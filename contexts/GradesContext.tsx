@@ -104,7 +104,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     try {
         const base64Data = await fileToBase64(selectedFile);
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.GEMINI_API_KEY });
         
         const schema = {
           type: Type.OBJECT,
