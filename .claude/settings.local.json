@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(firebase --version)",
+      "Bash(firebase init:*)",
+      "Bash(printf:*)",
+      "Bash(npm run build:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(firebase projects:list:*)",
+      "Bash(firebase:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

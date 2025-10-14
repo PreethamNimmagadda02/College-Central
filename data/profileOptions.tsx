@@ -1,0 +1,33 @@
+export const HOSTEL_OPTIONS: string[] = [
+  "Amber Hostel",
+  "Aquamarine Hostel",
+  "Diamond Hostel",
+  "Emerald Hostel",
+  "International Hostel",
+  "Jasper Hostel",
+  "Opal Hostel",
+  "Rosaline & Ruby Hostel",
+  "Sapphire Hostel",
+  "Topaz Hostel",
+];
+
+export const BRANCH_OPTIONS: string[] = [
+  "Applied Geology",
+  "Applied Geophysics",
+  "Chemical Engineering",
+  "Chemical Science",
+  "Civil Engineering",
+  "Computer Science and Engineering",
+  "Electrical Engineering",
+  "Electronics and Communication Engineering",
+  "Engineering Physics",
+  "Environmental Engineering",
+  "Mathematics and Computing",
+  "Mechanical Engineering",
+  "Mineral and Metallurgical Engineering",
+  "Mining Engineering",
+  "Mining Engineering and MBA in Logistic and Supply Chain Management (IIM Mumbai)",
+  "Mining Machinery Engineering",
+  "Petroleum Engineering",
+  "Physical Science",
+];

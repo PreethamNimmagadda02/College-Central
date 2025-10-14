@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF--8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'ism-maroon': '#800000',
+              'ism-gold': '#FFD700',
+              'primary': '#3b82f6',        // A brighter, more modern blue
+              'primary-dark': '#2563eb',    // A coordinating darker blue for hovers
+              'secondary': '#06b6d4',      // A vibrant cyan for accents
+              'secondary-light': '#67e8f9',// Lighter cyan for dark mode text
+              'light-bg': '#f1f5f9',        // Slate 100
+              'dark-bg': '#0f172a',         // Slate 900
+              'dark-card': '#1e293b',       // Slate 800
+              'dark-text': '#e2e8f0',       // Soft, readable off-white
+            },
+          },
+        },
+      }
+    </script>
+ 
+</head>
+  <body class="bg-light-bg dark:bg-dark-bg text-slate-800 dark:text-dark-text">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
