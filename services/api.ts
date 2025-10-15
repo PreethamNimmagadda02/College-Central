@@ -6,7 +6,8 @@ import {
   CampusEvent,
 } from '../types';
 import { db } from '../firebaseConfig';
-import { collection, query, orderBy, limit, onSnapshot, Unsubscribe, getDocs, where } from 'firebase/firestore';
+// FIX: Import QuerySnapshot and FirestoreError to fix type inference issues.
+import { collection, query, orderBy, limit, onSnapshot, Unsubscribe, getDocs, where, QuerySnapshot, FirestoreError, DocumentData } from 'firebase/firestore';
 import { CAMPUS_DIRECTORY } from '../data/directoryData';
 import { STUDENT_DIRECTORY } from '../data/studentDirectoryData';
 
@@ -16,8 +17,9 @@ export function subscribeToAllNewsAndEvents(callback: (items: NewsItem[], error?
   try {
     let newsCache: NewsItem[] | null = null;
     let eventsCache: NewsItem[] | null = null;
-    let newsError: Error | null = null;
-    let eventsError: Error | null = null;
+    // FIX: Changed type from Error to FirestoreError to match onSnapshot's error callback.
+    let newsError: FirestoreError | null = null;
+    let eventsError: FirestoreError | null = null;
 
     const mergeAndCallback = () => {
       // Wait until both listeners have reported back at least once (either with data or error)
@@ -41,22 +43,24 @@ export function subscribeToAllNewsAndEvents(callback: (items: NewsItem[], error?
     const newsQuery = query(collection(db, 'news'), orderBy('date', 'desc'));
     const eventsQuery = query(collection(db, 'events'), orderBy('date', 'desc'));
 
-    const unsubNews = onSnapshot(newsQuery, (snapshot) => {
+    // FIX: Explicitly type snapshot as QuerySnapshot and error as FirestoreError.
+    const unsubNews = onSnapshot(newsQuery, (snapshot: QuerySnapshot<DocumentData>) => {
         newsError = null;
         newsCache = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'announcement' } as Announcement & { type: 'announcement' }));
         mergeAndCallback();
-    }, (error) => {
+    }, (error: FirestoreError) => {
       console.error("Error subscribing to news:", error);
       newsError = error;
       newsCache = []; // On error, treat this source as empty
       mergeAndCallback();
     });
 
-    const unsubEvents = onSnapshot(eventsQuery, (snapshot) => {
+    // FIX: Explicitly type snapshot as QuerySnapshot and error as FirestoreError.
+    const unsubEvents = onSnapshot(eventsQuery, (snapshot: QuerySnapshot<DocumentData>) => {
         eventsError = null;
         eventsCache = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' } as CampusEvent & { type: 'event' }));
         mergeAndCallback();
-    }, (error) => {
+    }, (error: FirestoreError) => {
         console.error("Error subscribing to events:", error);
         eventsError = error;
         eventsCache = []; // On error, treat this source as empty
@@ -78,8 +82,9 @@ export function subscribeToLatestNewsAndEvents(count: number, callback: (items: 
   try {
     let newsCache: NewsItem[] | null = null;
     let eventsCache: NewsItem[] | null = null;
-    let newsError: Error | null = null;
-    let eventsError: Error | null = null;
+    // FIX: Changed type from Error to FirestoreError.
+    let newsError: FirestoreError | null = null;
+    let eventsError: FirestoreError | null = null;
 
     const mergeAndCallback = () => {
         if (newsCache === null || eventsCache === null) return;
@@ -106,22 +111,24 @@ export function subscribeToLatestNewsAndEvents(count: number, callback: (items: 
     // For events, get upcoming ones, ordered by date ascending (soonest first)
     const eventsQuery = query(collection(db, 'events'), where('date', '>=', todayStr), orderBy('date', 'asc'), limit(count));
 
-    const unsubNews = onSnapshot(newsQuery, (snapshot) => {
+    // FIX: Explicitly type snapshot as QuerySnapshot and error as FirestoreError.
+    const unsubNews = onSnapshot(newsQuery, (snapshot: QuerySnapshot<DocumentData>) => {
         newsError = null;
         newsCache = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'announcement' } as Announcement & { type: 'announcement' }));
         mergeAndCallback();
-    }, (error) => {
+    }, (error: FirestoreError) => {
       console.error("Error subscribing to latest news:", error);
       newsError = error;
       newsCache = [];
       mergeAndCallback();
     });
 
-    const unsubEvents = onSnapshot(eventsQuery, (snapshot) => {
+    // FIX: Explicitly type snapshot as QuerySnapshot and error as FirestoreError.
+    const unsubEvents = onSnapshot(eventsQuery, (snapshot: QuerySnapshot<DocumentData>) => {
         eventsError = null;
         eventsCache = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' } as CampusEvent & { type: 'event' }));
         mergeAndCallback();
-    }, (error) => {
+    }, (error: FirestoreError) => {
         console.error("Error subscribing to latest events:", error);
         eventsError = error;
         eventsCache = [];
@@ -148,8 +155,9 @@ export const fetchAllNewsAndEvents = async (forceRefresh = false): Promise<NewsI
 
     const [newsSnapshot, eventsSnapshot] = await Promise.all([getDocs(newsQuery), getDocs(eventsQuery)]);
     
-    const newsItems: NewsItem[] = newsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'announcement' } as Announcement & { type: 'announcement' }));
-    const eventItems: NewsItem[] = eventsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, type: 'event' } as CampusEvent & { type: 'event' }));
+    // FIX: Used Object.assign to resolve spread operator error on DocumentData type.
+    const newsItems: NewsItem[] = newsSnapshot.docs.map(doc => (Object.assign({}, doc.data(), { id: doc.id, type: 'announcement' }) as Announcement & { type: 'announcement' }));
+    const eventItems: NewsItem[] = eventsSnapshot.docs.map(doc => (Object.assign({}, doc.data(), { id: doc.id, type: 'event' }) as CampusEvent & { type: 'event' }));
 
     const allItems = [...newsItems, ...eventItems];
     allItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -165,7 +173,8 @@ export const fetchAnnouncements = async (forceRefresh = false): Promise<Announce
     // Note: forceRefresh is not implemented for Firestore fetch.
     const newsQuery = query(collection(db, 'news'), orderBy('date', 'desc'));
     const newsSnapshot = await getDocs(newsQuery);
-    return newsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Announcement));
+    // FIX: Used Object.assign to resolve spread operator error on DocumentData type.
+    return newsSnapshot.docs.map(doc => (Object.assign({}, doc.data(), { id: doc.id }) as Announcement));
 };
 
 

@@ -3,7 +3,8 @@ import { AcademicCalendarData, CalendarEvent } from '../types';
 import { PRELOADED_CALENDAR_DATA } from '../data/academicCalendarData';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
+// FIX: Import QuerySnapshot to fix type inference issue.
+import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc, QuerySnapshot, DocumentData } from 'firebase/firestore';
 
 interface CalendarContextType {
   calendarData: AcademicCalendarData | null;
@@ -43,7 +44,8 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       where('userId', '==', currentUser.uid)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    // FIX: Explicitly type snapshot as QuerySnapshot to resolve 'docs' property error.
+    const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
       const events = snapshot.docs.map(doc => ({
         ...doc.data(),
         id: doc.id
@@ -67,10 +69,13 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         const prefDocRef = doc(db, 'userReminderPreferences', currentUser.uid);
         const prefDoc = await getDoc(prefDocRef);
 
+        // FIX: Safely access 'reminderEventKeys' from document data.
         if (prefDoc.exists()) {
           const data = prefDoc.data();
-          setReminderPreferences(data.reminderEventKeys || []);
-          console.log('CalendarContext - Loaded reminder preferences:', data.reminderEventKeys);
+          if (data && data.reminderEventKeys) {
+            setReminderPreferences(data.reminderEventKeys || []);
+            console.log('CalendarContext - Loaded reminder preferences:', data.reminderEventKeys);
+          }
         } else {
           setReminderPreferences([]);
         }

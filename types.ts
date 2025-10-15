@@ -89,6 +89,8 @@ export interface StudentDirectoryEntry {
   admNo: string;
   name: string;
   branch: string;
+  // FIX: Add optional 'year' property to resolve type error in Directory.tsx
+  year?: string;
 }
 
 // New types for Academic Calendar

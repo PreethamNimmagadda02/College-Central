@@ -8,6 +8,7 @@ interface CampusMapContextType {
   locations: CampusLocation[];
   quickRoutes: QuickRoute[];
   loading: boolean;
+  error: string | null;
   savedPlaces: string[];
   toggleSavePlace: (locationId: string) => Promise<void>;
   getDirections: (from: string, to: string) => string;
@@ -401,6 +402,8 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [quickRoutes] = useState<QuickRoute[]>(defaultQuickRoutes);
   const [savedPlaces, setSavedPlaces] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  // FIX: Add error state to provider.
+  const [error, setError] = useState<string | null>(null);
 
   // Load user's saved places from Firebase
   useEffect(() => {
@@ -413,8 +416,14 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
     const unsubscribe = onSnapshot(
       doc(db, 'users', currentUser.uid),
       (docSnap) => {
-        if (docSnap.exists() && docSnap.data().savedCampusPlaces) {
-          setSavedPlaces(docSnap.data().savedCampusPlaces as string[]);
+        // FIX: Safely access 'savedCampusPlaces' property from document snapshot data.
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data && data.savedCampusPlaces) {
+            setSavedPlaces(data.savedCampusPlaces as string[]);
+          } else {
+            setSavedPlaces([]);
+          }
         } else {
           setSavedPlaces([]);
         }
@@ -422,6 +431,8 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       },
       (err) => {
         console.error('Error loading saved places:', err);
+        // FIX: Set error state on failure.
+        setError('Failed to load saved places.');
         setLoading(false);
       }
     );
@@ -500,6 +511,7 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
         locations,
         quickRoutes,
         loading,
+        error,
         savedPlaces,
         toggleSavePlace,
         getDirections,
