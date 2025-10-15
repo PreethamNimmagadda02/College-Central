@@ -15,6 +15,30 @@ const SearchIcon: React.FC = () => (
     </svg>
 );
 
+const BookmarkIcon: React.FC<{ filled?: boolean }> = ({ filled = false }) => (
+    <svg className="w-5 h-5" fill={filled ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+    </svg>
+);
+
+const StarIcon: React.FC = () => (
+    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+    </svg>
+);
+
+const ClockIcon: React.FC = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
+const InfoIcon: React.FC = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
 const generalForms = [
     { title: 'Academic Overload / Underload', formNumber: 'A1', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a1.pdf', submitTo: 'Academic Section' },
     { title: 'Adding/Dropping of Course(s)', formNumber: 'A2', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a2.pdf', submitTo: 'Academic Section' },
@@ -85,47 +109,162 @@ interface Form {
     submitTo: string;
 }
 
-const FormCard: React.FC<{ form: Form }> = ({ form }) => (
-    <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-lg shadow-md flex flex-col h-full transition-shadow duration-300 hover:shadow-xl">
+interface UserFormsData {
+    favorites: string[];
+    recentDownloads: Array<{
+        formNumber: string;
+        title: string;
+        timestamp: number;
+    }>;
+}
+
+const FormCard: React.FC<{
+    form: Form;
+    isFavorite: boolean;
+    onToggleFavorite: (formNumber: string) => void;
+    onDownload: (form: Form) => void;
+}> = ({ form, isFavorite, onToggleFavorite, onDownload }) => (
+    <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-lg shadow-md flex flex-col h-full transition-all duration-300 hover:shadow-xl border-2 border-transparent hover:border-primary/20">
         <div className="flex justify-between items-start mb-2">
             <h3 className="text-base md:text-lg font-bold text-slate-800 dark:text-white flex-grow pr-2">{form.title}</h3>
-            {form.formNumber && <span className="text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-1 px-2 rounded-full whitespace-nowrap">{form.formNumber}</span>}
+            <div className="flex items-center gap-2">
+                {form.formNumber && <span className="text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-1 px-2 rounded-full whitespace-nowrap">{form.formNumber}</span>}
+                <button
+                    onClick={() => onToggleFavorite(form.formNumber)}
+                    className={`p-2 rounded-lg transition-all ${isFavorite ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20' : 'text-slate-400 hover:text-yellow-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                    title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                    <BookmarkIcon filled={isFavorite} />
+                </button>
+            </div>
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 flex-grow">
            <strong>Submit to:</strong> {form.submitTo}
         </p>
-        <a 
-            href={form.downloadLink} 
-            target="_blank"
-            rel="noopener noreferrer"
+        <button
+            onClick={() => onDownload(form)}
             className="mt-4 inline-flex items-center justify-center px-4 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors duration-200 text-sm"
         >
             <DownloadIcon />
             Download PDF
-        </a>
+        </button>
     </div>
 );
 
 const CollegeForms: React.FC = () => {
+    const { currentUser } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
+    const [userFormsData, setUserFormsData] = useState<UserFormsData>({ favorites: [], recentDownloads: [] });
+    const [loading, setLoading] = useState(true);
+    const [showTips, setShowTips] = useState(true);
 
-    const filters = ['All', 'General', 'UG', 'PG', 'PhD'];
+    const filters = ['All', 'Favorites', 'General', 'UG', 'PG', 'PhD'];
 
-    const filterForms = (forms: Form[]) => {
-        if (!searchTerm) return forms;
-        const lowercasedTerm = searchTerm.toLowerCase();
-        return forms.filter(form =>
-            form.title.toLowerCase().includes(lowercasedTerm) ||
-            form.formNumber.toLowerCase().includes(lowercasedTerm) ||
-            form.submitTo.toLowerCase().includes(lowercasedTerm)
-        );
+    // Load user's forms data from Firebase
+    useEffect(() => {
+        const loadUserData = async () => {
+            if (!currentUser) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const userDocRef = doc(db, 'userForms', currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    setUserFormsData(userDoc.data() as UserFormsData);
+                } else {
+                    // Initialize user document
+                    const initialData: UserFormsData = { favorites: [], recentDownloads: [] };
+                    await setDoc(userDocRef, initialData);
+                    setUserFormsData(initialData);
+                }
+            } catch (error) {
+                console.error('Error loading user forms data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadUserData();
+    }, [currentUser]);
+
+    // Toggle favorite
+    const toggleFavorite = async (formNumber: string) => {
+        if (!currentUser) return;
+
+        const newFavorites = userFormsData.favorites.includes(formNumber)
+            ? userFormsData.favorites.filter(f => f !== formNumber)
+            : [...userFormsData.favorites, formNumber];
+
+        const updatedData = { ...userFormsData, favorites: newFavorites };
+        setUserFormsData(updatedData);
+
+        try {
+            const userDocRef = doc(db, 'userForms', currentUser.uid);
+            await updateDoc(userDocRef, { favorites: newFavorites });
+        } catch (error) {
+            console.error('Error updating favorites:', error);
+        }
     };
 
-    const filteredGeneralForms = useMemo(() => filterForms(generalForms), [searchTerm]);
-    const filteredUgForms = useMemo(() => filterForms(ugForms), [searchTerm]);
-    const filteredPgForms = useMemo(() => filterForms(pgForms), [searchTerm]);
-    const filteredPhdForms = useMemo(() => filterForms(phdForms), [searchTerm]);
+    // Handle download
+    const handleDownload = async (form: Form) => {
+        window.open(form.downloadLink, '_blank');
+
+        if (!currentUser) return;
+
+        const download = {
+            formNumber: form.formNumber,
+            title: form.title,
+            timestamp: Date.now()
+        };
+
+        const updatedDownloads = [download, ...userFormsData.recentDownloads.slice(0, 9)]; // Keep last 10
+        const updatedData = { ...userFormsData, recentDownloads: updatedDownloads };
+        setUserFormsData(updatedData);
+
+        try {
+            const userDocRef = doc(db, 'userForms', currentUser.uid);
+            await updateDoc(userDocRef, { recentDownloads: updatedDownloads });
+        } catch (error) {
+            console.error('Error updating recent downloads:', error);
+        }
+    };
+
+    const filterForms = (forms: Form[]) => {
+        let filtered = forms;
+
+        // Apply favorites filter
+        if (activeFilter === 'Favorites') {
+            filtered = filtered.filter(form => userFormsData.favorites.includes(form.formNumber));
+        }
+
+        // Apply search filter
+        if (searchTerm) {
+            const lowercasedTerm = searchTerm.toLowerCase();
+            filtered = filtered.filter(form =>
+                form.title.toLowerCase().includes(lowercasedTerm) ||
+                form.formNumber.toLowerCase().includes(lowercasedTerm) ||
+                form.submitTo.toLowerCase().includes(lowercasedTerm)
+            );
+        }
+
+        return filtered;
+    };
+
+    const allForms = [...generalForms, ...ugForms, ...pgForms, ...phdForms];
+    const favoriteForms = useMemo(() =>
+        allForms.filter(form => userFormsData.favorites.includes(form.formNumber)),
+        [userFormsData.favorites]
+    );
+
+    const filteredGeneralForms = useMemo(() => filterForms(generalForms), [searchTerm, userFormsData.favorites, activeFilter]);
+    const filteredUgForms = useMemo(() => filterForms(ugForms), [searchTerm, userFormsData.favorites, activeFilter]);
+    const filteredPgForms = useMemo(() => filterForms(pgForms), [searchTerm, userFormsData.favorites, activeFilter]);
+    const filteredPhdForms = useMemo(() => filterForms(phdForms), [searchTerm, userFormsData.favorites, activeFilter]);
 
     const getFilterLabel = (filter: string) => {
         switch (filter) {
@@ -136,14 +275,115 @@ const CollegeForms: React.FC = () => {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold">College Forms</h1>
-                <p className="text-slate-500 dark:text-slate-400 mt-1">
-                    Find and download important academic and administrative forms.
+            {/* Header with gradient */}
+            <div className="relative bg-gradient-to-r from-primary to-secondary p-8 rounded-xl shadow-lg text-white">
+                <h1 className="text-4xl font-bold mb-2">College Forms</h1>
+                <p className="text-blue-100">
+                    Find and download important academic and administrative forms
                 </p>
             </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-md">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">Total Forms</p>
+                            <p className="text-3xl font-bold text-primary mt-1">{allForms.length}</p>
+                        </div>
+                        <div className="bg-primary/10 p-3 rounded-lg">
+                            <DownloadIcon />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-md">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">Your Favorites</p>
+                            <p className="text-3xl font-bold text-yellow-500 mt-1">{userFormsData.favorites.length}</p>
+                        </div>
+                        <div className="bg-yellow-500/10 p-3 rounded-lg text-yellow-500">
+                            <StarIcon />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-md">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">Recent Downloads</p>
+                            <p className="text-3xl font-bold text-secondary mt-1">{userFormsData.recentDownloads.length}</p>
+                        </div>
+                        <div className="bg-secondary/10 p-3 rounded-lg text-secondary">
+                            <ClockIcon />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Recent Downloads Section */}
+            {userFormsData.recentDownloads.length > 0 && (
+                <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-md">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <ClockIcon />
+                        Recent Downloads
+                    </h3>
+                    <div className="space-y-2">
+                        {userFormsData.recentDownloads.slice(0, 5).map((download, index) => (
+                            <div key={index} className="flex items-center justify-between py-2 px-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                                <div>
+                                    <p className="font-medium text-sm">{download.title}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        {new Date(download.timestamp).toLocaleDateString()} at {new Date(download.timestamp).toLocaleTimeString()}
+                                    </p>
+                                </div>
+                                <span className="text-xs font-semibold bg-primary/10 text-primary py-1 px-2 rounded-full">
+                                    {download.formNumber}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Helpful Tips */}
+            {showTips && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-6 rounded-lg">
+                    <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                            <div className="text-blue-500 mt-1">
+                                <InfoIcon />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Helpful Tips</h3>
+                                <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+                                    <li>Use the search bar to quickly find forms by name, number, or submission office</li>
+                                    <li>Click the bookmark icon to save frequently used forms to favorites</li>
+                                    <li>All forms are official IIT ISM documents - ensure you submit to the correct office</li>
+                                    <li>Check "Submit to" field carefully before downloading</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowTips(false)}
+                            className="text-blue-500 hover:text-blue-700 text-xl font-bold"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-4 bg-white dark:bg-dark-card p-4 rounded-lg shadow-md">
                  <div className="relative">
@@ -171,6 +411,36 @@ const CollegeForms: React.FC = () => {
                 </div>
             </div>
 
+            {/* Favorites Section */}
+            {activeFilter === 'Favorites' && (
+                <div className="space-y-4">
+                    <h2 className="text-2xl font-semibold border-b border-slate-200 dark:border-slate-700 pb-2 flex items-center gap-2">
+                        <StarIcon />
+                        Your Favorite Forms
+                    </h2>
+                    {favoriteForms.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                            {favoriteForms.map((form, index) => (
+                                <FormCard
+                                    key={`favorite-${index}`}
+                                    form={form}
+                                    isFavorite={true}
+                                    onToggleFavorite={toggleFavorite}
+                                    onDownload={handleDownload}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 bg-white dark:bg-dark-card rounded-lg">
+                            <div className="text-slate-300 dark:text-slate-600 mb-4">
+                                <StarIcon />
+                            </div>
+                            <p className="text-slate-500 dark:text-slate-400">No favorite forms yet. Click the bookmark icon to save forms!</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* General Forms */}
             {(activeFilter === 'All' || activeFilter === 'General') && (
                 <div className="space-y-4">
@@ -178,7 +448,13 @@ const CollegeForms: React.FC = () => {
                      {filteredGeneralForms.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                             {filteredGeneralForms.map((form, index) => (
-                                <FormCard key={`general-${index}`} form={form} />
+                                <FormCard
+                                    key={`general-${index}`}
+                                    form={form}
+                                    isFavorite={userFormsData.favorites.includes(form.formNumber)}
+                                    onToggleFavorite={toggleFavorite}
+                                    onDownload={handleDownload}
+                                />
                             ))}
                         </div>
                     ) : (
@@ -196,7 +472,13 @@ const CollegeForms: React.FC = () => {
                      {filteredUgForms.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                             {filteredUgForms.map((form, index) => (
-                                <FormCard key={`ug-${index}`} form={form} />
+                                <FormCard
+                                    key={`ug-${index}`}
+                                    form={form}
+                                    isFavorite={userFormsData.favorites.includes(form.formNumber)}
+                                    onToggleFavorite={toggleFavorite}
+                                    onDownload={handleDownload}
+                                />
                             ))}
                         </div>
                      ) : (
@@ -213,8 +495,14 @@ const CollegeForms: React.FC = () => {
                     <h2 className="text-2xl font-semibold border-b border-slate-200 dark:border-slate-700 pb-2">Postgraduate (PG) Forms</h2>
                      {filteredPgForms.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                            {filteredPgForms.map((form, index) => (
-                                <FormCard key={`pg-${index}`} form={form} />
+                            {filteredPgForms.map((form: Form, index: number) => (
+                                <FormCard
+                                    key={`pg-${index}`}
+                                    form={form}
+                                    isFavorite={userFormsData.favorites.includes(form.formNumber)}
+                                    onToggleFavorite={toggleFavorite}
+                                    onDownload={handleDownload}
+                                />
                             ))}
                         </div>
                      ) : (
@@ -231,8 +519,14 @@ const CollegeForms: React.FC = () => {
                     <h2 className="text-2xl font-semibold border-b border-slate-200 dark:border-slate-700 pb-2">Doctoral (PhD) Forms</h2>
                      {filteredPhdForms.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                            {filteredPhdForms.map((form, index) => (
-                                <FormCard key={`phd-${index}`} form={form} />
+                            {filteredPhdForms.map((form: Form, index: number) => (
+                                <FormCard
+                                    key={`phd-${index}`}
+                                    form={form}
+                                    isFavorite={userFormsData.favorites.includes(form.formNumber)}
+                                    onToggleFavorite={toggleFavorite}
+                                    onDownload={handleDownload}
+                                />
                             ))}
                         </div>
                      ) : (

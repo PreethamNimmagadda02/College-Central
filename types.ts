@@ -124,3 +124,34 @@ export interface LostFoundItem {
   status: LostFoundStatus;
   imageUrl: string;
 }
+
+// Campus Map types
+export type CampusLocationCategory = 'academic' | 'residential' | 'facilities' | 'dining';
+
+export interface CampusLocation {
+  id: string;
+  name: string;
+  category: CampusLocationCategory;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  description: string; 
+  icon: string;
+  details?: {
+    address?: string;
+    contact?: string;
+    openingHours?: string;
+    capacity?: number;
+    facilities?: string[];
+  };
+}
+
+export interface QuickRoute {
+  id: string;
+  from: string;
+  to: string;
+  time: string;
+  distance: string;
+  steps?: string[];
+}
