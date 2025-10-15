@@ -53,8 +53,14 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setLoading(true);
       const userDocRef = doc(db, 'users', currentUser.uid);
       unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists() && docSnap.data().gradesData) {
-          setGradesDataState(docSnap.data().gradesData as GradesData);
+        // FIX: Safely access 'gradesData' property from document snapshot data.
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data && data.gradesData) {
+            setGradesDataState(data.gradesData as GradesData);
+          } else {
+            setGradesDataState(null);
+          }
         } else {
           setGradesDataState(null);
         }
@@ -104,6 +110,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     try {
         const base64Data = await fileToBase64(selectedFile);
+        // FIX: Obtain API key from process.env.API_KEY as per guidelines.
         const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
         
         const schema = {

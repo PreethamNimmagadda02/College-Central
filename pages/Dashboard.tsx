@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ClassSchedule, CampusEvent, Announcement, NewsItem } from '../types';
+import { ClassSchedule, CampusEvent, Announcement, NewsItem, CalendarEvent } from '../types';
 // FIX: Changed import from fetchLatestNewsAndEvents to subscribeToLatestNewsAndEvents.
 import { subscribeToLatestNewsAndEvents } from '../services/api';
 import { useUser } from '../contexts/UserContext';
@@ -67,7 +67,7 @@ const Dashboard: React.FC = () => {
     const { user, loading: userLoading } = useUser();
     const { gradesData, loading: gradesLoading } = useGrades();
     const { scheduleData, loading: scheduleLoading } = useSchedule();
-    const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey } = useCalendar();
+    const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey, toggleReminderPreference } = useCalendar();
 
     // Quick Links with better organization
     const quickLinks = [
@@ -498,7 +498,7 @@ const Dashboard: React.FC = () => {
                                         <div className="text-center py-8">
                                             <p className="text-slate-500 dark:text-slate-400 text-sm">No upcoming reminders</p>
                                             <p className="text-xs text-slate-400 mt-2">Total events: {calendarData.events.length}</p>
-                                            <Link to="/calendar" className="text-sm text-primary hover:text-primary-dark mt-2 inline-block">
+                                            <Link to="/academic-calendar" className="text-sm text-primary hover:text-primary-dark mt-2 inline-block">
                                                 Add events with "Remind Me" →
                                             </Link>
                                         </div>
@@ -517,27 +517,37 @@ const Dashboard: React.FC = () => {
                                     return (
                                         <div
                                             key={event.id || index}
-                                            className={`flex items-center justify-between p-3 rounded-lg border-l-4 ${
+                                            className={`group flex items-center justify-between p-3 rounded-lg border-l-4 ${
                                                 isUrgent ? 'bg-red-50 dark:bg-red-900/20 border-red-500' :
                                                 isWarning ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-500' :
                                                 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
                                             }`}
                                         >
-                                            <div>
-                                                <p className="font-medium">{event.description}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium truncate">{event.description}</p>
                                                 <p className="text-sm text-slate-600 dark:text-slate-400">{event.type}</p>
                                             </div>
-                                            <div className="text-right">
-                                                <p className={`text-sm font-semibold ${
-                                                    isUrgent ? 'text-red-600' :
-                                                    isWarning ? 'text-amber-600' :
-                                                    'text-blue-600'
-                                                }`}>
-                                                    {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`}
-                                                </p>
-                                                <p className="text-xs text-slate-500">
-                                                    {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                                </p>
+                                            <div className="flex items-center flex-shrink-0 ml-4">
+                                                <div className="text-right">
+                                                    <p className={`text-sm font-semibold ${
+                                                        isUrgent ? 'text-red-600' :
+                                                        isWarning ? 'text-amber-600' :
+                                                        'text-blue-600'
+                                                    }`}>
+                                                        {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                        {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => toggleReminderPreference(getEventKey(event))}
+                                                    className="ml-2 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Remove reminder"
+                                                    aria-label="Remove reminder"
+                                                >
+                                                    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
                                             </div>
                                         </div>
                                     );

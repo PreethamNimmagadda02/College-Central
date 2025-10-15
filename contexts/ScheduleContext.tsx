@@ -23,8 +23,14 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
       setLoading(true);
       const userDocRef = doc(db, 'users', currentUser.uid);
       unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists() && docSnap.data().scheduleData) {
-          setScheduleDataState(docSnap.data().scheduleData as ClassSchedule[]);
+        // FIX: Safely access 'scheduleData' property from document snapshot data.
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data && data.scheduleData) {
+            setScheduleDataState(data.scheduleData as ClassSchedule[]);
+          } else {
+            setScheduleDataState(null);
+          }
         } else {
           setScheduleDataState(null);
         }
