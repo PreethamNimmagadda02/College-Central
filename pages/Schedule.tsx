@@ -37,7 +37,7 @@ const Schedule: React.FC = () => {
     const [history, setHistory] = useState<ClassSchedule[][]>([]);
     const isInitialized = useRef(false);
     const [viewMode, setViewMode] = useState<'grid' | 'list' | 'compact'>('grid');
-    const [filterDay, setFilterDay] = useState<string>('all');
+    const [filterCourse, setFilterCourse] = useState<string>('all');
     
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     const timeSlots = Array.from({ length: 13 }, (_, i) => `${(8 + i).toString().padStart(2, '0')}:00`);
@@ -90,6 +90,18 @@ const Schedule: React.FC = () => {
         
         return todaysClasses.find(cls => cls.startTime > currentTime);
     }, [todaysClasses]);
+    
+    const selectedCoursesForFilter = useMemo(() => {
+        if (!scheduleData) return [];
+        const uniqueCodes = [...new Set(scheduleData.map(item => item.courseCode))];
+        return uniqueCodes.map(code => {
+            const course = TIMETABLE_DATA.find(c => c.courseCode === code);
+            return {
+                code: code,
+                name: course ? `${code} - ${course.courseName}` : code,
+            };
+        }).sort((a, b) => (a.code as string).localeCompare(b.code as string));
+    }, [scheduleData]);
 
     const handleCourseSelection = (courseCode: string) => {
         const newSelectedCodes = selectedCourseCodes.includes(courseCode) 
@@ -198,9 +210,9 @@ const Schedule: React.FC = () => {
 
     const filteredSchedule = useMemo(() => {
         if (!scheduleData) return [];
-        if (filterDay === 'all') return scheduleData;
-        return scheduleData.filter(item => item.day === filterDay);
-    }, [scheduleData, filterDay]);
+        if (filterCourse === 'all') return scheduleData;
+        return scheduleData.filter(item => item.courseCode === filterCourse);
+    }, [scheduleData, filterCourse]);
 
     const getGridPosition = (item: ClassSchedule) => {
         const startHour = parseInt(item.startTime.split(':')[0]);
@@ -437,13 +449,13 @@ const Schedule: React.FC = () => {
                     <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter:</span>
                         <select
-                            value={filterDay}
-                            onChange={(e) => setFilterDay(e.target.value)}
+                            value={filterCourse}
+                            onChange={(e) => setFilterCourse(e.target.value)}
                             className="px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700"
                         >
-                            <option value="all">All Days</option>
-                            {days.map(day => (
-                                <option key={day} value={day}>{day}</option>
+                            <option value="all">All Courses</option>
+                            {selectedCoursesForFilter.map(course => (
+                                <option key={course.code} value={course.code}>{course.name}</option>
                             ))}
                         </select>
                     </div>
@@ -549,7 +561,7 @@ const Schedule: React.FC = () => {
                         <div className="space-y-4">
                             {days.map(day => {
                                 const dayClasses = filteredSchedule.filter(item => item.day === day).sort((a, b) => a.startTime.localeCompare(b.startTime));
-                                if (dayClasses.length === 0 && filterDay !== 'all') return null;
+                                if (dayClasses.length === 0 && filterCourse !== 'all') return null;
                                 
                                 return (
                                     <div key={day} className={`border rounded-lg overflow-hidden ${day === today ? 'border-primary/30 bg-primary/5 dark:bg-primary/10' : 'border-slate-200 dark:border-slate-700'}`}>
