@@ -71,7 +71,11 @@ const Profile: React.FC = () => {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'phone') {
+            setFormData(prev => ({ ...prev, [name]: value.replace(/\D/g, '') }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSave = async () => {
@@ -313,11 +317,13 @@ const Profile: React.FC = () => {
                                             <label className="text-xs font-medium text-blue-700 dark:text-blue-300">Phone Number</label>
                                             {isEditing ? (
                                                 <input
-                                                    type="text"
+                                                    type="tel"
                                                     name="phone"
                                                     value={formData.phone || ''}
                                                     onChange={handleInputChange}
                                                     className="w-full mt-1 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                                    placeholder="Enter phone number"
+                                                    maxLength={15}
                                                 />
                                             ) : (
                                                 <p className="text-sm text-slate-800 dark:text-white mt-1 flex items-center gap-2">
