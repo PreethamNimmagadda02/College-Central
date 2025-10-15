@@ -7,18 +7,6 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Campus Locations - read-only for all authenticated users, admin can write
-    match /campusLocations/{locationId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null; // Allow any authenticated user to initialize data
-    }
-
-    // Quick Routes - read-only for all authenticated users, admin can write
-    match /quickRoutes/{routeId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null; // Allow any authenticated user to initialize data
-    }
-
     // Events collection - read for all authenticated users
     match /events/{eventId} {
       allow read: if request.auth != null;
@@ -27,7 +15,13 @@ service cloud.firestore {
 
     // Announcements collection - read for all authenticated users
     match /announcements/{announcementId} {
-      allow read: if request.auth != null;  
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // News collection - read for all authenticated users
+    match /news/{newsId} {
+      allow read: if request.auth != null;
       allow write: if request.auth != null;
     }
 
@@ -45,12 +39,24 @@ service cloud.firestore {
 
     // Academic calendar - read for all authenticated users
     match /academicCalendar/{calendarId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null; 
       allow write: if request.auth != null;
     }
 
     // User forms data - users can only read/write their own data
     match /userForms/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User events - users can only read/write their own events
+    match /userEvents/{eventId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // User reminder preferences - users can only read/write their own preferences
+    match /userReminderPreferences/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }

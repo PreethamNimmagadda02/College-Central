@@ -129,7 +129,7 @@ export const PRELOADED_CALENDAR_DATA: AcademicCalendarData = {
     { date: '2026-05-23', description: 'Last date for submission of the request for offering backlog courses (for final year) in the Summer Semester', type: 'Other' },
     { date: '2026-05-25', description: 'Last date for the courses proposed to be offered by the respective departments (Summer)', type: 'Other' },
     { date: '2026-05-27', description: "Idu'l Zuha", type: 'Holiday' },
-    { date: '2026-05-29', endDate: '2026-06-01', description: 'Online registration by students for Summer Semester', type: 'Other' },
+    { date: '2026-05-29', endDate: '2026-06-01', description: 'Online registration by students for Summer Semester', type: 'Other' }, 
     { date: '2026-06-04', endDate: '2026-06-09', description: 'Fee Payment for Summer Semester 2025-26', type: 'Other' },
     { date: '2026-06-04', endDate: '2026-06-10', description: 'Pre-registration for Monsoon Semester 2026-27 (Window 1)', type: 'Other' },
     { date: '2026-06-17', endDate: '2026-06-26', description: 'Fee payment for Monsoon Semester 2026-27 (Window 1)', type: 'Other' },

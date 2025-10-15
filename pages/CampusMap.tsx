@@ -7,12 +7,13 @@ const CampusMap: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<CampusLocationCategory | 'all'>('all');
   const [selectedLocation, setSelectedLocation] = useState<CampusLocation | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [mapView, setMapView] = useState<'map' | 'satellite' | 'hybrid'>('map');
+  const [mapView, setMapView] = useState<'map' | 'satellite'>('map');
   const [showDirections, setShowDirections] = useState(false);
   const [fromLocation, setFromLocation] = useState('');
   const [toLocation, setToLocation] = useState('');
   const [showEmergency, setShowEmergency] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [savedPlaceForDirections, setSavedPlaceForDirections] = useState<CampusLocation | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
 
   // Show notification helper
@@ -69,7 +70,7 @@ const CampusMap: React.FC = () => {
     const baseUrl = "https://www.google.com/maps/embed?pb=";
     const params = "!1m14!1m8!1m3!1d14603.65487739572!2d86.441225!3d23.814333!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39f6a3d7a3536633%3A0x1b1b361b7b415951!2sIndian%20Institute%20of%20Technology%20(Indian%20School%20of%20Mines)%2C%20Dhanbad!5e";
     
-    const viewType = mapView === 'satellite' ? '1' : mapView === 'hybrid' ? '4' : '0';
+    const viewType = mapView === 'satellite' ? '1' : '0';
     return `${baseUrl}${params}${viewType}!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin`;
   };
 
@@ -119,13 +120,13 @@ const CampusMap: React.FC = () => {
         
         {/* Map View Toggles */}
         <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
-          {(['map', 'satellite', 'hybrid'] as const).map((view) => (
+          {(['map', 'satellite'] as const).map((view) => (
             <button
               key={view}
               onClick={() => setMapView(view)}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                mapView === view 
-                  ? 'bg-white dark:bg-slate-600 text-primary shadow-sm' 
+                mapView === view
+                  ? 'bg-white dark:bg-slate-600 text-primary shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
@@ -527,18 +528,31 @@ const CampusMap: React.FC = () => {
               {locations
                 .filter(loc => savedPlaces.includes(loc.id))
                 .map(location => (
-                  <div key={location.id} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <span>{location.icon}</span>
-                      <span className="text-sm font-medium">{location.name}</span>
+                  <div key={location.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span>{location.icon}</span>
+                        <span className="text-sm font-medium">{location.name}</span>
+                      </div>
+                      <button
+                        onClick={() => toggleSavePlace(location.id)}
+                        className="text-yellow-500 hover:text-yellow-600"
+                      >
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                          <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                      </button>
                     </div>
                     <button
-                      onClick={() => toggleSavePlace(location.id)}
-                      className="text-yellow-500 hover:text-yellow-600"
+                      onClick={() => {
+                        setSavedPlaceForDirections(location);
+                      }}
+                      className="w-full px-3 py-1.5 bg-primary text-white text-xs rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-1"
                     >
-                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                        <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                       </svg>
+                      Get Directions
                     </button>
                   </div>
                 ))}
@@ -739,7 +753,7 @@ const CampusMap: React.FC = () => {
                 </svg>
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">From</label>
@@ -754,7 +768,7 @@ const CampusMap: React.FC = () => {
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">To</label>
                 <select
@@ -784,7 +798,66 @@ const CampusMap: React.FC = () => {
           </div>
         </div>
       )}
-    </div> 
+
+      {/* Saved Place Directions Modal */}
+      {savedPlaceForDirections && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={() => setSavedPlaceForDirections(null)}>
+          <div className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold">Get Directions</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  To: <span className="font-medium text-primary">{savedPlaceForDirections.name}</span>
+                </p>
+              </div>
+              <button onClick={() => setSavedPlaceForDirections(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">From</label>
+                <select
+                  value={fromLocation}
+                  onChange={(e) => setFromLocation(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
+                >
+                  <option value="">Select starting point...</option>
+                  {locations.map(loc => (
+                    <option key={loc.id} value={loc.name}>{loc.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    if (!fromLocation) {
+                      showNotification('Please select a starting point', 'error');
+                      return;
+                    }
+                    const url = getDirections(fromLocation, savedPlaceForDirections.name);
+                    window.open(url, '_blank');
+                    setSavedPlaceForDirections(null);
+                    setFromLocation('');
+                    showNotification(`Opening directions to ${savedPlaceForDirections.name}`);
+                  }}
+                  className="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  Open in Google Maps
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

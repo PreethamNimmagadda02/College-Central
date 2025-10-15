@@ -99,12 +99,21 @@ export interface CalendarEvent {
     endDate?: string; // YYYY-MM-DD
     description: string;
     type: CalendarEventType;
+    remindMe?: boolean; // User wants to be reminded about this event
+    userId?: string; // User who created this event (for user-created events)
+    id?: string; // Unique identifier for the event
 }
 
 export interface AcademicCalendarData {
     semesterStartDate: string; // YYYY-MM-DD
     semesterEndDate: string; // YYYY-MM-DD
     events: CalendarEvent[];
+}
+
+// User's reminder preferences for events
+export interface UserReminderPreferences {
+    userId: string;
+    reminderEventKeys: string[]; // Array of event keys (date + description) that user wants reminders for
 }
 
 // FIX: Added LostFoundStatus enum and LostFoundItem interface to resolve missing type errors.

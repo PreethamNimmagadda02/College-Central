@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { collection, getDocs, doc, setDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { CampusLocation, QuickRoute } from '../types';
 import { useAuth } from '../hooks/useAuth';
@@ -8,10 +8,8 @@ interface CampusMapContextType {
   locations: CampusLocation[];
   quickRoutes: QuickRoute[];
   loading: boolean;
-  error: string | null;
   savedPlaces: string[];
   toggleSavePlace: (locationId: string) => Promise<void>;
-  refreshData: () => Promise<void>;
   getDirections: (from: string, to: string) => string;
   shareLocation: (locationId: string) => Promise<void>;
 }
@@ -357,150 +355,61 @@ const defaultLocations: CampusLocation[] = [
 const defaultQuickRoutes: QuickRoute[] = [
   {
     id: 'route-1',
-    from: 'Main Gate',
-    to: 'Main Building',
-    time: '5 min walk',
-    distance: '400m',
-    steps: ['Enter through Main Gate', 'Walk straight on Main Road', 'Main Building on your left']
+    from: 'Main Building',
+    to: 'Central Library',
+    time: '3 min walk',
+    distance: '250m',
+    steps: ['Exit Main Building', 'Walk on Academic Road', 'Central Library on right']
   },
   {
     id: 'route-2',
-    from: 'Hostels Area',
-    to: 'Lecture Hall Complex',
-    time: '8 min walk',
-    distance: '650m',
-    steps: ['Exit hostel area', 'Take left on Hostel Road', 'Continue till LHC']
+    from: 'Amber Hostel',
+    to: 'New Lecture Hall Complex (NLHC)',
+    time: '4 min walk',
+    distance: '300m',
+    steps: ['Exit hostel', 'Walk towards academic area', 'NLHC ahead']
   },
   {
     id: 'route-3',
     from: 'Central Library',
-    to: 'Computer Centre',
-    time: '3 min walk',
-    distance: '250m',
-    steps: ['Exit Library', 'Walk on Academic Road', 'Computer Centre on right']
+    to: 'Computer Science & Engineering Department',
+    time: '5 min walk',
+    distance: '400m',
+    steps: ['Exit Library', 'Walk on Academic Road', 'CSE Department on right']
   },
   {
     id: 'route-4',
-    from: 'SAC',
-    to: 'Sports Complex',
-    time: '6 min walk',
-    distance: '500m',
-    steps: ['Exit SAC', 'Take Sports Road', 'Sports Complex ahead']
+    from: 'Student Activity Centre (SAC)',
+    to: 'Lower Ground',
+    time: '5 min walk',
+    distance: '450m',
+    steps: ['Exit SAC', 'Walk towards sports area', 'Lower Ground ahead']
   },
   {
     id: 'route-5',
     from: 'Main Building',
-    to: 'Heritage Restaurant',
-    time: '4 min walk',
-    distance: '300m',
-    steps: ['Exit Main Building', 'Walk towards Market Area', 'Heritage on left']
+    to: 'Barista',
+    time: '3 min walk',
+    distance: '250m',
+    steps: ['Exit Main Building', 'Walk towards dining area', 'Barista on left']
   },
 ]; 
 
 export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { currentUser } = useAuth();
-  const [locations, setLocations] = useState<CampusLocation[]>([]);
-  const [quickRoutes, setQuickRoutes] = useState<QuickRoute[]>([]);
+  const [locations] = useState<CampusLocation[]>(defaultLocations);
+  const [quickRoutes] = useState<QuickRoute[]>(defaultQuickRoutes);
   const [savedPlaces, setSavedPlaces] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Initialize default data in Firebase on first load
-  const initializeFirebaseData = async () => {
-    try {
-      const locationsSnapshot = await getDocs(collection(db, 'campusLocations'));
-
-      // Force update: Always update with latest coordinates (change this to locationsSnapshot.empty to prevent updates)
-      const forceUpdate = true; // Set to false after first update
-
-      if (locationsSnapshot.empty || forceUpdate) {
-        console.log('Initializing/updating campus locations data with corrected coordinates...');
-
-        // Add/Update all locations
-        for (const location of defaultLocations) {
-          await setDoc(doc(db, 'campusLocations', location.id), location);
-        }
-
-        // Add/Update all quick routes
-        for (const route of defaultQuickRoutes) {
-          await setDoc(doc(db, 'quickRoutes', route.id), route);
-        }
-
-        console.log('Campus data initialized/updated successfully with new coordinates');
-      }
-    } catch (err) {
-      console.error('Error initializing Firebase data:', err);
-    }
-  };
-
-  // Load data from Firebase
+  // Load user's saved places from Firebase
   useEffect(() => {
     if (!currentUser) {
       setLoading(false);
       return;
     }
 
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Initialize data if needed
-        await initializeFirebaseData();
-
-        // Set up real-time listeners
-        const unsubscribeLocations = onSnapshot(
-          collection(db, 'campusLocations'),
-          (snapshot) => {
-            const locationData = snapshot.docs.map(doc => ({
-              ...doc.data() as CampusLocation,
-              id: doc.id
-            }));
-            setLocations(locationData);
-            setLoading(false);
-          },
-          (err) => {
-            console.error('Error loading locations:', err);
-            setError('Failed to load campus locations. Please refresh the page.');
-            setLoading(false);
-          }
-        );
-
-        const unsubscribeRoutes = onSnapshot(
-          collection(db, 'quickRoutes'),
-          (snapshot) => {
-            const routeData = snapshot.docs.map(doc => ({
-              ...doc.data() as QuickRoute,
-              id: doc.id
-            }));
-            setQuickRoutes(routeData);
-          },
-          (err) => {
-            console.error('Error loading routes:', err);
-          }
-        );
-
-        return () => {
-          unsubscribeLocations();
-          unsubscribeRoutes();
-        };
-      } catch (err) {
-        console.error('Error in loadData:', err);
-        setError('Failed to load campus data. Please try again later.');
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [currentUser]);
-
-  // Load and sync saved places with Firebase
-  useEffect(() => {
-    if (!currentUser) {
-      setSavedPlaces([]);
-      return;
-    }
-
+    // Load user's saved places
     const unsubscribe = onSnapshot(
       doc(db, 'users', currentUser.uid),
       (docSnap) => {
@@ -509,9 +418,11 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
         } else {
           setSavedPlaces([]);
         }
+        setLoading(false);
       },
       (err) => {
         console.error('Error loading saved places:', err);
+        setLoading(false);
       }
     );
 
@@ -540,19 +451,6 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       console.error('Error saving place:', err);
       // Revert on error
       setSavedPlaces(savedPlaces);
-    }
-  };
-
-  // Refresh data
-  const refreshData = async () => {
-    try {
-      setLoading(true);
-      await initializeFirebaseData();
-      setLoading(false);
-    } catch (err) {
-      console.error('Error refreshing data:', err);
-      setError('Failed to refresh data');
-      setLoading(false);
     }
   };
 
@@ -596,16 +494,14 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   };
 
-  return (
+  return ( 
     <CampusMapContext.Provider
       value={{
         locations,
         quickRoutes,
         loading,
-        error,
         savedPlaces,
         toggleSavePlace,
-        refreshData,
         getDirections,
         shareLocation,
       }}
