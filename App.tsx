@@ -6,6 +6,7 @@ import { UserProvider } from './contexts/UserContext';
 import { GradesProvider } from './contexts/GradesContext';
 import { ScheduleProvider } from './contexts/ScheduleContext';
 import { CalendarProvider } from './contexts/CalendarContext';
+import { CampusMapProvider } from './contexts/CampusMapContext';
 
 import Layout from './pages/Layout';
 import Dashboard from './pages/Dashboard';
@@ -54,10 +55,12 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <UserProvider>
-        <GradesProvider>
+        <GradesProvider> 
           <ScheduleProvider>
-            <CalendarProvider>
-              <RouterProvider router={router} />
+            <CalendarProvider> 
+              <CampusMapProvider>
+                <RouterProvider router={router} />
+              </CampusMapProvider>
             </CalendarProvider>
           </ScheduleProvider>
         </GradesProvider>

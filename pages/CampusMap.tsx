@@ -1,83 +1,68 @@
-import React, { useState, useRef, useEffect } from 'react';
-
-// Campus locations data
-const campusLocations = {
-  academic: [
-    { id: 1, name: 'Main Building', category: 'academic', coordinates: { lat: 23.8143, lng: 86.4412 }, description: 'Administrative offices and classrooms', icon: '🏛️' },
-    { id: 2, name: 'Computer Centre', category: 'academic', coordinates: { lat: 23.8145, lng: 86.4415 }, description: 'Computing facilities and labs', icon: '💻' },
-    { id: 3, name: 'Central Library', category: 'academic', coordinates: { lat: 23.8140, lng: 86.4410 }, description: '24/7 study space with vast collection', icon: '📚' },
-    { id: 4, name: 'Lecture Hall Complex', category: 'academic', coordinates: { lat: 23.8148, lng: 86.4418 }, description: 'LHC - Main lecture halls', icon: '🎓' },
-    { id: 5, name: 'Workshop Building', category: 'academic', coordinates: { lat: 23.8146, lng: 86.4420 }, description: 'Engineering workshops and labs', icon: '🔧' },
-  ],
-  residential: [
-    { id: 6, name: 'Amber Hostel', category: 'residential', coordinates: { lat: 23.8150, lng: 86.4425 }, description: 'Boys hostel', icon: '🏠' },
-    { id: 7, name: 'Diamond Hostel', category: 'residential', coordinates: { lat: 23.8152, lng: 86.4428 }, description: 'Boys hostel', icon: '🏠' },
-    { id: 8, name: 'Emerald Hostel', category: 'residential', coordinates: { lat: 23.8155, lng: 86.4430 }, description: 'Boys hostel', icon: '🏠' },
-    { id: 9, name: 'Ruby Hostel', category: 'residential', coordinates: { lat: 23.8138, lng: 86.4405 }, description: 'Girls hostel', icon: '🏠' },
-    { id: 10, name: 'Faculty Quarters', category: 'residential', coordinates: { lat: 23.8135, lng: 86.4400 }, description: 'Faculty residential area', icon: '🏘️' },
-  ],
-  facilities: [
-    { id: 11, name: 'Student Activity Centre (SAC)', category: 'facilities', coordinates: { lat: 23.8142, lng: 86.4414 }, description: 'Clubs, events, and recreation', icon: '🎯' },
-    { id: 12, name: 'Health Centre', category: 'facilities', coordinates: { lat: 23.8144, lng: 86.4408 }, description: '24/7 medical facilities', icon: '🏥' },
-    { id: 13, name: 'Sports Complex', category: 'facilities', coordinates: { lat: 23.8147, lng: 86.4422 }, description: 'Indoor and outdoor sports facilities', icon: '⚽' },
-    { id: 14, name: 'Penman Auditorium', category: 'facilities', coordinates: { lat: 23.8141, lng: 86.4411 }, description: 'Main auditorium for events', icon: '🎭' },
-    { id: 15, name: 'Shopping Complex', category: 'facilities', coordinates: { lat: 23.8149, lng: 86.4424 }, description: 'Shops and daily necessities', icon: '🛍️' },
-  ],
-  dining: [
-    { id: 16, name: 'Heritage Restaurant', category: 'dining', coordinates: { lat: 23.8143, lng: 86.4416 }, description: 'Multi-cuisine restaurant', icon: '🍽️' },
-    { id: 17, name: 'Cafeteria', category: 'dining', coordinates: { lat: 23.8144, lng: 86.4417 }, description: 'Quick bites and beverages', icon: '☕' },
-    { id: 18, name: 'Food Court', category: 'dining', coordinates: { lat: 23.8146, lng: 86.4419 }, description: 'Various food stalls', icon: '🍔' },
-    { id: 19, name: 'Amber Mess', category: 'dining', coordinates: { lat: 23.8151, lng: 86.4426 }, description: 'Hostel dining facility', icon: '🍱' },
-    { id: 20, name: 'Night Canteen', category: 'dining', coordinates: { lat: 23.8145, lng: 86.4418 }, description: 'Late night snacks', icon: '🌙' },
-  ],
-};
-
-const quickRoutes = [
-  { from: 'Main Gate', to: 'Main Building', time: '5 min walk', distance: '400m' },
-  { from: 'Hostels', to: 'Lecture Hall Complex', time: '8 min walk', distance: '650m' },
-  { from: 'Library', to: 'Computer Centre', time: '3 min walk', distance: '250m' },
-  { from: 'SAC', to: 'Sports Complex', time: '6 min walk', distance: '500m' },
-];
+import React, { useState, useRef, useMemo } from 'react';
+import { useCampusMap } from '../contexts/CampusMapContext';
+import { CampusLocation, CampusLocationCategory } from '../types';
 
 const CampusMap: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const { locations, quickRoutes, loading, error, savedPlaces, toggleSavePlace, getDirections, shareLocation } = useCampusMap();
+  const [selectedCategory, setSelectedCategory] = useState<CampusLocationCategory | 'all'>('all');
+  const [selectedLocation, setSelectedLocation] = useState<CampusLocation | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [mapView, setMapView] = useState<'map' | 'satellite' | 'hybrid'>('map');
   const [showDirections, setShowDirections] = useState(false);
   const [fromLocation, setFromLocation] = useState('');
   const [toLocation, setToLocation] = useState('');
-  const [savedPlaces, setSavedPlaces] = useState<number[]>([]);
+  const [showEmergency, setShowEmergency] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
 
-  // Get all locations based on selected category
-  const getFilteredLocations = () => {
-    const allLocations = [
-      ...campusLocations.academic,
-      ...campusLocations.residential,
-      ...campusLocations.facilities,
-      ...campusLocations.dining,
-    ];
-
-    if (selectedCategory === 'all') return allLocations;
-    
-    return allLocations.filter(loc => loc.category === selectedCategory);
+  // Show notification helper
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
   };
+
+  // Handle get directions
+  const handleGetDirections = () => {
+    if (!fromLocation || !toLocation) {
+      showNotification('Please select both locations', 'error');
+      return;
+    }
+
+    const url = getDirections(fromLocation, toLocation);
+    window.open(url, '_blank');
+    setShowDirections(false);
+    showNotification('Opening directions in Google Maps');
+  };
+
+  // Handle share location
+  const handleShareLocation = async (locationId: string) => {
+    await shareLocation(locationId);
+    showNotification('Location shared successfully!');
+  };
+
+  // Get all locations based on selected category
+  const getFilteredLocations = useMemo(() => {
+    if (selectedCategory === 'all') return locations;
+    return locations.filter(loc => loc.category === selectedCategory);
+  }, [locations, selectedCategory]);
 
   // Search locations
-  const searchedLocations = getFilteredLocations().filter(location =>
-    location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    location.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Toggle saved place
-  const toggleSavePlace = (locationId: number) => {
-    setSavedPlaces(prev => 
-      prev.includes(locationId) 
-        ? prev.filter(id => id !== locationId)
-        : [...prev, locationId]
+  const searchedLocations = useMemo(() => {
+    return getFilteredLocations.filter(location =>
+      location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      location.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  };
+  }, [getFilteredLocations, searchQuery]);
+
+  // Count locations by category
+  const locationCounts = useMemo(() => {
+    return {
+      academic: locations.filter(loc => loc.category === 'academic').length,
+      residential: locations.filter(loc => loc.category === 'residential').length,
+      facilities: locations.filter(loc => loc.category === 'facilities').length,
+      dining: locations.filter(loc => loc.category === 'dining').length,
+    };
+  }, [locations]);
 
   // Get map URL based on view type
   const getMapUrl = () => {
@@ -87,6 +72,37 @@ const CampusMap: React.FC = () => {
     const viewType = mapView === 'satellite' ? '1' : mapView === 'hybrid' ? '4' : '0';
     return `${baseUrl}${params}${viewType}!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin`;
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">Loading campus map...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen p-4">
+        <div className="text-center max-w-md">
+          <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Failed to Load Campus Map</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-full mx-auto space-y-6 p-4 lg:p-6">
@@ -125,7 +141,7 @@ const CampusMap: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-xs">Academic Buildings</p>
-              <p className="text-2xl font-bold">{campusLocations.academic.length}</p>
+              <p className="text-2xl font-bold">{locationCounts.academic}</p>
             </div>
             <span className="text-3xl opacity-80">🏛️</span>
           </div>
@@ -135,7 +151,7 @@ const CampusMap: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 text-xs">Hostels</p>
-              <p className="text-2xl font-bold">{campusLocations.residential.length}</p>
+              <p className="text-2xl font-bold">{locationCounts.residential}</p>
             </div>
             <span className="text-3xl opacity-80">🏠</span>
           </div>
@@ -145,7 +161,7 @@ const CampusMap: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-100 text-xs">Facilities</p>
-              <p className="text-2xl font-bold">{campusLocations.facilities.length}</p>
+              <p className="text-2xl font-bold">{locationCounts.facilities}</p>
             </div>
             <span className="text-3xl opacity-80">🎯</span>
           </div>
@@ -155,7 +171,7 @@ const CampusMap: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100 text-xs">Food & Dining</p>
-              <p className="text-2xl font-bold">{campusLocations.dining.length}</p>
+              <p className="text-2xl font-bold">{locationCounts.dining}</p>
             </div>
             <span className="text-3xl opacity-80">🍽️</span>
           </div>
@@ -229,7 +245,7 @@ const CampusMap: React.FC = () => {
                     ? 'bg-orange-500 text-white' 
                     : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
                 }`}
-              >
+              > 
                 Dining
               </button>
             </div>
@@ -266,6 +282,11 @@ const CampusMap: React.FC = () => {
                           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                             {location.description}
                           </p>
+                          {location.details?.openingHours && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              ⏰ {location.details.openingHours}
+                            </p>
+                          )}
                           <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${
                             location.category === 'academic' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                             location.category === 'residential' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
@@ -313,19 +334,27 @@ const CampusMap: React.FC = () => {
             </h3>
             <div className="space-y-2">
               {quickRoutes.map((route, index) => (
-                <div key={index} className="bg-white dark:bg-dark-card p-3 rounded-lg">
+                <button
+                  key={index}
+                  onClick={() => {
+                    const url = getDirections(route.from, route.to);
+                    window.open(url, '_blank');
+                    showNotification(`Opening directions from ${route.from} to ${route.to}`);
+                  }}
+                  className="w-full bg-white dark:bg-dark-card p-3 rounded-lg hover:shadow-md transition-all cursor-pointer"
+                >
                   <div className="flex items-center justify-between">
-                    <div className="text-sm">
+                    <div className="text-sm text-left">
                       <p className="font-medium">{route.from} → {route.to}</p>
                       <p className="text-xs text-slate-500">{route.distance} • {route.time}</p>
                     </div>
-                    <button className="text-primary hover:bg-primary/10 p-1 rounded">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <div className="text-primary">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                       </svg>
-                    </button>
+                    </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -342,12 +371,40 @@ const CampusMap: React.FC = () => {
                   <div>
                     <h3 className="text-lg font-semibold">{selectedLocation.name}</h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400">{selectedLocation.description}</p>
-                    <div className="mt-2 flex gap-2">
-                      <button className="px-3 py-1 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors">
+                    {selectedLocation.details && (
+                      <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-400">
+                        {selectedLocation.details.openingHours && (
+                          <p>⏰ {selectedLocation.details.openingHours}</p>
+                        )}
+                        {selectedLocation.details.contact && (
+                          <p>📞 {selectedLocation.details.contact}</p>
+                        )}
+                        {selectedLocation.details.capacity && (
+                          <p>👥 Capacity: {selectedLocation.details.capacity}</p>
+                        )}
+                      </div>
+                    )}
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={() => {
+                          setToLocation(selectedLocation.name);
+                          setShowDirections(true);
+                        }}
+                        className="px-3 py-1 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                        </svg>
                         Get Directions
                       </button>
-                      <button className="px-3 py-1 bg-white dark:bg-dark-card text-slate-700 dark:text-slate-300 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                        Share Location
+                      <button
+                        onClick={() => handleShareLocation(selectedLocation.id)}
+                        className="px-3 py-1 bg-white dark:bg-dark-card text-slate-700 dark:text-slate-300 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a9.001 9.001 0 01-7.432 0m9.032-4.026A9.001 9.001 0 0112 3c-2.796 0-5.29 1.28-6.716 3.284m9.032 4.026a3.001 3.001 0 00-4.632 0" />
+                        </svg>
+                        Share
                       </button>
                     </div>
                   </div>
@@ -442,9 +499,12 @@ const CampusMap: React.FC = () => {
               </svg>
               <span className="text-xs font-medium">Info</span>
             </button>
-            <button className="p-3 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-lg transition-all flex flex-col items-center gap-2">
+            <button
+              onClick={() => setShowEmergency(true)}
+              className="p-3 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-lg transition-all flex flex-col items-center gap-2"
+            >
               <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a9.001 9.001 0 01-7.432 0m9.032-4.026A9.001 9.001 0 0112 3c-2.796 0-5.29 1.28-6.716 3.284m9.032 4.026a3.001 3.001 0 00-4.632 0" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <span className="text-xs font-medium">Emergency</span>
             </button>
@@ -464,7 +524,7 @@ const CampusMap: React.FC = () => {
           </h3>
           {savedPlaces.length > 0 ? (
             <div className="space-y-2">
-              {getFilteredLocations()
+              {locations
                 .filter(loc => savedPlaces.includes(loc.id))
                 .map(location => (
                   <div key={location.id} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
@@ -556,6 +616,117 @@ const CampusMap: React.FC = () => {
         </div>
       </div>
 
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
+          notification.type === 'success'
+            ? 'bg-green-500 text-white'
+            : 'bg-red-500 text-white'
+        } animate-slide-in-right`}>
+          <div className="flex items-center gap-2">
+            {notification.type === 'success' ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            <span className="font-medium">{notification.message}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Emergency Contacts Modal */}
+      {showEmergency && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={() => setShowEmergency(false)}>
+          <div className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Emergency Contacts
+              </h3>
+              <button onClick={() => setShowEmergency(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-red-700 dark:text-red-400">Police Emergency</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-500">100</p>
+                  </div>
+                  <a href="tel:100" className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+                    Call Now
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-blue-700 dark:text-blue-400">Health Centre</p>
+                    <p className="text-xl font-bold text-blue-600 dark:text-blue-500">0326-223-5435</p>
+                  </div>
+                  <a href="tel:03262235435" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                    Call Now
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-orange-700 dark:text-orange-400">Ambulance</p>
+                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-500">102</p>
+                  </div>
+                  <a href="tel:102" className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors">
+                    Call Now
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-purple-700 dark:text-purple-400">Security Control Room</p>
+                    <p className="text-xl font-bold text-purple-600 dark:text-purple-500">0326-223-5000</p>
+                  </div>
+                  <a href="tel:03262235000" className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
+                    Call Now
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-green-700 dark:text-green-400">Fire Emergency</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-500">101</p>
+                  </div>
+                  <a href="tel:101" className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                    Call Now
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-slate-600 dark:text-slate-400 text-center">
+                <strong>Important:</strong> In case of emergency, call the nearest contact or security immediately
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Directions Modal */}
       {showDirections && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={() => setShowDirections(false)}>
@@ -572,13 +743,13 @@ const CampusMap: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">From</label>
-                <select 
+                <select
                   value={fromLocation}
                   onChange={(e) => setFromLocation(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
                 >
                   <option value="">Select starting point...</option>
-                  {getFilteredLocations().map(loc => (
+                  {locations.map(loc => (
                     <option key={loc.id} value={loc.name}>{loc.name}</option>
                   ))}
                 </select>
@@ -586,31 +757,34 @@ const CampusMap: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">To</label>
-                <select 
+                <select
                   value={toLocation}
                   onChange={(e) => setToLocation(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
                 >
                   <option value="">Select destination...</option>
-                  {getFilteredLocations().map(loc => (
+                  {locations.map(loc => (
                     <option key={loc.id} value={loc.name}>{loc.name}</option>
                   ))}
                 </select>
               </div>
 
               <div className="flex gap-2">
-                <button className="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                <button
+                  onClick={handleGetDirections}
+                  className="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
-                  Get Directions
+                  Open in Google Maps
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </div> 
   );
 };
 
