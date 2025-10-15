@@ -67,7 +67,7 @@ const Dashboard: React.FC = () => {
     const { user, loading: userLoading } = useUser();
     const { gradesData, loading: gradesLoading } = useGrades();
     const { scheduleData, loading: scheduleLoading } = useSchedule();
-    const { calendarData, loading: calendarLoading } = useCalendar();
+    const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey } = useCalendar();
 
     // Quick Links with better organization
     const quickLinks = [
@@ -449,33 +449,100 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* New: Assignment Deadlines Widget */}
+                    {/* Upcoming Deadlines Widget - From Calendar Reminders */}
                     <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">Upcoming Deadlines</h2>
-                            <span className="text-sm text-slate-500">This Week</span>
+                            <h2 className="text-xl font-semibold">Upcoming Reminders</h2>
+                            <Link to="/academic-calendar" className="text-sm text-primary hover:text-primary-dark">View Calendar →</Link>
                         </div>
                         <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border-l-4 border-red-500">
-                                <div>
-                                    <p className="font-medium">Data Structures Assignment</p>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">CS201</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-sm font-semibold text-red-600">Tomorrow</p>
-                                    <p className="text-xs text-slate-500">11:59 PM</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-l-4 border-amber-500">
-                                <div>
-                                    <p className="font-medium">Physics Lab Report</p>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">PH102</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-sm font-semibold text-amber-600">In 3 days</p>
-                                    <p className="text-xs text-slate-500">5:00 PM</p>
-                                </div>
-                            </div>
+                            {(() => {
+                                if (!calendarData || !calendarData.events) {
+                                    return (
+                                        <div className="text-center py-8">
+                                            <p className="text-slate-500 dark:text-slate-400 text-sm">Loading reminders...</p>
+                                        </div>
+                                    );
+                                }
+
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+
+                                console.log('Dashboard - All calendar events:', calendarData.events);
+                                console.log('Dashboard - Reminder preferences:', reminderPreferences);
+
+                                const reminderEvents = calendarData.events
+                                    .filter(event => {
+                                        const eventKey = getEventKey(event);
+                                        console.log('Dashboard - Checking event:', event.description, 'remindMe:', event.remindMe, 'userId:', event.userId, 'eventKey:', eventKey, 'inPreferences:', reminderPreferences.includes(eventKey));
+
+                                        // Show if: user-created event with remindMe OR preloaded event in user's preferences
+                                        const isUserCreatedWithReminder = event.remindMe && event.userId;
+                                        const isPreloadedWithReminder = !event.userId && reminderPreferences.includes(eventKey);
+
+                                        if (!isUserCreatedWithReminder && !isPreloadedWithReminder) return false;
+
+                                        const eventDate = new Date(event.date);
+                                        eventDate.setHours(0, 0, 0, 0);
+                                        const isUpcoming = eventDate >= today;
+                                        console.log('Dashboard - Event is upcoming:', isUpcoming, 'eventDate:', eventDate, 'today:', today);
+                                        return isUpcoming;
+                                    })
+                                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                                    .slice(0, 5);
+
+                                console.log('Dashboard - Final reminder events:', reminderEvents);
+
+                                if (reminderEvents.length === 0) {
+                                    return (
+                                        <div className="text-center py-8">
+                                            <p className="text-slate-500 dark:text-slate-400 text-sm">No upcoming reminders</p>
+                                            <p className="text-xs text-slate-400 mt-2">Total events: {calendarData.events.length}</p>
+                                            <Link to="/calendar" className="text-sm text-primary hover:text-primary-dark mt-2 inline-block">
+                                                Add events with "Remind Me" →
+                                            </Link>
+                                        </div>
+                                    );
+                                }
+
+                                return reminderEvents.map((event, index) => {
+                                    const eventDate = new Date(event.date);
+                                    eventDate.setHours(0, 0, 0, 0);
+                                    const todayDate = new Date();
+                                    todayDate.setHours(0, 0, 0, 0);
+                                    const daysUntil = Math.ceil((eventDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+                                    const isUrgent = daysUntil <= 2;
+                                    const isWarning = daysUntil > 2 && daysUntil <= 7;
+
+                                    return (
+                                        <div
+                                            key={event.id || index}
+                                            className={`flex items-center justify-between p-3 rounded-lg border-l-4 ${
+                                                isUrgent ? 'bg-red-50 dark:bg-red-900/20 border-red-500' :
+                                                isWarning ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-500' :
+                                                'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
+                                            }`}
+                                        >
+                                            <div>
+                                                <p className="font-medium">{event.description}</p>
+                                                <p className="text-sm text-slate-600 dark:text-slate-400">{event.type}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className={`text-sm font-semibold ${
+                                                    isUrgent ? 'text-red-600' :
+                                                    isWarning ? 'text-amber-600' :
+                                                    'text-blue-600'
+                                                }`}>
+                                                    {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`}
+                                                </p>
+                                                <p className="text-xs text-slate-500">
+                                                    {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()}
                         </div>
                     </div>
                 </div>
@@ -524,7 +591,7 @@ const Dashboard: React.FC = () => {
                             </div>
                         ) : null}
                     </div>
-
+ 
                     {/* New: Study Streak */}
                     <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
                         <h3 className="text-lg font-semibold mb-3">Study Streak</h3>

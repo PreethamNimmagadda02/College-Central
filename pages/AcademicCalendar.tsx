@@ -8,7 +8,7 @@ const getEventTypeIcon = (type: CalendarEventType) => {
         case 'End-Semester Exams':
         case 'Mid-Semester Exams': return '📝';
         case 'Holiday': return '🎉';
-        default: return '🗓️';
+        default: return '🗓️'; 
     }
 };
 
@@ -27,6 +27,12 @@ const AcademicCalendar: React.FC = () => {
         calendarData,
         setCalendarData,
         loading: calendarLoading,
+        addUserEvent,
+        updateUserEvent,
+        deleteUserEvent,
+        reminderPreferences,
+        toggleReminderPreference,
+        getEventKey
     } = useCalendar();
     
     const [viewMode, setViewMode] = useState<'timeline' | 'grid' | 'list'>('timeline');
@@ -41,7 +47,8 @@ const AcademicCalendar: React.FC = () => {
         date: '',
         endDate: '',
         description: '',
-        type: 'Other'
+        type: 'Other',
+        remindMe: false
     });
 
     const filteredEvents = useMemo(() => {
@@ -299,50 +306,66 @@ const AcademicCalendar: React.FC = () => {
         });
     };
 
-    const handleAddEvent = () => {
+    const handleAddEvent = async () => {
         if (!newEvent.date || !newEvent.description) {
             alert('Please fill in all required fields.');
             return;
         }
 
-        setCalendarData(prevData => {
-            if (!prevData) return null;
-            const updatedEvents = [...prevData.events, newEvent as CalendarEvent];
-            updatedEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            return { ...prevData, events: updatedEvents };
-        });
-
-        setNewEvent({ date: '', endDate: '', description: '', type: 'Other' });
-        setShowAddEventModal(false);
-    };
-
-    const handleEditEvent = () => {
-        if (!selectedEvent || selectedEventIndex === null) return;
-        
-        setCalendarData(prevData => {
-            if (!prevData) return prevData;
-            const updatedEvents = [...prevData.events];
-            updatedEvents[selectedEventIndex] = selectedEvent;
-            updatedEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            return { ...prevData, events: updatedEvents };
-        });
-
-        setShowEditEventModal(false);
-        setSelectedEvent(null);
-        setSelectedEventIndex(null);
-    };
-
-    const handleDeleteEvent = (index: number) => {
-        if (confirm('Are you sure you want to delete this event?')) {
-             setCalendarData(prevData => {
-                if (!prevData) return null;
-                const updatedEvents = prevData.events.filter((_, i) => i !== index);
-                return { ...prevData, events: updatedEvents };
-            });
+        try {
+            await addUserEvent(newEvent as CalendarEvent);
+            setNewEvent({ date: '', endDate: '', description: '', type: 'Other', remindMe: false });
+            setShowAddEventModal(false);
+        } catch (error) {
+            console.error('Error adding event:', error);
+            alert('Failed to add event. Please try again.');
         }
     };
 
-    const handleSetEventReminder = (event: CalendarEvent) => {
+    const handleEditEvent = async () => {
+        if (!selectedEvent || !selectedEvent.id) return;
+
+        try {
+            await updateUserEvent(selectedEvent.id, selectedEvent);
+            setShowEditEventModal(false);
+            setSelectedEvent(null);
+            setSelectedEventIndex(null);
+        } catch (error) {
+            console.error('Error updating event:', error);
+            alert('Failed to update event. Please try again.');
+        }
+    };
+
+    const handleDeleteEvent = async (event: CalendarEvent) => {
+        if (!event.id || !event.userId) {
+            alert('Cannot delete system events');
+            return;
+        }
+
+        if (confirm('Are you sure you want to delete this event?')) {
+            try {
+                await deleteUserEvent(event.id);
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                alert('Failed to delete event. Please try again.');
+            }
+        }
+    };
+
+    const handleSetEventReminder = async (event: CalendarEvent) => {
+        const eventKey = getEventKey(event);
+        const isCurrentlyReminded = reminderPreferences.includes(eventKey);
+
+        try {
+            await toggleReminderPreference(eventKey);
+            alert(isCurrentlyReminded ? 'Reminder removed!' : 'Reminder set! This event will appear in your Dashboard.');
+        } catch (error) {
+            console.error('Error toggling reminder:', error);
+            alert('Failed to update reminder. Please try again.');
+        }
+    };
+
+    const handleSetEventReminderOld = (event: CalendarEvent) => {
         if (!('Notification' in window)) {
             alert('Your browser does not support notifications.');
             return;
@@ -876,6 +899,8 @@ const AcademicCalendar: React.FC = () => {
                                 <input
                                     type="date"
                                     value={newEvent.date}
+                                    min="2020-01-01"
+                                    max="2099-12-31"
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, date: e.target.value })}
                                     className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
                                 />
@@ -887,6 +912,8 @@ const AcademicCalendar: React.FC = () => {
                                 <input
                                     type="date"
                                     value={newEvent.endDate || ''}
+                                    min="2020-01-01"
+                                    max="2099-12-31"
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, endDate: e.target.value })}
                                     className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
                                 />
@@ -906,6 +933,18 @@ const AcademicCalendar: React.FC = () => {
                                     <option value="End-Semester Exams">End-Semester Exams</option>
                                     <option value="Holiday">Holiday</option>
                                 </select>
+                            </div>
+                            <div className="flex items-center space-x-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                <input
+                                    type="checkbox"
+                                    id="remindMe"
+                                    checked={newEvent.remindMe || false}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, remindMe: e.target.checked })}
+                                    className="w-4 h-4 text-purple-600 bg-white border-slate-300 rounded focus:ring-purple-500"
+                                />
+                                <label htmlFor="remindMe" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    🔔 Remind me about this event
+                                </label>
                             </div>
                             <div className="flex space-x-3 pt-4">
                                 <button
@@ -960,6 +999,8 @@ const AcademicCalendar: React.FC = () => {
                                 <input
                                     type="date"
                                     value={selectedEvent.date}
+                                    min="2020-01-01"
+                                    max="2099-12-31"
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedEvent({ ...selectedEvent, date: e.target.value })}
                                     className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
                                 />
@@ -971,6 +1012,8 @@ const AcademicCalendar: React.FC = () => {
                                 <input
                                     type="date"
                                     value={selectedEvent.endDate || ''}
+                                    min="2020-01-01"
+                                    max="2099-12-31"
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedEvent({ ...selectedEvent, endDate: e.target.value })}
                                     className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
                                 />
@@ -1081,12 +1124,16 @@ const AcademicCalendar: React.FC = () => {
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => handleSetEventReminder(selectedEvent)}
-                                className="flex items-center justify-center space-x-2 py-2.5 px-4 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 font-medium rounded-lg transition-all"
+                                className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
+                                    reminderPreferences.includes(getEventKey(selectedEvent))
+                                        ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                        : 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300'
+                                }`}
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill={reminderPreferences.includes(getEventKey(selectedEvent)) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                 </svg>
-                                <span className="text-sm">Remind Me</span>
+                                <span className="text-sm">{reminderPreferences.includes(getEventKey(selectedEvent)) ? 'Reminder Set ✓' : 'Set Reminder'}</span>
                             </button>
 
                             <button
@@ -1111,7 +1158,7 @@ const AcademicCalendar: React.FC = () => {
 
                             <button
                                 onClick={() => {
-                                    handleDeleteEvent(selectedEventIndex);
+                                    handleDeleteEvent(selectedEvent);
                                     setShowEventDetailsModal(false);
                                 }}
                                 className="flex items-center justify-center space-x-2 py-2.5 px-4 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 font-medium rounded-lg transition-all"
