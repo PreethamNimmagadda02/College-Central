@@ -468,13 +468,9 @@ const Dashboard: React.FC = () => {
                                 const today = new Date();
                                 today.setHours(0, 0, 0, 0);
 
-                                console.log('Dashboard - All calendar events:', calendarData.events);
-                                console.log('Dashboard - Reminder preferences:', reminderPreferences);
-
                                 const reminderEvents = calendarData.events
                                     .filter(event => {
                                         const eventKey = getEventKey(event);
-                                        console.log('Dashboard - Checking event:', event.description, 'remindMe:', event.remindMe, 'userId:', event.userId, 'eventKey:', eventKey, 'inPreferences:', reminderPreferences.includes(eventKey));
 
                                         // Show if: user-created event with remindMe OR preloaded event in user's preferences
                                         const isUserCreatedWithReminder = event.remindMe && event.userId;
@@ -485,13 +481,10 @@ const Dashboard: React.FC = () => {
                                         const eventDate = new Date(event.date);
                                         eventDate.setHours(0, 0, 0, 0);
                                         const isUpcoming = eventDate >= today;
-                                        console.log('Dashboard - Event is upcoming:', isUpcoming, 'eventDate:', eventDate, 'today:', today);
                                         return isUpcoming;
                                     })
                                     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                                     .slice(0, 5);
-
-                                console.log('Dashboard - Final reminder events:', reminderEvents);
 
                                 if (reminderEvents.length === 0) {
                                     return (

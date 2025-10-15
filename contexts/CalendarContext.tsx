@@ -50,7 +50,6 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         ...doc.data(),
         id: doc.id
       } as CalendarEvent));
-      console.log('CalendarContext - Loaded user events from Firebase:', events);
       setUserEvents(events);
     });
 
@@ -74,7 +73,6 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
           const data = prefDoc.data();
           if (data && data.reminderEventKeys) {
             setReminderPreferences(data.reminderEventKeys || []);
-            console.log('CalendarContext - Loaded reminder preferences:', data.reminderEventKeys);
           }
         } else {
           setReminderPreferences([]);
@@ -103,7 +101,6 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         userId: currentUser.uid,
         reminderEventKeys: newPreferences
       });
-      console.log('CalendarContext - Updated reminder preferences:', newPreferences);
     } catch (error) {
       console.error('Error updating reminder preferences:', error);
       // Revert on error
@@ -120,13 +117,6 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       ...PRELOADED_CALENDAR_DATA.events,
       ...userEvents
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    console.log('CalendarContext - Merging events:', {
-      preloadedCount: PRELOADED_CALENDAR_DATA.events.length,
-      userEventsCount: userEvents.length,
-      mergedCount: mergedEvents.length,
-      userEvents: userEvents
-    });
 
     setCalendarData({
       ...PRELOADED_CALENDAR_DATA,
@@ -146,7 +136,6 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       createdAt: new Date().toISOString()
     };
 
-    console.log('CalendarContext - Adding event to Firebase:', eventData);
     await addDoc(collection(db, 'userEvents'), eventData);
   };
 
