@@ -1,8 +1,10 @@
+// src/contexts/UserContext.tsx
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, setDoc, onSnapshot, updateDoc, Unsubscribe } from 'firebase/firestore';
+import { auth, db } from '../firebaseConfig';
 import { User } from '../types';
-import { useAuth } from '../hooks/useAuth';
-import { db } from '../firebaseConfig';
-import 'firebase/firestore';
 import { STUDENT_DIRECTORY } from '../data/studentDirectoryData';
 import { logActivity } from '../services/activityService';
 
@@ -10,118 +12,112 @@ interface UserContextType {
   user: User | null;
   updateUser: (newDetails: Partial<User>) => Promise<void>;
   loading: boolean;
+  error: Error | null; // ENHANCEMENT: Expose error state to the UI.
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null); // ENHANCEMENT: State for errors.
 
   useEffect(() => {
-    if (currentUser) {
-      setLoading(true);
-      const userDocRef = db.collection('users').doc(currentUser.uid);
+    let unsubscribeFromFirestore: Unsubscribe | null = null;
 
-      // This function will check for user existence, create if new, and then start listening.
-      const setupAndListen = async () => {
-        try {
-          // Perform a one-time check to see if the user document exists.
-          const docSnap = await userDocRef.get();
+    const unsubscribeFromAuth = onAuthStateChanged(auth, async (authUser) => {
+      if (unsubscribeFromFirestore) {
+        unsubscribeFromFirestore();
+      }
+      setError(null); // Reset error on auth state change.
 
-          if (!docSnap.exists) {
-            // Document does not exist, so this is a new user. Create it.
-            const admissionNumber = currentUser.email?.split('@')[0]?.toUpperCase() || 'Unknown';
-            const directoryEntry = STUDENT_DIRECTORY.find(student => student.admNo === admissionNumber);
+      if (authUser) {
+        setLoading(true);
+        const userDocRef = doc(db, 'users', authUser.uid);
 
-            const newUserProfile: User = directoryEntry
-              ? {
-                  id: currentUser.uid,
-                  name: directoryEntry.name,
-                  admissionNumber: directoryEntry.admNo,
-                  branch: directoryEntry.branch,
+        unsubscribeFromFirestore = onSnapshot(userDocRef, 
+          async (snapshot) => {
+            try {
+              if (snapshot.exists()) {
+                setUser(snapshot.data() as User);
+              } else {
+                console.log("New user detected. Creating profile...");
+                const admissionNumber = authUser.email?.split('@')[0]?.toUpperCase() ?? 'Unknown';
+                const directoryEntry = STUDENT_DIRECTORY.find(student => student.admNo === admissionNumber);
+
+                const newUserProfile: User = {
+                  id: authUser.uid,
+                  name: directoryEntry?.name ?? 'New Student',
+                  admissionNumber: directoryEntry?.admNo ?? admissionNumber,
+                  branch: directoryEntry?.branch ?? 'Not Set',
                   hostel: 'Not Set',
-                  email: currentUser.email || '',
-                  phone: 'Not Set',
-                }
-              : {
-                  id: currentUser.uid,
-                  name: 'New Student',
-                  admissionNumber: admissionNumber,
-                  branch: 'Not Set',
-                  hostel: 'Not Set',
-                  email: currentUser.email || '',
+                  email: authUser.email ?? '',
                   phone: 'Not Set',
                 };
-            
-            // Create the document for the new user.
-            await userDocRef.set(newUserProfile);
-          }
-        } catch (error) {
-          console.error("Error during user profile setup check:", error);
-          // Even if setup fails, we'll still try to listen for the document.
-        }
+                
+                await setDoc(userDocRef, newUserProfile);
 
-        // After the initial check/creation, attach the real-time listener.
-        const unsubscribe = userDocRef.onSnapshot( 
-          (docSnap) => {
-            if (docSnap.exists) {
-              setUser(docSnap.data() as User);
-            } else {
-              // This might happen if the doc is deleted, or if creation failed and we're listening.
+                // ENHANCEMENT: Log account creation after the profile is successfully created.
+                await logActivity(authUser.uid, {
+                  type: 'login',
+                  title: 'Account Created',
+                  description: 'Welcome! Your account has been created.',
+                  icon: '🎉',
+                });
+                // The listener will auto-update the user state with the new profile.
+              }
+            } catch (e) {
+              console.error("Error processing user profile:", e);
+              setError(e instanceof Error ? e : new Error('An unknown error occurred.'));
               setUser(null);
+            } finally {
+              setLoading(false);
             }
-            setLoading(false);
           }, 
-          (error) => {
-            console.error("Error with user profile snapshot:", error);
+          (err) => { // This block catches listener-specific errors
+            console.error("Error with user profile snapshot:", err);
+            setError(err);
             setUser(null);
             setLoading(false);
           }
         );
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    });
 
-        return unsubscribe;
-      };
-
-      let unsubscribe: () => void = () => {};
-      
-      setupAndListen().then(unsubFunc => {
-        if (unsubFunc) {
-          unsubscribe = unsubFunc;
-        }
-      });
-
-      // Cleanup function for the useEffect hook.
-      return () => {
-        unsubscribe();
-      };
-
-    } else {
-      // No user is logged in.
-      setUser(null);
-      setLoading(false);
-      return () => {}; // Return no-op cleanup
-    }
-  }, [currentUser]);
+    return () => {
+      unsubscribeFromAuth();
+      if (unsubscribeFromFirestore) {
+        unsubscribeFromFirestore();
+      }
+    };
+  }, []);
 
 
   const updateUser = async (newDetails: Partial<User>) => {
-    if (currentUser) {
-      const userDocRef = db.collection('users').doc(currentUser.uid);
-      await userDocRef.update(newDetails);
-      await logActivity(currentUser.uid, {
-        type: 'update',
-        title: 'Profile Updated',
-        description: 'Your profile information was successfully updated.',
-        icon: '✏️',
-        link: '/profile'
-      });
+    const currentUserId = auth.currentUser?.uid;
+    if (currentUserId) {
+      try {
+        const userDocRef = doc(db, 'users', currentUserId);
+        await updateDoc(userDocRef, newDetails);
+        await logActivity(currentUserId, {
+          type: 'update',
+          title: 'Profile Updated',
+          description: 'Your profile information was successfully updated.',
+          icon: '✏️',
+          link: '/profile'
+        });
+      } catch(e) {
+        console.error("Failed to update user:", e);
+        setError(e instanceof Error ? e : new Error('Failed to update profile.'));
+      }
     }
   };
 
   return (
-    <UserContext.Provider value={{ user, updateUser, loading }}>
+    <UserContext.Provider value={{ user, updateUser, loading, error }}>
       {children}
     </UserContext.Provider>
   );
