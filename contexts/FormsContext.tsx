@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
-import { doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
+import 'firebase/firestore';
 import { logActivity } from '../services/activityService';
 import { allForms } from '../data/formsData';
 import { Form, UserFormsData } from '../types';
@@ -27,14 +27,14 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             return;
         }
 
-        const userDocRef = doc(db, 'userForms', currentUser.uid);
-        const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-            if (docSnap.exists()) {
+        const userDocRef = db.collection('userForms').doc(currentUser.uid);
+        const unsubscribe = userDocRef.onSnapshot((docSnap) => {
+            if (docSnap.exists) {
                 setUserFormsData(docSnap.data() as UserFormsData);
             } else {
                 // Initialize if doesn't exist
                 const initialData: UserFormsData = { favorites: [], recentDownloads: [] };
-                setDoc(userDocRef, initialData);
+                userDocRef.set(initialData);
                 setUserFormsData(initialData);
             }
             setLoading(false);
@@ -65,8 +65,8 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             });
         }
         
-        const userDocRef = doc(db, 'userForms', currentUser.uid);
-        await updateDoc(userDocRef, { favorites: newFavorites });
+        const userDocRef = db.collection('userForms').doc(currentUser.uid);
+        await userDocRef.update({ favorites: newFavorites });
     };
 
     const addRecentDownload = async (form: Form) => {
@@ -88,8 +88,8 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
         const updatedDownloads = [newDownload, ...userFormsData.recentDownloads.filter(d => d.formNumber !== form.formNumber).slice(0, 9)];
 
-        const userDocRef = doc(db, 'userForms', currentUser.uid);
-        await updateDoc(userDocRef, { recentDownloads: updatedDownloads });
+        const userDocRef = db.collection('userForms').doc(currentUser.uid);
+        await userDocRef.update({ recentDownloads: updatedDownloads });
     };
 
     return (

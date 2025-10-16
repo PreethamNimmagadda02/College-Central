@@ -8,7 +8,7 @@ import { useCampusMap } from '../contexts/CampusMapContext';
 import { useCalendar } from '../contexts/CalendarContext';
 import { HOSTEL_OPTIONS, BRANCH_OPTIONS } from '../data/profileOptions';
 import { db } from '../firebaseConfig';
-import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import 'firebase/firestore';
 
 const formatTimeAgo = (timestamp: { seconds: number; nanoseconds: number } | null) => {
     if (!timestamp) return '...';
@@ -54,13 +54,9 @@ const Profile: React.FC = () => {
             return;
         }
 
-        const activityQuery = query(
-            collection(db, 'users', currentUser.uid, 'activity'),
-            orderBy('timestamp', 'desc'),
-            limit(20) // Fetch last 20 activities
-        );
+        const activityQuery = db.collection('users').doc(currentUser.uid).collection('activity').orderBy('timestamp', 'desc').limit(20);
 
-        const unsubscribe = onSnapshot(activityQuery, (snapshot) => {
+        const unsubscribe = activityQuery.onSnapshot((snapshot) => {
             const activities = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()

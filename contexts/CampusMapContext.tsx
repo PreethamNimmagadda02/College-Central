@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { CampusLocation, QuickRoute } from '../types';
 import { useAuth } from '../hooks/useAuth';
@@ -24,7 +24,7 @@ const defaultLocations: CampusLocation[] = [
   // Academic Buildings
   {
     id: 'loc-1',
-    name: 'Main Building',
+    name: 'Heritage Building',
     category: 'academic',
     coordinates: { lat: 23.814056965821766, lng: 86.44140298965519 },
     description: 'Central administrative hub with Director\'s office and administrative departments',
@@ -76,7 +76,7 @@ const defaultLocations: CampusLocation[] = [
     id: 'loc-5',
     name: 'Mining Engineering Department',
     category: 'academic',
-    coordinates: { lat: 23.81444529665606, lng: 86.44096001580465 },
+    coordinates: { lat: 23.814464658457133, lng: 86.44093176558529 },
     description: 'Department of Mining Engineering with specialized labs',
     icon: '⛏️',
     details: {
@@ -87,7 +87,7 @@ const defaultLocations: CampusLocation[] = [
     id: 'loc-6',
     name: 'Petroleum Engineering Department',
     category: 'academic',
-    coordinates: { lat: 23.815552017325857, lng: 86.44299841404145 },
+    coordinates: { lat: 23.815547284343133, lng: 86.4429919730059 },
     description: 'Department of Petroleum Engineering',
     icon: '🛢️',
     details: {
@@ -104,6 +104,78 @@ const defaultLocations: CampusLocation[] = [
     details: {
       facilities: ['Programming Labs', 'AI/ML Labs', 'Research Labs']
     }
+  },
+  {
+    id: 'loc-32',
+    name: 'Department of Applied Geophysics',
+    category: 'academic',
+    coordinates: { lat: 23.814940463528515, lng: 86.4428160255815 },
+    description: 'Academic department for geophysical studies.',
+    icon: '🌍',
+  },
+  {
+    id: 'loc-33',
+    name: 'Science Block',
+    category: 'academic',
+    coordinates: { lat: 23.814643043135696, lng: 86.44011718960266 },
+    description: 'Contains labs and classrooms for various science departments.',
+    icon: '🔬',
+  },
+  {
+    id: 'loc-34',
+    name: 'Department of Management Studies & Industrial Engineering',
+    category: 'academic',
+    coordinates: { lat: 23.812259746294608, lng: 86.44054881146033 },
+    description: 'Houses the business and industrial engineering programs.',
+    icon: '📈',
+  },
+  {
+    id: 'loc-35',
+    name: 'Department Of Mechanical Engineering',
+    category: 'academic',
+    coordinates: { lat: 23.8132523208166, lng: 86.43940766944276 },
+    description: 'Academic building for Mechanical Engineering.',
+    icon: '⚙️',
+  },
+  {
+    id: 'loc-37',
+    name: 'Department of Fuel, Mineral & Metallurgical Engineering',
+    category: 'academic',
+    coordinates: { lat: 23.81284892136605, lng: 86.43942610540878 },
+    description: 'Department focusing on material sciences and engineering.',
+    icon: '🔥',
+  },
+  {
+    id: 'loc-38',
+    name: 'Department of Environmental Science and Engineering',
+    category: 'academic',
+    coordinates: { lat: 23.812624506234613, lng: 86.4400661887596 },
+    description: 'Academic department for environmental studies.',
+    icon: '🌿',
+  },
+  {
+    id: 'loc-39',
+    name: 'Chemistry Lab',
+    category: 'academic',
+    coordinates: { lat: 23.8133500750202, lng: 86.43994344885287 },
+    description: 'Laboratories for the Chemistry department.',
+    icon: '🧪',
+  },
+  {
+    id: 'loc-40',
+    name: 'Academic Section (Old Library)',
+    category: 'academic',
+    coordinates: { lat: 23.815042241000025, lng: 86.44208388027826 },
+    description: 'Handles student academic records and administration.',
+    icon: '🏛️',
+  },
+  {
+    id: 'loc-41',
+    name: 'Golden Jubilee Lecture Theatre (GJLT)',
+    category: 'academic',
+    coordinates: { lat: 23.814020755891146, lng: 86.44020506900353 },
+    description: 'A large lecture theatre for seminars and events.',
+    icon: '🎭',
   },
 
   // Residential - Boys Hostels
@@ -166,6 +238,41 @@ const defaultLocations: CampusLocation[] = [
       capacity: 380,
       facilities: ['Common Room', 'Mess', 'Gym']
     }
+  },
+  {
+    id: 'loc-28',
+    name: 'Aquamarine Hostel',
+    category: 'residential',
+    coordinates: { lat: 23.819021720998393, lng: 86.43626368291831 },
+    description: "Boys' hostel complex.",
+    icon: '🏠',
+    details: { facilities: ['Common Room', 'Mess', 'Reading Room'] }
+  },
+  {
+    id: 'loc-29',
+    name: 'Sapphire Hostel',
+    category: 'residential',
+    coordinates: { lat: 23.819412395098297, lng: 86.43688593948976 },
+    description: "Boys' hostel known for its community events.",
+    icon: '🏠',
+    details: { facilities: ['Common Room', 'Mess', 'Sports facilities'] }
+  },
+  {
+    id: 'loc-30',
+    name: 'International Hostel',
+    category: 'residential',
+    coordinates: { lat: 23.81366696462716, lng: 86.44496499743238 },
+    description: 'Accommodation for international students and guests.',
+    icon: '🏨',
+    details: { facilities: ['Guest Rooms', 'Dining Hall'] }
+  },
+  {
+    id: 'loc-31',
+    name: 'Scolomin House',
+    category: 'residential',
+    coordinates: { lat: 23.81147920897859, lng: 86.44321461016374 },
+    description: 'Residential building for staff or post-docs.',
+    icon: '🏠',
   },
 
   // Residential - Girls Hostels
@@ -290,6 +397,111 @@ const defaultLocations: CampusLocation[] = [
       facilities: ['Mail Services', 'Banking Services']
     }
   },
+  {
+    id: 'loc-36',
+    name: 'Central Workshop',
+    category: 'facilities',
+    coordinates: { lat: 23.81487443978623, lng: 86.4393539548982 },
+    description: 'Main workshop for student projects and practicals.',
+    icon: '🔧',
+  },
+  {
+    id: 'loc-42',
+    name: 'Central Research Facility (CRF)',
+    category: 'facilities',
+    coordinates: { lat: 23.811505742135637, lng: 86.4411062213138 },
+    description: 'Advanced research facility with high-end instruments.',
+    icon: '🔬',
+  },
+  {
+    id: 'loc-43',
+    name: 'SBI ATM',
+    category: 'facilities',
+    coordinates: { lat: 23.81174129396242, lng: 86.44215169782204 },
+    description: 'State Bank of India ATM.',
+    icon: '🏧',
+  },
+  {
+    id: 'loc-44',
+    name: 'Upper Ground',
+    category: 'facilities',
+    coordinates: { lat: 23.81297614962238, lng: 86.44102039862429 },
+    description: 'Sports ground for various outdoor activities.',
+    icon: '🏟️',
+  },
+  {
+    id: 'loc-45',
+    name: 'Shooting Range',
+    category: 'facilities',
+    coordinates: { lat: 23.814475458099785, lng: 86.44390639451954 },
+    description: 'Campus facility for shooting sports.',
+    icon: '🎯',
+  },
+  {
+    id: 'loc-46',
+    name: 'Institute Innovation Hub (i2h)',
+    category: 'facilities',
+    coordinates: { lat: 23.812569435829932, lng: 86.4387022765506 },
+    description: 'Center for student innovation and entrepreneurship.',
+    icon: '💡',
+  },
+  {
+    id: 'loc-47',
+    name: 'Temple',
+    category: 'facilities',
+    coordinates: { lat: 23.811673561022676, lng: 86.4396159205859 },
+    description: 'Campus temple for worship.',
+    icon: '🕉️',
+  },
+  {
+    id: 'loc-48',
+    name: 'Gymkhana Ground (Amber Ground)',
+    category: 'facilities',
+    coordinates: { lat: 23.817708672807633, lng: 86.43882145462011 },
+    description: 'Main sports ground for cricket and other events.',
+    icon: '🏏',
+  },
+  {
+    id: 'loc-49',
+    name: 'Tennis Court',
+    category: 'facilities',
+    coordinates: { lat: 23.816542389853105, lng: 86.43878810948739 },
+    description: 'Courts for playing tennis.',
+    icon: '🎾',
+  },
+  {
+    id: 'loc-50',
+    name: 'Basketball Court',
+    category: 'facilities',
+    coordinates: { lat: 23.816987498470333, lng: 86.4388794904295 },
+    description: 'Outdoor court for basketball.',
+    icon: '🏀',
+  },
+  {
+    id: 'loc-51',
+    name: 'Volleyball Court',
+    category: 'facilities',
+    coordinates: { lat: 23.81696942302323, lng: 86.43826452138673 },
+    description: 'Outdoor court for volleyball.',
+    icon: '🏐',
+  },
+  {
+    id: 'loc-54',
+    name: 'Scolomin Club',
+    category: 'facilities',
+    coordinates: { lat: 23.812404009242115, lng: 86.44490372630143 },
+    description: 'Clubhouse for student and staff recreation',
+    icon: '♣️',
+  },
+  {
+    id: 'loc-55',
+    name: 'Institute Research Hub (iRh)',
+    category: 'facilities',
+    coordinates: { lat: 23.812414148253158, lng: 86.43902009000938 },
+    description: 'Hub for promoting research activities on campus',
+    icon: '🔬',
+  },
+
 
   // Dining
   {
@@ -352,6 +564,22 @@ const defaultLocations: CampusLocation[] = [
       facilities: ['Snacks', 'Tea/Coffee', 'Maggi Point']
     }
   },
+  {
+    id: 'loc-52',
+    name: 'Amul & Food Court',
+    category: 'dining',
+    coordinates: { lat: 23.81600853521701, lng: 86.4422399410473 },
+    description: 'Food court with Amul, Juice Box, and South Indian options.',
+    icon: '🍛',
+  },
+  {
+    id: 'loc-53',
+    name: 'Nescafe Cafe',
+    category: 'dining',
+    coordinates: { lat: 23.815056766407995, lng: 86.44172669535232 },
+    description: 'Nescafe outlet for coffee and snacks.',
+    icon: '☕',
+  },
 ];
 
 const defaultQuickRoutes: QuickRoute[] = [
@@ -403,7 +631,6 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [quickRoutes] = useState<QuickRoute[]>(defaultQuickRoutes);
   const [savedPlaces, setSavedPlaces] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  // FIX: Add error state to provider.
   const [error, setError] = useState<string | null>(null);
 
   // Load user's saved places from Firebase
@@ -414,11 +641,9 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
 
     // Load user's saved places
-    const unsubscribe = onSnapshot(
-      doc(db, 'users', currentUser.uid),
+    const unsubscribe = db.collection('users').doc(currentUser.uid).onSnapshot(
       (docSnap) => {
-        // FIX: Safely access 'savedCampusPlaces' property from document snapshot data.
-        if (docSnap.exists()) {
+        if (docSnap.exists) {
           const data = docSnap.data();
           if (data && data.savedCampusPlaces) {
             setSavedPlaces(data.savedCampusPlaces as string[]);
@@ -432,7 +657,6 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       },
       (err) => {
         console.error('Error loading saved places:', err);
-        // FIX: Set error state on failure.
         setError('Failed to load saved places.');
         setLoading(false);
       }
@@ -456,8 +680,8 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
     setSavedPlaces(newSaved);
 
     try {
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userDocRef, {
+      const userDocRef = db.collection('users').doc(currentUser.uid);
+      await userDocRef.update({
         savedCampusPlaces: newSaved
       });
       

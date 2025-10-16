@@ -3,8 +3,9 @@ import { AcademicCalendarData, CalendarEvent } from '../types';
 import { PRELOADED_CALENDAR_DATA } from '../data/academicCalendarData';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
-// FIX: Import QuerySnapshot to fix type inference issue.
-import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc, QuerySnapshot, DocumentData } from 'firebase/firestore';
+// FIX: Updated Firebase imports for v9 compatibility.
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/firestore';
 import { logActivity } from '../services/activityService';
 
 interface CalendarContextType {
@@ -40,13 +41,9 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       return;
     }
 
-    const q = query(
-      collection(db, 'userEvents'),
-      where('userId', '==', currentUser.uid)
-    );
+    const q = db.collection('userEvents').where('userId', '==', currentUser.uid);
 
-    // FIX: Explicitly type snapshot as QuerySnapshot to resolve 'docs' property error.
-    const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+    const unsubscribe = q.onSnapshot((snapshot: firebase.firestore.QuerySnapshot) => {
       const events = snapshot.docs.map(doc => ({
         ...doc.data(),
         id: doc.id
@@ -66,11 +63,10 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const loadPreferences = async () => {
       try {
-        const prefDocRef = doc(db, 'userReminderPreferences', currentUser.uid);
-        const prefDoc = await getDoc(prefDocRef);
+        const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
+        const prefDoc = await prefDocRef.get();
 
-        // FIX: Safely access 'reminderEventKeys' from document data.
-        if (prefDoc.exists()) {
+        if (prefDoc.exists) {
           const data = prefDoc.data();
           if (data && data.reminderEventKeys) {
             setReminderPreferences(data.reminderEventKeys || []);
@@ -100,8 +96,8 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     setReminderPreferences(newPreferences);
 
     try {
-      const prefDocRef = doc(db, 'userReminderPreferences', currentUser.uid);
-      await setDoc(prefDocRef, {
+      const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
+      await prefDocRef.set({
         userId: currentUser.uid,
         reminderEventKeys: newPreferences
       });
@@ -146,8 +142,8 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       userId: currentUser.uid,
       createdAt: new Date().toISOString()
     };
-
-    await addDoc(collection(db, 'userEvents'), eventData);
+    
+    await db.collection('userEvents').add(eventData);
 
     await logActivity(currentUser.uid, {
         type: 'event',
@@ -162,8 +158,8 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   const updateUserEvent = async (eventId: string, event: CalendarEvent) => {
     if (!currentUser) throw new Error('User must be logged in');
 
-    const eventRef = doc(db, 'userEvents', eventId);
-    await updateDoc(eventRef, {
+    const eventRef = db.collection('userEvents').doc(eventId);
+    await eventRef.update({
       ...event,
       updatedAt: new Date().toISOString()
     });
@@ -181,12 +177,12 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   const deleteUserEvent = async (eventId: string) => {
     if (!currentUser) throw new Error('User must be logged in');
 
-    const eventRef = doc(db, 'userEvents', eventId);
-    const eventSnap = await getDoc(eventRef);
+    const eventRef = db.collection('userEvents').doc(eventId);
+    const eventSnap = await eventRef.get();
 
-    if (eventSnap.exists()) {
+    if (eventSnap.exists) {
         const eventData = eventSnap.data() as CalendarEvent;
-        await deleteDoc(eventRef);
+        await eventRef.delete();
         await logActivity(currentUser.uid, {
             type: 'event',
             title: 'Event Deleted',
@@ -196,7 +192,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         });
     } else {
         // Fallback if the event doesn't exist for some reason
-        await deleteDoc(eventRef);
+        await eventRef.delete();
     }
   };
 

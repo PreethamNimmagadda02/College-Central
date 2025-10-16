@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { Semester } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import 'firebase/firestore';
 import { GoogleGenAI, Type } from "@google/genai";
 import { logActivity } from '../services/activityService';
 
@@ -52,10 +52,9 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     let unsubscribe = () => {};
     if (currentUser) {
       setLoading(true);
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-        // FIX: Safely access 'gradesData' property from document snapshot data.
-        if (docSnap.exists()) {
+      const userDocRef = db.collection('users').doc(currentUser.uid);
+      unsubscribe = userDocRef.onSnapshot((docSnap) => {
+        if (docSnap.exists) {
           const data = docSnap.data();
           if (data && data.gradesData) {
             setGradesDataState(data.gradesData as GradesData);
@@ -76,8 +75,8 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const setGradesData = async (data: GradesData | null) => {
     if (currentUser) {
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userDocRef, { gradesData: data });
+      const userDocRef = db.collection('users').doc(currentUser.uid);
+      await userDocRef.update({ gradesData: data });
     }
   };
 
@@ -111,8 +110,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     try {
         const base64Data = await fileToBase64(selectedFile);
-        // FIX: Obtain API key from process.env.API_KEY as per guidelines.
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         
         const schema = {
           type: Type.OBJECT,
