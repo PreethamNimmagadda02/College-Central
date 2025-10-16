@@ -3,6 +3,7 @@ import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { CampusLocation, QuickRoute } from '../types';
 import { useAuth } from '../hooks/useAuth';
+import { logActivity } from '../services/activityService';
 
 interface CampusMapContextType {
   locations: CampusLocation[];
@@ -447,9 +448,10 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       return;
     }
 
-    const newSaved = savedPlaces.includes(locationId)
-      ? savedPlaces.filter((id: string) => id !== locationId)
-      : [...savedPlaces, locationId];
+    const isSaving = !savedPlaces.includes(locationId);
+    const newSaved = isSaving
+      ? [...savedPlaces, locationId]
+      : savedPlaces.filter((id: string) => id !== locationId);
 
     setSavedPlaces(newSaved);
 
@@ -458,6 +460,18 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       await updateDoc(userDocRef, {
         savedCampusPlaces: newSaved
       });
+      
+      const location = locations.find(loc => loc.id === locationId);
+      if (location) {
+        await logActivity(currentUser.uid, {
+            type: 'map',
+            title: isSaving ? 'Place Saved' : 'Place Unsaved',
+            description: isSaving ? `Saved "${location.name}" to your places.` : `Removed "${location.name}" from your places.`,
+            icon: isSaving ? '⭐' : '🗑️',
+            link: '/campus-map'
+        });
+      }
+
     } catch (err) {
       console.error('Error saving place:', err);
       // Revert on error

@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
 import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { STUDENT_DIRECTORY } from '../data/studentDirectoryData';
+import { logActivity } from '../services/activityService';
 
 interface UserContextType {
   user: User | null;
@@ -109,6 +110,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (currentUser) {
       const userDocRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userDocRef, newDetails);
+      await logActivity(currentUser.uid, {
+        type: 'update',
+        title: 'Profile Updated',
+        description: 'Your profile information was successfully updated.',
+        icon: '✏️',
+        link: '/profile'
+      });
     }
   };
 

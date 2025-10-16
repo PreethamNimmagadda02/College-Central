@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { ClassSchedule, TimeTableCourse } from '../types';
 import { TIMETABLE_DATA } from '../data/courseData';
+import { useAuth } from '../hooks/useAuth';
+import { logActivity } from '../services/activityService';
 
 const ChevronDownIcon: React.FC = () => (
     <svg className="w-5 h-5 ml-2 -mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -27,6 +29,7 @@ const getClassColor = (courseCode: string) => {
 
 const Schedule: React.FC = () => {
     const { scheduleData, setScheduleData, loading: scheduleLoading } = useSchedule();
+    const { currentUser } = useAuth();
     
     const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -126,6 +129,15 @@ const Schedule: React.FC = () => {
         );
 
         setScheduleData(newScheduleData);
+        if (currentUser) {
+            logActivity(currentUser.uid, {
+                type: 'schedule',
+                title: 'Courses Updated',
+                description: `Updated schedule to ${newSelectedCodes.length} courses.`,
+                icon: '📚',
+                link: '/schedule'
+            });
+        }
         setHistory([]);
     };
     
@@ -146,6 +158,15 @@ const Schedule: React.FC = () => {
         );
 
         setScheduleData(newScheduleData);
+        if (currentUser) {
+            logActivity(currentUser.uid, {
+                type: 'schedule',
+                title: 'Schedule Reset',
+                description: 'Schedule was reset to its original state.',
+                icon: '🔄',
+                link: '/schedule'
+            });
+        }
         setHistory([]);
     };
 
@@ -157,26 +178,40 @@ const Schedule: React.FC = () => {
     };
 
     const handleUpdateVenue = () => {
-        if (!editingItem || !scheduleData) return;
+        if (!editingItem || !scheduleData || !currentUser) return;
         setHistory(prev => [...prev, scheduleData]);
         const updatedSchedule = scheduleData.map(item => 
             item.slotId === editingItem.slotId ? { ...item, location: newVenue } : item
         );
         setScheduleData(updatedSchedule);
+        logActivity(currentUser.uid, {
+            type: 'schedule',
+            title: 'Class Venue Changed',
+            description: `Updated venue for ${editingItem.courseCode} to ${newVenue}.`,
+            icon: '✏️',
+            link: '/schedule'
+        });
         setEditingItem(null);
     };
 
     const handleDeleteSlot = () => {
-        if (!editingItem || !scheduleData) return;
+        if (!editingItem || !scheduleData || !currentUser) return;
         setHistory(prev => [...prev, scheduleData]);
         const updatedSchedule = scheduleData.filter(item => item.slotId !== editingItem.slotId);
         setScheduleData(updatedSchedule);
+        logActivity(currentUser.uid, {
+            type: 'schedule',
+            title: 'Class Slot Removed',
+            description: `Removed a class slot for ${editingItem.courseName}.`,
+            icon: '🗑️',
+            link: '/schedule'
+        });
         setEditingItem(null);
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetDay: string, targetStartTime: string) => {
         e.preventDefault();
-        if (!scheduleData) return;
+        if (!scheduleData || !currentUser) return;
         setHistory(prev => [...prev, scheduleData]);
         const itemToMove: ClassSchedule = JSON.parse(e.dataTransfer.getData('application/json'));
 
@@ -200,6 +235,13 @@ const Schedule: React.FC = () => {
             return item;
         });
         setScheduleData(updatedSchedule);
+        logActivity(currentUser.uid, {
+            type: 'schedule',
+            title: 'Class Rescheduled',
+            description: `Rescheduled ${itemToMove.courseName} to ${targetDay} at ${targetStartTime}.`,
+            icon: '🔄',
+            link: '/schedule'
+        });
     };
 
     const filteredCourses = useMemo(() => {

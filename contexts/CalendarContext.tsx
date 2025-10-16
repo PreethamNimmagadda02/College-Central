@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
 // FIX: Import QuerySnapshot to fix type inference issue.
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { logActivity } from '../services/activityService';
 
 interface CalendarContextType {
   calendarData: AcademicCalendarData | null;
@@ -92,6 +93,9 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     const newPreferences = reminderPreferences.includes(eventKey)
       ? reminderPreferences.filter(key => key !== eventKey)
       : [...reminderPreferences, eventKey];
+    
+    const isAdding = newPreferences.length > reminderPreferences.length;
+    const eventDescription = eventKey.split('-').slice(1).join('-');
 
     setReminderPreferences(newPreferences);
 
@@ -100,6 +104,13 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       await setDoc(prefDocRef, {
         userId: currentUser.uid,
         reminderEventKeys: newPreferences
+      });
+      await logActivity(currentUser.uid, {
+        type: 'reminder',
+        title: isAdding ? 'Reminder Set' : 'Reminder Removed',
+        description: `For event: "${eventDescription}"`,
+        icon: isAdding ? '🔔' : '🔕',
+        link: '/academic-calendar'
       });
     } catch (error) {
       console.error('Error updating reminder preferences:', error);
@@ -137,6 +148,14 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
 
     await addDoc(collection(db, 'userEvents'), eventData);
+
+    await logActivity(currentUser.uid, {
+        type: 'event',
+        title: 'Event Added',
+        description: `Added "${event.description}" to calendar.`,
+        icon: '📅',
+        link: '/academic-calendar'
+    });
   };
 
   // Update user event in Firebase
@@ -148,6 +167,14 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       ...event,
       updatedAt: new Date().toISOString()
     });
+    
+    await logActivity(currentUser.uid, {
+        type: 'event',
+        title: 'Event Updated',
+        description: `Updated event: "${event.description}"`,
+        icon: '✏️',
+        link: '/academic-calendar'
+    });
   };
 
   // Delete user event from Firebase
@@ -155,7 +182,22 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (!currentUser) throw new Error('User must be logged in');
 
     const eventRef = doc(db, 'userEvents', eventId);
-    await deleteDoc(eventRef);
+    const eventSnap = await getDoc(eventRef);
+
+    if (eventSnap.exists()) {
+        const eventData = eventSnap.data() as CalendarEvent;
+        await deleteDoc(eventRef);
+        await logActivity(currentUser.uid, {
+            type: 'event',
+            title: 'Event Deleted',
+            description: `Deleted event: "${eventData.description}"`,
+            icon: '🗑️',
+            link: '/academic-calendar'
+        });
+    } else {
+        // Fallback if the event doesn't exist for some reason
+        await deleteDoc(eventRef);
+    }
   };
 
   return (

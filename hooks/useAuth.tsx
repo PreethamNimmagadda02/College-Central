@@ -7,6 +7,7 @@ import {
   signOut,
   User as FirebaseUser
 } from 'firebase/auth';
+import { logActivity } from '../services/activityService';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
@@ -32,14 +33,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    if (userCredential.user) {
+        await logActivity(userCredential.user.uid, {
+            type: 'login',
+            title: 'Signed In',
+            description: 'Successfully signed into your account.',
+            icon: '🔑',
+        });
+    }
   };
 
   const register = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    if (userCredential.user) {
+        await logActivity(userCredential.user.uid, {
+            type: 'login',
+            title: 'Account Created',
+            description: 'Welcome! Your account has been created.',
+            icon: '🎉',
+        });
+    }
   };
 
   const logout = async () => {
+    if (currentUser) {
+        await logActivity(currentUser.uid, {
+            type: 'logout',
+            title: 'Signed Out',
+            description: 'Successfully signed out of your account.',
+            icon: '👋',
+        });
+    }
     await signOut(auth);
   };
 
