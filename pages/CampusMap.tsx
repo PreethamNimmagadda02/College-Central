@@ -151,7 +151,7 @@ const CampusMap: React.FC = () => {
         <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-xl shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-100 text-xs">Hostels</p>
+              <p className="text-green-100 text-xs">Residentials</p>
               <p className="text-2xl font-bold">{locationCounts.residential}</p>
             </div>
             <span className="text-3xl opacity-80">🏠</span>
