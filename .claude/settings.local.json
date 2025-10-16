@@ -15,7 +15,8 @@
       "Read(//Users/preethamnimmagadda/Desktop/**)",
       "Bash(cat:*)",
       "Bash(npm install)",
-      "Bash(gcloud scheduler jobs list:*)"
+      "Bash(gcloud scheduler jobs list:*)",
+      "Bash(gcloud scheduler jobs describe:*)"
     ],
     "deny": [],
     "ask": []
