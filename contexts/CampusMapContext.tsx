@@ -24,9 +24,9 @@ const defaultLocations: CampusLocation[] = [
   // Academic Buildings
   {
     id: 'loc-1',
-    name: 'Heritage Building',
-    category: 'academic',
-    coordinates: { lat: 23.814056965821766, lng: 86.44140298965519 },
+    name: 'Administrative Block',
+    category: 'administration',
+    coordinates: { lat: 23.814165609301444, lng: 86.44237945447941 },
     description: 'Central administrative hub with Director\'s office and administrative departments',
     icon: '🏛️',
     details: {
@@ -164,10 +164,10 @@ const defaultLocations: CampusLocation[] = [
   {
     id: 'loc-40',
     name: 'Academic Section (Old Library)',
-    category: 'academic',
-    coordinates: { lat: 23.815042241000025, lng: 86.44208388027826 },
+    category: 'administration',
+    coordinates: { lat: 23.81500461492619, lng: 86.44202085761994 },
     description: 'Handles student academic records and administration.',
-    icon: '🏛️',
+    icon: '🏢',
   },
   {
     id: 'loc-41',
@@ -580,12 +580,23 @@ const defaultLocations: CampusLocation[] = [
     description: 'Nescafe outlet for coffee and snacks.',
     icon: '☕',
   },
+  {
+    id: 'loc-56',
+    name: "Office of Dean's Student Welfare (DSW)",
+    category: 'administration',
+    coordinates: { lat: 23.817085615774094, lng: 86.43766197506451 },
+    description: "Office responsible for student welfare and support services.",
+    icon: '🏢',
+    details: {
+      openingHours: '9:00 AM - 5:00 PM',
+    }
+  },
 ];
 
 const defaultQuickRoutes: QuickRoute[] = [
   {
     id: 'route-1',
-    from: 'Main Building',
+    from: 'Administrative Block (Heritage Building)',
     to: 'Central Library',
     time: '3 min walk',
     distance: '250m',
@@ -617,7 +628,7 @@ const defaultQuickRoutes: QuickRoute[] = [
   },
   {
     id: 'route-5',
-    from: 'Main Building',
+    from: 'Administrative Block (Heritage Building)',
     to: 'Barista',
     time: '3 min walk',
     distance: '250m',
