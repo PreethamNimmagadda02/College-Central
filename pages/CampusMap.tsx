@@ -62,6 +62,7 @@ const CampusMap: React.FC = () => {
       residential: locations.filter(loc => loc.category === 'residential').length,
       facilities: locations.filter(loc => loc.category === 'facilities').length,
       dining: locations.filter(loc => loc.category === 'dining').length,
+      administration: locations.filter(loc => loc.category === 'administration').length,
     };
   }, [locations]);
 
@@ -137,7 +138,7 @@ const CampusMap: React.FC = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-xl shadow-lg">
           <div className="flex items-center justify-between">
             <div>
@@ -145,6 +146,15 @@ const CampusMap: React.FC = () => {
               <p className="text-2xl font-bold">{locationCounts.academic}</p>
             </div>
             <span className="text-3xl opacity-80">🏛️</span>
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white p-4 rounded-xl shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-indigo-100 text-xs">Administration</p>
+              <p className="text-2xl font-bold">{locationCounts.administration}</p>
+            </div>
+            <span className="text-3xl opacity-80">🏢</span>
           </div>
         </div>
 
@@ -220,6 +230,16 @@ const CampusMap: React.FC = () => {
                 Academic
               </button>
               <button
+                onClick={() => setSelectedCategory('administration')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  selectedCategory === 'administration' 
+                    ? 'bg-indigo-500 text-white' 
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                }`}
+              > 
+                Administration
+              </button>
+              <button
                 onClick={() => setSelectedCategory('residential')}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   selectedCategory === 'residential' 
@@ -292,6 +312,7 @@ const CampusMap: React.FC = () => {
                             location.category === 'academic' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                             location.category === 'residential' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                             location.category === 'facilities' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                            location.category === 'administration' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' :
                             'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
                           }`}>
                             {location.category}
@@ -463,6 +484,10 @@ const CampusMap: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
                   <span>Academic</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 bg-indigo-500 rounded-full"></span>
+                  <span>Administration</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 bg-green-500 rounded-full"></span>

@@ -11,7 +11,11 @@
       "WebSearch",
       "WebFetch(domain:www.google.com)",
       "Bash(npm init:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Read(//Users/preethamnimmagadda/Desktop/**)",
+      "Bash(cat:*)",
+      "Bash(npm install)",
+      "Bash(gcloud scheduler jobs list:*)"
     ],
     "deny": [],
     "ask": []

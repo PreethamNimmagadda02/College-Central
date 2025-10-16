@@ -137,7 +137,7 @@ export interface LostFoundItem {
 }
 
 // Campus Map types
-export type CampusLocationCategory = 'academic' | 'residential' | 'facilities' | 'dining';
+export type CampusLocationCategory = 'academic' | 'residential' | 'facilities' | 'dining' | 'administration';
 
 export interface CampusLocation {
   id: string;
