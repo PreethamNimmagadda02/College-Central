@@ -1,4 +1,6 @@
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+// FIX: Update Firebase imports to v8 compat syntax.
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/firestore';
 import { db } from '../firebaseConfig';
 import { ActivityType } from '../types';
 
@@ -16,10 +18,12 @@ export const logActivity = async (userId: string, activity: ActivityLog) => {
       return;
   }
   try {
-    const activityCollectionRef = collection(db, 'users', userId, 'activity');
-    await addDoc(activityCollectionRef, {
+    // FIX: Use v8 compat syntax for collection reference and addDoc.
+    const activityCollectionRef = db.collection('users').doc(userId).collection('activity');
+    await activityCollectionRef.add({
       ...activity,
-      timestamp: serverTimestamp(),
+      // FIX: Use v8 compat syntax for serverTimestamp.
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
     });
   } catch (error: any) {
     console.error("Error logging activity: ", error);

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { User } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
-import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
+import 'firebase/firestore';
 import { STUDENT_DIRECTORY } from '../data/studentDirectoryData';
 import { logActivity } from '../services/activityService';
 
@@ -22,15 +22,15 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     if (currentUser) {
       setLoading(true);
-      const userDocRef = doc(db, 'users', currentUser.uid);
+      const userDocRef = db.collection('users').doc(currentUser.uid);
 
       // This function will check for user existence, create if new, and then start listening.
       const setupAndListen = async () => {
         try {
           // Perform a one-time check to see if the user document exists.
-          const docSnap = await getDoc(userDocRef);
+          const docSnap = await userDocRef.get();
 
-          if (!docSnap.exists()) {
+          if (!docSnap.exists) {
             // Document does not exist, so this is a new user. Create it.
             const admissionNumber = currentUser.email?.split('@')[0]?.toUpperCase() || 'Unknown';
             const directoryEntry = STUDENT_DIRECTORY.find(student => student.admNo === admissionNumber);
@@ -56,7 +56,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 };
             
             // Create the document for the new user.
-            await setDoc(userDocRef, newUserProfile);
+            await userDocRef.set(newUserProfile);
           }
         } catch (error) {
           console.error("Error during user profile setup check:", error);
@@ -64,9 +64,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         // After the initial check/creation, attach the real-time listener.
-        const unsubscribe = onSnapshot(userDocRef, 
+        const unsubscribe = userDocRef.onSnapshot( 
           (docSnap) => {
-            if (docSnap.exists()) {
+            if (docSnap.exists) {
               setUser(docSnap.data() as User);
             } else {
               // This might happen if the doc is deleted, or if creation failed and we're listening.
@@ -108,8 +108,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateUser = async (newDetails: Partial<User>) => {
     if (currentUser) {
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userDocRef, newDetails);
+      const userDocRef = db.collection('users').doc(currentUser.uid);
+      await userDocRef.update(newDetails);
       await logActivity(currentUser.uid, {
         type: 'update',
         title: 'Profile Updated',

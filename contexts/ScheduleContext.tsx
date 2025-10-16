@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { ClassSchedule } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import 'firebase/firestore';
 
 interface ScheduleContextType {
   scheduleData: ClassSchedule[] | null;
@@ -21,10 +21,9 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
     let unsubscribe = () => {};
     if (currentUser) {
       setLoading(true);
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-        // FIX: Safely access 'scheduleData' property from document snapshot data.
-        if (docSnap.exists()) {
+      const userDocRef = db.collection('users').doc(currentUser.uid);
+      unsubscribe = userDocRef.onSnapshot((docSnap) => {
+        if (docSnap.exists) {
           const data = docSnap.data();
           if (data && data.scheduleData) {
             setScheduleDataState(data.scheduleData as ClassSchedule[]);
@@ -45,8 +44,8 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const setScheduleData = async (data: ClassSchedule[] | null) => {
     if (currentUser) {
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userDocRef, { scheduleData: data });
+      const userDocRef = db.collection('users').doc(currentUser.uid);
+      await userDocRef.update({ scheduleData: data });
     }
   };
 
