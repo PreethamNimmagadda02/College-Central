@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { GoogleGenAI, Type } from "@google/genai";
+import { logActivity } from '../services/activityService';
 
 export interface GradesData {
   semesters: Semester[];
@@ -100,7 +101,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const processGrades = async () => {
-    if (!selectedFile) {
+    if (!selectedFile || !currentUser) {
       setError("Please select a file first.");
       return;
     }
@@ -165,6 +166,13 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         const result = JSON.parse(response.text.trim());
         await setGradesData(result);
+        await logActivity(currentUser.uid, {
+            type: 'grades',
+            title: 'Grades Processed',
+            description: 'Successfully processed and updated your grade sheet.',
+            icon: '📊',
+            link: '/grades'
+        });
         selectFile(null); // Clear file selection on success
 
     } catch (e) {
@@ -176,6 +184,15 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const resetGradesState = async () => {
+    if (currentUser) {
+        await logActivity(currentUser.uid, {
+            type: 'grades',
+            title: 'Grades Data Cleared',
+            description: 'Your academic performance data has been cleared.',
+            icon: '🔄',
+            link: '/grades'
+        });
+    }
     await setGradesData(null);
     selectFile(null);
     setError(null);

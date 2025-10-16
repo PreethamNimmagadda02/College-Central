@@ -9,7 +9,9 @@
       "Bash(firebase projects:list:*)",
       "Bash(firebase:*)",
       "WebSearch",
-      "WebFetch(domain:www.google.com)"
+      "WebFetch(domain:www.google.com)",
+      "Bash(npm init:*)",
+      "Bash(cd:*)"
     ],
     "deny": [],
     "ask": []

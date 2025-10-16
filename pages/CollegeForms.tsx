@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { db } from '../firebaseConfig';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { useForms } from '../contexts/FormsContext';
+import { Form, UserFormsData } from '../types';
+import { allForms, generalForms, ugForms, pgForms, phdForms } from '../data/formsData';
+import { logActivity } from '../services/activityService';
 
 const DownloadIcon: React.FC = () => (
     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -39,85 +40,6 @@ const InfoIcon: React.FC = () => (
     </svg>
 );
 
-const generalForms = [
-    { title: 'Academic Overload / Underload', formNumber: 'A1', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a1.pdf', submitTo: 'Academic Section' },
-    { title: 'Adding/Dropping of Course(s)', formNumber: 'A2', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a2.pdf', submitTo: 'Academic Section' },
-    { title: 'Application for Summer Semester', formNumber: 'A3', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a3.pdf', submitTo: 'Academic Section' },
-    { title: 'Application for Make-up Examination', formNumber: 'A4', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a4.pdf', submitTo: 'Academic Section' },
-    { title: 'Reinstatement in Program', formNumber: 'A5', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a5_4_1.pdf', submitTo: 'Academic Section' },
-    { title: 'Attendance Waiver Form', formNumber: 'A6', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a6.pdf', submitTo: 'Academic Section' },
-    { title: 'Application for Foreign Visit – For Academic Purpose', formNumber: 'A7', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a7.pdf', submitTo: 'Academic Section' },
-    { title: 'Migration Certificate', formNumber: 'A9', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a9.pdf', submitTo: 'Academic Section' },
-    { title: 'Transcript', formNumber: 'A12', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a12.pdf', submitTo: 'Academic Section' },
-    { title: 'Duplicate Certificates', formNumber: 'A13', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a13.pdf', submitTo: 'Academic Section' },
-    { title: 'Verification of Degree/Grade Card/Other Documents', formNumber: 'A14', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a14.pdf', submitTo: 'Academic Section' },
-    { title: 'Login Credential of Parent Portal, MIS, Institute Email', formNumber: 'A15', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a15.pdf', submitTo: 'Academic Section' },
-    { title: 'Re-Issue of Identity Card', formNumber: 'A16', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a16.pdf', submitTo: 'Academic Section' },
-    { title: 'Form for Offline Registration', formNumber: 'A17', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a17.pdf', submitTo: 'Academic Section' },
-    { title: 'Form for Academic Helpdesk', formNumber: 'A20', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/a20.pdf', submitTo: 'Academic Section' }
-];
-
-const ugForms = [
-    { title: 'Scholarship (Dual Degree / Int. M.Tech Program)', formNumber: 'UG1', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ug1.pdf', submitTo: 'Academic Section' },
-    { title: 'Pursuing Internship / Academic Work', formNumber: 'UG2', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ug2.pdf', submitTo: 'HOD / Dean (IRAA) (As Applicable)' },
-    { title: 'Application form for Semester Leave', formNumber: 'UG3', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ug3.pdf', submitTo: 'Convener (DUGC)' },
-    { title: 'Mentor Mentee Interaction Details', formNumber: 'UG4', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/UG4.pdf', submitTo: 'HOD' },
-    { title: 'Mentor Mentee Interaction Summary', formNumber: 'UG5', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/UG5.pdf', submitTo: 'ADUG' }
-];
-
-const pgForms = [
-    { title: 'Claiming Arrear of Assistantship / Scholarship', formNumber: 'PG1', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg1.pdf', submitTo: 'HOD / Convener (DPGC)' },
-    { title: 'Pursuing Research Internship / Academic Work', formNumber: 'PG2', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg2.pdf', submitTo: 'Supervisor (As Applicable)' },
-    { title: 'Application for Changing Registration from PG to Integrated PG-Ph.D.', formNumber: 'PG3', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg3.pdf', submitTo: 'Convener (DPGC)' },
-    { title: 'Application for PG Diploma', formNumber: 'PG4', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg4.pdf', submitTo: 'Convener (DPGC)' },
-    { title: 'Receipt of Soft Copy of PG Thesis at Central Library', formNumber: 'PG5', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg5.pdf', submitTo: 'Convener (DPGC)' },
-    { title: 'Inclusion of External Co-Supervisor', formNumber: 'PG6', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg6.pdf', submitTo: 'Supervisor' },
-    { title: 'Application form for Semester Leave', formNumber: 'PG7', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg7.pdf', submitTo: 'Supervisor / Convener (DPGC) (As Applicable)' },
-    { title: 'Intimation about the Industrial Internship', formNumber: 'PG8', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg8.pdf', submitTo: 'Supervisor' },
-    { title: 'RESEARCH PROPOSAL SEMINAR REPORT', formNumber: 'PG9', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg9.pdf', submitTo: 'Convener, DPGC' },
-    { title: 'Certificate for the Final Version of Dissertation', formNumber: 'PG10', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg10.pdf', submitTo: 'Supervisor' },
-    { title: 'Declaration by the Student', formNumber: 'PG11', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg11.pdf', submitTo: 'Supervisor' },
-    { title: 'Certificate for Classified Data', formNumber: 'PG12', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg12.pdf', submitTo: 'Supervisor' },
-    { title: 'Certificate Regarding English Checking', formNumber: 'PG13', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg13.pdf', submitTo: 'Supervisor' },
-    { title: 'Copyright and Consent Form', formNumber: 'PG14', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg14.pdf', submitTo: 'Supervisor' },
-    { title: 'CONVERSION OF M.TECH PROGRAM FROM FULL TIME TO PART TIME', formNumber: 'PG15', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pg15.pdf', submitTo: 'Convener (DPGC)/HOD' }
-];
-
-const phdForms = [
-    { title: 'Physical registration form for Part-time / External Ph.D Scholars', formNumber: 'PT1', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/pt1.pdf', submitTo: 'Supervisor' },
-    { title: 'Academic Works Outside The Institute', formNumber: 'PH1', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph1.pdf', submitTo: 'Supervisor' },
-    { title: 'Pre-Submission Thesis Assessment by Doctoral Scrutiny Committee', formNumber: 'PH6', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph6.pdf', submitTo: 'Supervisor' },
-    { title: 'Particulars of candidate for Submission of Synopsis for Ph.D', formNumber: 'PH9', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph9.pdf', submitTo: 'Supervisor' },
-    { title: 'Copyright and Consent Form', formNumber: 'PH10', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph10.pdf', submitTo: 'Supervisor' },
-    { title: 'Certificate for Classified Data', formNumber: 'PH11', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph11.pdf', submitTo: 'Supervisor' },
-    { title: 'Certificate regarding English Check', formNumber: 'PH12', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph12.pdf', submitTo: 'Supervisor' },
-    { title: 'Statement of Corrections for Revision of Ph.D Thesis', formNumber: 'PH14', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph14.pdf', submitTo: 'Supervisor' },
-    { title: 'Certificate For Final Version of Thesis', formNumber: 'PH16', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph16.pdf', submitTo: 'Supervisor' },
-    { title: 'Compliance of UGC Regulations Certificate/Ph.D Course Work/Provisional Certificate', formNumber: 'PH19', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph19.pdf', submitTo: 'Academic Section' },
-    { title: 'Inclusion Of Joint-Supervisor (Internal/External) After Approval Of Ph2', formNumber: 'PH21', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph21.pdf', submitTo: 'Supervisor' },
-    { title: 'Change Of Supervisor/ Joint-Supervisor (Internal/External)', formNumber: 'PH22', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph22.pdf', submitTo: 'DSC Chairperson' },
-    { title: 'NDC Format', formNumber: '', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ndc-format.pdf', submitTo: 'Supervisor' },
-    { title: 'RECEIPT OF SOFT COPY OF THESIS AT CENTRAL LIBRARY', formNumber: 'PH17', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/ph17_Updated.pdf', submitTo: 'AR(PG)' },
-    { title: 'FORM FOR CLAIMING HRA BY MARRIED PH.D. SCHOLARS', formNumber: 'PH23', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/PH23.pdf', submitTo: 'Academic Section' },
-    { title: 'Request for the Clearance of Comprehensive Viva', formNumber: 'PH3A', downloadLink: 'https://people.iitism.ac.in/~academics/assets/acad_forms/PH3A.pdf', submitTo: 'Academic Section' },
-];
-
-interface Form {
-    title: string;
-    formNumber: string;
-    downloadLink: string;
-    submitTo: string;
-}
-
-interface UserFormsData {
-    favorites: string[];
-    recentDownloads: Array<{
-        formNumber: string;
-        title: string;
-        timestamp: number;
-    }>;
-}
-
 const FormCard: React.FC<{
     form: Form;
     isFavorite: boolean;
@@ -152,86 +74,19 @@ const FormCard: React.FC<{
 );
 
 const CollegeForms: React.FC = () => {
-    const { currentUser } = useAuth();
+    const { userFormsData, loading, toggleFavorite, addRecentDownload } = useForms();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
-    const [userFormsData, setUserFormsData] = useState<UserFormsData>({ favorites: [], recentDownloads: [] });
-    const [loading, setLoading] = useState(true);
     const [showTips, setShowTips] = useState(true);
+    
+    const safeUserFormsData = userFormsData || { favorites: [], recentDownloads: [] };
 
     const filters = ['All', 'Favorites', 'General', 'UG', 'PG', 'PhD'];
-
-    // Load user's forms data from Firebase
-    useEffect(() => {
-        const loadUserData = async () => {
-            if (!currentUser) {
-                setLoading(false);
-                return;
-            }
-
-            try {
-                const userDocRef = doc(db, 'userForms', currentUser.uid);
-                const userDoc = await getDoc(userDocRef);
-
-                if (userDoc.exists()) {
-                    setUserFormsData(userDoc.data() as UserFormsData);
-                } else {
-                    // Initialize user document
-                    const initialData: UserFormsData = { favorites: [], recentDownloads: [] };
-                    await setDoc(userDocRef, initialData);
-                    setUserFormsData(initialData);
-                }
-            } catch (error) {
-                console.error('Error loading user forms data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadUserData();
-    }, [currentUser]);
-
-    // Toggle favorite
-    const toggleFavorite = async (formNumber: string) => {
-        if (!currentUser) return;
-
-        const newFavorites = userFormsData.favorites.includes(formNumber)
-            ? userFormsData.favorites.filter(f => f !== formNumber)
-            : [...userFormsData.favorites, formNumber];
-
-        const updatedData = { ...userFormsData, favorites: newFavorites };
-        setUserFormsData(updatedData);
-
-        try {
-            const userDocRef = doc(db, 'userForms', currentUser.uid);
-            await updateDoc(userDocRef, { favorites: newFavorites });
-        } catch (error) {
-            console.error('Error updating favorites:', error);
-        }
-    };
-
+    
     // Handle download
     const handleDownload = async (form: Form) => {
         window.open(form.downloadLink, '_blank');
-
-        if (!currentUser) return;
-
-        const download = {
-            formNumber: form.formNumber,
-            title: form.title,
-            timestamp: Date.now()
-        };
-
-        const updatedDownloads = [download, ...userFormsData.recentDownloads.slice(0, 9)]; // Keep last 10
-        const updatedData = { ...userFormsData, recentDownloads: updatedDownloads };
-        setUserFormsData(updatedData);
-
-        try {
-            const userDocRef = doc(db, 'userForms', currentUser.uid);
-            await updateDoc(userDocRef, { recentDownloads: updatedDownloads });
-        } catch (error) {
-            console.error('Error updating recent downloads:', error);
-        }
+        await addRecentDownload(form);
     };
 
     const filterForms = (forms: Form[]) => {
@@ -239,7 +94,7 @@ const CollegeForms: React.FC = () => {
 
         // Apply favorites filter
         if (activeFilter === 'Favorites') {
-            filtered = filtered.filter(form => userFormsData.favorites.includes(form.formNumber));
+            filtered = filtered.filter(form => safeUserFormsData.favorites.includes(form.formNumber));
         }
 
         // Apply search filter
@@ -254,17 +109,16 @@ const CollegeForms: React.FC = () => {
 
         return filtered;
     };
-
-    const allForms = [...generalForms, ...ugForms, ...pgForms, ...phdForms];
+    
     const favoriteForms = useMemo(() =>
-        allForms.filter(form => userFormsData.favorites.includes(form.formNumber)),
-        [userFormsData.favorites]
+        allForms.filter(form => safeUserFormsData.favorites.includes(form.formNumber)),
+        [safeUserFormsData.favorites]
     );
 
-    const filteredGeneralForms = useMemo(() => filterForms(generalForms), [searchTerm, userFormsData.favorites, activeFilter]);
-    const filteredUgForms = useMemo(() => filterForms(ugForms), [searchTerm, userFormsData.favorites, activeFilter]);
-    const filteredPgForms = useMemo(() => filterForms(pgForms), [searchTerm, userFormsData.favorites, activeFilter]);
-    const filteredPhdForms = useMemo(() => filterForms(phdForms), [searchTerm, userFormsData.favorites, activeFilter]);
+    const filteredGeneralForms = useMemo(() => filterForms(generalForms), [searchTerm, safeUserFormsData.favorites, activeFilter]);
+    const filteredUgForms = useMemo(() => filterForms(ugForms), [searchTerm, safeUserFormsData.favorites, activeFilter]);
+    const filteredPgForms = useMemo(() => filterForms(pgForms), [searchTerm, safeUserFormsData.favorites, activeFilter]);
+    const filteredPhdForms = useMemo(() => filterForms(phdForms), [searchTerm, safeUserFormsData.favorites, activeFilter]);
 
     const getFilterLabel = (filter: string) => {
         switch (filter) {
@@ -311,7 +165,7 @@ const CollegeForms: React.FC = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-slate-500 dark:text-slate-400 text-sm">Your Favorites</p>
-                            <p className="text-3xl font-bold text-yellow-500 mt-1">{userFormsData.favorites.length}</p>
+                            <p className="text-3xl font-bold text-yellow-500 mt-1">{safeUserFormsData.favorites.length}</p>
                         </div>
                         <div className="bg-yellow-500/10 p-3 rounded-lg text-yellow-500">
                             <StarIcon />
@@ -323,7 +177,7 @@ const CollegeForms: React.FC = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-slate-500 dark:text-slate-400 text-sm">Recent Downloads</p>
-                            <p className="text-3xl font-bold text-secondary mt-1">{userFormsData.recentDownloads.length}</p>
+                            <p className="text-3xl font-bold text-secondary mt-1">{safeUserFormsData.recentDownloads.length}</p>
                         </div>
                         <div className="bg-secondary/10 p-3 rounded-lg text-secondary">
                             <ClockIcon />
@@ -333,14 +187,14 @@ const CollegeForms: React.FC = () => {
             </div>
 
             {/* Recent Downloads Section */}
-            {userFormsData.recentDownloads.length > 0 && (
+            {safeUserFormsData.recentDownloads.length > 0 && (
                 <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-md">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <ClockIcon />
                         Recent Downloads
                     </h3>
                     <div className="space-y-2">
-                        {userFormsData.recentDownloads.slice(0, 5).map((download, index) => (
+                        {safeUserFormsData.recentDownloads.slice(0, 5).map((download, index) => (
                             <div key={index} className="flex items-center justify-between py-2 px-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
                                 <div>
                                     <p className="font-medium text-sm">{download.title}</p>
@@ -451,7 +305,7 @@ const CollegeForms: React.FC = () => {
                                 <FormCard
                                     key={`general-${index}`}
                                     form={form}
-                                    isFavorite={userFormsData.favorites.includes(form.formNumber)}
+                                    isFavorite={safeUserFormsData.favorites.includes(form.formNumber)}
                                     onToggleFavorite={toggleFavorite}
                                     onDownload={handleDownload}
                                 />
@@ -475,7 +329,7 @@ const CollegeForms: React.FC = () => {
                                 <FormCard
                                     key={`ug-${index}`}
                                     form={form}
-                                    isFavorite={userFormsData.favorites.includes(form.formNumber)}
+                                    isFavorite={safeUserFormsData.favorites.includes(form.formNumber)}
                                     onToggleFavorite={toggleFavorite}
                                     onDownload={handleDownload}
                                 />
@@ -499,7 +353,7 @@ const CollegeForms: React.FC = () => {
                                 <FormCard
                                     key={`pg-${index}`}
                                     form={form}
-                                    isFavorite={userFormsData.favorites.includes(form.formNumber)}
+                                    isFavorite={safeUserFormsData.favorites.includes(form.formNumber)}
                                     onToggleFavorite={toggleFavorite}
                                     onDownload={handleDownload}
                                 />
@@ -523,7 +377,7 @@ const CollegeForms: React.FC = () => {
                                 <FormCard
                                     key={`phd-${index}`}
                                     form={form}
-                                    isFavorite={userFormsData.favorites.includes(form.formNumber)}
+                                    isFavorite={safeUserFormsData.favorites.includes(form.formNumber)}
                                     onToggleFavorite={toggleFavorite}
                                     onDownload={handleDownload}
                                 />

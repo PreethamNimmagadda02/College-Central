@@ -166,3 +166,42 @@ export interface QuickRoute {
   distance: string;
   steps?: string[];
 }
+
+// College Forms
+export interface Form {
+    title: string;
+    formNumber: string;
+    downloadLink: string;
+    submitTo: string;
+}
+
+export interface UserFormsData {
+    favorites: string[]; // array of formNumbers
+    recentDownloads: Array<{
+        formNumber: string;
+        title: string;
+        timestamp: number;
+    }>;
+}
+
+// Activity Log type
+export type ActivityType =
+  | 'event'
+  | 'reminder'
+  | 'form'
+  | 'update'
+  | 'login'
+  | 'logout'
+  | 'grades'
+  | 'schedule'
+  | 'map';
+
+export interface ActivityItem {
+    id: string;
+    type: ActivityType;
+    title: string;
+    description: string;
+    timestamp: { seconds: number; nanoseconds: number }; // Firestore Timestamp shape
+    icon: string;
+    link?: string;
+}

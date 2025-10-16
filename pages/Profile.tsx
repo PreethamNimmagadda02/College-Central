@@ -1,62 +1,86 @@
 import React, { useState, useEffect } from 'react';
-import { User } from '../types';
+import { Link } from 'react-router-dom';
+import { User, ActivityItem } from '../types';
 import { useUser } from '../contexts/UserContext';
 import { useAuth } from '../hooks/useAuth';
+import { useForms } from '../contexts/FormsContext';
+import { useCampusMap } from '../contexts/CampusMapContext';
+import { useCalendar } from '../contexts/CalendarContext';
 import { HOSTEL_OPTIONS, BRANCH_OPTIONS } from '../data/profileOptions';
+import { db } from '../firebaseConfig';
+import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
 
-interface ActivityItem {
-    id: string;
-    type: 'event' | 'reminder' | 'form' | 'update';
-    title: string;
-    description: string;
-    timestamp: string;
-    icon: string;
-}
+const formatTimeAgo = (timestamp: { seconds: number; nanoseconds: number } | null) => {
+    if (!timestamp) return '...';
+    const now = new Date();
+    const activityDate = new Date(timestamp.seconds * 1000);
+    const diffSeconds = Math.floor((now.getTime() - activityDate.getTime()) / 1000);
+
+    if (diffSeconds < 60) return 'just now';
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return activityDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
 
 const Profile: React.FC = () => {
     const { user, updateUser, loading } = useUser();
     const { currentUser, logout } = useAuth();
+    const { userFormsData } = useForms();
+    const { savedPlaces } = useCampusMap();
+    const { reminderPreferences, calendarData } = useCalendar();
+
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<Partial<User>>({});
     const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'settings'>('overview');
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [imageError, setImageError] = useState(false);
 
-    // Mock activity data - in real app, this would come from backend
-    const recentActivity: ActivityItem[] = [
-        {
-            id: '1',
-            type: 'reminder',
-            title: 'Mid-Sem Exams',
-            description: 'Upcoming in 5 days',
-            timestamp: '2 hours ago',
-            icon: '📚'
-        },
-        {
-            id: '2',
-            type: 'form',
-            title: 'Downloaded Scholarship Form',
-            description: 'From College Forms section',
-            timestamp: '1 day ago',
-            icon: '📄'
-        },
-        {
-            id: '3',
-            type: 'event',
-            title: 'Added Personal Event',
-            description: 'Project Submission - CS301',
-            timestamp: '2 days ago',
-            icon: '📅'
-        },
-        {
-            id: '4',
-            type: 'update',
-            title: 'Profile Updated',
-            description: 'Changed hostel information',
-            timestamp: '1 week ago',
-            icon: '✏️'
+    const [activity, setActivity] = useState<ActivityItem[]>([]);
+    const [activityLoading, setActivityLoading] = useState(true);
+
+    // Calculate stats for overview
+    const savedFormsCount = userFormsData?.favorites?.length ?? 0;
+    const userAddedEventsCount = calendarData?.events.filter(e => e.userId === currentUser?.uid).length ?? 0;
+    const remindersCount = reminderPreferences?.length ?? 0;
+    const savedPlacesCount = savedPlaces?.length ?? 0;
+
+    useEffect(() => {
+        if (!currentUser) {
+            setActivityLoading(false);
+            return;
         }
-    ];
+
+        const activityQuery = query(
+            collection(db, 'users', currentUser.uid, 'activity'),
+            orderBy('timestamp', 'desc'),
+            limit(20) // Fetch last 20 activities
+        );
+
+        const unsubscribe = onSnapshot(activityQuery, (snapshot) => {
+            const activities = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            } as ActivityItem));
+            setActivity(activities);
+            setActivityLoading(false);
+        }, (error: any) => {
+            console.error("Error fetching activity: ", error);
+            if (error.code === 'permission-denied') {
+                console.error(
+                    "Firestore Security Rules Error: The current user does not have permission to read their own activity log. " +
+                    "Please ensure your Firestore rules allow reads on the 'users/{userId}/activity/{activityId}' path for authenticated users."
+                );
+            }
+            setActivityLoading(false);
+        });
+
+        return () => unsubscribe();
+
+    }, [currentUser]);
 
     useEffect(() => {
         if (user) {
@@ -398,7 +422,7 @@ const Profile: React.FC = () => {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-green-100 text-xs">Saved Forms</p>
-                                            <p className="text-2xl font-bold">12</p>
+                                            <p className="text-2xl font-bold">{savedFormsCount}</p>
                                         </div>
                                         <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -410,7 +434,7 @@ const Profile: React.FC = () => {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-blue-100 text-xs">Events</p>
-                                            <p className="text-2xl font-bold">8</p>
+                                            <p className="text-2xl font-bold">{userAddedEventsCount}</p>
                                         </div>
                                         <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -422,7 +446,7 @@ const Profile: React.FC = () => {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-purple-100 text-xs">Reminders</p>
-                                            <p className="text-2xl font-bold">5</p>
+                                            <p className="text-2xl font-bold">{remindersCount}</p>
                                         </div>
                                         <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -434,7 +458,7 @@ const Profile: React.FC = () => {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-orange-100 text-xs">Saved Places</p>
-                                            <p className="text-2xl font-bold">6</p>
+                                            <p className="text-2xl font-bold">{savedPlacesCount}</p>
                                         </div>
                                         <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -447,29 +471,53 @@ const Profile: React.FC = () => {
                     )}
 
                     {activeTab === 'activity' && (
-                        <div className="space-y-4">
+                       <div className="space-y-4">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold">Recent Activity</h3>
                                 <button className="text-sm text-primary hover:underline">View All</button>
                             </div>
-                            {recentActivity.map(activity => (
-                                <div key={activity.id} className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all">
-                                    <div className="text-3xl">{activity.icon}</div>
-                                    <div className="flex-1">
-                                        <h4 className="font-semibold text-slate-900 dark:text-white">{activity.title}</h4>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400">{activity.description}</p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">{activity.timestamp}</p>
-                                    </div>
-                                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                        activity.type === 'reminder' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
-                                        activity.type === 'form' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                        activity.type === 'event' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                        'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                    }`}>
-                                        {activity.type}
-                                    </span>
+                            {activityLoading ? (
+                                <div className="text-center py-8">
+                                    <div className="w-8 h-8 border-2 border-t-transparent border-primary rounded-full animate-spin mx-auto"></div>
+                                    <p className="mt-2 text-sm text-slate-500">Loading activity...</p>
                                 </div>
-                            ))}
+                            ) : activity.length > 0 ? (
+                                activity.map(activityItem => {
+                                    const content = (
+                                        <div className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all w-full">
+                                            <div className="text-2xl pt-1">{activityItem.icon}</div>
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-slate-900 dark:text-white">{activityItem.title}</h4>
+                                                <p className="text-sm text-slate-600 dark:text-slate-400">{activityItem.description}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">{formatTimeAgo(activityItem.timestamp)}</p>
+                                            </div>
+                                            <span className={`self-start px-2 py-1 text-xs font-medium rounded-full ${
+                                                activityItem.type === 'reminder' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                                                activityItem.type === 'form' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                activityItem.type === 'event' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                activityItem.type === 'login' || activityItem.type === 'logout' ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' :
+                                                'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                            }`}>
+                                                {activityItem.type}
+                                            </span>
+                                        </div>
+                                    );
+
+                                    return activityItem.link ? (
+                                        <Link to={activityItem.link} key={activityItem.id} className="block">
+                                            {content}
+                                        </Link>
+                                    ) : (
+                                        <div key={activityItem.id}>
+                                            {content}
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <div className="text-center py-12">
+                                    <p className="text-slate-500 dark:text-slate-400">No recent activity to display.</p>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -548,30 +596,6 @@ const Profile: React.FC = () => {
                                     </button>
                                 </div>
                             </div>
-
-                            {/* Danger Zone */}
-                            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border border-red-200 dark:border-red-800">
-                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-red-900 dark:text-red-100">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                    Danger Zone
-                                </h3>
-                                <div className="space-y-3">
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full p-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                        </svg>
-                                        Logout
-                                    </button>
-                                    <button className="w-full p-3 bg-white dark:bg-slate-700 border-2 border-red-500 text-red-600 dark:text-red-400 rounded-lg font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
-                                        Delete Account
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     )}
                 </div>
@@ -601,5 +625,5 @@ const Profile: React.FC = () => {
         </div>
     );
 };
-  
+ 
 export default Profile;
