@@ -501,31 +501,9 @@ const Profile: React.FC = () => {
                     {activeTab === 'activity' && (
                        <div className="space-y-4">
                             <div className="flex flex-col gap-4">
-                                {/* Header with View All button */}
+                                {/* Header */}
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-semibold">Recent Activity</h3>
-                                    {filteredAndSortedActivities.length > 10 && (
-                                        <button
-                                            onClick={() => setShowAllActivity(!showAllActivity)}
-                                            className="text-sm text-primary hover:text-primary-dark font-medium flex items-center gap-1 transition-colors"
-                                        >
-                                            {showAllActivity ? (
-                                                <>
-                                                    <span>Show Less</span>
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                                    </svg>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <span>View All ({filteredAndSortedActivities.length})</span>
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                    </svg>
-                                                </>
-                                            )}
-                                        </button>
-                                    )}
                                 </div>
 
                                 {/* Search, Filter, and Sort Controls */}
@@ -619,43 +597,62 @@ const Profile: React.FC = () => {
                                 </div>
                             ) : filteredAndSortedActivities.length > 0 ? (
                                 <>
-                                    {(showAllActivity ? filteredAndSortedActivities : filteredAndSortedActivities.slice(0, 10)).map((activityItem: ActivityItem) => {
-                                        const content = (
-                                            <div className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all w-full">
-                                                <div className="text-2xl pt-1">{activityItem.icon}</div>
-                                                <div className="flex-1">
-                                                    <h4 className="font-semibold text-slate-900 dark:text-white">{activityItem.title}</h4>
-                                                    <p className="text-sm text-slate-600 dark:text-slate-400">{activityItem.description}</p>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">{formatTimeAgo(activityItem.timestamp)}</p>
+                                    <div className="space-y-2">
+                                        {(showAllActivity ? filteredAndSortedActivities : filteredAndSortedActivities.slice(0, 10)).map((activityItem: ActivityItem) => {
+                                            const content = (
+                                                <div className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all w-full">
+                                                    <div className="text-2xl pt-1">{activityItem.icon}</div>
+                                                    <div className="flex-1">
+                                                        <h4 className="font-semibold text-slate-900 dark:text-white">{activityItem.title}</h4>
+                                                        <p className="text-sm text-slate-600 dark:text-slate-400">{activityItem.description}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">{formatTimeAgo(activityItem.timestamp)}</p>
+                                                    </div>
+                                                    <span className={`self-start px-2 py-1 text-xs font-medium rounded-full ${
+                                                        activityItem.type === 'reminder' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                                                        activityItem.type === 'form' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                        activityItem.type === 'event' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                        activityItem.type === 'login' || activityItem.type === 'logout' ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' :
+                                                        'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                                    }`}>
+                                                        {activityItem.type}
+                                                    </span>
                                                 </div>
-                                                <span className={`self-start px-2 py-1 text-xs font-medium rounded-full ${
-                                                    activityItem.type === 'reminder' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
-                                                    activityItem.type === 'form' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                    activityItem.type === 'event' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                    activityItem.type === 'login' || activityItem.type === 'logout' ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' :
-                                                    'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                                }`}>
-                                                    {activityItem.type}
-                                                </span>
-                                            </div>
-                                        );
+                                            );
 
-                                        return activityItem.link ? (
-                                            <Link to={activityItem.link} key={activityItem.id} className="block">
-                                                {content}
-                                            </Link>
-                                        ) : (
-                                            <div key={activityItem.id}>
-                                                {content}
-                                            </div>
-                                        );
-                                    })}
-
-                                    {!showAllActivity && filteredAndSortedActivities.length > 10 && (
+                                            return activityItem.link ? (
+                                                <Link to={activityItem.link} key={activityItem.id} className="block">
+                                                    {content}
+                                                </Link>
+                                            ) : (
+                                                <div key={activityItem.id}>
+                                                    {content}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    
+                                    {filteredAndSortedActivities.length > 10 && (
                                         <div className="text-center pt-4">
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                                Showing 10 of {filteredAndSortedActivities.length} activities
-                                            </p>
+                                            <button
+                                                onClick={() => setShowAllActivity(!showAllActivity)}
+                                                className="text-sm text-primary hover:text-primary-dark font-medium flex items-center gap-1 transition-colors mx-auto"
+                                            >
+                                                {showAllActivity ? (
+                                                    <>
+                                                        <span>Show Less</span>
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                                        </svg>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span>View All ({filteredAndSortedActivities.length})</span>
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </>
+                                                )}
+                                            </button>
                                         </div>
                                     )}
                                 </>
