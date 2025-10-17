@@ -46,93 +46,60 @@ async function fetchIITDhanbadUpdates(): Promise<GeminiSearchResult> {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-  const prompt = `You are gathering the LATEST and MOST RECENT information about IIT Dhanbad (Indian Institute of Technology Dhanbad, formerly ISM Dhanbad) for the current academic year 2025-26.
+  const prompt = `You are an AI assistant tasked with extracting the LATEST and MOST RECENT information about IIT Dhanbad (Indian Institute of Technology Dhanbad). Your goal is to act like a web scraper and pull authentic data from the official sources provided.
 
-CRITICAL: Today's date is October 16, 2025. ONLY include information from 2025 onwards. DO NOT include any events or announcements from 2024 or earlier.
+CRITICAL: Today's date is October 17, 2025. You MUST ONLY include information with dates from 2025 onwards. IGNORE and DISCARD any items from 2024 or earlier.
 
-Search for and provide ONLY RECENT information from these SPECIFIC SOURCES:
+EXTRACT information ONLY from the following official IIT (ISM) Dhanbad URLs:
+- Notices and General Updates: https://www.iitism.ac.in/all-active-notices
+- Press Releases and News: https://people.iitism.ac.in/~mbc/mbcpress_release.php
+- Departmental Events: https://www.iitism.ac.in/dept-event-list
+- Seminars: https://www.iitism.ac.in/seminar-1
 
-OFFICIAL WEBSITES (PRIORITY - Search these first):
-- https://www.iitism.ac.in (main site)
-- https://www.iitism.ac.in/dept-event-list (department events)
-- https://www.iitism.ac.in/all-active-notices (official notices)
-- https://www.iitism.ac.in/seminar-1 (seminars)
-- https://people.iitism.ac.in/~mbc/mbcpress_release (press releases)
-- IIT ISM Alumni Association website
-
-NEWS SOURCES (Search for "IIT Dhanbad" OR "IIT ISM"):
-- economictimes.indiatimes.com
-- indiatoday.in
-- newsonair.gov.in
-- ndtv.com
-- timesofindia.indiatimes.com
-- thejharkhandstory.com
-- hindustantimes.com
-
-SOCIAL MEDIA (Check recent posts):
-- Instagram: iit_ism, concetto.iitism, srijan.iitism, parakram.iitism, studentgymkhana.iitism, basant.iitism
-- LinkedIn: Search for "IIT ISM Dhanbad", "Concetto IIT ISM", "Srijan IIT ISM", "Parakram IIT ISM", "Basant IIT ISM", "Student Gymkhana IIT ISM"
-- Facebook: IIT (ISM) Dhanbad official page
-
-INFORMATION TO FETCH:
-1. UPCOMING campus events (October 2025 onwards - workshops, seminars, cultural events, technical fests, placements)
-2. CURRENT academic announcements (October 2025 onwards - exam schedules, registration dates, important notices)
-3. LATEST campus news (October 2025 - achievements, initiatives, collaborations, infrastructure updates)
+Based on the content found at these URLs, identify and extract the following:
+1.  **Upcoming campus events:** Look for workshops, seminars, fests (Concetto, Srijan, Parakram, Basant), placement drives, etc. scheduled for on or after October 17, 2025.
+2.  **Recent announcements and news:** Look for academic notices, exam schedules, registration deadlines, collaborations, achievements, etc., published recently in 2025.
 
 MANDATORY REQUIREMENTS:
-- Generate realistic upcoming events and announcements based on typical IIT Dhanbad academic calendar
-- ALL dates MUST be from October 16, 2025 onwards
-- Use REAL URLs from the sources listed above (iitism.ac.in/dept-event-list, iitism.ac.in/all-active-notices, etc.)
-- For sourceUrl field, use the appropriate URL from the list above based on content type:
-  * Events: https://www.iitism.ac.in/dept-event-list
-  * Notices: https://www.iitism.ac.in/all-active-notices
-  * Seminars: https://www.iitism.ac.in/seminar-1
-  * Press releases: https://people.iitism.ac.in/~mbc/mbcpress_release
-- For fests: Concetto (technical), Srijan (literary-cultural), Basant (spring fest), Parakram (sports)
-- Generate 8-12 realistic items based on typical IIT academic calendar patterns
+- ALL data (events, announcements, news) MUST be directly extracted from the content of the provided URLs. Do NOT invent or generate any information.
+- ALL dates MUST be from 2025. Verify this for every single item.
+- For the "sourceUrl" field, you MUST use the exact URL from the list above from which you extracted the information. For example, if you extract an event from the department events page, the sourceUrl MUST be "https://www.iitism.ac.in/dept-event-list".
+- Generate between 8 to 12 of the most recent and relevant items you can find.
+- Provide realistic details for each field based on the source. If a detail (like time or organizer) is not available, you can use a sensible placeholder like "To be announced" or the relevant department name.
 
-For each item, provide:
-- Title
-- Date (YYYY-MM-DD format, MUST be 2025-10-16 or later)
-- Description/Content (realistic and detailed)
-- Category (Academic/Cultural/Technical/Sports/General)
-- Organizer/Author
-- Source URL (use iitism.ac.in URLs or placeholder)
-
-Return your response in valid JSON format:
+Return your response in a valid JSON format as specified below:
 {
   "events": [
     {
-      "title": "Event Title",
-      "date": "2025-10-20",
-      "time": "10:00 AM - 12:00 PM",
-      "location": "Venue Name",
-      "description": "Detailed description",
+      "title": "Extracted Event Title",
+      "date": "2025-10-28",
+      "time": "10:00 AM",
+      "location": "Extracted Venue",
+      "description": "Extracted detailed description of the event.",
       "category": "Technical",
-      "organizer": "Organizing Body",
-      "imageUrl": "https://via.placeholder.com/800x400?text=IIT+Dhanbad+Event",
-      "sourceUrl": "https://iitism.ac.in/events"
+      "organizer": "Extracted Organizing Department",
+      "imageUrl": "https://www.iitism.ac.in/assets/img/logo.png",
+      "sourceUrl": "https://www.iitism.ac.in/dept-event-list"
     }
   ],
   "announcements": [
     {
-      "title": "Announcement Title",
-      "date": "2025-10-16",
-      "content": "Announcement content",
+      "title": "Extracted Announcement Title",
+      "date": "2025-10-17",
+      "content": "Extracted content of the announcement or news.",
       "category": "Academic",
-      "author": "Administration",
-      "sourceUrl": "https://iitism.ac.in/announcements"
+      "author": "Registrar Office",
+      "sourceUrl": "https://www.iitism.ac.in/all-active-notices"
     }
   ]
 }
 
-CRITICAL VALIDATION:
-- Verify ALL dates are >= 2025-10-16
-- All sourceUrl fields must use one of the official URLs listed above (iitism.ac.in URLs)
-- Generate realistic content appropriate for each source type
-- Include at least 8-12 diverse items (mix of events and announcements)`;
+CRITICAL VALIDATION before returning the JSON:
+- Is every single date in 2025?
+- Does every "sourceUrl" exactly match one of the URLs provided in this prompt?
+- Is the information realistic and directly derivable from official university communications?`;
 
   try {
     const result = await model.generateContent(prompt);
@@ -159,11 +126,10 @@ CRITICAL VALIDATION:
 
     // Fix and validate URLs
     const validUrls = [
-      'https://www.iitism.ac.in',
-      'https://www.iitism.ac.in/dept-event-list',
       'https://www.iitism.ac.in/all-active-notices',
-      'https://www.iitism.ac.in/seminar-1',
-      'https://people.iitism.ac.in/~mbc/mbcpress_release'
+      'https://people.iitism.ac.in/~mbc/mbcpress_release.php',
+      'https://www.iitism.ac.in/dept-event-list',
+      'https://www.iitism.ac.in/seminar-1'
     ];
 
     // Ensure all events have valid URLs
@@ -196,10 +162,10 @@ CRITICAL VALIDATION:
  */
 async function storeEvents(events: Omit<CampusEvent, 'id'>[]): Promise<void> {
   const eventsRef = db.collection('events');
-  const cutoffDate = '2025-6-01'; // Only store events from October 2025 onwards
+  const cutoffDate = '2025-01-01'; // Only store events from 2025 onwards
 
   for (const event of events) {
-    // Skip events with old dates (before October 2025)
+    // Skip events with old dates
     if (event.date < cutoffDate) {
       console.log(`Skipping old event (${event.date}): ${event.title}`);
       continue;
@@ -237,10 +203,10 @@ async function storeEvents(events: Omit<CampusEvent, 'id'>[]): Promise<void> {
  */
 async function storeAnnouncements(announcements: Omit<Announcement, 'id'>[]): Promise<void> {
   const newsRef = db.collection('news');
-  const cutoffDate = '2025-6-01'; // Only store announcements from October 2025 onwards
+   const cutoffDate = '2025-01-01'; // Only store events from 2025 onwards
 
   for (const announcement of announcements) {
-    // Skip announcements with old dates (before October 2025)
+    // Skip announcements with old dates
     if (announcement.date < cutoffDate) {
       console.log(`Skipping old announcement (${announcement.date}): ${announcement.title}`);
       continue;
@@ -275,12 +241,12 @@ async function storeAnnouncements(announcements: Omit<Announcement, 'id'>[]): Pr
 
 /**
  * Cloud Function that runs every 6 hours to fetch and store IIT Dhanbad updates
- * Schedule: 0 at every 6th hour (runs at 00:00, 06:00, 12:00, 18:00)
+ * Schedule: Runs at 00:00, 06:00, 12:00, 18:00
  */
 export const fetchIITDhanbadData = functions
   .runWith({ timeoutSeconds: 300, memory: '512MB' })
   .pubsub
-  .schedule('*/2 * * * *')
+  .schedule('0 */6 * * *')
   .timeZone('Asia/Kolkata')
   .onRun(async () => {
     console.log('Starting scheduled fetch of IIT Dhanbad updates...');
