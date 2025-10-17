@@ -8,6 +8,7 @@ import { useGrades } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useAuth } from '../hooks/useAuth';
+import { GoogleGenAI } from '@google/genai';
 import {
     InstructorIcon, LocationIcon, LibraryIcon, GymkhanaIcon,
     PortalIcon, CalendarCheckIcon, HealthIcon, FeeIcon,
@@ -93,6 +94,12 @@ const Dashboard: React.FC = () => {
     const { scheduleData, loading: scheduleLoading } = useSchedule();
     const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey, toggleReminderPreference, updateUserEvent } = useCalendar();
     const { currentUser } = useAuth();
+    
+    // AI Weather Recommendation State
+    const [recommendation, setRecommendation] = useState<string | null>(null);
+    const [recommendationLoading, setRecommendationLoading] = useState(false);
+    const [recommendationError, setRecommendationError] = useState<string | null>(null);
+
 
     // Quick Links state management
     const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
@@ -195,9 +202,35 @@ const Dashboard: React.FC = () => {
         }
     }, [scheduleData]);
 
+    const fetchWeatherRecommendation = async (weatherData: WeatherData) => {
+        setRecommendationLoading(true);
+        setRecommendationError(null);
+        setRecommendation(null);
+
+        try {
+            const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+            const prompt = `The current weather at my college campus in Dhanbad, India is ${weatherData.temp}°C and ${weatherData.desc}. Provide 1 short, actionable recommendation for a student. For example, what to wear, what activities to do, or what to carry. Keep the tone friendly and concise, using bullet points with emojis. Do not use markdown formatting.`;
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+            });
+
+            setRecommendation(response.text);
+        } catch (err) {
+            console.error("AI recommendation error:", err);
+            setRecommendationError("Couldn't get AI tips right now.");
+        } finally {
+            setRecommendationLoading(false);
+        }
+    };
+
     const fetchWeather = async () => {
         setWeatherError(null);
         setWeatherLoading(true);
+        setRecommendation(null);
+        setRecommendationLoading(true);
+        setRecommendationError(null);
 
         try {
             const lat = 23.79;
@@ -223,9 +256,12 @@ const Dashboard: React.FC = () => {
                 icon: icon
             };
             setWeather(weatherData);
+            await fetchWeatherRecommendation(weatherData);
 
         } catch (err) {
             setWeatherError('Could not load weather.');
+            setRecommendationError(null);
+            setRecommendationLoading(false);
             console.error("Weather fetch error:", err);
         } finally {
             setWeatherLoading(false);
@@ -897,16 +933,40 @@ const Dashboard: React.FC = () => {
                                 <p className="text-red-500 text-sm">{weatherError}</p>
                             </div>
                         ) : weather ? (
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-5xl font-bold bg-gradient-to-br from-sky-600 to-blue-600 bg-clip-text text-transparent">
-                                        {weather.temp}°C
-                                    </p>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 font-medium">{weather.desc}</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Dhanbad, Jharkhand</p>
+                            <>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-5xl font-bold bg-gradient-to-br from-sky-600 to-blue-600 bg-clip-text text-transparent">
+                                            {weather.temp}°C
+                                        </p>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 font-medium">{weather.desc}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Dhanbad, Jharkhand</p>
+                                    </div>
+                                    <div className="text-7xl drop-shadow-lg">{weather.icon}</div>
                                 </div>
-                                <div className="text-7xl drop-shadow-lg">{weather.icon}</div>
-                            </div>
+                                <div className="mt-4 pt-4 border-t border-sky-300/50 dark:border-sky-700/50">
+                                    {recommendationLoading ? (
+                                        <div className="animate-pulse flex space-x-2">
+                                            <div className="text-sm font-medium text-sky-700 dark:text-sky-300">✨</div>
+                                            <div className="flex-1 space-y-2 py-1">
+                                                <div className="h-2 bg-sky-200/50 dark:bg-sky-700/50 rounded"></div>
+                                                <div className="h-2 bg-sky-200/50 dark:bg-sky-700/50 rounded w-5/6"></div>
+                                            </div>
+                                        </div>
+                                    ) : recommendationError ? (
+                                        <p className="text-xs text-red-600 dark:text-red-400">{recommendationError}</p>
+                                    ) : recommendation && (
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-sky-800 dark:text-sky-200 mb-2 flex items-center gap-2">
+                                                ✨ Weather Advice 
+                                            </h4>
+                                            <p className="text-sm text-sky-700 dark:text-sky-300 whitespace-pre-line leading-relaxed">
+                                                {recommendation}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
                         ) : null}
                     </div>
                 </div>
@@ -1011,4 +1071,4 @@ const Dashboard: React.FC = () => {
     );
 };
 
-export default Dashboard; 
+export default Dashboard;
