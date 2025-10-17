@@ -7,7 +7,10 @@ import {
     onAuthStateChanged,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    signOut
+    signOut,
+    signInWithPopup,
+    GoogleAuthProvider,
+    sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth } from '../firebaseConfig'; // This should export the v9 `auth` object
 import { logActivity } from '../services/activityService';
@@ -17,6 +20,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -69,6 +74,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      // Restrict to iitism.ac.in domain
+      provider.setCustomParameters({
+        prompt: 'select_account',
+        hd: 'iitism.ac.in' // Hosted domain parameter for Google Workspace
+      });
+      const userCredential = await signInWithPopup(auth, provider);
+
+      // Verify the email domain after authentication
+      const email = userCredential.user.email;
+      if (!email || !email.endsWith('@iitism.ac.in')) {
+        // Sign out the user immediately
+        await signOut(auth);
+        throw new Error('INVALID_DOMAIN: Only @iitism.ac.in email addresses are allowed.');
+      }
+
+      await logActivity(userCredential.user.uid, {
+        type: 'login',
+        title: 'Signed In with Google',
+        description: 'Successfully signed into your account using Google.',
+        icon: '🔑',
+      });
+    } catch (error) {
+      console.error("Google login failed:", error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error("Password reset failed:", error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       // ✅ 1. Check if there's a user to log out.
@@ -94,9 +138,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw error;
     }
   };
-  
+
   return (
-    <AuthContext.Provider value={{ currentUser, isAuthenticated: !!currentUser, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ currentUser, isAuthenticated: !!currentUser, login, register, loginWithGoogle, resetPassword, logout, loading }}>
       {/* Always render children to let the UI handle the loading state */}
       {children}
     </AuthContext.Provider>
