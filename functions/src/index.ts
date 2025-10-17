@@ -105,7 +105,7 @@ CRITICAL VALIDATION before returning the JSON:
 
   try {
     const response = await client.chat.completions.create({
-      model: 'sonar-pro',
+      model: 'sonar-deep-research',
       messages: [
         {
           role: 'system',
