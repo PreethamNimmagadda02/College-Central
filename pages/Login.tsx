@@ -435,20 +435,7 @@ const Login: React.FC = () => {
 
           <div className="relative flex h-full w-full flex-col justify-between p-10">
               {/* Header */}
-              <div className="space-y-2">
-                  <div className="flex items-center gap-3 text-white">
-                      <div className="relative">
-                          <div className="absolute inset-0 bg-white rounded-xl blur opacity-40"></div>
-                          <div className="relative bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/20">
-                              <LogoIcon className="h-8 w-8 text-white" />
-                          </div>
-                      </div>
-                      <div>
-                          <span className="text-xl font-bold">College Central</span>
-                          <p className="text-xs text-white/80">IIT (ISM) Dhanbad</p>
-                      </div>
-                  </div>
-              </div>
+              
 
               {/* Main Content */}
               <div className="text-white space-y-6">
@@ -468,7 +455,7 @@ const Login: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4 max-w-lg">
                       <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4">
                           <div className="text-3xl mb-2">📚</div>
-                          <p className="text-sm font-medium">Academic Resources</p>
+                          <p className="text-sm font-medium">Academic Analysis</p>
                       </div>
                       <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4">
                           <div className="text-3xl mb-2">📅</div>
