@@ -44,10 +44,13 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     const q = db.collection('userEvents').where('userId', '==', currentUser.uid);
 
     const unsubscribe = q.onSnapshot((snapshot: firebase.firestore.QuerySnapshot) => {
-      const events = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      } as CalendarEvent));
+      const events = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id
+        } as CalendarEvent;
+      });
       setUserEvents(events);
     });
 
@@ -159,19 +162,39 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (!currentUser) throw new Error('User must be logged in');
 
     const eventRef = db.collection('userEvents').doc(eventId);
+    const oldEventSnap = await eventRef.get();
+    const oldEvent = oldEventSnap.data() as CalendarEvent;
+
     await eventRef.update({
       ...event,
       updatedAt: new Date().toISOString()
     });
-    
-    await logActivity(currentUser.uid, {
+
+    // Check if only reminder was toggled
+    const reminderToggled = oldEvent.remindMe !== event.remindMe;
+    const onlyReminderChanged = reminderToggled &&
+      oldEvent.date === event.date &&
+      oldEvent.description === event.description &&
+      oldEvent.type === event.type;
+
+    if (onlyReminderChanged) {
+      await logActivity(currentUser.uid, {
+        type: 'reminder',
+        title: event.remindMe ? 'Reminder Set' : 'Reminder Removed',
+        description: `For event: "${event.description}"`,
+        icon: event.remindMe ? '🔔' : '🔕',
+        link: '/academic-calendar'
+      });
+    } else {
+      await logActivity(currentUser.uid, {
         type: 'event',
         title: 'Event Updated',
         description: `Updated event: "${event.description}"`,
         icon: '✏️',
         link: '/academic-calendar'
-    });
-  };
+      });
+    }
+  }; 
 
   // Delete user event from Firebase
   const deleteUserEvent = async (eventId: string) => {
@@ -182,11 +205,31 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     if (eventSnap.exists) {
         const eventData = eventSnap.data() as CalendarEvent;
+
+        // Delete the event from Firebase
         await eventRef.delete();
+
+        // Remove reminder preference if it exists
+        const eventKey = getEventKey(eventData);
+        if (reminderPreferences.includes(eventKey)) {
+            const newPreferences = reminderPreferences.filter(key => key !== eventKey);
+            setReminderPreferences(newPreferences);
+
+            try {
+                const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
+                await prefDocRef.set({
+                    userId: currentUser.uid,
+                    reminderEventKeys: newPreferences
+                });
+            } catch (error) {
+                console.error('Error removing reminder preference:', error);
+            }
+        }
+
         await logActivity(currentUser.uid, {
             type: 'event',
             title: 'Event Deleted',
-            description: `Deleted event: "${eventData.description}"`,
+            description: `Deleted event: "${eventData.description}"${reminderPreferences.includes(eventKey) ? ' and its reminder' : ''}`,
             icon: '🗑️',
             link: '/academic-calendar'
         });
