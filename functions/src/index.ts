@@ -265,7 +265,7 @@ async function storeAnnouncements(announcements: Omit<Announcement, 'id'>[]): Pr
 export const fetchIITDhanbadData = functions
   .runWith({ timeoutSeconds: 300, memory: '512MB' })
   .pubsub
-  .schedule('0 */6 * * *')
+  .schedule('0 */2 * * * *')
   .timeZone('Asia/Kolkata')
   .onRun(async () => {
     console.log('Starting scheduled fetch of IIT Dhanbad updates...');
