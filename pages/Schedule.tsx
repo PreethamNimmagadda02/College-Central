@@ -36,6 +36,14 @@ const Schedule: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [editingItem, setEditingItem] = useState<ClassSchedule | null>(null);
     const [newVenue, setNewVenue] = useState('');
+    const [newInstructor, setNewInstructor] = useState('');
+    const [newDay, setNewDay] = useState('');
+    const [newStartTime, setNewStartTime] = useState('');
+    const [newEndTime, setNewEndTime] = useState('');
+    const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+    const [hasConflict, setHasConflict] = useState(false);
+    const [conflictingClasses, setConflictingClasses] = useState<ClassSchedule[]>([]);
+    const [applyInstructorToAll, setApplyInstructorToAll] = useState(true);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [history, setHistory] = useState<ClassSchedule[][]>([]);
     const isInitialized = useRef(false);
@@ -50,8 +58,39 @@ const Schedule: React.FC = () => {
     useEffect(() => {
         if (editingItem) {
             setNewVenue(editingItem.location);
+            setNewInstructor(editingItem.instructor);
+            setNewDay(editingItem.day);
+            setNewStartTime(editingItem.startTime);
+            setNewEndTime(editingItem.endTime);
+            setValidationErrors({});
+            setHasConflict(false);
+            setConflictingClasses([]);
+            setApplyInstructorToAll(true); // Default to updating all classes
         }
     }, [editingItem]);
+
+    // Check for conflicts whenever day or time changes
+    useEffect(() => {
+        if (editingItem && scheduleData && newDay && newStartTime && newEndTime) {
+            checkForConflicts();
+        }
+    }, [newDay, newStartTime, newEndTime]);
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!editingItem) return;
+
+            if (e.key === 'Escape') {
+                setEditingItem(null);
+            } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                handleUpdateClassDetails();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [editingItem, newVenue, newInstructor, newDay, newStartTime, newEndTime]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -177,18 +216,146 @@ const Schedule: React.FC = () => {
         setHistory(prev => prev.slice(0, -1));
     };
 
-    const handleUpdateVenue = () => {
+    // Validation function
+    const validateForm = (): boolean => {
+        const errors: {[key: string]: string} = {};
+
+        if (!newVenue.trim()) {
+            errors.venue = 'Venue is required';
+        }
+        if (!newInstructor.trim()) {
+            errors.instructor = 'Instructor name is required';
+        }
+        if (!newStartTime) {
+            errors.startTime = 'Start time is required';
+        }
+        if (!newEndTime) {
+            errors.endTime = 'End time is required';
+        }
+        if (newStartTime && newEndTime && newStartTime >= newEndTime) {
+            errors.time = 'End time must be after start time';
+        }
+
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    // Check for scheduling conflicts
+    const checkForConflicts = () => {
+        if (!editingItem || !scheduleData) return;
+
+        const conflicts = scheduleData.filter(item => {
+            // Skip the current editing item
+            if (item.slotId === editingItem.slotId) return false;
+
+            // Check if same day
+            if (item.day !== newDay) return false;
+
+            // Check time overlap
+            const itemStart = item.startTime;
+            const itemEnd = item.endTime;
+
+            // Check if times overlap
+            const hasOverlap = (newStartTime < itemEnd && newEndTime > itemStart);
+
+            return hasOverlap;
+        });
+
+        setConflictingClasses(conflicts);
+        setHasConflict(conflicts.length > 0);
+    };
+
+    // Handle update with validation
+    const handleUpdateClassDetails = () => {
         if (!editingItem || !scheduleData || !currentUser) return;
+
+        // Validate form
+        if (!validateForm()) {
+            return;
+        }
+
         setHistory(prev => [...prev, scheduleData]);
-        const updatedSchedule = scheduleData.map(item => 
-            item.slotId === editingItem.slotId ? { ...item, location: newVenue } : item
-        );
+
+        // Check if instructor changed
+        const instructorChanged = newInstructor.trim() !== editingItem.instructor;
+
+        const updatedSchedule = scheduleData.map(item => {
+            // Always update the current editing item
+            if (item.slotId === editingItem.slotId) {
+                return {
+                    ...item,
+                    location: newVenue.trim(),
+                    instructor: newInstructor.trim(),
+                    day: newDay as ClassSchedule['day'],
+                    startTime: newStartTime,
+                    endTime: newEndTime
+                };
+            }
+
+            // If instructor changed and applyToAll is true, update all classes of same course
+            if (instructorChanged && applyInstructorToAll && item.courseCode === editingItem.courseCode) {
+                return {
+                    ...item,
+                    instructor: newInstructor.trim()
+                };
+            }
+
+            return item;
+        });
         setScheduleData(updatedSchedule);
+
+        const changes = [];
+        if (newVenue !== editingItem.location) changes.push('venue');
+        if (instructorChanged) {
+            if (applyInstructorToAll) {
+                changes.push('instructor (all classes)');
+            } else {
+                changes.push('instructor');
+            }
+        }
+        if (newDay !== editingItem.day) changes.push('day');
+        if (newStartTime !== editingItem.startTime || newEndTime !== editingItem.endTime) changes.push('time');
+
         logActivity(currentUser.uid, {
             type: 'schedule',
-            title: 'Class Venue Changed',
-            description: `Updated venue for ${editingItem.courseCode} to ${newVenue}.`,
+            title: 'Class Details Updated',
+            description: `Updated ${changes.join(', ')} for ${editingItem.courseCode}.`,
             icon: '✏️',
+            link: '/schedule'
+        });
+        setEditingItem(null);
+    };
+
+    // Duplicate class function
+    const handleDuplicateClass = () => {
+        if (!editingItem || !scheduleData || !currentUser) return;
+
+        // Validate form first
+        if (!validateForm()) {
+            return;
+        }
+
+        setHistory(prev => [...prev, scheduleData]);
+
+        const newClass: ClassSchedule = {
+            slotId: `${editingItem.courseCode}-${newDay}-${newStartTime}-${Date.now()}`,
+            day: newDay as ClassSchedule['day'],
+            startTime: newStartTime,
+            endTime: newEndTime,
+            courseName: editingItem.courseName,
+            courseCode: editingItem.courseCode,
+            instructor: newInstructor.trim(),
+            location: newVenue.trim(),
+        };
+
+        const updatedSchedule = [...scheduleData, newClass];
+        setScheduleData(updatedSchedule);
+
+        logActivity(currentUser.uid, {
+            type: 'schedule',
+            title: 'Class Duplicated',
+            description: `Created duplicate of ${editingItem.courseCode} on ${newDay} at ${newStartTime}.`,
+            icon: '📋',
             link: '/schedule'
         });
         setEditingItem(null);
@@ -696,69 +863,288 @@ const Schedule: React.FC = () => {
             {/* Edit Modal */}
             {editingItem && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={() => setEditingItem(null)}>
-                    <div className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-bold">Edit Class Details</h3>
-                            <button onClick={() => setEditingItem(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
-                                <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Course</p>
-                                <p className="font-semibold">{editingItem.courseCode} - {editingItem.courseName}</p>
-                            </div>
-                            
-                            <div>
-                                <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Schedule</p>
-                                <p className="font-semibold">{editingItem.day}, {editingItem.startTime} - {editingItem.endTime}</p>
-                            </div>
-                            
-                            <div>
-                                <label htmlFor="venue" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                    Venue / Location
-                                </label>
-                                <input
-                                    type="text"
-                                    id="venue"
-                                    value={newVenue}
-                                    onChange={(e) => setNewVenue(e.target.value)}
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
-                                    placeholder="Enter venue or room number"
-                                    autoFocus
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center gap-3 mt-6">
-                            <button 
-                                onClick={handleDeleteSlot} 
-                                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors flex items-center"
-                            >
-                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                                Delete
-                            </button>
-                            <div className="flex gap-2">
-                                <button 
-                                    onClick={() => setEditingItem(null)} 
-                                    className="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-600 dark:hover:bg-slate-700 font-medium transition-colors"
+                    <div className="bg-white dark:bg-dark-card rounded-xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[90vh] overflow-y-auto" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                        {/* Header */}
+                        <div className="sticky top-0 bg-white dark:bg-dark-card border-b border-slate-200 dark:border-slate-700 p-6 rounded-t-xl">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white">Edit Class Details</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                        {editingItem.courseCode} - {editingItem.courseName}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setEditingItem(null)}
+                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                 >
-                                    Cancel
-                                </button>
-                                <button 
-                                    onClick={handleUpdateVenue} 
-                                    className="px-6 py-2 rounded-lg bg-primary hover:bg-primary-dark text-white font-medium transition-colors flex items-center"
-                                >
-                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    <svg className="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
-                                    Save
                                 </button>
+                            </div>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-6">
+                            {/* Course Info - Read Only */}
+                            <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm font-medium text-blue-800 dark:text-blue-300">Course Information</p>
+                                </div>
+                                <p className="text-slate-700 dark:text-slate-300">
+                                    <span className="font-semibold">{editingItem.courseCode}</span> - {editingItem.courseName}
+                                </p>
+                            </div>
+
+                            {/* Editable Fields */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Instructor */}
+                                <div className="md:col-span-2">
+                                    <label htmlFor="instructor" className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                        <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        Instructor
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="instructor"
+                                        value={newInstructor}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewInstructor(e.target.value)}
+                                        className={`w-full px-4 py-3 rounded-lg border-2 ${
+                                            validationErrors.instructor
+                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                                                : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                                        } dark:bg-slate-700 transition-colors`}
+                                        placeholder="e.g., Dr. John Smith"
+                                    />
+                                    {validationErrors.instructor && (
+                                        <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {validationErrors.instructor}
+                                        </p>
+                                    )}
+
+                                    {/* Apply to all classes checkbox */}
+                                    {scheduleData && scheduleData.filter(item => item.courseCode === editingItem?.courseCode).length > 1 && (
+                                        <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                                            <label className="flex items-start gap-3 cursor-pointer group">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={applyInstructorToAll}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApplyInstructorToAll(e.target.checked)}
+                                                    className="mt-0.5 h-5 w-5 rounded border-blue-300 text-primary focus:ring-primary cursor-pointer"
+                                                />
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-blue-900 dark:text-blue-200 group-hover:text-primary transition-colors">
+                                                        Apply to all classes of {editingItem?.courseCode}
+                                                    </p>
+                                                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                                                        This will update the instructor for all {scheduleData.filter(item => item.courseCode === editingItem?.courseCode).length} class sessions of this course
+                                                    </p>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Venue */}
+                                <div className="md:col-span-2">
+                                    <label htmlFor="venue" className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                        <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        Venue / Location
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="venue"
+                                        value={newVenue}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewVenue(e.target.value)}
+                                        className={`w-full px-4 py-3 rounded-lg border-2 ${
+                                            validationErrors.venue
+                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                                                : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                                        } dark:bg-slate-700 transition-colors`}
+                                        placeholder="e.g., Room 101, Main Building"
+                                    />
+                                    {validationErrors.venue && (
+                                        <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {validationErrors.venue}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Day */}
+                                <div>
+                                    <label htmlFor="day" className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                        <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        Day
+                                    </label>
+                                    <select
+                                        id="day"
+                                        value={newDay}
+                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewDay(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700 transition-colors"
+                                    >
+                                        {days.map(day => (
+                                            <option key={day} value={day}>{day}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Time Range */}
+                                <div>
+                                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                        <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Time Range
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="time"
+                                            value={newStartTime}
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStartTime(e.target.value)}
+                                            className={`flex-1 px-3 py-3 rounded-lg border-2 ${
+                                                validationErrors.time || validationErrors.startTime
+                                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                                                    : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                                            } dark:bg-slate-700 transition-colors`}
+                                        />
+                                        <span className="text-slate-500 dark:text-slate-400 font-medium">to</span>
+                                        <input
+                                            type="time"
+                                            value={newEndTime}
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEndTime(e.target.value)}
+                                            className={`flex-1 px-3 py-3 rounded-lg border-2 ${
+                                                validationErrors.time || validationErrors.endTime
+                                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                                                    : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                                            } dark:bg-slate-700 transition-colors`}
+                                        />
+                                    </div>
+                                    {(validationErrors.time || validationErrors.startTime || validationErrors.endTime) && (
+                                        <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {validationErrors.time || validationErrors.startTime || validationErrors.endTime}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Duration Display */}
+                            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                    <span className="font-semibold">Duration:</span> {
+                                        (() => {
+                                            const start = new Date(`1970-01-01T${newStartTime}`);
+                                            const end = new Date(`1970-01-01T${newEndTime}`);
+                                            const diff = (end.getTime() - start.getTime()) / (1000 * 60);
+                                            return diff > 0 ? `${Math.floor(diff / 60)}h ${diff % 60}m` : 'Invalid';
+                                        })()
+                                    }
+                                </p>
+                            </div>
+
+                            {/* Conflict Warning */}
+                            {hasConflict && (
+                                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg p-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex-shrink-0">
+                                            <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
+                                                ⚠️ Schedule Conflict Detected
+                                            </h4>
+                                            <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-2">
+                                                This time slot overlaps with {conflictingClasses.length} other class{conflictingClasses.length !== 1 ? 'es' : ''}:
+                                            </p>
+                                            <ul className="space-y-1">
+                                                {conflictingClasses.map(cls => (
+                                                    <li key={cls.slotId} className="text-sm text-yellow-700 dark:text-yellow-400 flex items-center gap-2">
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        <span className="font-medium">{cls.courseCode}</span> - {cls.startTime} to {cls.endTime}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Keyboard Shortcuts Help */}
+                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                                <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span><strong>Tip:</strong> Press <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded border border-slate-300 dark:border-slate-600 text-xs font-mono">Esc</kbd> to close, <kbd className="px-2 py-1 bg-white dark:bg-slate-700 rounded border border-slate-300 dark:border-slate-600 text-xs font-mono">Ctrl+Enter</kbd> to save</span>
+                                </p>
+                            </div>
+                        </div>
+ 
+                        {/* Footer */}
+                        <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 p-6 rounded-b-xl">
+                            <div className="flex flex-col gap-3">
+                                {/* Top Row - Destructive and Special Actions */}
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <button
+                                        onClick={handleDeleteSlot}
+                                        className="w-full sm:w-auto px-5 py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors flex items-center justify-center shadow-lg hover:shadow-xl"
+                                    >
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete Class
+                                    </button>
+                                    <button
+                                        onClick={handleDuplicateClass}
+                                        className="w-full sm:w-auto px-5 py-3 rounded-lg bg-purple-500 hover:bg-purple-600 text-white font-semibold transition-colors flex items-center justify-center shadow-lg hover:shadow-xl"
+                                    >
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        Duplicate as New Class
+                                    </button>
+                                </div>
+
+                                {/* Bottom Row - Primary Actions */}
+                                <div className="flex gap-3 w-full">
+                                    <button
+                                        onClick={() => setEditingItem(null)}
+                                        className="flex-1 px-5 py-3 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 font-semibold transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleUpdateClassDetails}
+                                        className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center"
+                                    >
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Save Changes
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
