@@ -7,6 +7,7 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
+
 interface CampusEvent {
   id: string;
   title: string;
