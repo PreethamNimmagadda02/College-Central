@@ -39,7 +39,7 @@ interface GeminiSearchResult {
  * Fetches latest news, events, and announcements about IIT Dhanbad using Gemini AI
  */
 async function fetchIITDhanbadUpdates(): Promise<GeminiSearchResult> {
-  const apiKey = functions.config().gemini?.api_key || process.env.GEMINI_API_KEY;
+  const apiKey = functions.config().gemini?.api_key || import.meta.env.VITE_GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error('Gemini API key not configured');
