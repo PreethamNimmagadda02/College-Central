@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
     }
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
-  
+
   const { user } = useUser();
 
   React.useEffect(() => {
@@ -33,52 +33,86 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const toggleTheme = () => setIsDark(!isDark);
 
   return (
-    <header className="fixed top-0 w-full bg-white dark:bg-dark-card z-20 border-b border-slate-200 dark:border-slate-700 shadow-sm">
+    <header className="fixed top-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl z-50 border-b border-slate-200/50 dark:border-slate-700/50 shadow-lg">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Header: Left side */}
           <div className="flex items-center gap-4">
             {/* Hamburger button */}
             <button
-              className="text-slate-500 hover:text-slate-600 lg:hidden"
+              className="text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
               aria-controls="sidebar"
               aria-expanded={sidebarOpen}
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
               <span className="sr-only">Open sidebar</span>
               <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <rect x="4" y="5" width="16" height="2" />
-                <rect x="4" y="11" width="16" height="2" />
-                <rect x="4" y="17" width="16" height="2" />
+                <rect x="4" y="5" width="16" height="2" rx="1" />
+                <rect x="4" y="11" width="16" height="2" rx="1" />
+                <rect x="4" y="17" width="16" height="2" rx="1" />
               </svg>
             </button>
-             <Link to="/" className="flex items-center gap-2">
-                <LogoIcon className="w-8 h-8 text-primary" />
-                <h1 className="hidden sm:block text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                    IIT(ISM) Student Hub
+
+            {/* Logo and Brand */}
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 p-1.5 rounded-lg shadow-md">
+                  <LogoIcon className="w-6 h-6 text-white" />
+                </div>
+              </div> 
+              <div className="hidden sm:block">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  College Central
                 </h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400 -mt-0.5">IIT (ISM) Dhanbad</p>
+              </div>
             </Link>
           </div>
 
           {/* Header: Right side */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2">
+            {/* Theme Toggle */}
             <button
-                onClick={toggleTheme}
-                className="w-10 h-10 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none transition-colors duration-300"
-                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              onClick={toggleTheme}
+              className="relative w-10 h-10 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition-all duration-300 group"
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-                <div className="relative w-full h-full flex items-center justify-center">
-                    <SunIcon className={`absolute inset-0 w-full h-full text-slate-600 transition-all duration-300 ease-in-out transform ${isDark ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100'}`} />
-                    <MoonIcon className={`absolute inset-0 w-full h-full text-yellow-300 transition-all duration-300 ease-in-out transform ${isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-0'}`} />
-                </div>
+              <div className="relative w-full h-full flex items-center justify-center">
+                <SunIcon className={`absolute inset-0 w-full h-full text-amber-500 transition-all duration-500 ease-in-out transform ${isDark ? 'opacity-0 rotate-180 scale-0' : 'opacity-100 rotate-0 scale-100'}`} />
+                <MoonIcon className={`absolute inset-0 w-full h-full text-blue-400 transition-all duration-500 ease-in-out transform ${isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-180 scale-0'}`} />
+              </div>
             </button>
+
+            {/* User Profile */}
             {user && (
-              <Link to="/profile" className="flex items-center group cursor-pointer p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="View your profile">
-                <div className="text-right mr-3">
-                  <p className="font-semibold text-sm group-hover:text-primary dark:group-hover:text-secondary transition-colors">{user.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{user.admissionNumber}</p>
+              <Link
+                to="/profile"
+                className="flex items-center gap-3 group cursor-pointer px-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                title="View your profile"
+              >
+                <div className="hidden lg:block text-right">
+                  <p className="font-semibold text-sm text-slate-700 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {user.fullName || user.name}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {user.rollNumber || user.admissionNumber}
+                  </p>
                 </div>
-                <img className="h-8 w-8 rounded-full ring-2 ring-transparent group-hover:ring-primary dark:group-hover:ring-secondary transition-all" src={`https://picsum.photos/seed/${user.id}/100`} alt="User avatar" />
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur opacity-0 group-hover:opacity-40 transition-opacity"></div>
+                  {user.profilePicture ? (
+                    <img
+                      className="relative w-9 h-9 rounded-full ring-2 ring-slate-200 dark:ring-slate-700 group-hover:ring-blue-500 transition-all object-cover"
+                      src={user.profilePicture}
+                      alt="User avatar"
+                    />
+                  ) : (
+                    <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm ring-2 ring-slate-200 dark:ring-slate-700 group-hover:ring-blue-500 transition-all">
+                      {user.fullName?.charAt(0) || user.name.charAt(0)}
+                    </div>
+                  )}
+                </div>
               </Link>
             )}
           </div>

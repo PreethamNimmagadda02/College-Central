@@ -156,18 +156,20 @@ const Dashboard: React.FC = () => {
 
     const getGreeting = () => {
         const hour = new Date().getHours();
-        if (hour < 12) return 'Good Morning';
-        if (hour < 18) return 'Good Afternoon';
-        return 'Good Evening';
+        if (hour < 12) return { emoji: '🌅', text: 'Good Morning' };
+        if (hour < 17) return { emoji: '☀️', text: 'Good Afternoon' };
+        return { emoji: '🌆', text: 'Good Evening' };
     };
 
     const getMotivationalQuote = () => {
         const quotes = [
-            "Keep pushing forward, success is near!",
-            "Every class is a step toward your dreams.",
-            "Your dedication today shapes your tomorrow.",
-            "Knowledge is the passport to the future.",
-            "Excellence is not a skill, it's an attitude."
+            { text: "Arise, awake and stop not until the goal is reached", author: "Swami Vivekananda" },
+            { text: "The future belongs to those who believe in the beauty of their dreams", author: "Eleanor Roosevelt" },
+            { text: "Excellence is not a skill, it's an attitude", author: "Ralph Marston" },
+            { text: "Your only limit is your mind", author: "Anonymous" },
+            { text: "Dream big, work hard, stay focused", author: "Anonymous" },
+            { text: "Success is the sum of small efforts repeated day in and day out", author: "Robert Collier" },
+            { text: "Don't watch the clock; do what it does. Keep going", author: "Sam Levenson" }
         ];
         return quotes[Math.floor(Math.random() * quotes.length)];
     };
@@ -211,64 +213,139 @@ const Dashboard: React.FC = () => {
         );
     }
     
-    // The rest of the component remains largely the same, as it consumes data from contexts.
-    // ... (rest of JSX is identical to the original)
+    const greeting = getGreeting();
+    const quote = getMotivationalQuote();
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
-            {/* Enhanced Header with Stats Bar */}
-            <div className="bg-gradient-to-r from-primary to-primary-dark dark:from-dark-card dark:to-dark-background rounded-2xl p-6 text-white shadow-xl">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold">{getGreeting()}, {user.name.split(' ')[0]}! 👋</h1>
-                        <p className="text-white/80 mt-1">{getMotivationalQuote()}</p>
-                    </div>
-                    <div className="flex gap-6 text-sm">
-                        <div className="text-center">
-                            <p className="text-white/70">Today</p>
-                            <p className="font-semibold">{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+            {/* Hero Section - Greeting & Progress */}
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 overflow-hidden">
+                <div className="p-6 md:p-8">
+                    {/* Greeting Section */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-30"></div>
+                                <div className="relative text-5xl md:text-6xl bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-2xl shadow-lg">
+                                    {greeting.emoji}
+                                </div>
+                            </div>
+                            <div>
+                                <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-1">
+                                    {greeting.text},
+                                </h1>
+                                <p className="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-white">
+                                    {user.fullName?.split(' ')[0] || user.name.split(' ')[0]}!
+                                </p>
+                            </div>
                         </div>
-                        <div className="text-center">
-                            <p className="text-white/70">Week</p>
-                            <p className="font-semibold">Week {currentWeek}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-white/70">Semester</p>
-                            <p className="font-semibold">{Math.round(semesterProgress)}%</p>
+
+                        {/* Quick Stats Pills */}
+                        <div className="flex flex-wrap gap-3">
+                            <div className="group bg-gradient-to-br from-blue-50 to-blue-100 dark:from-slate-800 dark:to-slate-700 px-5 py-3 rounded-xl border border-blue-200 dark:border-slate-600 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105">
+                                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Today</p>
+                                <p className="text-sm font-bold text-slate-800 dark:text-white">{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                            </div>
+                            <div className="group bg-gradient-to-br from-purple-50 to-purple-100 dark:from-slate-800 dark:to-slate-700 px-5 py-3 rounded-xl border border-purple-200 dark:border-slate-600 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105">
+                                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Week</p>
+                                <p className="text-sm font-bold text-slate-800 dark:text-white">#{currentWeek}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                {/* Semester Progress Bar */}
-                <div className="mt-4">
-                    <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
-                        <div 
-                            className="bg-white/80 h-full rounded-full transition-all duration-500"
-                            style={{ width: `${semesterProgress}%` }}
-                        ></div>
+
+                    {/* Motivational Quote */}
+                    <div className="group bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800/50 dark:to-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-5 mb-6 hover:shadow-md transition-all duration-200">
+                        <div className="flex items-start gap-3">
+                            <div className="text-2xl bg-gradient-to-br from-amber-400 to-orange-500 p-2 rounded-lg shadow-sm">💡</div>
+                            <div className="flex-1">
+                                <p className="text-slate-700 dark:text-slate-200 text-base font-medium italic leading-relaxed">
+                                    "{quote.text}"
+                                </p>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium">
+                                    — {quote.author}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <p className="text-xs text-white/60 mt-1">
-                        {calendarData ? "Semester Progress" : <span>Semester Progress (using default dates - <Link to="/academic-calendar" className="underline">upload calendar</Link>)</span>}
-                    </p>
+
+                    {/* Semester Progress */}
+                    <div className="bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-800/50 dark:to-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2.5 rounded-xl shadow-md">
+                                    <span className="text-2xl">🎯</span>
+                                </div>
+                                <h3 className="text-slate-800 dark:text-white font-bold text-lg">Semester Progress</h3>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                    {Math.round(semesterProgress)}%
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Complete</p>
+                            </div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="relative">
+                            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden shadow-inner">
+                                <div
+                                    className="bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 h-full rounded-full transition-all duration-1000 ease-out relative group"
+                                    style={{ width: `${semesterProgress}%` }}
+                                >
+                                    <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-all"></div>
+                                </div>
+                            </div>
+                            {/* Milestone markers */}
+                            <div className="flex justify-between mt-3 text-xs font-semibold">
+                                <span className={`${semesterProgress >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>🚀 Start</span>
+                                <span className={`${semesterProgress >= 50 ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500'}`}>⚡ Midpoint</span>
+                                <span className={`${semesterProgress >= 100 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>🎓 Finals</span>
+                            </div>
+                        </div>
+
+                        {calendarData ? null : (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-4 text-center">
+                                Using default dates • <Link to="/academic-calendar" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">Upload your calendar</Link>
+                            </p>
+                        )}
+                    </div>
                 </div>
             </div>
 
             {/* Quick Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-dark-card p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Today's Classes</p>
-                    <p className="text-2xl font-bold text-slate-800 dark:text-white">{todaysClasses.length}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="group bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-blue-100 font-medium">Today's Classes</p>
+                            <p className="text-4xl font-bold text-white mt-2">{todaysClasses.length}</p>
+                        </div>
+                        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                            <span className="text-3xl">📚</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="bg-white dark:bg-dark-card p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">CGPA</p>
-                    <p className="text-2xl font-bold text-primary dark:text-secondary">{displayCgpa != null ? displayCgpa.toFixed(2) : 'N/A'}</p>
+                <div className="group bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-purple-100 font-medium">CGPA</p>
+                            <p className="text-4xl font-bold text-white mt-2">{displayCgpa != null ? displayCgpa.toFixed(2) : 'N/A'}</p>
+                        </div>
+                        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                            <span className="text-3xl">🎯</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="bg-white dark:bg-dark-card p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Credits</p>
-                    <p className="text-2xl font-bold text-slate-800 dark:text-white">{gradesData?.totalCredits ?? 'N/A'}</p>
-                </div>
-                <div className="bg-white dark:bg-dark-card p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Attendance</p>
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">92%</p>
+                <div className="group bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-green-100 font-medium">Total Credits</p>
+                            <p className="text-4xl font-bold text-white mt-2">{gradesData?.totalCredits ?? 'N/A'}</p>
+                        </div>
+                        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                            <span className="text-3xl">✨</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -575,34 +652,32 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* New: Weather Widget */}
-                    <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                        <h3 className="text-lg font-semibold mb-3">Campus Weather</h3>
+                    {/* Weather Widget - Enhanced */}
+                    <div className="bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/20 p-6 rounded-2xl shadow-md border border-sky-200 dark:border-sky-700/50 hover:shadow-lg transition-all">
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <span className="text-sky-500">🌤️</span>
+                            Campus Weather
+                        </h3>
                         {weatherLoading ? (
-                            <div className="flex items-center justify-center h-20">
-                                <div className="w-8 h-8 border-2 border-t-transparent border-primary rounded-full animate-spin"></div>
+                            <div className="flex items-center justify-center h-24">
+                                <div className="w-10 h-10 border-3 border-t-transparent border-sky-500 rounded-full animate-spin"></div>
                             </div>
                         ) : weatherError ? (
-                            <div className="text-center text-red-500">{weatherError}</div>
+                            <div className="text-center py-6">
+                                <p className="text-red-500 text-sm">{weatherError}</p>
+                            </div>
                         ) : weather ? (
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-3xl font-bold">{weather.temp}°C</p>
-                                    <p className="text-sm text-slate-500">{weather.desc}</p>
+                                    <p className="text-5xl font-bold bg-gradient-to-br from-sky-600 to-blue-600 bg-clip-text text-transparent">
+                                        {weather.temp}°C
+                                    </p>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 font-medium">{weather.desc}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Dhanbad, Jharkhand</p>
                                 </div>
-                                <div className="text-5xl">{weather.icon}</div>
+                                <div className="text-7xl drop-shadow-lg">{weather.icon}</div>
                             </div>
                         ) : null}
-                    </div>
- 
-                    {/* New: Study Streak */}
-                    <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                        <h3 className="text-lg font-semibold mb-3">Study Streak</h3>
-                        <div className="text-center">
-                            <p className="text-4xl mb-2">🔥</p>
-                            <p className="text-3xl font-bold text-orange-500">7 Days</p>
-                            <p className="text-sm text-slate-500 mt-1">Keep it going!</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -610,4 +685,4 @@ const Dashboard: React.FC = () => {
     );
 };
 
-export default Dashboard;
+export default Dashboard; 
