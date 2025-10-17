@@ -35,18 +35,64 @@ const Profile: React.FC = () => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<Partial<User>>({});
-    const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'activity'>('overview');
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [imageError, setImageError] = useState(false);
 
     const [activity, setActivity] = useState<ActivityItem[]>([]);
     const [activityLoading, setActivityLoading] = useState(true);
+    const [showAllActivity, setShowAllActivity] = useState(false);
+    const [activitySearch, setActivitySearch] = useState('');
+    const [activitySortBy, setActivitySortBy] = useState<'recent' | 'oldest' | 'type'>('recent');
+    const [activityFilterType, setActivityFilterType] = useState<string>('all');
 
     // Calculate stats for overview
     const savedFormsCount = userFormsData?.favorites?.length ?? 0;
     const userAddedEventsCount = calendarData?.events.filter(e => e.userId === currentUser?.uid).length ?? 0;
     const remindersCount = reminderPreferences?.length ?? 0;
     const savedPlacesCount = savedPlaces?.length ?? 0;
+
+    // Get unique activity types for filter
+    const activityTypes = ['all', ...Array.from(new Set(activity.map(item => item.type)))];
+
+    // Filter, search, and sort activities
+    const filteredAndSortedActivities = React.useMemo(() => {
+        let filtered = [...activity];
+
+        // Apply type filter
+        if (activityFilterType !== 'all') {
+            filtered = filtered.filter(item => item.type === activityFilterType);
+        }
+
+        // Apply search
+        if (activitySearch.trim()) {
+            const searchLower = activitySearch.toLowerCase();
+            filtered = filtered.filter(item =>
+                item.title.toLowerCase().includes(searchLower) ||
+                item.description.toLowerCase().includes(searchLower) ||
+                item.type.toLowerCase().includes(searchLower)
+            );
+        }
+
+        // Apply sorting
+        if (activitySortBy === 'recent') {
+            filtered.sort((a, b) => {
+                const timeA = a.timestamp?.seconds || 0;
+                const timeB = b.timestamp?.seconds || 0;
+                return timeB - timeA;
+            });
+        } else if (activitySortBy === 'oldest') {
+            filtered.sort((a, b) => {
+                const timeA = a.timestamp?.seconds || 0;
+                const timeB = b.timestamp?.seconds || 0;
+                return timeA - timeB;
+            });
+        } else if (activitySortBy === 'type') {
+            filtered.sort((a, b) => a.type.localeCompare(b.type));
+        }
+
+        return filtered;
+    }, [activity, activityFilterType, activitySearch, activitySortBy]);
 
     useEffect(() => {
         if (!currentUser) {
@@ -284,20 +330,6 @@ const Profile: React.FC = () => {
                         </svg>
                         Activity
                     </button>
-                    <button
-                        onClick={() => setActiveTab('settings')}
-                        className={`flex-1 px-6 py-4 font-medium transition-all flex items-center justify-center gap-2 ${
-                            activeTab === 'settings'
-                                ? 'text-primary border-b-2 border-primary bg-primary/5'
-                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                        }`}
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Settings
-                    </button>
                 </div>
 
                 {/* Tab Content */}
@@ -468,157 +500,196 @@ const Profile: React.FC = () => {
 
                     {activeTab === 'activity' && (
                        <div className="space-y-4">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold">Recent Activity</h3>
+                            <div className="flex flex-col gap-4">
+                                {/* Header with View All button */}
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-semibold">Recent Activity</h3>
+                                    {filteredAndSortedActivities.length > 10 && (
+                                        <button
+                                            onClick={() => setShowAllActivity(!showAllActivity)}
+                                            className="text-sm text-primary hover:text-primary-dark font-medium flex items-center gap-1 transition-colors"
+                                        >
+                                            {showAllActivity ? (
+                                                <>
+                                                    <span>Show Less</span>
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                                    </svg>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span>View All ({filteredAndSortedActivities.length})</span>
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Search, Filter, and Sort Controls */}
+                                <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 space-y-3">
+                                    {/* Search Bar */}
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={activitySearch}
+                                            onChange={(e) => setActivitySearch(e.target.value)}
+                                            placeholder="Search activities..."
+                                            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                        />
+                                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                        {activitySearch && (
+                                            <button
+                                                onClick={() => setActivitySearch('')}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Filter and Sort Row */}
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        {/* Filter by Type */}
+                                        <div className="flex-1">
+                                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Filter by Type</label>
+                                            <select
+                                                value={activityFilterType} 
+                                                onChange={(e) => setActivityFilterType(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors text-sm"
+                                            >
+                                                {activityTypes.map((type: string) => (
+                                                    <option key={type} value={type}>
+                                                        {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Sort By */}
+                                        <div className="flex-1">
+                                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Sort By</label>
+                                            <select
+                                                value={activitySortBy}
+                                                onChange={(e) => setActivitySortBy(e.target.value as 'recent' | 'oldest' | 'type')}
+                                                className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors text-sm"
+                                            >
+                                                <option value="recent">Most Recent</option>
+                                                <option value="oldest">Oldest First</option>
+                                                <option value="type">By Type</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Results Count */}
+                                    {(activitySearch || activityFilterType !== 'all') && (
+                                        <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                                                {filteredAndSortedActivities.length} {filteredAndSortedActivities.length === 1 ? 'result' : 'results'} found
+                                            </p>
+                                            {(activitySearch || activityFilterType !== 'all') && (
+                                                <button
+                                                    onClick={() => {
+                                                        setActivitySearch('');
+                                                        setActivityFilterType('all');
+                                                        setActivitySortBy('recent');
+                                                    }}
+                                                    className="text-sm text-primary hover:text-primary-dark font-medium flex items-center gap-1"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                    </svg>
+                                                    Clear All
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             {activityLoading ? (
                                 <div className="text-center py-8">
                                     <div className="w-8 h-8 border-2 border-t-transparent border-primary rounded-full animate-spin mx-auto"></div>
                                     <p className="mt-2 text-sm text-slate-500">Loading activity...</p>
                                 </div>
-                            ) : activity.length > 0 ? (
-                                activity.map(activityItem => {
-                                    const content = (
-                                        <div className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all w-full">
-                                            <div className="text-2xl pt-1">{activityItem.icon}</div>
-                                            <div className="flex-1">
-                                                <h4 className="font-semibold text-slate-900 dark:text-white">{activityItem.title}</h4>
-                                                <p className="text-sm text-slate-600 dark:text-slate-400">{activityItem.description}</p>
-                                                <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">{formatTimeAgo(activityItem.timestamp)}</p>
+                            ) : filteredAndSortedActivities.length > 0 ? (
+                                <>
+                                    {(showAllActivity ? filteredAndSortedActivities : filteredAndSortedActivities.slice(0, 10)).map((activityItem: ActivityItem) => {
+                                        const content = (
+                                            <div className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all w-full">
+                                                <div className="text-2xl pt-1">{activityItem.icon}</div>
+                                                <div className="flex-1">
+                                                    <h4 className="font-semibold text-slate-900 dark:text-white">{activityItem.title}</h4>
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400">{activityItem.description}</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">{formatTimeAgo(activityItem.timestamp)}</p>
+                                                </div>
+                                                <span className={`self-start px-2 py-1 text-xs font-medium rounded-full ${
+                                                    activityItem.type === 'reminder' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                                                    activityItem.type === 'form' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                    activityItem.type === 'event' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                    activityItem.type === 'login' || activityItem.type === 'logout' ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' :
+                                                    'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                                }`}>
+                                                    {activityItem.type}
+                                                </span>
                                             </div>
-                                            <span className={`self-start px-2 py-1 text-xs font-medium rounded-full ${
-                                                activityItem.type === 'reminder' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
-                                                activityItem.type === 'form' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                activityItem.type === 'event' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                activityItem.type === 'login' || activityItem.type === 'logout' ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' :
-                                                'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                            }`}>
-                                                {activityItem.type}
-                                            </span>
-                                        </div>
-                                    );
+                                        );
 
-                                    return activityItem.link ? (
-                                        <Link to={activityItem.link} key={activityItem.id} className="block">
-                                            {content}
-                                        </Link>
-                                    ) : (
-                                        <div key={activityItem.id}>
-                                            {content}
+                                        return activityItem.link ? (
+                                            <Link to={activityItem.link} key={activityItem.id} className="block">
+                                                {content}
+                                            </Link>
+                                        ) : (
+                                            <div key={activityItem.id}>
+                                                {content}
+                                            </div>
+                                        );
+                                    })}
+
+                                    {!showAllActivity && filteredAndSortedActivities.length > 10 && (
+                                        <div className="text-center pt-4">
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                Showing 10 of {filteredAndSortedActivities.length} activities
+                                            </p>
                                         </div>
-                                    );
-                                })
+                                    )}
+                                </>
                             ) : (
                                 <div className="text-center py-12">
-                                    <p className="text-slate-500 dark:text-slate-400">No recent activity to display.</p>
+                                    <div className="text-slate-400 mb-3">
+                                        <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M12 12h.01M12 12h.01M12 12h.01M12 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-slate-500 dark:text-slate-400 font-medium">
+                                        {activitySearch || activityFilterType !== 'all'
+                                            ? 'No activities found matching your criteria'
+                                            : 'No recent activity to display'}
+                                    </p>
+                                    {(activitySearch || activityFilterType !== 'all') && (
+                                        <button
+                                            onClick={() => {
+                                                setActivitySearch('');
+                                                setActivityFilterType('all');
+                                            }}
+                                            className="mt-4 text-primary hover:text-primary-dark font-medium"
+                                        >
+                                            Clear filters
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
                     )}
-
-                    {activeTab === 'settings' && (
-                        <div className="space-y-6">
-                            {/* Account Settings */}
-                            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-6">
-                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                    Account Settings
-                                </h3>
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded-lg">
-                                        <div>
-                                            <p className="font-medium">Email Notifications</p>
-                                            <p className="text-sm text-slate-500">Receive email updates about events</p>
-                                        </div>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" className="sr-only peer" defaultChecked />
-                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                                        </label>
-                                    </div>
-
-                                    <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded-lg">
-                                        <div>
-                                            <p className="font-medium">Calendar Reminders</p>
-                                            <p className="text-sm text-slate-500">Get notified about upcoming events</p>
-                                        </div>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" className="sr-only peer" defaultChecked />
-                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                                        </label>
-                                    </div>
-
-                                    <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded-lg">
-                                        <div>
-                                            <p className="font-medium">Dark Mode</p>
-                                            <p className="text-sm text-slate-500">Toggle dark mode theme</p>
-                                        </div>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" className="sr-only peer" />
-                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Privacy & Security */}
-                            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-6">
-                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                    Privacy & Security
-                                </h3>
-                                <div className="space-y-3">
-                                    <button className="w-full text-left p-3 bg-white dark:bg-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition-all flex items-center justify-between">
-                                        <span className="font-medium">Change Password</span>
-                                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-                                    <button className="w-full text-left p-3 bg-white dark:bg-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition-all flex items-center justify-between">
-                                        <span className="font-medium">Two-Factor Authentication</span>
-                                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-                                    <button className="w-full text-left p-3 bg-white dark:bg-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition-all flex items-center justify-between">
-                                        <span className="font-medium">Privacy Settings</span>
-                                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
-
-            {/* Notification Toast */}
-            {notification && (
-                <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
-                    notification.type === 'success'
-                        ? 'bg-green-500 text-white'
-                        : 'bg-red-500 text-white'
-                } animate-slide-in-right`}>
-                    <div className="flex items-center gap-2">
-                        {notification.type === 'success' ? (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                        ) : (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        )}
-                        <span className="font-medium">{notification.message}</span>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
- 
+
 export default Profile;

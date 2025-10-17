@@ -7,11 +7,21 @@ import { useUser } from '../contexts/UserContext';
 import { useGrades } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useCalendar } from '../contexts/CalendarContext';
-import { 
-    InstructorIcon, LocationIcon, LibraryIcon, GymkhanaIcon, 
-    PortalIcon, CalendarCheckIcon, HealthIcon, FeeIcon, 
+import {
+    InstructorIcon, LocationIcon, LibraryIcon, GymkhanaIcon,
+    PortalIcon, CalendarCheckIcon, HealthIcon, FeeIcon,
     WebsiteIcon, EmailIcon, LmsIcon, CdcIcon, MapIcon, RefreshIcon, ScholarshipIcon
 } from '../components/icons/SidebarIcons';
+
+interface QuickLink {
+    id: string;
+    name: string;
+    href: string;
+    icon: React.ReactNode;
+    isExternal: boolean;
+    color: string;
+    isCustom?: boolean;
+}
 
 interface WeatherData {
     temp: string;
@@ -55,6 +65,19 @@ const getWeatherInfoFromCode = (code: number, isDay: number): { desc: string, ic
     }
 };
 
+// Default quick links
+const defaultQuickLinks: QuickLink[] = [
+    { id: '1', name: 'MIS Portal', href: 'https://mis.iitism.ac.in/', icon: <PortalIcon />, isExternal: true, color: 'text-blue-600 dark:text-blue-400', isCustom: false },
+    { id: '2', name: 'Student Email', href: 'https://outlook.office.com/mail/', icon: <EmailIcon />, isExternal: true, color: 'text-red-600 dark:text-red-400', isCustom: false },
+    { id: '3', name: 'CDC Portal', href: 'https://www.iitism.ac.in/career-development-centre', icon: <CdcIcon />, isExternal: true, color: 'text-green-600 dark:text-green-400', isCustom: false },
+    { id: '4', name: 'Central Library', href: 'https://library.iitism.ac.in/', icon: <LibraryIcon />, isExternal: true, color: 'text-purple-600 dark:text-purple-400', isCustom: false },
+    { id: '5', name: 'Fee Payment/Pre-Registration', href: 'https://pre-registration.iitism.ac.in/login/', icon: <FeeIcon />, isExternal: true, color: 'text-orange-600 dark:text-orange-400', isCustom: false },
+    { id: '6', name: 'Scholarships', href: 'https://www.iitism.ac.in/name-of-scholarships', icon: <ScholarshipIcon />, isExternal: true, color: 'text-teal-600 dark:text-teal-400', isCustom: false },
+    { id: '7', name: 'Student Gymkhana', href: 'https://sgiitism.in/', icon: <GymkhanaIcon />, isExternal: true, color: 'text-indigo-600 dark:text-indigo-400', isCustom: false },
+    { id: '8', name: 'Health Centre', href: 'https://people.iitism.ac.in/~healthcenter/index.php', icon: <HealthIcon />, isExternal: true, color: 'text-pink-600 dark:text-pink-400', isCustom: false },
+    { id: '9', name: 'IIT(ISM) Website', href: 'https://www.iitism.ac.in/', icon: <WebsiteIcon />, isExternal: true, color: 'text-cyan-600 dark:text-cyan-400', isCustom: false },
+];
+
 const Dashboard: React.FC = () => {
     const [todaysClasses, setTodaysClasses] = useState<ClassSchedule[]>([]);
     const [latestItems, setLatestItems] = useState<NewsItem[]>([]);
@@ -69,18 +92,94 @@ const Dashboard: React.FC = () => {
     const { scheduleData, loading: scheduleLoading } = useSchedule();
     const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey, toggleReminderPreference } = useCalendar();
 
-    // Quick Links with better organization
-    const quickLinks = [
-        { name: 'MIS Portal', href: 'https://mis.iitism.ac.in/', icon: <PortalIcon />, isExternal: true, color: 'text-blue-600 dark:text-blue-400' },
-        { name: 'Student Email', href: 'https://outlook.office.com/mail/', icon: <EmailIcon />, isExternal: true, color: 'text-red-600 dark:text-red-400' },
-        { name: 'CDC Portal', href: 'https://www.iitism.ac.in/career-development-centre', icon: <CdcIcon />, isExternal: true, color: 'text-green-600 dark:text-green-400' },
-        { name: 'Central Library', href: 'https://library.iitism.ac.in/', icon: <LibraryIcon />, isExternal: true, color: 'text-purple-600 dark:text-purple-400' },
-        { name: 'Fee Payment/Pre-Registration', href: 'https://pre-registration.iitism.ac.in/login/', icon: <FeeIcon />, isExternal: true, color: 'text-orange-600 dark:text-orange-400' },
-        { name: 'Scholarships', href: 'https://www.iitism.ac.in/name-of-scholarships', icon: <ScholarshipIcon />, isExternal: true, color: 'text-teal-600 dark:text-teal-400' },
-        { name: 'Student Gymkhana', href: 'https://sgiitism.in/', icon: <GymkhanaIcon />, isExternal: true, color: 'text-indigo-600 dark:text-indigo-400' },
-        { name: 'Health Centre', href: 'https://people.iitism.ac.in/~healthcenter/index.php', icon: <HealthIcon />, isExternal: true, color: 'text-pink-600 dark:text-pink-400' },
-        { name: 'IIT(ISM) Website', href: 'https://www.iitism.ac.in/', icon: <WebsiteIcon />, isExternal: true, color: 'text-cyan-600 dark:text-cyan-400' },
-    ];
+    // Quick Links state management
+    const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
+    const [isManagingLinks, setIsManagingLinks] = useState(false);
+    const [editingLink, setEditingLink] = useState<QuickLink | null>(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newLink, setNewLink] = useState({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+
+    // Load quick links from localStorage on mount
+    useEffect(() => {
+        const savedLinks = localStorage.getItem('customQuickLinks');
+        if (savedLinks) {
+            try {
+                const parsed = JSON.parse(savedLinks);
+                // Reconstruct icons for saved links
+                const linksWithIcons = parsed.map((link: QuickLink) => ({
+                    ...link,
+                    icon: link.isCustom ? <WebsiteIcon /> : getDefaultIcon(link.id)
+                }));
+                setQuickLinks(linksWithIcons);
+            } catch (e) {
+                setQuickLinks(defaultQuickLinks);
+            }
+        } else {
+            setQuickLinks(defaultQuickLinks);
+        }
+    }, []);
+
+    // Save quick links to localStorage
+    const saveQuickLinks = (links: QuickLink[]) => {
+        const linksToSave = links.map(link => ({
+            ...link,
+            icon: null // Don't save React nodes
+        }));
+        localStorage.setItem('customQuickLinks', JSON.stringify(linksToSave));
+        setQuickLinks(links);
+    };
+
+    // Get default icon for preloaded links
+    const getDefaultIcon = (id: string) => {
+        const defaultLink = defaultQuickLinks.find(link => link.id === id);
+        return defaultLink?.icon || <WebsiteIcon />;
+    };
+
+    // Add new quick link
+    const handleAddLink = () => {
+        if (newLink.name && newLink.href) {
+            const link: QuickLink = {
+                id: Date.now().toString(),
+                name: newLink.name,
+                href: newLink.href.startsWith('http') ? newLink.href : `https://${newLink.href}`,
+                icon: <WebsiteIcon />,
+                isExternal: true,
+                color: newLink.color,
+                isCustom: true
+            };
+            const updatedLinks = [...quickLinks, link];
+            saveQuickLinks(updatedLinks);
+            setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+            setShowAddModal(false);
+        }
+    };
+
+    // Remove quick link
+    const handleRemoveLink = (id: string) => {
+        const updatedLinks = quickLinks.filter(link => link.id !== id);
+        saveQuickLinks(updatedLinks);
+    };
+
+    // Edit quick link
+    const handleEditLink = (link: QuickLink) => {
+        if (editingLink && editingLink.id === link.id) {
+            const updatedLinks = quickLinks.map(l =>
+                l.id === editingLink.id
+                    ? { ...editingLink, href: editingLink.href.startsWith('http') ? editingLink.href : `https://${editingLink.href}` }
+                    : l
+            );
+            saveQuickLinks(updatedLinks);
+            setEditingLink(null);
+        } else {
+            setEditingLink({ ...link });
+        }
+    };
+
+    // Reset to default links
+    const handleResetToDefault = () => {
+        saveQuickLinks(defaultQuickLinks);
+        setIsManagingLinks(false);
+    };
 
     useEffect(() => {
         if (scheduleData) {
@@ -283,7 +382,7 @@ const Dashboard: React.FC = () => {
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Complete</p>
                             </div>
-                        </div>
+                        </div> 
 
                         {/* Progress Bar */}
                         <div className="relative">
@@ -631,23 +730,98 @@ const Dashboard: React.FC = () => {
                 <div className="space-y-6">
                     {/* Quick Links - Enhanced Grid */}
                     <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                        <h3 className="text-lg font-semibold mb-4">Quick Access</h3>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold">Quick Access</h3>
+                            <button
+                                onClick={() => setIsManagingLinks(!isManagingLinks)}
+                                className="text-sm text-primary hover:text-primary-dark font-medium transition-colors"
+                            >
+                                {isManagingLinks ? 'Done' : 'Manage'}
+                            </button>
+                        </div>
+
+                        {isManagingLinks && (
+                            <div className="mb-4 space-y-2">
+                                <button
+                                    onClick={() => setShowAddModal(true)}
+                                    className="w-full py-2 px-4 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors text-sm font-medium"
+                                >
+                                    + Add New Link
+                                </button>
+                                <button
+                                    onClick={handleResetToDefault}
+                                    className="w-full py-2 px-4 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors text-sm font-medium"
+                                >
+                                    Reset to Default
+                                </button>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-2 gap-3">
                             {quickLinks.map(link => (
-                                <a
-                                    key={link.name}
-                                    href={link.href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex flex-col items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all hover:shadow-md group"
-                                >
-                                    <div className={`text-2xl mb-2 ${link.color} group-hover:scale-110 transition-transform`}>
-                                        {link.icon}
-                                    </div>
-                                    <span className="text-xs text-center text-slate-600 dark:text-slate-300 group-hover:text-primary dark:group-hover:text-secondary">
-                                        {link.name}
-                                    </span>
-                                </a>
+                                <div key={link.id} className="relative group">
+                                    {editingLink?.id === link.id ? (
+                                        <div className="p-3 rounded-lg border-2 border-primary bg-slate-50 dark:bg-slate-800 space-y-2">
+                                            <input
+                                                type="text"
+                                                value={editingLink.name}
+                                                onChange={(e) => setEditingLink({ ...editingLink, name: e.target.value })}
+                                                className="w-full px-2 py-1 text-xs border rounded dark:bg-slate-700 dark:border-slate-600"
+                                                placeholder="Name"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={editingLink.href}
+                                                onChange={(e) => setEditingLink({ ...editingLink, href: e.target.value })}
+                                                className="w-full px-2 py-1 text-xs border rounded dark:bg-slate-700 dark:border-slate-600"
+                                                placeholder="URL"
+                                            />
+                                            <button
+                                                onClick={() => handleEditLink(link)}
+                                                className="w-full py-1 bg-primary text-white rounded text-xs font-medium"
+                                            >
+                                                Save
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <a
+                                            href={link.href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex flex-col items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all hover:shadow-md"
+                                        >
+                                            <div className={`text-2xl mb-2 ${link.color} group-hover:scale-110 transition-transform`}>
+                                                {link.icon}
+                                            </div>
+                                            <span className="text-xs text-center text-slate-600 dark:text-slate-300 group-hover:text-primary dark:group-hover:text-secondary">
+                                                {link.name}
+                                            </span>
+                                        </a>
+                                    )}
+
+                                    {isManagingLinks && editingLink?.id !== link.id && (
+                                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => handleEditLink(link)}
+                                                className="p-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 shadow-md"
+                                                title="Edit"
+                                            >
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                onClick={() => handleRemoveLink(link.id)}
+                                                className="p-1 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-md"
+                                                title="Remove"
+                                            >
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             ))}
                         </div>
                     </div>
@@ -681,6 +855,102 @@ const Dashboard: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Add Link Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-semibold">Add Quick Link</h3>
+                            <button
+                                onClick={() => {
+                                    setShowAddModal(false);
+                                    setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+                                }}
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Link Name</label>
+                                <input
+                                    type="text"
+                                    value={newLink.name}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewLink({ ...newLink, name: e.target.value })}
+                                    placeholder="e.g., Google Drive"
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 focus:ring-2 focus:ring-primary"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">URL</label>
+                                <input
+                                    type="text"
+                                    value={newLink.href}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewLink({ ...newLink, href: e.target.value })}
+                                    placeholder="e.g., drive.google.com"
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 focus:ring-2 focus:ring-primary"
+                                />
+                                <p className="text-xs text-slate-500 mt-1">https:// will be added automatically if not provided</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Color</label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {[
+                                        { name: 'Blue', value: 'text-blue-600 dark:text-blue-400' },
+                                        { name: 'Red', value: 'text-red-600 dark:text-red-400' },
+                                        { name: 'Green', value: 'text-green-600 dark:text-green-400' },
+                                        { name: 'Purple', value: 'text-purple-600 dark:text-purple-400' },
+                                        { name: 'Orange', value: 'text-orange-600 dark:text-orange-400' },
+                                        { name: 'Teal', value: 'text-teal-600 dark:text-teal-400' },
+                                        { name: 'Pink', value: 'text-pink-600 dark:text-pink-400' },
+                                        { name: 'Indigo', value: 'text-indigo-600 dark:text-indigo-400' },
+                                    ].map(color => (
+                                        <button
+                                            key={color.value}
+                                            onClick={() => setNewLink({ ...newLink, color: color.value })}
+                                            className={`p-2 rounded-lg border-2 transition-all ${
+                                                newLink.color === color.value
+                                                    ? 'border-primary bg-primary/10'
+                                                    : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
+                                            }`}
+                                        >
+                                            <div className={`${color.value} text-2xl`}>
+                                                <WebsiteIcon />
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 pt-2">
+                                <button
+                                    onClick={() => {
+                                        setShowAddModal(false);
+                                        setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+                                    }}
+                                    className="flex-1 py-2 px-4 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAddLink}
+                                    disabled={!newLink.name || !newLink.href}
+                                    className="flex-1 py-2 px-4 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Add Link
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
