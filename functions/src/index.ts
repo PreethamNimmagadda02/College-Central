@@ -157,6 +157,33 @@ CRITICAL VALIDATION:
     if (!data.events) data.events = [];
     if (!data.announcements) data.announcements = [];
 
+    // Fix and validate URLs
+    const validUrls = [
+      'https://www.iitism.ac.in',
+      'https://www.iitism.ac.in/dept-event-list',
+      'https://www.iitism.ac.in/all-active-notices',
+      'https://www.iitism.ac.in/seminar-1',
+      'https://people.iitism.ac.in/~mbc/mbcpress_release'
+    ];
+
+    // Ensure all events have valid URLs
+    data.events = data.events.map(event => {
+      if (!event.sourceUrl || !validUrls.includes(event.sourceUrl)) {
+        // Default to dept-event-list for events
+        event.sourceUrl = 'https://www.iitism.ac.in/dept-event-list';
+      }
+      return event;
+    });
+
+    // Ensure all announcements have valid URLs
+    data.announcements = data.announcements.map(announcement => {
+      if (!announcement.sourceUrl || !validUrls.includes(announcement.sourceUrl)) {
+        // Default to all-active-notices for announcements
+        announcement.sourceUrl = 'https://www.iitism.ac.in/all-active-notices';
+      }
+      return announcement;
+    });
+
     return data;
   } catch (error) {
     console.error('Error fetching IIT Dhanbad updates:', error);
