@@ -470,7 +470,6 @@ const Profile: React.FC = () => {
                        <div className="space-y-4">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold">Recent Activity</h3>
-                                <button className="text-sm text-primary hover:underline">View All</button>
                             </div>
                             {activityLoading ? (
                                 <div className="text-center py-8">
