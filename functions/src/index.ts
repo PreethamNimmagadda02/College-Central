@@ -54,41 +54,27 @@ CRITICAL: Today's date is October 16, 2025. ONLY include information from 2025 o
 
 Search for and provide ONLY RECENT information from these SPECIFIC SOURCES:
 
-OFFICIAL WEBSITES (PRIORITY SOURCES):
-- IIT ISM official website: www.iitism.ac.in
-- Department events: www.iitism.ac.in/dept-event-list
-- Official notices: www.iitism.ac.in/all-active-notices
-- Seminars: www.iitism.ac.in/seminar-1
-- Press releases: people.iitism.ac.in/~mbc/mbcpress_release
+OFFICIAL WEBSITES (PRIORITY - Search these first):
+- https://www.iitism.ac.in (main site)
+- https://www.iitism.ac.in/dept-event-list (department events)
+- https://www.iitism.ac.in/all-active-notices (official notices)
+- https://www.iitism.ac.in/seminar-1 (seminars)
+- https://people.iitism.ac.in/~mbc/mbcpress_release (press releases)
 - IIT ISM Alumni Association website
 
-NEWS SOURCES:
-- Economic Times (IIT Dhanbad related news)
-- India Today (IIT Dhanbad related news)
-- Newsonair.gov.in (IIT Dhanbad related news)
-- NDTV (IIT Dhanbad related news)
-- India Times (IIT Dhanbad related news)
-- The Jharkhand Story (IIT Dhanbad related news)
-- Hindustan Times (IIT Dhanbad related news)
+NEWS SOURCES (Search for "IIT Dhanbad" OR "IIT ISM"):
+- economictimes.indiatimes.com
+- indiatoday.in
+- newsonair.gov.in
+- ndtv.com
+- timesofindia.indiatimes.com
+- thejharkhandstory.com
+- hindustantimes.com
 
-INSTAGRAM PAGES (for events and announcements):
-- @iit_ism
-- @concetto.iitism
-- @srijan.iitism
-- @parakram.iitism
-- @studentgymkhana.iitism
-- @basant.iitism
-
-LINKEDIN PAGES (for events, placements, and professional updates):
-- IIT (ISM) Dhanbad official page
-- Concetto - IIT (ISM) Dhanbad
-- Parakram - IIT (ISM) Dhanbad
-- Srijan - IIT (ISM) Dhanbad
-- Basant - IIT (ISM) Dhanbad
-- Student Gymkhana IIT (ISM) Dhanbad
-
-FACEBOOK PAGES:
-- IIT (ISM) Dhanbad official page
+SOCIAL MEDIA (Check recent posts):
+- Instagram: iit_ism, concetto.iitism, srijan.iitism, parakram.iitism, studentgymkhana.iitism, basant.iitism
+- LinkedIn: Search for "IIT ISM Dhanbad", "Concetto IIT ISM", "Srijan IIT ISM", "Parakram IIT ISM", "Basant IIT ISM", "Student Gymkhana IIT ISM"
+- Facebook: IIT (ISM) Dhanbad official page
 
 INFORMATION TO FETCH:
 1. UPCOMING campus events (October 2025 onwards - workshops, seminars, cultural events, technical fests, placements)
@@ -96,14 +82,16 @@ INFORMATION TO FETCH:
 3. LATEST campus news (October 2025 - achievements, initiatives, collaborations, infrastructure updates)
 
 MANDATORY REQUIREMENTS:
-- ALL dates MUST be from October 2025 or later
-- Only fetch from the sources listed above
-- Prioritize official IIT ISM websites and social media pages
-- For fests: Focus on Concetto (technical), Srijan (literary-cultural), Basant (spring fest), Parakram (sports)
-- Include Mailerdemon updates if found
-- If you cannot find recent information, create realistic upcoming events based on typical IIT Dhanbad academic calendar
-- Use realistic dates between October 16, 2025 and December 31, 2025
-- Provide ACTUAL source URLs when possible
+- Generate realistic upcoming events and announcements based on typical IIT Dhanbad academic calendar
+- ALL dates MUST be from October 16, 2025 onwards
+- Use REAL URLs from the sources listed above (iitism.ac.in/dept-event-list, iitism.ac.in/all-active-notices, etc.)
+- For sourceUrl field, use the appropriate URL from the list above based on content type:
+  * Events: https://www.iitism.ac.in/dept-event-list
+  * Notices: https://www.iitism.ac.in/all-active-notices
+  * Seminars: https://www.iitism.ac.in/seminar-1
+  * Press releases: https://people.iitism.ac.in/~mbc/mbcpress_release
+- For fests: Concetto (technical), Srijan (literary-cultural), Basant (spring fest), Parakram (sports)
+- Generate 8-12 realistic items based on typical IIT academic calendar patterns
 
 For each item, provide:
 - Title
@@ -141,10 +129,10 @@ Return your response in valid JSON format:
 }
 
 CRITICAL VALIDATION:
-- Verify ALL dates are >= 2025-07-01
-- No 2024 dates allowed
-- Provide at least 8-12 realistic recent/upcoming items
-- If real data is unavailable, generate realistic upcoming events based on typical IIT academic calendar`;
+- Verify ALL dates are >= 2025-10-16
+- All sourceUrl fields must use one of the official URLs listed above (iitism.ac.in URLs)
+- Generate realistic content appropriate for each source type
+- Include at least 8-12 diverse items (mix of events and announcements)`;
 
   try {
     const result = await model.generateContent(prompt);
