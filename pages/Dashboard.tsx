@@ -372,7 +372,7 @@ const Dashboard: React.FC = () => {
                                     {greeting.text},
                                 </h1>
                                 <p className="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-white">
-                                    {user.fullName?.split(' ')[0] || user.name.split(' ')[0]}!
+                                    {user.fullName?.split(' ')[0] || user.name.split(' ')[0]}
                                 </p>
                             </div>
                         </div>
