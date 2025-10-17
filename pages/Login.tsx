@@ -429,15 +429,65 @@ const Login: React.FC = () => {
             </div>
         </div>
        </div>
-       <div className="hidden bg-cover bg-center lg:block" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop')" }}>
-          <div className="flex h-full w-full flex-col justify-between bg-black/50 p-10">
-              <div className="flex items-center gap-3 text-white">
-                  <LogoIcon className="h-10 w-10 text-white" />
-                  <span className="text-xl font-semibold">IIT(ISM) Student Hub</span>
+       <div className="hidden bg-cover bg-center lg:block relative overflow-hidden" style={{ backgroundImage: "url('https://www.iitism.ac.in/iitismnew/assets/img/gallery/main2.jpg')" }}>
+          {/* Overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-slate-900/70 to-purple-900/80"></div>
+
+          <div className="relative flex h-full w-full flex-col justify-between p-10">
+              {/* Header */}
+              <div className="space-y-2">
+                  <div className="flex items-center gap-3 text-white">
+                      <div className="relative">
+                          <div className="absolute inset-0 bg-white rounded-xl blur opacity-40"></div>
+                          <div className="relative bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/20">
+                              <LogoIcon className="h-8 w-8 text-white" />
+                          </div>
+                      </div>
+                      <div>
+                          <span className="text-xl font-bold">College Central</span>
+                          <p className="text-xs text-white/80">IIT (ISM) Dhanbad</p>
+                      </div>
+                  </div>
               </div>
-              <div className="text-white">
-                  <h1 className="text-4xl font-bold leading-tight">Your Gateway to Campus Life.</h1>
-                  <p className="mt-2 text-lg text-white/80">All your academic and campus resources, right at your fingertips.</p>
+
+              {/* Main Content */}
+              <div className="text-white space-y-6">
+                  <div className="space-y-4">
+                      <h1 className="text-5xl font-extrabold leading-tight">
+                          Welcome to<br />
+                          <span className="bg-gradient-to-r from-blue-300 via-purple-300 to-blue-300 bg-clip-text text-transparent">
+                              IIT (ISM) Dhanbad
+                          </span>
+                      </h1>
+                      <p className="text-xl text-white/90 max-w-md leading-relaxed">
+                          Your one-stop hub for academics, campus life, and everything in between.
+                      </p>
+                  </div>
+
+                  {/* Features */}
+                  <div className="grid grid-cols-2 gap-4 max-w-lg">
+                      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4">
+                          <div className="text-3xl mb-2">📚</div>
+                          <p className="text-sm font-medium">Academic Resources</p>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4">
+                          <div className="text-3xl mb-2">📅</div>
+                          <p className="text-sm font-medium">Class Schedules</p>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4">
+                          <div className="text-3xl mb-2">🎯</div>
+                          <p className="text-sm font-medium">Track Progress</p>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4">
+                          <div className="text-3xl mb-2">🗺️</div>
+                          <p className="text-sm font-medium">Campus Map</p>
+                      </div>
+                  </div>
+              </div>
+
+              {/* Footer */}
+              <div className="text-white/60 text-sm">
+                  <p>© 2025 College Central. All rights reserved.</p>
               </div>
           </div>
       </div>
