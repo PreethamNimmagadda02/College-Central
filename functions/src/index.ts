@@ -234,6 +234,7 @@ async function storeAnnouncements(announcements: Omit<Announcement, 'id'>[]): Pr
       .where('date', '==', announcement.date)
       .limit(1)
       .get();
+    
 
     if (existingQuery.empty) {
       // Add new announcement
