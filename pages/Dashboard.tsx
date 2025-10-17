@@ -339,7 +339,7 @@ const Dashboard: React.FC = () => {
                 <div className="group bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-green-100 font-medium">Total Credits</p>
+                            <p className="text-sm text-green-100 font-medium">Credits Achieved</p>
                             <p className="text-4xl font-bold text-white mt-2">{gradesData?.totalCredits ?? 'N/A'}</p>
                         </div>
                         <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
