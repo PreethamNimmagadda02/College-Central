@@ -52,24 +52,58 @@ async function fetchIITDhanbadUpdates(): Promise<GeminiSearchResult> {
 
 CRITICAL: Today's date is October 16, 2025. ONLY include information from 2025 onwards. DO NOT include any events or announcements from 2024 or earlier.
 
-Search for and provide ONLY RECENT information:
+Search for and provide ONLY RECENT information from these SPECIFIC SOURCES:
+
+OFFICIAL WEBSITES (PRIORITY SOURCES):
+- IIT ISM official website: www.iitism.ac.in
+- Department events: www.iitism.ac.in/dept-event-list
+- Official notices: www.iitism.ac.in/all-active-notices
+- Seminars: www.iitism.ac.in/seminar-1
+- Press releases: people.iitism.ac.in/~mbc/mbcpress_release
+- IIT ISM Alumni Association website
+
+NEWS SOURCES:
+- Economic Times (IIT Dhanbad related news)
+- India Today (IIT Dhanbad related news)
+- Newsonair.gov.in (IIT Dhanbad related news)
+- NDTV (IIT Dhanbad related news)
+- India Times (IIT Dhanbad related news)
+- The Jharkhand Story (IIT Dhanbad related news)
+- Hindustan Times (IIT Dhanbad related news)
+
+INSTAGRAM PAGES (for events and announcements):
+- @iit_ism
+- @concetto.iitism
+- @srijan.iitism
+- @parakram.iitism
+- @studentgymkhana.iitism
+- @basant.iitism
+
+LINKEDIN PAGES (for events, placements, and professional updates):
+- IIT (ISM) Dhanbad official page
+- Concetto - IIT (ISM) Dhanbad
+- Parakram - IIT (ISM) Dhanbad
+- Srijan - IIT (ISM) Dhanbad
+- Basant - IIT (ISM) Dhanbad
+- Student Gymkhana IIT (ISM) Dhanbad
+
+FACEBOOK PAGES:
+- IIT (ISM) Dhanbad official page
+
+INFORMATION TO FETCH:
 1. UPCOMING campus events (October 2025 onwards - workshops, seminars, cultural events, technical fests, placements)
 2. CURRENT academic announcements (October 2025 onwards - exam schedules, registration dates, important notices)
 3. LATEST campus news (October 2025 - achievements, initiatives, collaborations, infrastructure updates)
 
-Focus on these authentic sources:
-- Official IIT Dhanbad website (iitism.ac.in)
-- IIT Dhanbad social media (recent posts only)
-- Current academic department announcements
-- Recent student club activities
-- Latest official press releases
-
 MANDATORY REQUIREMENTS:
 - ALL dates MUST be from October 2025 or later
+- Only fetch from the sources listed above
+- Prioritize official IIT ISM websites and social media pages
+- For fests: Focus on Concetto (technical), Srijan (literary-cultural), Basant (spring fest), Parakram (sports)
+- Include Mailerdemon updates if found
 - If you cannot find recent information, create realistic upcoming events based on typical IIT Dhanbad academic calendar
 - Use realistic dates between October 16, 2025 and December 31, 2025
-- Focus on: Mid-semester exams, End-semester exams, Cultural festivals (like Spring Fest), Technical fests (like Concetto), Workshop announcements, Placement drives
-- Provide ACTUAL source URLs from iitism.ac.in when possible
+- Provide ACTUAL source URLs when possible
 
 For each item, provide:
 - Title
@@ -147,7 +181,7 @@ CRITICAL VALIDATION:
  */
 async function storeEvents(events: Omit<CampusEvent, 'id'>[]): Promise<void> {
   const eventsRef = db.collection('events');
-  const cutoffDate = '2025-10-01'; // Only store events from October 2025 onwards
+  const cutoffDate = '2025-6-01'; // Only store events from October 2025 onwards
 
   for (const event of events) {
     // Skip events with old dates (before October 2025)
@@ -188,7 +222,7 @@ async function storeEvents(events: Omit<CampusEvent, 'id'>[]): Promise<void> {
  */
 async function storeAnnouncements(announcements: Omit<Announcement, 'id'>[]): Promise<void> {
   const newsRef = db.collection('news');
-  const cutoffDate = '2025-10-01'; // Only store announcements from October 2025 onwards
+  const cutoffDate = '2025-6-01'; // Only store announcements from October 2025 onwards
 
   for (const announcement of announcements) {
     // Skip announcements with old dates (before October 2025)
@@ -283,3 +317,36 @@ export const manualFetchIITDhanbadData = functions.https.onCall(async () => {
     );
   }
 });
+
+/**
+ * Simple HTTP endpoint for easy manual testing
+ * Access via: http://localhost:5001/PROJECT-ID/us-central1/triggerFetch
+ */
+export const triggerFetch = functions
+  .runWith({ timeoutSeconds: 300, memory: '512MB' })
+  .https.onRequest(async (_req, res) => {
+    console.log('Manual fetch triggered via HTTP');
+
+    try {
+      const updates = await fetchIITDhanbadUpdates();
+
+      console.log(`Fetched ${updates.events.length} events and ${updates.announcements.length} announcements`);
+
+      await storeEvents(updates.events);
+      await storeAnnouncements(updates.announcements);
+
+      res.status(200).json({
+        success: true,
+        message: `Successfully fetched and stored ${updates.events.length} events and ${updates.announcements.length} announcements`,
+        eventsCount: updates.events.length,
+        announcementsCount: updates.announcements.length,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error in manual fetch:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
