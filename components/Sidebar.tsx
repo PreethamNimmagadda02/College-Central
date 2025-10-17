@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { DashboardIcon, GradesIcon, ScheduleIcon, EventsIcon, AnnouncementsIcon, DirectoryIcon, ProfileIcon, LogoutIcon, MapIcon, FormsIcon, CalendarIcon } from './icons/SidebarIcons';
 import { useAuth } from '../hooks/useAuth';
+import { useUser } from '../contexts/UserContext';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -11,13 +12,13 @@ interface SidebarProps {
 }
 
 const CollapseIcon: React.FC = () => (
-    <svg className="w-6 h-6 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+    <svg className="w-5 h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
     </svg>
 );
 
 const ExpandIcon: React.FC = () => (
-    <svg className="w-6 h-6 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+    <svg className="w-5 h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5" />
     </svg>
 );
@@ -26,6 +27,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
   const trigger = useRef<HTMLButtonElement>(null);
   const sidebar = useRef<HTMLElement>(null);
   const { logout } = useAuth();
+  const { user } = useUser();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -47,24 +49,31 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
     document.addEventListener('click', clickHandler);
     return () => document.removeEventListener('click', clickHandler);
   });
-  
-  const menuItems = [
-    { path: '/', icon: <DashboardIcon />, label: 'Dashboard' },
-    { path: '/grades', icon: <GradesIcon />, label: 'Grades' },
-    { path: '/schedule', icon: <ScheduleIcon />, label: 'Schedule' },
-    { path: '/academic-calendar', icon: <CalendarIcon />, label: 'Academic Calendar' },
-    { path: '/news-and-events', icon: <AnnouncementsIcon />, label: 'News & Events' },
-    { path: '/directory', icon: <DirectoryIcon />, label: 'Campus Directory' },
-    { path: '/campus-map', icon: <MapIcon />, label: 'Campus Map' },
-    { path: '/college-forms', icon: <FormsIcon />, label: 'College Forms' },
-  ];
+
+  const menuSections = {
+    academics: [
+      { path: '/', icon: <DashboardIcon />, label: 'Dashboard' },
+      { path: '/grades', icon: <GradesIcon />, label: 'Grades' },
+      { path: '/schedule', icon: <ScheduleIcon />, label: 'Schedule' },
+      { path: '/academic-calendar', icon: <CalendarIcon />, label: 'Academic Calendar' },
+    ],
+    campus: [
+      { path: '/news-and-events', icon: <AnnouncementsIcon />, label: 'News & Events' },
+      { path: '/directory', icon: <DirectoryIcon />, label: 'Directory' },
+      { path: '/campus-map', icon: <MapIcon />, label: 'Campus Map' },
+      { path: '/college-forms', icon: <FormsIcon />, label: 'Forms' },
+    ],
+  };
 
   const tooltipClasses = `
-    absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3 py-1.5 rounded-md
-    bg-slate-800 dark:bg-slate-900 text-white text-sm font-medium shadow-lg
-    transition-opacity duration-200
+    absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1.5 rounded-lg
+    bg-slate-900 dark:bg-slate-800 text-white text-xs font-medium shadow-xl
+    border border-slate-700 dark:border-slate-600
+    transition-all duration-150
     invisible opacity-0 group-hover:visible group-hover:opacity-100
-    whitespace-nowrap z-50
+    whitespace-nowrap z-50 pointer-events-none
+    before:content-[''] before:absolute before:right-full before:top-1/2 before:-translate-y-1/2
+    before:border-4 before:border-transparent before:border-r-slate-900 dark:before:border-r-slate-800
     ${!sidebarCollapsed ? 'hidden' : ''}
   `;
 
@@ -72,86 +81,217 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
     <>
       {/* Sidebar backdrop (mobile) */}
       <div
-        className={`fixed inset-0 bg-slate-900 bg-opacity-30 z-30 lg:hidden lg:z-auto transition-opacity duration-200 ${
+        className={`fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 lg:hidden transition-opacity duration-300 ${
           sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
+        onClick={() => setSidebarOpen(false)}
         aria-hidden="true"
       ></div>
 
       <aside
         ref={sidebar}
-        className={`fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] flex-col bg-white dark:bg-dark-card border-r border-slate-200 dark:border-slate-700 duration-300 ease-in-out transition-all overflow-visible
-          ${sidebarCollapsed ? 'w-20' : 'w-64'}
+        className={`fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] flex-col
+          bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl
+          border-r border-slate-200/50 dark:border-slate-700/50
+          shadow-xl
+          duration-300 ease-in-out transition-all overflow-visible
+          ${sidebarCollapsed ? 'w-20' : 'w-72'}
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        <nav className={`flex flex-col flex-1 px-3 py-4 mt-4 ${!sidebarCollapsed ? 'overflow-y-auto' : ''}`}>
-          <ul className="flex flex-col gap-1.5 flex-1">
-            {menuItems.map((item) => (
+        {/* User Profile Section */}
+        {!sidebarCollapsed && (
+          <div className="px-4 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900">
+            <div className="flex items-center gap-3 mb-3">
+              {user?.profilePicture ? (
+                <img
+                  src={user.profilePicture}
+                  alt={user.fullName || user.name}
+                  className="w-12 h-12 rounded-full object-cover shadow-lg ring-2 ring-white dark:ring-slate-700"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg ring-2 ring-white dark:ring-slate-700">
+                  {user?.fullName?.charAt(0) || user?.name?.charAt(0) || 'S'}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                  {user?.fullName || user?.name || 'Student'}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                  {user?.rollNumber || user?.admissionNumber || 'Roll No.'}
+                </p>
+              </div>
+            </div>
+            {/* Additional User Info */}
+            <div className="space-y-1.5 px-1">
+              {user?.branch && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-slate-400 dark:text-slate-500">📚</span>
+                  <span className="text-slate-600 dark:text-slate-400 truncate font-medium">
+                    {user.branch}
+                  </span>
+                </div>
+              )}
+              {(user?.year || user?.semester) && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-slate-400 dark:text-slate-500">🎓</span>
+                  <span className="text-slate-600 dark:text-slate-400 font-medium">
+                    {user.year ? `Year ${user.year}` : ''}
+                    {user.year && user.semester ? ' • ' : ''}
+                    {user.semester ? `Sem ${user.semester}` : ''}
+                  </span>
+                </div>
+              )}
+              {user?.hostel && user.hostel !== 'Not Set' && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-slate-400 dark:text-slate-500">🏠</span>
+                  <span className="text-slate-600 dark:text-slate-400 truncate font-medium">
+                    {user.hostel}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Collapsed User Avatar */}
+        {sidebarCollapsed && (
+          <div className="px-3 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-center">
+            {user?.profilePicture ? (
+              <img
+                src={user.profilePicture}
+                alt={user.fullName || user.name}
+                className="w-10 h-10 rounded-full object-cover shadow-lg ring-2 ring-white dark:ring-slate-700"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg ring-2 ring-white dark:ring-slate-700">
+                {user?.fullName?.charAt(0) || user?.name?.charAt(0) || 'S'}
+              </div>
+            )}
+          </div>
+        )}
+
+        <nav className={`flex flex-col flex-1 px-3 py-4 ${!sidebarCollapsed ? 'overflow-y-auto' : ''} scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600`}>
+          {/* Academics Section */}
+          {!sidebarCollapsed && (
+            <div className="px-3 mb-2">
+              <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                Academics
+              </h3>
+            </div>
+          )}
+          <ul className="flex flex-col gap-1 mb-6">
+            {menuSections.academics.map((item) => (
               <li key={item.path}>
                 <NavLink
                   to={item.path}
                   end={item.path === '/'}
                   className={({ isActive }) =>
-                    `relative group flex items-center gap-3 rounded-md py-2 font-medium duration-300 ease-in-out ${
-                      sidebarCollapsed ? 'px-2 justify-center' : 'px-4'
+                    `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all duration-200 ${
+                      sidebarCollapsed ? 'px-3 justify-center' : 'px-3'
                     } ${
-                      isActive 
-                        ? 'bg-primary/10 text-primary dark:bg-slate-700 dark:text-white border-l-4 border-primary' 
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                      isActive
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02]'
+                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01]'
                     }`
                   }
                   onClick={() => sidebarOpen && setSidebarOpen(false)}
                 >
-                  {item.icon}
+                  <span className="shrink-0">{item.icon}</span>
                   <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
                   <span className={tooltipClasses}>{item.label}</span>
                 </NavLink>
               </li>
             ))}
           </ul>
-          {/* Bottom actions */}
-          <ul className="flex flex-col gap-1.5 mt-auto">
-             <li>
+
+          {/* Campus Section */}
+          {!sidebarCollapsed && (
+            <div className="px-3 mb-2">
+              <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                Campus Life
+              </h3>
+            </div>
+          )}
+          <ul className="flex flex-col gap-1 flex-1">
+            {menuSections.campus.map((item) => (
+              <li key={item.path}>
                 <NavLink
-                  to="/profile"
+                  to={item.path}
                   className={({ isActive }) =>
-                    `relative group flex items-center gap-3 rounded-md py-2 font-medium duration-300 ease-in-out ${
-                      sidebarCollapsed ? 'px-2 justify-center' : 'px-4'
+                    `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all duration-200 ${
+                      sidebarCollapsed ? 'px-3 justify-center' : 'px-3'
                     } ${
-                      isActive 
-                        ? 'bg-primary/10 text-primary dark:bg-slate-700 dark:text-white border-l-4 border-primary' 
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                      isActive
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02]'
+                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01]'
                     }`
                   }
+                  onClick={() => sidebarOpen && setSidebarOpen(false)}
                 >
-                  <ProfileIcon />
-                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Profile</span>
-                  <span className={tooltipClasses}>Profile</span>
+                  <span className="shrink-0">{item.icon}</span>
+                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
+                  <span className={tooltipClasses}>{item.label}</span>
                 </NavLink>
               </li>
-              <li>
-                <button
-                  onClick={handleLogout}
-                  className={`relative group flex items-center gap-3 w-full rounded-md py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium duration-300 ease-in-out ${sidebarCollapsed ? 'px-2 justify-center' : 'px-4'}`}
-                >
-                  <LogoutIcon />
-                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Logout</span>
-                  <span className={tooltipClasses}>Logout</span>
-                </button>
-              </li>
+            ))}
           </ul>
+
+          {/* Bottom actions */}
+          <div className="border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
+            <ul className="flex flex-col gap-1">
+               <li>
+                  <NavLink
+                    to="/profile"
+                    className={({ isActive }) =>
+                      `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all duration-200 ${
+                        sidebarCollapsed ? 'px-3 justify-center' : 'px-3'
+                      } ${
+                        isActive
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02]'
+                          : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01]'
+                      }`
+                    }
+                  >
+                    <span className="shrink-0"><ProfileIcon /></span>
+                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Profile</span>
+                    <span className={tooltipClasses}>Profile</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <button
+                    onClick={handleLogout}
+                    className={`relative group flex items-center gap-3 w-full rounded-lg py-2.5
+                      text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+                      font-medium transition-all duration-200 hover:scale-[1.01] ${
+                        sidebarCollapsed ? 'px-3 justify-center' : 'px-3'
+                      }`}
+                  >
+                    <span className="shrink-0"><LogoutIcon /></span>
+                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Logout</span>
+                    <span className={tooltipClasses}>Logout</span>
+                  </button>
+                </li>
+            </ul>
+          </div>
         </nav>
-        
+
         {/* Collapse toggle button */}
-        <div className="hidden lg:block p-3 border-t border-slate-200 dark:border-slate-700">
-            <button 
+        <div className="hidden lg:block px-3 py-3 border-t border-slate-200 dark:border-slate-700">
+            <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className={`relative group flex items-center w-full rounded-md p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 ${sidebarCollapsed ? 'justify-center' : 'justify-start gap-3'}`}
+                className={`relative group flex items-center w-full rounded-lg py-2 px-2.5
+                  text-slate-500 dark:text-slate-400
+                  hover:bg-slate-100 dark:hover:bg-slate-800
+                  transition-all duration-200 hover:scale-[1.02]
+                  ${sidebarCollapsed ? 'justify-center' : 'justify-start gap-2'}`}
                 aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
                 {sidebarCollapsed ? <ExpandIcon/> : <CollapseIcon/>}
-                <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>Collapse</span>
+                <span className={`text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                  Collapse
+                </span>
                 <span className={tooltipClasses}>{sidebarCollapsed ? 'Expand' : 'Collapse'}</span>
             </button>
         </div>

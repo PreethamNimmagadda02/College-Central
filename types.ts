@@ -1,11 +1,16 @@
 export interface User {
   id: string;
   name: string;
+  fullName?: string;
+  rollNumber?: string;
   admissionNumber: string;
   branch: string;
+  year?: number;
+  semester?: number;
   hostel: string;
   email: string;
   phone: string;
+  profilePicture?: string;
 }
 
 export interface Grade {
