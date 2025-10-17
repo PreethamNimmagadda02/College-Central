@@ -1,6 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -36,19 +36,17 @@ interface GeminiSearchResult {
 }
 
 /**
- * Fetches latest news, events, and announcements about IIT Dhanbad using Perplexity Sonar API
+ * Fetches latest news, events, and announcements about IIT Dhanbad using Gemini AI
  */
 async function fetchIITDhanbadUpdates(): Promise<GeminiSearchResult> {
-  const apiKey = functions.config().perplexity?.api_key || process.env.PERPLEXITY_API_KEY;
+  const apiKey = functions.config().gemini?.api_key || process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    throw new Error('Perplexity API key not configured');
+    throw new Error('Gemini API key not configured');
   }
 
-  const client = new OpenAI({
-    apiKey: apiKey,
-    baseURL: 'https://api.perplexity.ai'
-  });
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const prompt = `You are an AI assistant tasked with extracting the LATEST and MOST RECENT information about IIT Dhanbad (Indian Institute of Technology Dhanbad). Your goal is to act like a web scraper and pull authentic data from the official sources provided.
 
@@ -104,23 +102,9 @@ CRITICAL VALIDATION before returning the JSON:
 - Is the information realistic and directly derivable from official university communications?`;
 
   try {
-    const response = await client.chat.completions.create({
-      model: 'sonar-deep-research',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a helpful assistant that searches the web for current information and returns structured JSON data.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.2,
-      max_tokens: 4000
-    });
-
-    const text = response.choices[0].message.content || '';
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
 
     // Extract JSON from response (might be wrapped in markdown code blocks)
     let jsonText = text;
@@ -234,7 +218,6 @@ async function storeAnnouncements(announcements: Omit<Announcement, 'id'>[]): Pr
       .where('date', '==', announcement.date)
       .limit(1)
       .get();
-    
 
     if (existingQuery.empty) {
       // Add new announcement
