@@ -314,6 +314,13 @@ const AcademicCalendar: React.FC = () => {
 
         try {
             await addUserEvent(newEvent as CalendarEvent);
+
+            // If reminder was checked, add to reminder preferences
+            if (newEvent.remindMe) {
+                const eventKey = getEventKey(newEvent as CalendarEvent);
+                await toggleReminderPreference(eventKey);
+            }
+
             setNewEvent({ date: '', endDate: '', description: '', type: 'Other', remindMe: false });
             setShowAddEventModal(false);
         } catch (error) {

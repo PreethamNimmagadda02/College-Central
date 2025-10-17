@@ -7,6 +7,7 @@ import { useUser } from '../contexts/UserContext';
 import { useGrades } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useCalendar } from '../contexts/CalendarContext';
+import { useAuth } from '../hooks/useAuth';
 import {
     InstructorIcon, LocationIcon, LibraryIcon, GymkhanaIcon,
     PortalIcon, CalendarCheckIcon, HealthIcon, FeeIcon,
@@ -90,7 +91,8 @@ const Dashboard: React.FC = () => {
     const { user, loading: userLoading } = useUser();
     const { gradesData, loading: gradesLoading } = useGrades();
     const { scheduleData, loading: scheduleLoading } = useSchedule();
-    const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey, toggleReminderPreference } = useCalendar();
+    const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey, toggleReminderPreference, updateUserEvent } = useCalendar();
+    const { currentUser } = useAuth();
 
     // Quick Links state management
     const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
@@ -628,10 +630,30 @@ const Dashboard: React.FC = () => {
                     {/* Upcoming Deadlines Widget - From Calendar Reminders */}
                     <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">Upcoming Reminders</h2>
+                            <div>
+                                <h2 className="text-xl font-semibold">Upcoming Reminders</h2>
+                                {calendarData && calendarData.events && (() => {
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const count = calendarData.events.filter(event => {
+                                        const eventKey = getEventKey(event);
+                                        const isUserCreatedWithReminder = event.remindMe === true && !!event.userId;
+                                        const isPreloadedWithReminder = !event.userId && reminderPreferences.includes(eventKey);
+                                        if (!isUserCreatedWithReminder && !isPreloadedWithReminder) return false;
+                                        const eventDate = new Date(event.date);
+                                        eventDate.setHours(0, 0, 0, 0);
+                                        return eventDate >= today;
+                                    }).length;
+                                    return count > 0 ? (
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                            {count} {count === 1 ? 'reminder' : 'reminders'} active
+                                        </p>
+                                    ) : null;
+                                })()}
+                            </div>
                             <Link to="/academic-calendar" className="text-sm text-primary hover:text-primary-dark">View Calendar →</Link>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-3 max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
                             {(() => {
                                 if (!calendarData || !calendarData.events) {
                                     return (
@@ -644,23 +666,25 @@ const Dashboard: React.FC = () => {
                                 const today = new Date();
                                 today.setHours(0, 0, 0, 0);
 
+
                                 const reminderEvents = calendarData.events
-                                    .filter(event => {
+                                    .filter((event: CalendarEvent) => {
                                         const eventKey = getEventKey(event);
 
                                         // Show if: user-created event with remindMe OR preloaded event in user's preferences
-                                        const isUserCreatedWithReminder = event.remindMe && event.userId;
+                                        const isUserCreatedWithReminder = event.remindMe === true && !!event.userId;
                                         const isPreloadedWithReminder = !event.userId && reminderPreferences.includes(eventKey);
 
                                         if (!isUserCreatedWithReminder && !isPreloadedWithReminder) return false;
 
+                                        // Check if event is upcoming
                                         const eventDate = new Date(event.date);
                                         eventDate.setHours(0, 0, 0, 0);
                                         const isUpcoming = eventDate >= today;
+
                                         return isUpcoming;
                                     })
-                                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                                    .slice(0, 5);
+                                    .sort((a: CalendarEvent, b: CalendarEvent) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
                                 if (reminderEvents.length === 0) {
                                     return (
@@ -682,6 +706,7 @@ const Dashboard: React.FC = () => {
                                     const daysUntil = Math.ceil((eventDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
                                     const isUrgent = daysUntil <= 2;
                                     const isWarning = daysUntil > 2 && daysUntil <= 7;
+                                    const isUserEvent = !!event.userId;
 
                                     return (
                                         <div
@@ -693,7 +718,17 @@ const Dashboard: React.FC = () => {
                                             }`}
                                         >
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-medium truncate">{event.description}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-medium truncate">{event.description}</p>
+                                                    {isUserEvent && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" title="User-created event">
+                                                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                            </svg>
+                                                            Personal
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <p className="text-sm text-slate-600 dark:text-slate-400">{event.type}</p>
                                             </div>
                                             <div className="flex items-center flex-shrink-0 ml-4">
@@ -710,12 +745,33 @@ const Dashboard: React.FC = () => {
                                                     </p>
                                                 </div>
                                                 <button
-                                                    onClick={() => toggleReminderPreference(getEventKey(event))}
+                                                    onClick={async () => {
+                                                        try {
+                                                            // For user-defined events, turn off remindMe flag and toggle preference
+                                                            if (event.userId && event.id) {
+                                                                await updateUserEvent(event.id, {
+                                                                    ...event,
+                                                                    remindMe: false
+                                                                });
+                                                                // Also toggle the reminder preference for consistency
+                                                                const eventKey = getEventKey(event);
+                                                                if (reminderPreferences.includes(eventKey)) {
+                                                                    await toggleReminderPreference(eventKey);
+                                                                }
+                                                            } else {
+                                                                // For preloaded events, just toggle the reminder preference
+                                                                await toggleReminderPreference(getEventKey(event));
+                                                            }
+                                                        } catch (error) {
+                                                            console.error('Error removing reminder:', error);
+                                                            alert('Failed to remove reminder');
+                                                        }
+                                                    }}
                                                     className="ml-2 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 opacity-0 group-hover:opacity-100 transition-opacity"
                                                     title="Remove reminder"
                                                     aria-label="Remove reminder"
                                                 >
-                                                    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                                                 </button>
                                             </div>
                                         </div>
