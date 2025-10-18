@@ -19,7 +19,7 @@ A comprehensive web application designed specifically for IIT (ISM) Dhanbad stud
 
 ### 📰 Stay Updated
 - **News & Events**: Real-time campus announcements and upcoming events
-- **Activity Feed**: Track your interactions and activities within the app
+- **Activity Feed**: Track your interactions and activities within the app 
 - **Weather Widget**: Campus weather updates with AI-powered recommendations
 
 ### 🎯 Additional Features
