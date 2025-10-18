@@ -469,12 +469,6 @@ const Login: React.FC = () => {
               <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse delay-1000"></div>
           </div>
 
-          {/* Background Image Overlay */}
-          <div
-              className="absolute inset-0 bg-cover bg-center opacity-20"
-              style={{ backgroundImage: "url('/Login_Page.jpeg')" }}
-          ></div>
-
           <div className="relative flex h-full w-full flex-col justify-center items-center p-12 text-center">
               {/* Main Heading */}
               <div className="max-w-md space-y-6">
