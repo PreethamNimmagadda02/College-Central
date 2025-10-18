@@ -53,7 +53,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         icon: '🔑',
       });
     } catch (error) {
-      console.error("Login failed:", error);
       // Re-throw the error so the UI can catch it and display a message
       throw error;
     }
