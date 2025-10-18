@@ -174,7 +174,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full lg:grid lg:grid-cols-2">
-       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+       <div className="flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         {/* Background Image */}
         <div
             className="absolute inset-0 bg-cover bg-center"
@@ -192,40 +192,40 @@ const Login: React.FC = () => {
 
         <div className="w-full max-w-md relative z-10">
             {/* Logo and Header */}
-            <div className="text-center mb-10">
-                <div className="flex justify-center mb-6">
+            <div className="text-center mb-8">
+                <div className="flex justify-center mb-4">
                     <div className="relative group">
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                        <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-5 rounded-3xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
-                            <LogoIcon className="w-14 h-14 text-white" />
+                        <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-4 rounded-3xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
+                            <LogoIcon className="w-16 h-16 text-white" />
                         </div>
                     </div>
                 </div>
-                <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3 tracking-tight leading-tight pb-1">
+                <h1 className="text-4xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2 tracking-tight leading-tight pb-1">
                     College Central
                 </h1>
-                <p className="text-slate-500 dark:text-slate-400 text-base font-medium">
+                <p className="text-slate-100 dark:text-slate-200 text-lg font-bold">
                     IIT (ISM) Dhanbad
                 </p>
             </div>
 
             {/* Login Card */}
-            <div className="bg-slate-900/10 hover:bg-slate-900/90 backdrop-blur-sm hover:backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 hover:border-slate-700/50 p-10 hover:shadow-3xl transition-all duration-500 ease-in-out">
+            <div className="bg-slate-900/10 hover:bg-slate-900/90 backdrop-blur-sm hover:backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 hover:border-slate-700/50 p-8 hover:shadow-3xl transition-all duration-500 ease-in-out">
                 {!showForgotPassword ? (
                     <>
-                        <div className="mb-8">
-                            <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+                        <div className="mb-6">
+                            <h2 className="text-2xl font-bold text-white mb-1">Welcome Back</h2>
                             <p className="text-white/80 text-sm">Sign in to access your campus hub</p>
                         </div>
             
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-4" onSubmit={handleSubmit}>
                 {/* Admission Number Input */}
                 <div>
-                    <label htmlFor="admission-number" className="block text-sm font-semibold text-white mb-2.5">
+                    <label htmlFor="admission-number" className="block text-sm font-semibold text-white mb-2">
                         Admission Number
                     </label>
                     <div className="relative group">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                             <UserIcon className="h-5 w-5 text-white/60 group-focus-within:text-blue-400 transition-colors duration-200" />
                         </div>
                         <input
@@ -237,18 +237,18 @@ const Login: React.FC = () => {
                             value={admissionNumber}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAdmissionNumber(e.target.value)}
                             placeholder="21JE0789"
-                            className="w-full pl-12 pr-4 py-3.5 text-white bg-white/10 border-2 border-white/20 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-200 placeholder:text-white/50"
+                            className="w-full pl-10 pr-4 py-2.5 text-white bg-white/10 border-2 border-white/20 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-200 placeholder:text-white/50"
                         />
                     </div>
                 </div>
 
                 {/* Password Input */}
                 <div>
-                    <label htmlFor="password" className="block text-sm font-semibold text-white mb-2.5">
+                    <label htmlFor="password" className="block text-sm font-semibold text-white mb-2">
                         Password
                     </label>
                     <div className="relative group">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                             <LockIcon className="h-5 w-5 text-white/60 group-focus-within:text-blue-400 transition-colors duration-200" />
                         </div>
                         <input
@@ -260,12 +260,12 @@ const Login: React.FC = () => {
                             value={password}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                             placeholder="Enter your password"
-                            className="w-full pl-12 pr-12 py-3.5 text-white bg-white/10 border-2 border-white/20 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-200 placeholder:text-white/50"
+                            className="w-full pl-10 pr-10 py-2.5 text-white bg-white/10 border-2 border-white/20 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-200 placeholder:text-white/50"
                         />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute inset-y-0 right-0 flex items-center pr-4 text-white/60 hover:text-blue-400 transition-colors duration-200"
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-white/60 hover:text-blue-400 transition-colors duration-200"
                             aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
                             {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
@@ -274,15 +274,15 @@ const Login: React.FC = () => {
                 </div>
 
                 {/* Remember Me & Forgot Password */}
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center justify-between">
                     <label className="flex items-center group cursor-pointer">
                         <input
                             type="checkbox"
                             checked={rememberMe}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRememberMe(e.target.checked)}
-                            className="w-4.5 h-4.5 text-blue-500 border-white/30 bg-white/10 rounded-md focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 cursor-pointer transition-all"
+                            className="w-4 h-4 text-blue-500 border-white/30 bg-white/10 rounded-md focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 cursor-pointer transition-all"
                         />
-                        <span className="ml-2.5 text-sm font-medium text-white/80 group-hover:text-white transition-colors">
+                        <span className="ml-2 text-sm font-medium text-white/80 group-hover:text-white transition-colors">
                             Remember me
                         </span>
                     </label>
@@ -297,7 +297,7 @@ const Login: React.FC = () => {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 animate-shake">
+                    <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-3 animate-shake">
                         <div className="flex items-center gap-2">
                             <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
@@ -309,7 +309,7 @@ const Login: React.FC = () => {
 
                 {/* Success Message */}
                 {resetSuccess && (
-                    <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-4">
+                    <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-3">
                         <div className="flex items-center gap-2">
                             <svg className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -323,7 +323,7 @@ const Login: React.FC = () => {
                 <button
                     type="submit"
                     disabled={isSubmitting || isGoogleSubmitting}
-                    className="w-full flex justify-center items-center gap-2.5 py-4 px-4 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] text-base"
+                    className="w-full flex justify-center items-center gap-2.5 py-3 px-4 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] text-base"
                 >
                     {isSubmitting ? (
                         <>
@@ -337,9 +337,9 @@ const Login: React.FC = () => {
                 </button>
 
                 {/* Divider */}
-                <div className="flex items-center gap-4 py-4">
+                <div className="flex items-center gap-4 py-2">
                     <div className="flex-1 border-t-2 border-white/20"></div>
-                    <span className="text-white/70 font-medium text-sm">Or continue with</span>
+                    <span className="text-white/70 font-medium text-sm">Or</span>
                     <div className="flex-1 border-t-2 border-white/20"></div>
                 </div>
 
@@ -348,7 +348,7 @@ const Login: React.FC = () => {
                     type="button"
                     onClick={handleGoogleSignIn}
                     disabled={isSubmitting || isGoogleSubmitting}
-                    className="w-full flex items-center justify-center gap-3 py-3.5 px-4 border-2 border-white/30 rounded-xl font-semibold text-white bg-white/10 hover:bg-white/20 hover:border-white/40 focus:outline-none focus:ring-4 focus:ring-blue-400/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg"
+                    className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border-2 border-white/30 rounded-xl font-semibold text-white bg-white/10 hover:bg-white/20 hover:border-white/40 focus:outline-none focus:ring-4 focus:ring-blue-400/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg"
                 >
                     {isGoogleSubmitting ? (
                         <>
@@ -370,19 +370,12 @@ const Login: React.FC = () => {
                         </>
                     )}
                 </button>
-
-                {/* Info Text */}
-                <div className="bg-white/10 border border-white/20 rounded-xl p-3 mt-2">
-                    <p className="text-center text-xs text-white/90 font-medium">
-                        ✨ First time here? Your account will be created automatically
-                    </p>
-                </div>
             </form>
             </>
                 ) : (
                     /* Forgot Password Form */
                     <>
-                        <div className="flex items-center mb-8">
+                        <div className="flex items-center mb-6">
                             <button
                                 onClick={() => {
                                     setShowForgotPassword(false);
@@ -396,22 +389,22 @@ const Login: React.FC = () => {
                                 </svg>
                             </button>
                             <div className="ml-2">
-                                <h2 className="text-3xl font-bold text-white">Reset Password</h2>
+                                <h2 className="text-2xl font-bold text-white">Reset Password</h2>
                                 <p className="text-sm text-white/80 mt-1">We'll help you get back in</p>
                             </div>
                         </div>
 
-                        <p className="text-sm text-white/90 mb-6 bg-white/10 p-4 rounded-xl border border-white/20">
-                            Enter your admission number or email address and we'll send you a secure link to reset your password.
+                        <p className="text-sm text-white/90 mb-4 bg-white/10 p-3 rounded-xl border border-white/20">
+                            Enter your admission number or email address and we'll send a secure link to reset your password.
                         </p>
 
-                        <form className="space-y-6" onSubmit={handlePasswordReset}>
+                        <form className="space-y-4" onSubmit={handlePasswordReset}>
                             <div>
-                                <label htmlFor="reset-email" className="block text-sm font-semibold text-white mb-2.5">
+                                <label htmlFor="reset-email" className="block text-sm font-semibold text-white mb-2">
                                     Admission Number or Email
                                 </label>
                                 <div className="relative group">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                         <UserIcon className="h-5 w-5 text-white/60 group-focus-within:text-blue-400 transition-colors duration-200" />
                                     </div>
                                     <input
@@ -421,13 +414,13 @@ const Login: React.FC = () => {
                                         value={resetEmail}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setResetEmail(e.target.value)}
                                         placeholder="21JE0789 or email@iitism.ac.in"
-                                        className="w-full pl-12 pr-4 py-3.5 text-white bg-white/10 border-2 border-white/20 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-200 placeholder:text-white/50"
+                                        className="w-full pl-10 pr-4 py-2.5 text-white bg-white/10 border-2 border-white/20 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-200 placeholder:text-white/50"
                                     />
                                 </div>
                             </div>
 
                             {error && (
-                                <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 animate-shake">
+                                <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-3 animate-shake">
                                     <div className="flex items-center gap-2">
                                         <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
@@ -438,7 +431,7 @@ const Login: React.FC = () => {
                             )}
 
                             {resetSuccess && (
-                                <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-4">
+                                <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-3">
                                     <div className="flex items-center gap-2">
                                         <svg className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -451,7 +444,7 @@ const Login: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={isResetting}
-                                className="w-full flex justify-center items-center gap-2.5 py-4 px-4 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] text-base"
+                                className="w-full flex justify-center items-center gap-2.5 py-3 px-4 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] text-base"
                             >
                                 {isResetting ? (
                                     <>
@@ -469,87 +462,81 @@ const Login: React.FC = () => {
             </div>
         </div>
        </div>
-       <div className="hidden lg:block relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800">
+       <div className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 h-screen flex-col justify-center items-center p-12 text-center">
           {/* Animated Background Pattern */}
           <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse"></div>
               <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse delay-1000"></div>
           </div>
 
-          {/* Background Image Overlay */}
-          <div
-              className="absolute inset-0 bg-cover bg-center opacity-20"
-              style={{ backgroundImage: "url('https://www.iitism.ac.in/iitismnew/assets/img/gallery/main2.jpg')" }}
-          ></div>
-
-          <div className="relative flex h-full w-full flex-col justify-center items-center p-12 text-center">
+          <div className="relative flex h-full w-full flex-col justify-center items-center">
               {/* Main Heading */}
-              <div className="max-w-2xl space-y-8">
-                  <div className="space-y-4">
+              <div className="max-w-md space-y-6">
+                  <div className="space-y-3">
                       <div className="inline-block">
-                          <h1 className="text-6xl md:text-7xl font-black text-white leading-tight mb-2">
+                          <h1 className="text-5xl font-black text-white leading-tight mb-2">
                               Your Campus,
                           </h1>
-                          <h1 className="text-6xl md:text-7xl font-black leading-tight">
+                          <h1 className="text-5xl font-black leading-tight">
                               <span className="bg-gradient-to-r from-yellow-300 via-amber-200 to-orange-300 bg-clip-text text-transparent">
                                   Simplified
                               </span>
                           </h1>
                       </div>
-                      <p className="text-2xl text-white/95 font-light leading-relaxed max-w-xl mx-auto">
+                      <p className="text-xl text-white/95 font-light leading-relaxed max-w-xl mx-auto">
                           Everything you need for campus life in one place
                       </p>
                   </div>
 
                   {/* Features Grid */}
-                  <div className="grid grid-cols-2 gap-6 mt-12 max-w-2xl">
+                  <div className="grid grid-cols-2 gap-4 mt-8">
                       {/* Feature 1 */}
-                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-6 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
-                          <div className="flex flex-col items-center space-y-3">
-                              <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
+                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-4 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
+                          <div className="flex flex-col items-center space-y-2">
+                              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center text-2xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
                                   📊
                               </div>
-                              <h3 className="text-lg font-bold text-white">Smart Analytics</h3>
-                              <p className="text-sm text-white/80 leading-relaxed">
+                              <h3 className="text-md font-bold text-white">Smart Analytics</h3>
+                              <p className="text-xs text-white/80 leading-relaxed">
                                   Track your academic performance with detailed insights
                               </p>
                           </div>
                       </div>
 
                       {/* Feature 2 */}
-                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-6 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
-                          <div className="flex flex-col items-center space-y-3">
-                              <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
+                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-4 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
+                          <div className="flex flex-col items-center space-y-2">
+                              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center text-2xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
                                   ⏰
                               </div>
-                              <h3 className="text-lg font-bold text-white">Live Schedules</h3>
-                              <p className="text-sm text-white/80 leading-relaxed">
+                              <h3 className="text-md font-bold text-white">Live Schedules</h3>
+                              <p className="text-xs text-white/80 leading-relaxed">
                                   Never miss a class with real-time timetables
                               </p>
                           </div>
                       </div>
 
                       {/* Feature 3 */}
-                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-6 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
-                          <div className="flex flex-col items-center space-y-3">
-                              <div className="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
+                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-4 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
+                          <div className="flex flex-col items-center space-y-2">
+                              <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-pink-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
                                   🎓
                               </div>
-                              <h3 className="text-lg font-bold text-white">Grade Tracker</h3>
-                              <p className="text-sm text-white/80 leading-relaxed">
+                              <h3 className="text-md font-bold text-white">Grade Tracker</h3>
+                              <p className="text-xs text-white/80 leading-relaxed">
                                   Monitor your CGPA and semester progress
                               </p>
                           </div>
                       </div>
 
                       {/* Feature 4 */}
-                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-6 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
-                          <div className="flex flex-col items-center space-y-3">
-                              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
+                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-4 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
+                          <div className="flex flex-col items-center space-y-2">
+                              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
                                   🗺️
                               </div>
-                              <h3 className="text-lg font-bold text-white">Campus Guide</h3>
-                              <p className="text-sm text-white/80 leading-relaxed">
+                              <h3 className="text-md font-bold text-white">Campus Guide</h3>
+                              <p className="text-xs text-white/80 leading-relaxed">
                                   Navigate campus with our interactive map
                               </p>
                           </div>
@@ -557,7 +544,7 @@ const Login: React.FC = () => {
                   </div>
 
                   {/* Trust Badge */}
-                  <div className="mt-12 pt-8 border-t border-white/20">
+                  <div className="mt-8 pt-6 border-t border-white/20">
                       <p className="text-white/70 text-sm font-medium">
                           Trusted by <span className="text-yellow-300 font-bold">5,000+</span> IIT (ISM) students
                       </p>
@@ -565,7 +552,7 @@ const Login: React.FC = () => {
               </div>
 
               {/* Footer */}
-              <div className="absolute bottom-6 text-white/50 text-xs">
+              <div className="absolute bottom-4 text-white/50 text-xs">
                   <p>© 2025 College Central</p>
               </div>
           </div>
@@ -574,4 +561,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default Login; 
