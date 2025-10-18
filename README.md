@@ -35,7 +35,7 @@ A comprehensive web application designed specifically for IIT (ISM) Dhanbad stud
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd Stusent-Central
+   cd Student-Central
    ```
 
 2. Install dependencies:
