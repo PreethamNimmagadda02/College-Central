@@ -174,7 +174,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full lg:grid lg:grid-cols-2">
-       <div className="flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+       <div className="flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden min-h-screen">
         {/* Background Image */}
         <div
             className="absolute inset-0 bg-cover bg-center"
@@ -462,7 +462,7 @@ const Login: React.FC = () => {
             </div>
         </div>
        </div>
-       <div className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 h-screen flex-col justify-center items-center p-12 text-center">
+       <div className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 min-h-screen flex-col justify-center items-center p-12 text-center"> 
           {/* Animated Background Pattern */}
           <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse"></div>

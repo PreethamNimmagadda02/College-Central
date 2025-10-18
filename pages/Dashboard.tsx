@@ -12,7 +12,7 @@ import { GoogleGenAI } from '@google/genai';
 import {
     InstructorIcon, LocationIcon, LibraryIcon, GymkhanaIcon,
     PortalIcon, CalendarCheckIcon, HealthIcon, FeeIcon,
-    WebsiteIcon, EmailIcon, LmsIcon, CdcIcon, MapIcon, RefreshIcon, ScholarshipIcon
+    WebsiteIcon, EmailIcon, LmsIcon, CdcIcon, MapIcon, RefreshIcon, ScholarshipIcon, DirectoryIcon
 } from '../components/icons/SidebarIcons';
 
 interface QuickLink {
@@ -78,6 +78,7 @@ const defaultQuickLinks: QuickLink[] = [
     { id: '7', name: 'Student Gymkhana', href: 'https://sgiitism.in/', icon: <GymkhanaIcon />, isExternal: true, color: 'text-indigo-600 dark:text-indigo-400', isCustom: false },
     { id: '8', name: 'Health Centre', href: 'https://people.iitism.ac.in/~healthcenter/index.php', icon: <HealthIcon />, isExternal: true, color: 'text-pink-600 dark:text-pink-400', isCustom: false },
     { id: '9', name: 'IIT(ISM) Website', href: 'https://www.iitism.ac.in/', icon: <WebsiteIcon />, isExternal: true, color: 'text-cyan-600 dark:text-cyan-400', isCustom: false },
+    { id: '10', name: 'College Directory', href: 'https://share.google/YnDiJNPeoRC7UMl5t', icon: <DirectoryIcon />, isExternal: true, color: 'text-yellow-600 dark:text-yellow-400', isCustom: false },
 ];
 
 const Dashboard: React.FC = () => {

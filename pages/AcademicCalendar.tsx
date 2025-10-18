@@ -362,9 +362,19 @@ const AcademicCalendar: React.FC = () => {
     const handleSetEventReminder = async (event: CalendarEvent) => {
         const eventKey = getEventKey(event);
         const isCurrentlyReminded = reminderPreferences.includes(eventKey);
+        const isUserEvent = !!event.userId && !!event.id;
 
         try {
-            await toggleReminderPreference(eventKey);
+            if (isUserEvent) {
+                // For user-created events, update both remindMe flag and reminderPreferences
+                await updateUserEvent(event.id!, {
+                    ...event,
+                    remindMe: !isCurrentlyReminded
+                });
+            } else {
+                // For preloaded events, only toggle reminderPreferences
+                await toggleReminderPreference(eventKey);
+            }
             alert(isCurrentlyReminded ? 'Reminder removed!' : 'Reminder set! This event will appear in your Dashboard.');
         } catch (error) {
             console.error('Error toggling reminder:', error);
@@ -474,6 +484,17 @@ const AcademicCalendar: React.FC = () => {
                     </p>
                 </div>
                 <div className="flex space-x-3">
+                    <button
+                        onClick={handleExportPDF}
+                        className="px-5 py-2.5 text-sm font-medium rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transition-all duration-200 shadow-md hover:shadow-lg"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span>Export PDF</span>
+                        </div>
+                    </button>
                     <button
                         onClick={() => setShowAddEventModal(true)}
                         className="px-5 py-2.5 text-sm font-medium rounded-lg bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white transition-all duration-200 shadow-md hover:shadow-lg"
@@ -835,42 +856,6 @@ const AcademicCalendar: React.FC = () => {
                 )}
             </div>
 
-            {/* Additional Features Section */}
-            <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                    <span className="mr-2">💡</span> Quick Actions
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <button
-                        onClick={handleSyncGoogleCalendar}
-                        className="flex items-center justify-center space-x-2 p-3 bg-white dark:bg-dark-card rounded-lg hover:shadow-md transition-all duration-200 hover:scale-105"
-                    >
-                        <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                        </svg>
-                        <span className="text-sm font-medium">Sync with Google Calendar</span>
-                    </button>
-                    <button
-                        onClick={handleExportPDF}
-                        className="flex items-center justify-center space-x-2 p-3 bg-white dark:bg-dark-card rounded-lg hover:shadow-md transition-all duration-200 hover:scale-105"
-                    >
-                        <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span className="text-sm font-medium">Export as PDF</span>
-                    </button>
-                    <button
-                        onClick={handleSetReminders}
-                        className="flex items-center justify-center space-x-2 p-3 bg-white dark:bg-dark-card rounded-lg hover:shadow-md transition-all duration-200 hover:scale-105"
-                    >
-                        <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                        <span className="text-sm font-medium">Set Reminders</span>
-                    </button>
-                </div>
-            </div>
-
             {/* Add Event Modal */}
             {showAddEventModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -1155,7 +1140,13 @@ const AcademicCalendar: React.FC = () => {
 
                             <button
                                 onClick={() => openEditModal(selectedEvent, selectedEventIndex)}
-                                className="flex items-center justify-center space-x-2 py-2.5 px-4 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 font-medium rounded-lg transition-all"
+                                disabled={!selectedEvent.userId}
+                                className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
+                                    selectedEvent.userId
+                                        ? 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 cursor-pointer'
+                                        : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
+                                }`}
+                                title={!selectedEvent.userId ? 'Cannot edit preloaded events' : 'Edit this event'}
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1168,7 +1159,13 @@ const AcademicCalendar: React.FC = () => {
                                     handleDeleteEvent(selectedEvent);
                                     setShowEventDetailsModal(false);
                                 }}
-                                className="flex items-center justify-center space-x-2 py-2.5 px-4 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 font-medium rounded-lg transition-all"
+                                disabled={!selectedEvent.userId}
+                                className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
+                                    selectedEvent.userId
+                                        ? 'bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 cursor-pointer'
+                                        : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
+                                }`}
+                                title={!selectedEvent.userId ? 'Cannot delete preloaded events' : 'Delete this event'} 
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

@@ -596,10 +596,10 @@ const defaultLocations: CampusLocation[] = [
 const defaultQuickRoutes: QuickRoute[] = [
   {
     id: 'route-1',
-    from: 'Administrative Block (Heritage Building)',
+    from: 'Administrative Block',
     to: 'Central Library',
-    time: '3 min walk',
-    distance: '250m',
+    time: '4 min walk',
+    distance: '300m',
     steps: ['Exit Main Building', 'Walk on Academic Road', 'Central Library on right']
   },
   {
@@ -607,31 +607,31 @@ const defaultQuickRoutes: QuickRoute[] = [
     from: 'Amber Hostel',
     to: 'New Lecture Hall Complex (NLHC)',
     time: '4 min walk',
-    distance: '300m',
+    distance: '270m',
     steps: ['Exit hostel', 'Walk towards academic area', 'NLHC ahead']
   },
   {
     id: 'route-3',
     from: 'Central Library',
     to: 'Computer Science & Engineering Department',
-    time: '5 min walk',
-    distance: '400m',
+    time: '9 min walk',
+    distance: '650m',
     steps: ['Exit Library', 'Walk on Academic Road', 'CSE Department on right']
   },
   {
     id: 'route-4',
     from: 'Student Activity Centre (SAC)',
     to: 'Lower Ground',
-    time: '5 min walk',
-    distance: '450m',
+    time: '15 min walk',
+    distance: '1100m',
     steps: ['Exit SAC', 'Walk towards sports area', 'Lower Ground ahead']
   },
   {
     id: 'route-5',
-    from: 'Administrative Block (Heritage Building)',
+    from: 'New Lecture Hall Complex (NLHC)',
     to: 'Barista',
-    time: '3 min walk',
-    distance: '250m',
+    time: '5 min walk',
+    distance: '350m',
     steps: ['Exit Main Building', 'Walk towards dining area', 'Barista on left']
   },
 ]; 

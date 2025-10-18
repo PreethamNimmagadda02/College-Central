@@ -177,6 +177,21 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       oldEvent.description === event.description &&
       oldEvent.type === event.type;
 
+    // Sync reminder preference with remindMe flag
+    if (reminderToggled) {
+      const eventKey = getEventKey(event);
+      const hasPreference = reminderPreferences.includes(eventKey);
+
+      // If remindMe is true but preference doesn't exist, add it
+      if (event.remindMe && !hasPreference) {
+        await toggleReminderPreference(eventKey);
+      }
+      // If remindMe is false but preference exists, remove it
+      else if (!event.remindMe && hasPreference) {
+        await toggleReminderPreference(eventKey);
+      }
+    }
+
     if (onlyReminderChanged) {
       await logActivity(currentUser.uid, {
         type: 'reminder',

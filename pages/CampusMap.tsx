@@ -346,38 +346,31 @@ const CampusMap: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Routes */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4">
+          {/* Campus Info - Moved Below Locations */}
+          <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4">
             <h3 className="font-semibold mb-3 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Popular Routes
+              Campus Information
             </h3>
-            <div className="space-y-2">
-              {quickRoutes.map((route, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    const url = getDirections(route.from, route.to);
-                    window.open(url, '_blank');
-                    showNotification(`Opening directions from ${route.from} to ${route.to}`);
-                  }}
-                  className="w-full bg-white dark:bg-dark-card p-3 rounded-lg hover:shadow-md transition-all cursor-pointer"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-left">
-                      <p className="font-medium">{route.from} → {route.to}</p>
-                      <p className="text-xs text-slate-500">{route.distance} • {route.time}</p>
-                    </div>
-                    <div className="text-primary">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                      </svg>
-                    </div>
-                  </div>
-                </button>
-              ))}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-600 dark:text-slate-400">Total Area</span>
+                <span className="font-medium">393 acres</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-600 dark:text-slate-400">Main Gate Hours</span>
+                <span className="font-medium">5:00 AM to 10:00 PM</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-600 dark:text-slate-400">Emergency</span>
+                <span className="font-medium text-red-500">100</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-600 dark:text-slate-400">Health Centre</span> 
+                <span className="font-medium">0326-223-5988</span>
+              </div>
             </div>
           </div>
         </div>
@@ -477,69 +470,10 @@ const CampusMap: React.FC = () => {
                 </button>
               </div>
             </div>
-
-            {/* Map Legend */}
-            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
-                  <span>Academic</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-indigo-500 rounded-full"></span>
-                  <span>Administration</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                  <span>Residential</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-purple-500 rounded-full"></span>
-                  <span>Facilities</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
-                  <span>Dining</span>
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <button className="p-3 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-lg transition-all flex flex-col items-center gap-2">
-              <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h11M9 21V3m0 0L3 9m6-6L15 9" />
-              </svg>
-              <span className="text-xs font-medium">Navigate</span>
-            </button>
-            <button className="p-3 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-lg transition-all flex flex-col items-center gap-2">
-              <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-xs font-medium">Schedule</span>
-            </button>
-            <button className="p-3 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-lg transition-all flex flex-col items-center gap-2">
-              <svg className="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-xs font-medium">Info</span>
-            </button>
-            <button
-              onClick={() => setShowEmergency(true)}
-              className="p-3 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-lg transition-all flex flex-col items-center gap-2"
-            >
-              <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span className="text-xs font-medium">Emergency</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Features */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Campus Information and Saved Places - Moved Below Map */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* Saved Places */}
         <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4">
           <h3 className="font-semibold mb-3 flex items-center">
@@ -549,7 +483,7 @@ const CampusMap: React.FC = () => {
             Saved Places ({savedPlaces.length})
           </h3>
           {savedPlaces.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-slate-100 dark:scrollbar-track-slate-800 pr-2">
               {locations
                 .filter(loc => savedPlaces.includes(loc.id))
                 .map(location => (
@@ -587,70 +521,40 @@ const CampusMap: React.FC = () => {
           )}
         </div>
 
-        {/* Campus Info */}
-        <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4">
+        {/* Popular Routes */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl shadow-lg p-4">
           <h3 className="font-semibold mb-3 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
             </svg>
-            Campus Information
-          </h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Total Area</span>
-              <span className="font-medium">393 acres</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Main Gate Hours</span>
-              <span className="font-medium">24/7</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Emergency</span>
-              <span className="font-medium text-red-500">100</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Health Centre</span>
-              <span className="font-medium">0326-223-5435</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Transport Options */}
-        <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4">
-          <h3 className="font-semibold mb-3 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
-            Transport Options
+            Popular Routes
           </h3>
           <div className="space-y-2">
-            <button className="w-full p-2 text-left bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span>🚌</span>
-                  <span className="text-sm font-medium">Campus Bus</span>
+            {quickRoutes.map((route, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  const url = getDirections(route.from, route.to);
+                  window.open(url, '_blank');
+                  showNotification(`Opening directions from ${route.from} to ${route.to}`);
+                }}
+                className="w-full bg-white dark:bg-dark-card p-3 rounded-lg hover:shadow-md transition-all cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-left">
+                    <p className="font-medium">{route.from} → {route.to}</p>
+                    <p className="text-xs text-slate-500">{route.distance} • {route.time}</p>
+                  </div>
+                  <div className="text-primary">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                  </div>
                 </div>
-                <span className="text-xs text-slate-500">Every 30min</span>
-              </div>
-            </button>
-            <button className="w-full p-2 text-left bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span>🚲</span>
-                  <span className="text-sm font-medium">Bicycle Stands</span>
-                </div>
-                <span className="text-xs text-slate-500">12 locations</span>
-              </div>
-            </button>
-            <button className="w-full p-2 text-left bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span>🚶</span>
-                  <span className="text-sm font-medium">Walking Paths</span>
-                </div>
-                <span className="text-xs text-slate-500">Well-lit</span>
-              </div>
-            </button>
+              </button>
+            ))}
+          </div>
+        </div>
           </div>
         </div>
       </div>
