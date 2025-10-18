@@ -472,7 +472,7 @@ const Login: React.FC = () => {
           {/* Background Image Overlay */}
           <div
               className="absolute inset-0 bg-cover bg-center opacity-20"
-              style={{ backgroundImage: "url('https://www.iitism.ac.in/iitismnew/assets/img/gallery/main2.jpg')" }}
+              style={{ backgroundImage: "url('/Login_Page.jpeg')" }}
           ></div>
 
           <div className="relative flex h-full w-full flex-col justify-center items-center p-12 text-center">
