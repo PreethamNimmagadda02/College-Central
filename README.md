@@ -1,4 +1,4 @@
-# IIT(ISM) Student Central
+# IIT(ISM) College Central
 
 A comprehensive web application designed specifically for IIT (ISM) Dhanbad students to manage their academic life, stay connected with campus activities, and access essential resources all in one place.
 
