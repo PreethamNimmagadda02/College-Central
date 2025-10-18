@@ -3,6 +3,35 @@ import { DirectoryEntry, StudentDirectoryEntry } from '../types';
 import { fetchDirectory, fetchStudentDirectory } from '../services/api';
 import { Search, Mail, Phone, Users, GraduationCap, Building2, Download, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 
+const isValidIndianPhoneNumber = (phone: string): boolean => {
+  if (!phone || typeof phone !== 'string' || !/\d/.test(phone)) {
+    // Return false if phone is null, not a string, or contains no digits
+    return false;
+  }
+
+  // Keep only digits from the string
+  const digitsOnly = phone.replace(/\D/g, '');
+
+  // Check for invalid patterns like all same digits
+  if (/^(\d)\1{9,}$/.test(digitsOnly)) {
+    return false;
+  }
+
+  // The number, after stripping non-digits, should be 10 or more digits.
+  // This will correctly filter out short extension numbers like '326', '5662'
+  // and placeholders like '-'.
+  if (digitsOnly.length >= 10) {
+    // A 10 digit number is a valid mobile or landline with STD.
+    if (digitsOnly.length === 10) return true;
+    // An 11 digit number is valid if it starts with 0.
+    if (digitsOnly.length === 11 && digitsOnly.startsWith('0')) return true;
+    // A 12 digit number is valid if it starts with 91.
+    if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) return true;
+  }
+  
+  return false;
+};
+
 
 const Directory = () => {
   const [facultyDirectory, setFacultyDirectory] =  useState<DirectoryEntry[]>([]);
@@ -387,10 +416,12 @@ const Directory = () => {
                               <Mail className="w-4 h-4" />
                               <span className="group-hover:underline">{entry.email}</span>
                             </a>
-                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
-                              <Phone className="w-4 h-4" />
-                              <span>{entry.phone}</span>
-                            </div>
+                            {isValidIndianPhoneNumber(entry.phone) && (
+                              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
+                                <Phone className="w-4 h-4" />
+                                <span>{entry.phone}</span>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>
