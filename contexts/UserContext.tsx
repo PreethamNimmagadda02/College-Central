@@ -54,8 +54,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   hostel: 'Not Set',
                   email: authUser.email ?? '',
                   phone: authUser.phoneNumber ?? 'Not Set',
-                  profilePicture: authUser.photoURL ?? undefined,
-                  profilePicturePath: undefined, // No path for external URLs
+                  profilePicture: authUser.photoURL ?? null,
+                  profilePicturePath: null, // No path for external URLs
                 };
                 
                 await userDocRef.set(newUserProfile); // Use compat API
