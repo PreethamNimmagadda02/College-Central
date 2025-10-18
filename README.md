@@ -1,4 +1,4 @@
-# IIT(ISM) Student Hub
+# IIT(ISM) Student Central
 
 A comprehensive web application designed specifically for IIT (ISM) Dhanbad students to manage their academic life, stay connected with campus activities, and access essential resources all in one place.
 
@@ -111,17 +111,10 @@ iit-ism-student-hub/
 1. Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. Add it to `.env.local` as `VITE_GEMINI_API_KEY`
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📄 License
-
-This project is open source and available under the MIT License.
-
 ## 👨‍💻 Developed By
 
-IIT(ISM) Student Hub Team
+Preetham Nimagadda
+IIT(ISM) Dhanbad
 
 ---
 
