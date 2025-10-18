@@ -1,4 +1,3 @@
-
 // FIX: Add optional properties to User interface to resolve property access errors across components.
 export interface User {
   id: string;
@@ -9,6 +8,7 @@ export interface User {
   email: string;
   phone: string;
   profilePicture?: string;
+  profilePicturePath?: string;
   fullName?: string;
   rollNumber?: string;
   year?: string;
@@ -211,4 +211,4 @@ export interface ActivityItem {
     timestamp: { seconds: number; nanoseconds: number }; // Firestore Timestamp shape
     icon: string;
     link?: string;
-} 
+}

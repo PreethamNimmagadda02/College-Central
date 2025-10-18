@@ -9,6 +9,7 @@ import { useCalendar } from '../contexts/CalendarContext';
 import { HOSTEL_OPTIONS, BRANCH_OPTIONS } from '../data/profileOptions';
 import { db } from '../firebaseConfig';
 import 'firebase/firestore';
+import { X } from 'lucide-react';
 
 const formatTimeAgo = (timestamp: { seconds: number; nanoseconds: number } | null) => {
     if (!timestamp) return '...';
@@ -27,7 +28,7 @@ const formatTimeAgo = (timestamp: { seconds: number; nanoseconds: number } | nul
 };
 
 const Profile: React.FC = () => {
-    const { user, updateUser, loading } = useUser();
+    const { user, updateUser, uploadProfilePicture, loading } = useUser();
     const { currentUser, logout } = useAuth();
     const { userFormsData } = useForms();
     const { savedPlaces } = useCampusMap();
@@ -38,6 +39,10 @@ const Profile: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'overview' | 'activity'>('overview');
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [imageError, setImageError] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [isImageExpanded, setIsImageExpanded] = useState(false);
+    const [showModalContent, setShowModalContent] = useState(false);
 
     const [activity, setActivity] = useState<ActivityItem[]>([]);
     const [activityLoading, setActivityLoading] = useState(true);
@@ -130,6 +135,12 @@ const Profile: React.FC = () => {
         }
     }, [user]);
 
+    useEffect(() => {
+        if (user?.profilePicture) {
+            setImageError(false);
+        }
+    }, [user?.profilePicture]);
+
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ message, type });
         setTimeout(() => setNotification(null), 3000);
@@ -154,6 +165,23 @@ const Profile: React.FC = () => {
         }
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setIsUploading(true);
+            showNotification('Uploading picture...', 'success');
+            try {
+                await uploadProfilePicture(file);
+                showNotification('Profile picture updated!', 'success');
+            } catch (error: any) {
+                console.error(error);
+                showNotification(error instanceof Error ? error.message : 'Upload failed. Please try again.', 'error');
+            } finally {
+                setIsUploading(false);
+            }
+        }
+    };
+
     const handleLogout = async () => {
         if (window.confirm('Are you sure you want to logout?')) {
             await logout();
@@ -167,6 +195,30 @@ const Profile: React.FC = () => {
             .join('')
             .toUpperCase()
             .slice(0, 2);
+    };
+    
+    const openModal = () => {
+        if (user?.profilePicture && !imageError) {
+            setIsImageExpanded(true);
+            setTimeout(() => setShowModalContent(true), 50); // a tiny delay to ensure transition works on mount
+        }
+    };
+
+    const closeModal = () => {
+        setShowModalContent(false);
+        setTimeout(() => {
+            setIsImageExpanded(false);
+        }, 300); // should match the transition duration
+    };
+
+    const handlePictureClick = () => {
+        if (isEditing) {
+            if (!isUploading) {
+                fileInputRef.current?.click();
+            }
+        } else {
+            openModal();
+        }
     };
 
     if (loading || !user) {
@@ -195,26 +247,43 @@ const Profile: React.FC = () => {
 
                     <div className="relative flex flex-col md:flex-row items-center md:items-start gap-6">
                         {/* Profile Picture */}
-                        <div className="relative group">
-                            {imageError || !currentUser?.photoURL ? (
-                                <div className="h-32 w-32 rounded-full bg-white text-primary flex items-center justify-center text-4xl font-bold ring-4 ring-white/50 shadow-xl">
-                                    {getInitials(user.name)}
-                                </div>
-                            ) : (
+                        <div
+                            className={`relative group ${isEditing ? 'cursor-pointer' : (user.profilePicture && !imageError ? 'cursor-zoom-in' : 'cursor-default')}`}
+                            onClick={handlePictureClick}
+                        >
+                            {user.profilePicture && !imageError ? (
                                 <img
                                     className="h-32 w-32 rounded-full ring-4 ring-white/50 shadow-xl object-cover"
-                                    src={currentUser.photoURL}
+                                    src={user.profilePicture}
                                     alt="Profile"
                                     onError={() => setImageError(true)}
                                 />
+                            ) : (
+                                <div className="h-32 w-32 rounded-full bg-white text-primary flex items-center justify-center text-4xl font-bold ring-4 ring-white/50 shadow-xl">
+                                    {getInitials(user.name)}
+                                </div>
                             )}
                             {isEditing && (
-                                <button className="absolute bottom-0 right-0 bg-white text-primary p-2 rounded-full shadow-lg hover:shadow-xl transition-all">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                </button>
+                                <>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        hidden
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        disabled={isUploading}
+                                    />
+                                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {isUploading ? (
+                                            <div className="w-8 h-8 border-4 border-t-transparent border-white rounded-full animate-spin"></div>
+                                        ) : (
+                                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                </>
                             )}
                         </div>
 
@@ -685,6 +754,45 @@ const Profile: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* Expanded Image Modal */}
+            {isImageExpanded && user.profilePicture && (
+                <div
+                    className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out ${showModalContent ? 'opacity-100' : 'opacity-0'}`}
+                    onClick={closeModal}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Expanded profile picture view"
+                >
+                    {/* Full-screen blurred background of the same image */}
+                    <img
+                        src={user.profilePicture}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover filter blur-xl scale-110"
+                    />
+                    {/* Semi-transparent overlay for contrast */}
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+            
+                    <button
+                        className="absolute top-6 right-6 text-white/70 hover:text-white hover:scale-110 transition-all z-[101]"
+                        aria-label="Close image view"
+                        onClick={closeModal}
+                    >
+                        <X size={32} />
+                    </button>
+                    <div
+                        className={`relative transition-all duration-300 ease-out ${showModalContent ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <img
+                            src={user.profilePicture}
+                            alt="Expanded profile"
+                            className="w-[70vmin] h-[70vmin] max-w-lg max-h-lg object-cover rounded-full shadow-2xl ring-4 ring-white/20"
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
