@@ -21,12 +21,20 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
 
   React.useEffect(() => {
     const root = document.documentElement;
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    
     if (isDark) {
       root.classList.add('dark');
       localStorage.setItem('theme', 'dark');
+      if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', '#0f172a');
+      }
     } else {
       root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
+      if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', '#f1f5f9');
+      }
     }
   }, [isDark]);
 
