@@ -1,17 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import { App as CapacitorApp } from '@capacitor/app';
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => localStorage.getItem('sidebar-collapsed') === 'true'
   );
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', String(sidebarCollapsed));
   }, [sidebarCollapsed]);
+
+  useEffect(() => {
+    const registerBackButton = async () => {
+      const listener = await CapacitorApp.addListener('backButton', () => {
+        if (location.pathname === '/') {
+          CapacitorApp.exitApp();
+        } else {
+          navigate(-1);
+        }
+      });
+      return listener;
+    };
+
+    const listenerPromise = registerBackButton();
+
+    return () => {
+      const removeListener = async () => {
+        const listener = await listenerPromise;
+        listener.remove();
+      };
+      removeListener();
+    };
+  }, [location.pathname, navigate]);
 
   return (
     <div className="bg-light-bg dark:bg-dark-bg min-h-screen">
