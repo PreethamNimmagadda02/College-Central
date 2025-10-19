@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ClassSchedule, CampusEvent, Announcement, NewsItem, CalendarEvent } from '../types';
 // FIX: Changed import from fetchLatestNewsAndEvents to subscribeToLatestNewsAndEvents.
@@ -82,7 +82,6 @@ const defaultQuickLinks: QuickLink[] = [
 ];
 
 const Dashboard: React.FC = () => {
-    const [todaysClasses, setTodaysClasses] = useState<ClassSchedule[]>([]);
     const [latestItems, setLatestItems] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -191,17 +190,71 @@ const Dashboard: React.FC = () => {
         setIsManagingLinks(false);
     };
 
-    useEffect(() => {
-        if (scheduleData) {
-            const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-            const classes = scheduleData
-                .filter(c => c.day === today)
-                .sort((a, b) => a.startTime.localeCompare(b.startTime));
-            setTodaysClasses(classes);
-        } else {
-            setTodaysClasses([]);
+    const scheduleInfo = useMemo(() => {
+        const defaultState = {
+            title: "Today's Schedule",
+            classes: [] as ClassSchedule[],
+            isHoliday: false,
+            holidayDescription: null as string | null,
+            infoMessage: null as string | null,
+        };
+    
+        if (!calendarData || !scheduleData) {
+            return defaultState;
         }
-    }, [scheduleData]);
+    
+        const now = new Date();
+        // Create a YYYY-MM-DD string for today in the local timezone. This avoids all Date parsing timezone issues.
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const todayString = `${year}-${month}-${day}`;
+
+        const todayWeekday = now.toLocaleDateString('en-US', { weekday: 'long' });
+    
+        // Check for a specific event today using reliable string comparison
+        const todayEvent = calendarData.events.find(e => {
+            const startDate = e.date;
+            const endDate = e.endDate || e.date; // Use start date if end date is missing
+            return todayString >= startDate && todayString <= endDate;
+        });
+    
+        if (todayEvent && (todayEvent.type === 'Holiday' || todayEvent.description.toLowerCase().includes('no class'))) {
+            return {
+                ...defaultState,
+                title: "It's a Holiday!",
+                isHoliday: true,
+                holidayDescription: todayEvent.description,
+            };
+        }
+    
+        let effectiveDay = todayWeekday;
+        let infoMessage: string | null = null;
+        const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+    
+        if (todayEvent && todayEvent.description.toLowerCase().includes('timetable')) {
+            const desc = todayEvent.description.toLowerCase();
+            for (const day of weekdays) {
+                if (desc.includes(`${day} timetable`)) {
+                    effectiveDay = day.charAt(0).toUpperCase() + day.slice(1);
+                    infoMessage = `Today follows ${effectiveDay}'s schedule as per the academic calendar.`;
+                    break;
+                }
+            }
+        }
+        
+        const classesForDay = scheduleData
+            .filter(c => c.day.toLowerCase() === effectiveDay.toLowerCase())
+            .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    
+        return {
+            ...defaultState,
+            classes: classesForDay,
+            infoMessage,
+            title: infoMessage ? `Schedule for Today (${effectiveDay})` : `Today's Schedule`,
+        };
+    
+    }, [calendarData, scheduleData]);
 
     const fetchWeatherRecommendation = async (weatherData: WeatherData) => {
         setRecommendationLoading(true);
@@ -209,7 +262,8 @@ const Dashboard: React.FC = () => {
         setRecommendation(null);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+            // FIX: Use process.env.API_KEY as per guidelines, which also resolves the TypeScript error with import.meta.env.
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `The current weather at my college campus in Dhanbad, India is ${weatherData.temp}°C and ${weatherData.desc}. Provide 1 short, actionable recommendation for a student keeping in the time of the day. For example, what to wear, what activities to do, or what to carry. Keep the tone friendly and concise, using bullet points with emojis. Do not use markdown formatting.`;
 
             const response = await ai.models.generateContent({
@@ -317,7 +371,7 @@ const Dashboard: React.FC = () => {
     const displayCgpa = gradesData?.cgpa;
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    const upcomingClassIndex = todaysClasses.findIndex(c => c.endTime > currentTime);
+    const upcomingClassIndex = scheduleInfo.classes.findIndex(c => c.endTime > currentTime);
 
     const { semesterProgress, currentWeek } = (() => {
         const defaultStartDate = new Date(now.getFullYear(), 0, 15);
@@ -456,7 +510,7 @@ const Dashboard: React.FC = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-blue-100 font-medium">Today's Classes</p>
-                            <p className="text-4xl font-bold text-white mt-2">{todaysClasses.length}</p>
+                            <p className="text-4xl font-bold text-white mt-2">{scheduleInfo.classes.length}</p>
                         </div>
                         <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
                             <span className="text-3xl">📚</span>
@@ -493,87 +547,105 @@ const Dashboard: React.FC = () => {
                     {/* Today's Classes - Enhanced */}
                     <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-semibold">Today's Schedule</h2>
+                            <h2 className="text-xl font-semibold">{scheduleInfo.title}</h2>
                             <Link to="/schedule" className="text-sm text-primary hover:text-primary-dark transition-colors">
                                 View Full Schedule →
                             </Link>
                         </div>
                         
-                        {scheduleData ? (
-                            todaysClasses.length > 0 ? (
-                                <div className="relative">
-                                    <div className="absolute left-3 top-2 h-[calc(100%-8px)] w-0.5 bg-gradient-to-b from-primary/20 to-transparent" aria-hidden="true"></div>
-                                    <ul className="space-y-4">
-                                        {todaysClasses.map((c, index) => {
-                                            const isPast = upcomingClassIndex !== -1 && index < upcomingClassIndex;
-                                            const isCurrentOrNext = index === upcomingClassIndex;
-                                            const isCurrent = isCurrentOrNext && c.startTime <= currentTime;
-                                            const isNext = isCurrentOrNext && !isCurrent;
-                                            
-                                            return (
-                                                <li key={c.slotId} className={`relative pl-10 transition-all duration-300 ${isPast ? 'opacity-50' : ''}`}>
-                                                    <div className={`absolute left-0 top-2 h-6 w-6 rounded-full flex items-center justify-center ring-4 ${
-                                                        isCurrent ? 'bg-primary ring-primary/20' : 
-                                                        isNext ? 'bg-amber-500 ring-amber-500/20' : 
-                                                        isPast ? 'bg-slate-300 ring-slate-200' : 
-                                                        'bg-primary/60 ring-primary/10'
-                                                    }`}>
-                                                        <div className="h-2 w-2 rounded-full bg-white"></div>
-                                                    </div>
-                                                    
-                                                    <div className={`rounded-lg transition-all ${
-                                                        isCurrent ? 'bg-primary/5 border-l-4 border-primary p-4 -ml-1 shadow-sm' : 
-                                                        isNext ? 'bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 -ml-1' :
-                                                        'p-3 hover:bg-slate-50 dark:hover:bg-slate-800'
-                                                    }`}>
-                                                        <div className="flex justify-between items-start">
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center gap-3 mb-1">
-                                                                    <p className={`font-semibold ${isCurrent ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>
-                                                                        {c.startTime} - {c.endTime}
-                                                                    </p>
-                                                                    {isCurrent && (
-                                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-primary text-white animate-pulse">
-                                                                            ONGOING
+                        {scheduleInfo.isHoliday ? (
+                             <div className="text-center py-12">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
+                                    <span className="text-4xl">🎉</span>
+                                </div>
+                                <h3 className="text-lg font-medium text-slate-900 dark:text-white">{scheduleInfo.holidayDescription}</h3>
+                                <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your day off!</p>
+                            </div>
+                        ) : scheduleData ? (
+                            <>
+                                {scheduleInfo.infoMessage && (
+                                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg flex items-start gap-3">
+                                        <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p className="text-sm text-blue-700 dark:text-blue-300">{scheduleInfo.infoMessage}</p>
+                                    </div>
+                                )}
+                                {scheduleInfo.classes.length > 0 ? (
+                                    <div className="relative">
+                                        <div className="absolute left-3 top-2 h-[calc(100%-8px)] w-0.5 bg-gradient-to-b from-primary/20 to-transparent" aria-hidden="true"></div>
+                                        <ul className="space-y-4">
+                                            {scheduleInfo.classes.map((c, index) => {
+                                                const isPast = upcomingClassIndex !== -1 && index < upcomingClassIndex;
+                                                const isCurrentOrNext = index === upcomingClassIndex;
+                                                const isCurrent = isCurrentOrNext && c.startTime <= currentTime;
+                                                const isNext = isCurrentOrNext && !isCurrent;
+                                                
+                                                return (
+                                                    <li key={c.slotId} className={`relative pl-10 transition-all duration-300 ${isPast ? 'opacity-50' : ''}`}>
+                                                        <div className={`absolute left-0 top-2 h-6 w-6 rounded-full flex items-center justify-center ring-4 ${
+                                                            isCurrent ? 'bg-primary ring-primary/20' : 
+                                                            isNext ? 'bg-amber-500 ring-amber-500/20' : 
+                                                            isPast ? 'bg-slate-300 ring-slate-200' : 
+                                                            'bg-primary/60 ring-primary/10'
+                                                        }`}>
+                                                            <div className="h-2 w-2 rounded-full bg-white"></div>
+                                                        </div>
+                                                        
+                                                        <div className={`rounded-lg transition-all ${
+                                                            isCurrent ? 'bg-primary/5 border-l-4 border-primary p-4 -ml-1 shadow-sm' : 
+                                                            isNext ? 'bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 -ml-1' :
+                                                            'p-3 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                                        }`}>
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-3 mb-1">
+                                                                        <p className={`font-semibold ${isCurrent ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>
+                                                                            {c.startTime} - {c.endTime}
+                                                                        </p>
+                                                                        {isCurrent && (
+                                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-primary text-white animate-pulse">
+                                                                                ONGOING
+                                                                            </span>
+                                                                        )}
+                                                                        {isNext && (
+                                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white">
+                                                                                UP NEXT
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="font-bold text-slate-800 dark:text-white">{c.courseName}</p>
+                                                                    <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mt-2">
+                                                                        <span className="flex items-center gap-1.5">
+                                                                            <InstructorIcon className="w-4 h-4" />
+                                                                            {c.instructor}
                                                                         </span>
-                                                                    )}
-                                                                    {isNext && (
-                                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white">
-                                                                            UP NEXT
+                                                                        <span className="flex items-center gap-1.5">
+                                                                            <LocationIcon className="w-4 h-4" />
+                                                                            {c.location}
                                                                         </span>
-                                                                    )}
-                                                                </div>
-                                                                <p className="font-bold text-slate-800 dark:text-white">{c.courseName}</p>
-                                                                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mt-2">
-                                                                    <span className="flex items-center gap-1.5">
-                                                                        <InstructorIcon className="w-4 h-4" />
-                                                                        {c.instructor}
-                                                                    </span>
-                                                                    <span className="flex items-center gap-1.5">
-                                                                        <LocationIcon className="w-4 h-4" />
-                                                                        {c.location}
-                                                                    </span>
-                                                                    <span className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
-                                                                        {c.courseCode}
-                                                                    </span>
+                                                                        <span className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
+                                                                            {c.courseCode}
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </div>
-                            ) : (
-                                <div className="text-center py-12">
-                                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
-                                        <CalendarCheckIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
                                     </div>
-                                    <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Classes Today!</h3>
-                                    <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your free day or catch up on assignments.</p>
-                                </div>
-                            )
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
+                                            <CalendarCheckIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
+                                        </div>
+                                        <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Classes Today!</h3>
+                                        <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your free day or catch up on assignments.</p>
+                                    </div>
+                                )}
+                             </>
                         ) : (
                             <div className="text-center py-8 bg-slate-50 dark:bg-slate-800 rounded-lg">
                                 <CalendarCheckIcon className="mx-auto h-12 w-12 text-slate-400 mb-3" />
