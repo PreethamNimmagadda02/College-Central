@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LogoIcon } from '../components/icons/SidebarIcons';
+import { App as CapacitorApp } from '@capacitor/app';
 
 // Local icon components for clarity
 const UserIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -50,6 +51,26 @@ const Login: React.FC = () => {
         navigate('/', { replace: true });
     }
   }, [authLoading, isAuthenticated, navigate]);
+
+  // Capacitor back button handler
+  useEffect(() => {
+    const registerBackButton = async () => {
+      const listener = await CapacitorApp.addListener('backButton', () => {
+        CapacitorApp.exitApp();
+      });
+      return listener;
+    };
+
+    const listenerPromise = registerBackButton();
+
+    return () => {
+      const removeListener = async () => {
+        const listener = await listenerPromise;
+        listener.remove();
+      };
+      removeListener();
+    };
+  }, []);
 
   // Load remembered admission number
   useEffect(() => {
