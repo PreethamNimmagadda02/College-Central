@@ -50,7 +50,7 @@ const defaultLocations: CampusLocation[] = [
   {
     id: 'loc-3',
     name: 'Central Library',
-    category: 'academic',
+    category: 'facilities',
     coordinates: { lat: 23.816044265938007, lng: 86.44224027740222 },
     description: 'Dr. B. R. Ambedkar Central Library with 24/7 access and vast collection',
     icon: '📚',
@@ -172,7 +172,7 @@ const defaultLocations: CampusLocation[] = [
   {
     id: 'loc-41',
     name: 'Golden Jubilee Lecture Theatre (GJLT)',
-    category: 'academic',
+    category: 'facilities',
     coordinates: { lat: 23.814020755891146, lng: 86.44020506900353 },
     description: 'A large lecture theatre for seminars and events.',
     icon: '🎭',
