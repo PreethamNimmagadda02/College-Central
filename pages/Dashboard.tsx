@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ClassSchedule, CampusEvent, Announcement, NewsItem, CalendarEvent } from '../types';
@@ -107,6 +108,25 @@ const Dashboard: React.FC = () => {
     const [editingLink, setEditingLink] = useState<QuickLink | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [newLink, setNewLink] = useState({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+    const [selectedDate, setSelectedDate] = useState(new Date());
+
+    // Helper function to format a Date object into 'YYYY-MM-DD' string for the input
+    const toInputDateString = (date: Date) => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    
+    // Handler for date picker changes
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const dateString = e.target.value;
+        if (dateString) {
+            // Splitting the string is more robust against timezone shifts than new Date(string)
+            const [year, month, day] = dateString.split('-').map(Number);
+            setSelectedDate(new Date(year, month - 1, day));
+        }
+    };
 
     // Load quick links from localStorage on mount
     useEffect(() => {
@@ -199,25 +219,26 @@ const Dashboard: React.FC = () => {
             infoMessage: null as string | null,
         };
     
-        if (!calendarData || !scheduleData) {
+        if (!calendarData) { // scheduleData can be null if not yet uploaded
             return defaultState;
         }
     
-        const now = new Date();
-        // Create a YYYY-MM-DD string for today in the local timezone. This avoids all Date parsing timezone issues.
-        const year = now.getFullYear();
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const day = now.getDate().toString().padStart(2, '0');
-        const todayString = `${year}-${month}-${day}`;
-
-        const todayWeekday = now.toLocaleDateString('en-US', { weekday: 'long' });
+        const dateToDisplay = selectedDate;
+        const today = new Date();
+        const isToday = toInputDateString(dateToDisplay) === toInputDateString(today);
     
-        // Check for a specific event today using reliable string comparison
+        // Create a YYYY-MM-DD string for the selected date for reliable comparison
+        const displayDateString = toInputDateString(dateToDisplay);
+        const displayWeekday = dateToDisplay.toLocaleDateString('en-US', { weekday: 'long' });
+    
+        // Check for a specific event on the selected date
         const todayEvent = calendarData.events.find(e => {
             const startDate = e.date;
             const endDate = e.endDate || e.date; // Use start date if end date is missing
-            return todayString >= startDate && todayString <= endDate;
+            return displayDateString >= startDate && displayDateString <= endDate;
         });
+
+        let titleText = isToday ? "Today's Schedule" : `${dateToDisplay.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}'s Schedule`;
     
         if (todayEvent && (todayEvent.type === 'Holiday' || todayEvent.description.toLowerCase().includes('no class'))) {
             return {
@@ -228,33 +249,37 @@ const Dashboard: React.FC = () => {
             };
         }
     
-        let effectiveDay = todayWeekday;
+        let effectiveDay = displayWeekday;
         let infoMessage: string | null = null;
-        const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+        const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     
         if (todayEvent && todayEvent.description.toLowerCase().includes('timetable')) {
             const desc = todayEvent.description.toLowerCase();
             for (const day of weekdays) {
                 if (desc.includes(`${day} timetable`)) {
                     effectiveDay = day.charAt(0).toUpperCase() + day.slice(1);
-                    infoMessage = `Today follows ${effectiveDay}'s schedule as per the academic calendar.`;
+                    infoMessage = `This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
                     break;
                 }
             }
         }
         
-        const classesForDay = scheduleData
+        const classesForDay = (scheduleData || [])
             .filter(c => c.day.toLowerCase() === effectiveDay.toLowerCase())
             .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+        if(infoMessage){
+            titleText = `Schedule for ${dateToDisplay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (${effectiveDay})`
+        }
     
         return {
             ...defaultState,
             classes: classesForDay,
             infoMessage,
-            title: infoMessage ? `Schedule for Today (${effectiveDay})` : `Today's Schedule`,
+            title: titleText,
         };
     
-    }, [calendarData, scheduleData]);
+    }, [calendarData, scheduleData, selectedDate]);
 
     const fetchWeatherRecommendation = async (weatherData: WeatherData) => {
         setRecommendationLoading(true);
@@ -546,11 +571,20 @@ const Dashboard: React.FC = () => {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Today's Classes - Enhanced */}
                     <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                             <h2 className="text-xl font-semibold">{scheduleInfo.title}</h2>
-                            <Link to="/schedule" className="text-sm text-primary hover:text-primary-dark transition-colors">
-                                View Full Schedule →
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="date"
+                                    value={toInputDateString(selectedDate)}
+                                    onChange={handleDateChange}
+                                    className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+                                    aria-label="Select date to view schedule"
+                                />
+                                <Link to="/schedule" className="text-sm text-primary hover:text-primary-dark transition-colors whitespace-nowrap">
+                                    Full Schedule →
+                                </Link>
+                            </div>
                         </div>
                         
                         {scheduleInfo.isHoliday ? (
@@ -561,7 +595,7 @@ const Dashboard: React.FC = () => {
                                 <h3 className="text-lg font-medium text-slate-900 dark:text-white">{scheduleInfo.holidayDescription}</h3>
                                 <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your day off!</p>
                             </div>
-                        ) : scheduleData ? (
+                        ) : (
                             <>
                                 {scheduleInfo.infoMessage && (
                                     <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg flex items-start gap-3">
@@ -641,19 +675,11 @@ const Dashboard: React.FC = () => {
                                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
                                             <CalendarCheckIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
                                         </div>
-                                        <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Classes Today!</h3>
+                                        <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Classes Scheduled!</h3>
                                         <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your free day or catch up on assignments.</p>
                                     </div>
                                 )}
                              </>
-                        ) : (
-                            <div className="text-center py-8 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                                <CalendarCheckIcon className="mx-auto h-12 w-12 text-slate-400 mb-3" />
-                                <p className="text-slate-600 dark:text-slate-400 mb-4">Upload your schedule to see today's classes</p>
-                                <Link to="/schedule" className="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors">
-                                    Setup Schedule →
-                                </Link>
-                            </div>
                         )}
                     </div>
 
