@@ -116,6 +116,10 @@ iit-ism-student-hub/
 ### Preetham Nimagadda
 ### IIT(ISM) Dhanbad
 
+<a href="https://www.linkedin.com/in/preethamnimmagadda" target="_blank">
+  <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Preetham Nimmagadda"/>
+ </a>
+
 ---
 
 **Note**: This application is specifically designed for IIT (ISM) Dhanbad students and contains features tailored to the campus environment.
