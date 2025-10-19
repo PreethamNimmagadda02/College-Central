@@ -288,7 +288,7 @@ const Dashboard: React.FC = () => {
 
         try {
             // FIX: Use process.env.API_KEY as per guidelines, which also resolves the TypeScript error with import.meta.env.
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
             const prompt = `The current weather at my college campus in Dhanbad, India is ${weatherData.temp}°C and ${weatherData.desc}. Provide 1 short, actionable recommendation for a student keeping in the time of the day. For example, what to wear, what activities to do, or what to carry. Keep the tone friendly and concise, using bullet points with emojis. Do not use markdown formatting.`;
 
             const response = await ai.models.generateContent({
