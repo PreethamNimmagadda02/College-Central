@@ -22,6 +22,56 @@ interface CalendarContextType {
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
 
+// Helper function to adjust the years of academic calendar events to the current year
+const adjustCalendarDatesToCurrentYear = (data: AcademicCalendarData): AcademicCalendarData => {
+  const currentYear = new Date().getFullYear();
+  const originalStartYear = new Date(data.semesterStartDate).getFullYear();
+
+  const adjustedEvents = data.events.map(event => {
+    const originalEventDate = new Date(`${event.date}T12:00:00Z`); // Use midday UTC to avoid timezone shifts
+    const originalEventYear = originalEventDate.getUTCFullYear();
+    const yearOffset = originalEventYear - originalStartYear;
+    const newYear = currentYear + yearOffset;
+
+    // Adjust start date
+    const adjustedStartDate = new Date(originalEventDate);
+    adjustedStartDate.setUTCFullYear(newYear);
+    const newStartDateString = adjustedStartDate.toISOString().split('T')[0];
+
+    // Adjust end date if it exists
+    let newEndDateString: string | undefined = undefined;
+    if (event.endDate) {
+      const originalEndDate = new Date(`${event.endDate}T12:00:00Z`);
+      const originalEndYear = originalEndDate.getUTCFullYear();
+      const endYearOffset = originalEndYear - originalStartYear;
+      const adjustedEndDate = new Date(originalEndDate);
+      adjustedEndDate.setUTCFullYear(currentYear + endYearOffset);
+      newEndDateString = adjustedEndDate.toISOString().split('T')[0];
+    }
+    
+    return {
+      ...event,
+      date: newStartDateString,
+      endDate: newEndDateString,
+    };
+  });
+
+  const adjustedStartDate = new Date(`${data.semesterStartDate}T12:00:00Z`);
+  adjustedStartDate.setUTCFullYear(currentYear);
+  
+  const adjustedEndDate = new Date(`${data.semesterEndDate}T12:00:00Z`);
+  const originalEndYear = adjustedEndDate.getUTCFullYear();
+  const endYearOffset = originalEndYear - originalStartYear;
+  adjustedEndDate.setUTCFullYear(currentYear + endYearOffset);
+
+  return {
+    ...data,
+    semesterStartDate: adjustedStartDate.toISOString().split('T')[0],
+    semesterEndDate: adjustedEndDate.toISOString().split('T')[0],
+    events: adjustedEvents,
+  };
+};
+
 export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { currentUser } = useAuth();
   const [calendarData, setCalendarData] = useState<AcademicCalendarData | null>(null);
@@ -118,18 +168,21 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  // Merge preloaded data with user events
+  // Merge preloaded data with user events and adjust dates
   useEffect(() => {
     setLoading(true);
 
-    // Combine preloaded events with user events
+    // Adjust preloaded data to the current year
+    const adjustedPreloadedData = adjustCalendarDatesToCurrentYear(PRELOADED_CALENDAR_DATA);
+
+    // Combine adjusted preloaded events with user events (user events are assumed to be for current year)
     const mergedEvents = [
-      ...PRELOADED_CALENDAR_DATA.events,
+      ...adjustedPreloadedData.events,
       ...userEvents
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     setCalendarData({
-      ...PRELOADED_CALENDAR_DATA,
+      ...adjustedPreloadedData,
       events: mergedEvents
     });
 
