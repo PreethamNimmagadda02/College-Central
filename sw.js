@@ -40,6 +40,15 @@ self.addEventListener('fetch', event => {
     return;
   }
   
+  // Don't cache external images that might fail
+  if (event.request.url.includes('iitism.ac.in') || event.request.url.includes('via.placeholder.com')) {
+    event.respondWith(fetch(event.request).catch(() => {
+      // Return a simple response for failed external requests
+      return new Response('', { status: 404 });
+    }));
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
@@ -68,7 +77,10 @@ self.addEventListener('fetch', event => {
 
             return response;
           }
-        );
+        ).catch(() => {
+          // Return a simple response for failed requests
+          return new Response('', { status: 404 });
+        });
       })
     );
 });

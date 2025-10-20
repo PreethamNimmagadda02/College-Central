@@ -108,7 +108,18 @@ const Dashboard: React.FC = () => {
     const [editingLink, setEditingLink] = useState<QuickLink | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [newLink, setNewLink] = useState({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState(() => {
+        // Try to load selected date from localStorage, fallback to today
+        const savedDate = localStorage.getItem('dashboardSelectedDate');
+        if (savedDate) {
+            try {
+                return new Date(savedDate);
+            } catch (e) {
+                console.warn('Invalid saved date, using today');
+            }
+        }
+        return new Date();
+    });
 
     // Helper function to format a Date object into 'YYYY-MM-DD' string for the input
     const toInputDateString = (date: Date) => {
@@ -124,8 +135,19 @@ const Dashboard: React.FC = () => {
         if (dateString) {
             // Splitting the string is more robust against timezone shifts than new Date(string)
             const [year, month, day] = dateString.split('-').map(Number);
-            setSelectedDate(new Date(year, month - 1, day));
+            const newDate = new Date(year, month - 1, day);
+            setSelectedDate(newDate);
+            
+            // Save to localStorage to persist across page refreshes
+            localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
         }
+    };
+
+    // Reset to today's date
+    const handleResetToToday = () => {
+        const today = new Date();
+        setSelectedDate(today);
+        localStorage.setItem('dashboardSelectedDate', today.toISOString());
     };
 
     // Load quick links from localStorage on mount
@@ -231,8 +253,8 @@ const Dashboard: React.FC = () => {
         const displayDateString = toInputDateString(dateToDisplay);
         const displayWeekday = dateToDisplay.toLocaleDateString('en-US', { weekday: 'long' });
     
-        // Check for a specific event on the selected date
-        const todayEvent = calendarData.events.find(e => {
+        // Check for academic calendar events on the selected date
+        const todayEvents = calendarData.events.filter(e => {
             const startDate = e.date;
             const endDate = e.endDate || e.date; // Use start date if end date is missing
             return displayDateString >= startDate && displayDateString <= endDate;
@@ -240,36 +262,165 @@ const Dashboard: React.FC = () => {
 
         let titleText = isToday ? "Today's Schedule" : `${dateToDisplay.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}'s Schedule`;
     
-        if (todayEvent && (todayEvent.type === 'Holiday' || todayEvent.description.toLowerCase().includes('no class'))) {
+        // Check for holidays and special events
+        const holidayEvent = todayEvents.find(e => 
+            e.type === 'Holiday' || 
+            e.description.toLowerCase().includes('no class') ||
+            e.description.toLowerCase().includes('holiday') ||
+            e.description.toLowerCase().includes('break') ||
+            e.description.toLowerCase().includes('vacation')
+        );
+
+        if (holidayEvent) {
             return {
                 ...defaultState,
-                title: "It's a Holiday!",
+                title: "It's a Holiday! 🎉",
                 isHoliday: true,
-                holidayDescription: todayEvent.description,
+                holidayDescription: holidayEvent.description,
+            };
+        }
+
+        // Check for exam periods
+        const examEvent = todayEvents.find(e => 
+            e.type === 'Mid-Semester Exams' || 
+            e.type === 'End-Semester Exams' ||
+            e.description.toLowerCase().includes('exam') ||
+            e.description.toLowerCase().includes('midterm') ||
+            e.description.toLowerCase().includes('final')
+        );
+
+        if (examEvent) {
+            return {
+                ...defaultState,
+                title: "Exam Period 📝",
+                isHoliday: true,
+                holidayDescription: `${examEvent.description} - Regular classes may be suspended.`,
+            };
+        }
+
+        // Check for semester start/end
+        const semesterEvent = todayEvents.find(e => 
+            e.type === 'Start of Semester' || 
+            e.description.toLowerCase().includes('semester start') ||
+            e.description.toLowerCase().includes('semester end')
+        );
+
+        if (semesterEvent) {
+            return {
+                ...defaultState,
+                title: "Semester Event 📚",
+                isHoliday: true,
+                holidayDescription: `${semesterEvent.description} - Check with your department for schedule changes.`,
             };
         }
     
+        // Check for timetable changes or special scheduling
+        const timetableEvent = todayEvents.find(e => 
+            e.description.toLowerCase().includes('timetable') ||
+            e.description.toLowerCase().includes('schedule change') ||
+            e.description.toLowerCase().includes('class schedule') ||
+            e.description.toLowerCase().includes('working as per') ||
+            e.description.toLowerCase().includes('working as') ||
+            e.description.toLowerCase().includes('afternoon working') ||
+            e.description.toLowerCase().includes('morning working')
+        );
+
         let effectiveDay = displayWeekday;
         let infoMessage: string | null = null;
         const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     
-        if (todayEvent && todayEvent.description.toLowerCase().includes('timetable')) {
-            const desc = todayEvent.description.toLowerCase();
+        if (timetableEvent) {
+            const desc = timetableEvent.description.toLowerCase();
+            
+            // Check for specific day timetable changes
             for (const day of weekdays) {
-                if (desc.includes(`${day} timetable`)) {
+                if (desc.includes(`${day} timetable`) || desc.includes(`${day} schedule`)) {
                     effectiveDay = day.charAt(0).toUpperCase() + day.slice(1);
-                    infoMessage = `This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
+                    infoMessage = `📅 This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
                     break;
                 }
             }
+            
+            // Check for "working as per [day] timetable" patterns
+            if (!infoMessage) {
+                for (const day of weekdays) {
+                    if (desc.includes(`working as per ${day}`) || desc.includes(`as per ${day}`)) {
+                        effectiveDay = day.charAt(0).toUpperCase() + day.slice(1);
+                        infoMessage = `📅 This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
+                        break;
+                    }
+                }
+            }
+            
+            // Check for afternoon/morning working patterns
+            if (!infoMessage) {
+                if (desc.includes('afternoon working')) {
+                    infoMessage = `📅 ${timetableEvent.description}`;
+                } else if (desc.includes('morning working')) {
+                    infoMessage = `📅 ${timetableEvent.description}`;
+                } else if (desc.includes('working as per')) {
+                    infoMessage = `📅 ${timetableEvent.description}`;
+                }
+            }
+            
+            // If no specific pattern matched, show general timetable change message
+            if (!infoMessage) {
+                infoMessage = `📅 ${timetableEvent.description}`;
+            }
+        }
+
+        // Check for special events like festivals, important dates, etc.
+        const specialEvents = todayEvents.filter(e => 
+            e.type === 'Other' && 
+            !e.description.toLowerCase().includes('timetable') &&
+            !e.description.toLowerCase().includes('holiday') &&
+            !e.description.toLowerCase().includes('exam') &&
+            !e.description.toLowerCase().includes('working as') &&
+            (e.description.toLowerCase().includes('festival') ||
+             e.description.toLowerCase().includes('convocation') ||
+             e.description.toLowerCase().includes('foundation day') ||
+             e.description.toLowerCase().includes('srijan') ||
+             e.description.toLowerCase().includes('concetto') ||
+             e.description.toLowerCase().includes('parakram') ||
+             e.description.toLowerCase().includes('basant') ||
+             e.description.toLowerCase().includes('sports meet') ||
+             e.description.toLowerCase().includes('orientation') ||
+             e.description.toLowerCase().includes('registration'))
+        );
+
+        if (specialEvents.length > 0 && !infoMessage) {
+            const eventDescriptions = specialEvents.map(e => e.description).join(', ');
+            infoMessage = `🎉 Special Event: ${eventDescriptions}`;
+        }
+
+        // Check for other academic events that might affect schedule
+        const otherEvents = todayEvents.filter(e => 
+            e.type === 'Other' && 
+            !e.description.toLowerCase().includes('timetable') &&
+            !e.description.toLowerCase().includes('holiday') &&
+            !e.description.toLowerCase().includes('exam') &&
+            !e.description.toLowerCase().includes('working as') &&
+            !specialEvents.includes(e)
+        );
+
+        if (otherEvents.length > 0 && !infoMessage) {
+            const eventDescriptions = otherEvents.map(e => e.description).join(', ');
+            infoMessage = `📋 Academic Event: ${eventDescriptions}`;
         }
         
         const classesForDay = (scheduleData || [])
             .filter(c => c.day.toLowerCase() === effectiveDay.toLowerCase())
             .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-        if(infoMessage){
-            titleText = `Schedule for ${dateToDisplay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (${effectiveDay})`
+        // Update title based on events and schedule changes
+        if (infoMessage) {
+            if (timetableEvent) {
+                titleText = `Schedule for ${dateToDisplay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (${effectiveDay})`;
+            } else if (specialEvents.length > 0) {
+                titleText = `${dateToDisplay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - Special Day`;
+            } else if (otherEvents.length > 0) {
+                titleText = `${dateToDisplay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - Academic Day`;
+            }
         }
     
         return {
@@ -581,6 +732,13 @@ const Dashboard: React.FC = () => {
                                     className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
                                     aria-label="Select date to view schedule"
                                 />
+                                <button
+                                    onClick={handleResetToToday}
+                                    className="px-3 py-1.5 text-xs bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-300 rounded-lg transition-colors font-medium"
+                                    title="Reset to today"
+                                >
+                                    Today
+                                </button>
                                 <Link to="/schedule" className="text-sm text-primary hover:text-primary-dark transition-colors whitespace-nowrap">
                                     Full Schedule →
                                 </Link>
