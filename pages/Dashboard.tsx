@@ -257,18 +257,94 @@ const Dashboard: React.FC = () => {
         const todayEvents = calendarData.events.filter(e => {
             const startDate = e.date;
             const endDate = e.endDate || e.date; // Use start date if end date is missing
-            return displayDateString >= startDate && displayDateString <= endDate;
+            const isOnDate = displayDateString >= startDate && displayDateString <= endDate;
+            
+            if (!isOnDate) return false;
+            
+            // Filter for BTech-relevant events only
+            const description = e.description.toLowerCase();
+            
+            // Always include holidays, exams, and timetable changes
+            if (e.type === 'Holiday' || 
+                e.type === 'Mid-Semester Exams' || 
+                e.type === 'End-Semester Exams' ||
+                description.includes('timetable') ||
+                description.includes('working as per') ||
+                description.includes('working as') ||
+                description.includes('afternoon working') ||
+                description.includes('morning working')) {
+                return true;
+            }
+            
+            // Include events that mention BTech students specifically
+            if (description.includes('b. tech') || 
+                description.includes('btech') ||
+                description.includes('b tech') ||
+                description.includes('ug students') ||
+                description.includes('undergraduate') ||
+                description.includes('final year ug') ||
+                description.includes('1st year ug') ||
+                description.includes('2nd year') ||
+                description.includes('3rd year') ||
+                description.includes('4th year') ||
+                description.includes('int. m. tech') ||
+                description.includes('dual degree') ||
+                description.includes('bs-ms')) {
+                return true;
+            }
+            
+            // Include general academic events that affect all students
+            if (description.includes('all students') ||
+                description.includes('semester classes') ||
+                description.includes('semester start') ||
+                description.includes('semester end') ||
+                description.includes('convocation') ||
+                description.includes('foundation day') ||
+                description.includes('srijan') ||
+                description.includes('concetto') ||
+                description.includes('parakram') ||
+                description.includes('basant') ||
+                description.includes('sports meet') ||
+                description.includes('orientation') ||
+                description.includes('registration') ||
+                description.includes('fee payment') ||
+                description.includes('pre-registration')) {
+                return true;
+            }
+            
+            // Exclude PG-only, PhD-only, Executive-only events
+            if (description.includes('pg students') ||
+                description.includes('ph. d') ||
+                description.includes('phd') ||
+                description.includes('m. tech') ||
+                description.includes('m. sc') ||
+                description.includes('mba') ||
+                description.includes('executive') ||
+                description.includes('part-time') ||
+                description.includes('research proposal') ||
+                description.includes('supervisor') ||
+                description.includes('project guide') ||
+                description.includes('thesis') ||
+                description.includes('dissertation')) {
+                return false;
+            }
+            
+            // Include other general events by default
+            return true;
         });
 
         let titleText = isToday ? "Today's Schedule" : `${dateToDisplay.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}'s Schedule`;
     
-        // Check for holidays and special events
+        // Check for holidays and special events - suspend classes for ALL holidays, breaks, vacations, and exams
         const holidayEvent = todayEvents.find(e => 
-            e.type === 'Holiday' || 
-            e.description.toLowerCase().includes('no class') ||
-            e.description.toLowerCase().includes('holiday') ||
-            e.description.toLowerCase().includes('break') ||
-            e.description.toLowerCase().includes('vacation')
+            e.type === 'Holiday' ||
+            e.type === 'Mid-Semester Exams' || 
+            e.type === 'End-Semester Exams' ||
+            e.description.toLowerCase().includes('semester break') ||
+            e.description.toLowerCase().includes('mid semester break') ||
+            e.description.toLowerCase().includes('winter break') ||
+            e.description.toLowerCase().includes('summer break') ||
+            e.description.toLowerCase().includes('no class')
         );
 
         if (holidayEvent) {
@@ -280,16 +356,13 @@ const Dashboard: React.FC = () => {
             };
         }
 
-        // Check for exam periods
+        // Check for exam periods (already handled in holidayEvent, but keep for specific messaging)
         const examEvent = todayEvents.find(e => 
             e.type === 'Mid-Semester Exams' || 
-            e.type === 'End-Semester Exams' ||
-            e.description.toLowerCase().includes('exam') ||
-            e.description.toLowerCase().includes('midterm') ||
-            e.description.toLowerCase().includes('final')
+            e.type === 'End-Semester Exams'
         );
 
-        if (examEvent) {
+        if (examEvent && !holidayEvent) {
             return {
                 ...defaultState,
                 title: "Exam Period 📝",
@@ -369,14 +442,23 @@ const Dashboard: React.FC = () => {
             }
         }
 
-        // Check for special events like festivals, important dates, etc.
+        // Check for special events like festivals, important dates, etc. - only BTech relevant
         const specialEvents = todayEvents.filter(e => 
             e.type === 'Other' && 
             !e.description.toLowerCase().includes('timetable') &&
             !e.description.toLowerCase().includes('holiday') &&
             !e.description.toLowerCase().includes('exam') &&
             !e.description.toLowerCase().includes('working as') &&
-            (e.description.toLowerCase().includes('festival') ||
+            // Must be BTech-relevant OR affect all students
+            (e.description.toLowerCase().includes('b. tech') || 
+             e.description.toLowerCase().includes('btech') ||
+             e.description.toLowerCase().includes('b tech') ||
+             e.description.toLowerCase().includes('ug students') ||
+             e.description.toLowerCase().includes('undergraduate') ||
+             e.description.toLowerCase().includes('all students') ||
+             e.description.toLowerCase().includes('semester classes') ||
+             e.description.toLowerCase().includes('semester start') ||
+             e.description.toLowerCase().includes('semester end') ||
              e.description.toLowerCase().includes('convocation') ||
              e.description.toLowerCase().includes('foundation day') ||
              e.description.toLowerCase().includes('srijan') ||
@@ -385,7 +467,9 @@ const Dashboard: React.FC = () => {
              e.description.toLowerCase().includes('basant') ||
              e.description.toLowerCase().includes('sports meet') ||
              e.description.toLowerCase().includes('orientation') ||
-             e.description.toLowerCase().includes('registration'))
+             e.description.toLowerCase().includes('registration') ||
+             e.description.toLowerCase().includes('fee payment') ||
+             e.description.toLowerCase().includes('pre-registration'))
         );
 
         if (specialEvents.length > 0 && !infoMessage) {
@@ -393,14 +477,36 @@ const Dashboard: React.FC = () => {
             infoMessage = `🎉 Special Event: ${eventDescriptions}`;
         }
 
-        // Check for other academic events that might affect schedule
+
+        // Check for other academic events that might affect schedule - only BTech relevant
         const otherEvents = todayEvents.filter(e => 
             e.type === 'Other' && 
             !e.description.toLowerCase().includes('timetable') &&
             !e.description.toLowerCase().includes('holiday') &&
             !e.description.toLowerCase().includes('exam') &&
             !e.description.toLowerCase().includes('working as') &&
-            !specialEvents.includes(e)
+            !specialEvents.includes(e) &&
+            // Must be BTech-relevant OR affect all students
+            (e.description.toLowerCase().includes('b. tech') || 
+             e.description.toLowerCase().includes('btech') ||
+             e.description.toLowerCase().includes('b tech') ||
+             e.description.toLowerCase().includes('ug students') ||
+             e.description.toLowerCase().includes('undergraduate') ||
+             e.description.toLowerCase().includes('all students') ||
+             e.description.toLowerCase().includes('semester classes') ||
+             e.description.toLowerCase().includes('semester start') ||
+             e.description.toLowerCase().includes('semester end') ||
+             e.description.toLowerCase().includes('convocation') ||
+             e.description.toLowerCase().includes('foundation day') ||
+             e.description.toLowerCase().includes('srijan') ||
+             e.description.toLowerCase().includes('concetto') ||
+             e.description.toLowerCase().includes('parakram') ||
+             e.description.toLowerCase().includes('basant') ||
+             e.description.toLowerCase().includes('sports meet') ||
+             e.description.toLowerCase().includes('orientation') ||
+             e.description.toLowerCase().includes('registration') ||
+             e.description.toLowerCase().includes('fee payment') ||
+             e.description.toLowerCase().includes('pre-registration'))
         );
 
         if (otherEvents.length > 0 && !infoMessage) {
