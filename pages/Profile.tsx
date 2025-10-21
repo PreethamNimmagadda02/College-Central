@@ -523,7 +523,7 @@ const Profile: React.FC = () => {
 
                             {/* Quick Stats */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-                                <Link to="/forms" className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95">
+                                <Link to="/college-forms" className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95">
                                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     <div className="relative z-10 flex items-center justify-between">
                                         <div>
@@ -538,7 +538,7 @@ const Profile: React.FC = () => {
                                     </div>
                                 </Link>
 
-                                <Link to="/calendar" className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95">
+                                <Link to="/academic-calendar" className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95">
                                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     <div className="relative z-10 flex items-center justify-between">
                                         <div>
@@ -553,7 +553,7 @@ const Profile: React.FC = () => {
                                     </div>
                                 </Link>
 
-                                <Link to="/Dashboard" className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95">
+                                <Link to="/" className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95">
                                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     <div className="relative z-10 flex items-center justify-between">
                                         <div>
@@ -976,7 +976,7 @@ const Profile: React.FC = () => {
                                             Edit Profile
                                         </button>
                                         <Link
-                                            to="/forms"
+                                            to="/college-forms"
                                             onClick={() => setShowAcademicInfoModal(false)}
                                             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
                                         >
