@@ -11,14 +11,14 @@ interface SidebarProps {
   setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed }) => {
+const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarCollapsed }) => {
   const trigger = useRef<HTMLButtonElement>(null);
   const sidebar = useRef<HTMLElement>(null);
   const { logout } = useAuth();
   const { user } = useUser();
   const navigate = useNavigate();
   const [isHoveringEdge, setIsHoveringEdge] = React.useState(false);
-  const [isHoveringSidebar, setIsHoveringSidebar] = React.useState(false);
+  const [isArrowClicked, setIsArrowClicked] = React.useState(false);
 
   const handleLogout = async () => {
     try {
@@ -28,21 +28,6 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
         console.error("Failed to log out:", error);
     }
   }
-
-  // Handle hover edge detection
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (sidebarCollapsed) {
-        const isNearLeftEdge = e.clientX <= 20; // 20px from left edge
-        setIsHoveringEdge(isNearLeftEdge);
-      }
-    };
-
-    if (sidebarCollapsed) {
-      document.addEventListener('mousemove', handleMouseMove);
-      return () => document.removeEventListener('mousemove', handleMouseMove);
-    }
-  }, [sidebarCollapsed]);
 
   // close on click outside
   useEffect(() => {
@@ -79,11 +64,8 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
     whitespace-nowrap z-50 pointer-events-none
     before:content-[''] before:absolute before:right-full before:top-1/2 before:-translate-y-1/2
     before:border-4 before:border-transparent before:border-r-slate-900 dark:before:border-r-slate-800
-    ${!sidebarCollapsed || (isHoveringEdge || isHoveringSidebar) ? 'hidden' : ''}
+    ${!sidebarCollapsed || isHoveringEdge || isArrowClicked ? 'hidden' : ''}
   `;
-
-  // Determine if sidebar should be expanded
-  const isExpanded = !sidebarCollapsed || isHoveringEdge || isHoveringSidebar;
 
   return (
     <>
@@ -92,6 +74,49 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
           display: none;
         }
       `}</style>
+      {/* Edge hover detector and arrow button for collapsed sidebar */}
+      {sidebarCollapsed && (
+        <>
+          <div
+            className="hidden lg:block fixed left-0 top-16 w-12 h-[calc(100vh-4rem)] z-30"
+            onMouseEnter={() => {
+              if (!isArrowClicked) {
+                setIsHoveringEdge(true);
+              }
+            }}
+            onMouseLeave={() => {
+              if (!isArrowClicked) {
+                setIsHoveringEdge(false);
+              }
+            }}
+          />
+          <button
+            onClick={() => {
+              setIsArrowClicked(!isArrowClicked);
+              setIsHoveringEdge(false);
+            }}
+            onMouseEnter={() => {
+              if (!isArrowClicked) {
+                setIsHoveringEdge(true);
+              }
+            }}
+            className={`hidden lg:flex fixed top-1/2 -translate-y-1/2 z-50 items-center justify-center w-6 h-16 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-r-lg shadow-lg transition-all duration-300 hover:w-8 ${
+              isHoveringEdge || isArrowClicked ? 'left-72' : 'left-0'
+            }`}
+            aria-label="Toggle sidebar visibility"
+          >
+            <svg
+              className={`w-4 h-4 transition-transform duration-300 ${isHoveringEdge || isArrowClicked ? 'rotate-180' : ''}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </> 
+      )}
 
       {/* Sidebar backdrop (mobile) */}
       <div
@@ -102,56 +127,40 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
         aria-hidden="true"
       ></div>
 
-      {/* Collapse/Expand Toggle Button */}
-      <button
-        ref={trigger}
-        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-        className={`hidden lg:flex fixed top-20 z-50 items-center justify-center w-6 h-12 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-r-lg shadow-lg transition-all duration-300 hover:scale-105 ${
-          sidebarCollapsed ? 'left-0' : 'left-72'
-        }`}
-        aria-label="Toggle sidebar"
-      >
-        <svg
-          className={`w-4 h-4 transition-transform duration-300 ${sidebarCollapsed ? '' : 'rotate-180'}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2.5}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-
       <aside
         ref={sidebar}
         onMouseEnter={() => {
-          if (sidebarCollapsed) {
-            setIsHoveringSidebar(true);
+          if (sidebarCollapsed && !isArrowClicked) {
+            setIsHoveringEdge(true);
           }
         }}
-        onMouseLeave={() => {
-          if (sidebarCollapsed) {
-            setIsHoveringSidebar(false);
+        onMouseLeave={(e: React.MouseEvent) => {
+          if (sidebarCollapsed && !isArrowClicked) {
+            setIsHoveringEdge(false);
           }
         }}
         className={`fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] flex-col
-          bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl
+          ${isHoveringEdge && sidebarCollapsed && !isArrowClicked
+            ? 'bg-white/40 dark:bg-slate-900/40 backdrop-blur-md'
+            : 'bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl'
+          }
           border-r border-slate-200/50 dark:border-slate-700/50
           shadow-xl
           duration-300 ease-in-out transition-all overflow-visible
-          ${isExpanded ? 'w-72' : 'w-20'}
+          ${sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'w-20' : 'w-72'}
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'lg:opacity-0 lg:-translate-x-[calc(100%-1.5rem)]' : ''}
         `}
       >
         <nav
-          className={`sidebar-nav flex flex-col flex-1 px-3 py-4 ${isExpanded ? 'overflow-y-auto' : ''}`}
-          style={isExpanded ? {
+          className={`sidebar-nav flex flex-col flex-1 px-3 py-4 ${!sidebarCollapsed || isHoveringEdge || isArrowClicked ? 'overflow-y-auto' : ''}`}
+          style={!sidebarCollapsed || isHoveringEdge || isArrowClicked ? {
             scrollbarWidth: 'none',
             msOverflowStyle: 'none'
           } as React.CSSProperties : {}}
         >
           {/* Academics Section */}
-          {isExpanded && (
+          {(!sidebarCollapsed || isHoveringEdge || isArrowClicked) && (
             <div className="px-3 mb-2">
               <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Academics
@@ -166,7 +175,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                   end={item.path === '/'}
                   className={({ isActive }) =>
                     `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all duration-200 ${
-                      !isExpanded ? 'px-3 justify-center' : 'px-3'
+                      sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'px-3 justify-center' : 'px-3'
                     } ${
                       isActive
                         ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02]'
@@ -176,7 +185,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                   onClick={() => sidebarOpen && setSidebarOpen(false)}
                 >
                   <span className="shrink-0">{item.icon}</span>
-                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${!isExpanded ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
+                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
                   <span className={tooltipClasses}>{item.label}</span>
                 </NavLink>
               </li>
@@ -184,7 +193,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
           </ul>
 
           {/* Campus Section */}
-          {isExpanded && (
+          {(!sidebarCollapsed || isHoveringEdge || isArrowClicked) && (
             <div className="px-3 mb-2">
               <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Campus Life
@@ -198,7 +207,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                   to={item.path}
                   className={({ isActive }) =>
                     `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all duration-200 ${
-                      !isExpanded ? 'px-3 justify-center' : 'px-3'
+                      sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'px-3 justify-center' : 'px-3'
                     } ${
                       isActive
                         ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02]'
@@ -208,7 +217,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                   onClick={() => sidebarOpen && setSidebarOpen(false)}
                 >
                   <span className="shrink-0">{item.icon}</span>
-                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${!isExpanded ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
+                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
                   <span className={tooltipClasses}>{item.label}</span>
                 </NavLink>
               </li>
@@ -223,7 +232,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                     to="/profile"
                     className={({ isActive }) =>
                       `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all duration-200 ${
-                        !isExpanded ? 'px-3 justify-center' : 'px-3'
+                        sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'px-3 justify-center' : 'px-3'
                       } ${
                         isActive
                           ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02]'
@@ -232,7 +241,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                     }
                   >
                     <span className="shrink-0"><ProfileIcon /></span>
-                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${!isExpanded ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Profile</span>
+                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Profile</span>
                     <span className={tooltipClasses}>Profile</span>
                   </NavLink>
                 </li>
@@ -242,11 +251,11 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                     className={`relative group flex items-center gap-3 w-full rounded-lg py-2.5
                       text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
                       font-medium transition-all duration-200 hover:scale-[1.01] ${
-                        !isExpanded ? 'px-3 justify-center' : 'px-3'
+                        sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'px-3 justify-center' : 'px-3'
                       }`}
                   >
                     <span className="shrink-0"><LogoutIcon /></span>
-                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${!isExpanded ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Logout</span>
+                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Logout</span>
                     <span className={tooltipClasses}>Logout</span>
                   </button>
                 </li>
@@ -257,6 +266,6 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
       </aside>
     </>
   );
-}; 
+};
 
 export default Sidebar;
