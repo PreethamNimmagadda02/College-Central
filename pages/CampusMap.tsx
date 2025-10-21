@@ -139,7 +139,10 @@ const CampusMap: React.FC = () => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-        <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+        <div
+          onClick={() => setSelectedCategory('academic')}
+          className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative z-10 flex items-center justify-between">
             <div>
@@ -149,7 +152,10 @@ const CampusMap: React.FC = () => {
             <span className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">🏛️</span>
           </div>
         </div>
-        <div className="group relative overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+        <div
+          onClick={() => setSelectedCategory('administration')}
+          className="group relative overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative z-10 flex items-center justify-between">
             <div>
@@ -160,7 +166,10 @@ const CampusMap: React.FC = () => {
           </div>
         </div>
 
-        <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+        <div
+          onClick={() => setSelectedCategory('residential')}
+          className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative z-10 flex items-center justify-between">
             <div>
@@ -171,7 +180,10 @@ const CampusMap: React.FC = () => {
           </div>
         </div>
 
-        <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+        <div
+          onClick={() => setSelectedCategory('facilities')}
+          className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative z-10 flex items-center justify-between">
             <div>
@@ -182,7 +194,10 @@ const CampusMap: React.FC = () => {
           </div>
         </div>
 
-        <div className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+        <div
+          onClick={() => setSelectedCategory('dining')}
+          className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative z-10 flex items-center justify-between">
             <div>
