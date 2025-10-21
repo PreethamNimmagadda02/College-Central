@@ -733,11 +733,29 @@ const Schedule: React.FC = () => {
                                 <div className="sticky left-0 top-0 z-20 bg-slate-50 dark:bg-slate-800 rounded-tl-lg"></div>
                                 
                                 {/* Time labels */}
-                                {timeSlots.map((time, index) => (
-                                    <div key={time} className="sticky left-0 z-10 text-right pr-3 text-sm font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 flex items-start justify-end pt-1" style={{ gridColumn: 1, gridRow: index * 2 + 2, gridRowEnd: index * 2 + 4 }}>
-                                        {formatTime(time)}
-                                    </div>
-                                ))}
+                                {timeSlots.flatMap((time, index) => {
+                                    const hour = 8 + index;
+                                    const halfHourTime = `${String(hour).padStart(2, '0')}:30`;
+
+                                    return [
+                                        // Full hour label
+                                        <div
+                                            key={`${time}-full`}
+                                            className="sticky left-0 z-10 text-right pr-3 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 flex items-start justify-end pt-1"
+                                            style={{ gridColumn: 1, gridRow: index * 2 + 2 }}
+                                        >
+                                            {formatTime(time)}
+                                        </div>,
+                                        // Half hour mark
+                                        <div
+                                            key={`${time}-half`}
+                                            className="sticky left-0 z-10 text-right pr-3 text-xs text-slate-500 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 flex items-start justify-end pt-1"
+                                            style={{ gridColumn: 1, gridRow: index * 2 + 3 }}
+                                        >
+                                            {formatTime(halfHourTime)}
+                                        </div>
+                                    ];
+                                })}
 
                                 {/* Day headers */}
                                 {days.map((day, index) => (
