@@ -34,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
     const handleMouseMove = (e: MouseEvent) => {
       if (sidebarCollapsed && !isArrowClicked) {
         const isNearLeftEdge = e.clientX <= 20; // 20px from left edge
+        console.log('Mouse position:', e.clientX, 'Near edge:', isNearLeftEdge, 'Sidebar collapsed:', sidebarCollapsed);
         setIsHoveringEdge(isNearLeftEdge);
       }
     };
@@ -43,6 +44,11 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
       return () => document.removeEventListener('mousemove', handleMouseMove);
     }
   }, [sidebarCollapsed, isArrowClicked]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Sidebar state:', { sidebarCollapsed, isHoveringEdge, isArrowClicked });
+  }, [sidebarCollapsed, isHoveringEdge, isArrowClicked]);
 
   // close on click outside
   useEffect(() => {
@@ -156,16 +162,12 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
           }
         }}
         className={`fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] flex-col
-          ${isHoveringEdge && sidebarCollapsed && !isArrowClicked
-            ? 'bg-white/40 dark:bg-slate-900/40 backdrop-blur-md'
-            : 'bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl'
-          }
+          bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl
           border-r border-slate-200/50 dark:border-slate-700/50
           shadow-xl
           duration-300 ease-in-out transition-all overflow-visible
           ${sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'w-20' : 'w-72'}
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          ${sidebarCollapsed && !isHoveringEdge && !isArrowClicked ? 'lg:opacity-0 lg:-translate-x-[calc(100%-1.5rem)]' : ''}
         `}
       >
         <nav
