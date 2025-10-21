@@ -177,7 +177,10 @@ const CollegeForms: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="group relative overflow-hidden bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
+                <div
+                    onClick={() => setActiveFilter('Favorites')}
+                    className="group relative overflow-hidden bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 cursor-pointer active:scale-95"
+                >
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center justify-between text-white">
                         <div>
@@ -188,9 +191,28 @@ const CollegeForms: React.FC = () => {
                             <StarIcon />
                         </div>
                     </div>
+                    {activeFilter === 'Favorites' && (
+                        <div className="absolute top-2 right-2 bg-white/30 backdrop-blur-sm rounded-full p-1">
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    )}
                 </div>
 
-                <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 sm:col-span-2 lg:col-span-1">
+                <div
+                    onClick={() => {
+                        setActiveFilter('All');
+                        // Scroll to recent downloads section
+                        setTimeout(() => {
+                            const element = document.getElementById('recent-downloads-section');
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }, 100);
+                    }}
+                    className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 sm:col-span-2 lg:col-span-1 cursor-pointer active:scale-95"
+                >
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center justify-between text-white">
                         <div>
@@ -367,6 +389,64 @@ const CollegeForms: React.FC = () => {
                             <p className="text-slate-500 dark:text-slate-400">No PhD forms match your search.</p>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Recent Downloads Section */}
+            {safeUserFormsData.recentDownloads.length > 0 && activeFilter === 'All' && (
+                <div id="recent-downloads-section" className="space-y-4 scroll-mt-6">
+                    <h2 className="text-2xl font-semibold border-b border-slate-200 dark:border-slate-700 pb-2 flex items-center gap-2">
+                        <ClockIcon />
+                        Recent Downloads
+                    </h2>
+                    <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+                        <div className="space-y-3">
+                            {safeUserFormsData.recentDownloads.slice(0, 10).map((download, index) => {
+                                const form = allForms.find(f => f.formNumber === download.formNumber);
+                                if (!form) return null;
+                                return (
+                                    <div
+                                        key={index}
+                                        className="group relative overflow-hidden flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 border border-transparent hover:border-primary/30 dark:hover:border-secondary/30"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <div className="relative z-10 flex-1 min-w-0">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-shrink-0 w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors truncate">
+                                                        {download.title}
+                                                    </p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-xs font-mono bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded">
+                                                            {download.formNumber}
+                                                        </span>
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                                            {new Date(download.timestamp).toLocaleDateString()} at {new Date(download.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDownload(form)}
+                                            className="relative z-10 ml-4 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary dark:from-secondary dark:to-secondary/80 dark:hover:from-secondary/80 dark:hover:to-secondary text-white rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105 active:scale-95 text-sm font-medium"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                            <span className="hidden sm:inline">Download Again</span>
+                                            <span className="sm:hidden">Download</span>
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
