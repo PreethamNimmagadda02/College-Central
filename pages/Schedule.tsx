@@ -811,24 +811,21 @@ const Schedule: React.FC = () => {
                                             {/* Animated gradient background on hover */}
                                             <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                                            <div className="relative z-10">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <div className="font-extrabold text-sm truncate group-hover:scale-105 transition-transform">{item.courseCode}</div>
-                                                    <svg className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div className="relative z-10 h-full flex flex-col">
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <div className="font-black text-sm group-hover:scale-105 transition-transform">{item.courseCode}</div>
+                                                    <svg className="w-4 h-4 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
                                                 </div>
-                                                <div className="text-xs opacity-90 truncate mb-2 leading-tight">{item.courseName}</div>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center opacity-80 group-hover:opacity-100 transition-opacity">
-                                                        <svg className="w-3.5 h-3.5 mr-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div className="text-xs font-bold mb-2 leading-snug line-clamp-2 flex-grow">{item.courseName}</div>
+                                                <div className="mt-auto flex items-center justify-between">
+                                                    <div className="flex items-center opacity-90 group-hover:opacity-100 transition-opacity min-w-0">
+                                                        <svg className="w-3.5 h-3.5 mr-1 flex-shrink-0 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                         </svg>
-                                                        <span className="text-xs truncate font-medium">{item.location}</span>
-                                                    </div>
-                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold">
-                                                        ✎
+                                                        <span className="text-[10px] truncate font-semibold">{item.location}</span>
                                                     </div>
                                                 </div>
                                             </div>
