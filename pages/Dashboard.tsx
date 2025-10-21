@@ -474,35 +474,56 @@ const Dashboard: React.FC = () => {
             }
         }
 
-        // Check for special events like festivals, important dates, etc. - only BTech relevant
-        const specialEvents = todayEvents.filter(e => 
-            e.type === 'Other' && 
-            !e.description.toLowerCase().includes('timetable') &&
-            !e.description.toLowerCase().includes('holiday') &&
-            !e.description.toLowerCase().includes('exam') &&
-            !e.description.toLowerCase().includes('working as') &&
-            // Must be BTech-relevant OR affect all students
-            (e.description.toLowerCase().includes('b. tech') || 
-             e.description.toLowerCase().includes('btech') ||
-             e.description.toLowerCase().includes('b tech') ||
-             e.description.toLowerCase().includes('ug students') ||
-             e.description.toLowerCase().includes('undergraduate') ||
-             e.description.toLowerCase().includes('all students') ||
-             e.description.toLowerCase().includes('semester classes') ||
-             e.description.toLowerCase().includes('semester start') ||
-             e.description.toLowerCase().includes('semester end') ||
-             e.description.toLowerCase().includes('convocation') ||
-             e.description.toLowerCase().includes('foundation day') ||
-             e.description.toLowerCase().includes('srijan') ||
-             e.description.toLowerCase().includes('concetto') ||
-             e.description.toLowerCase().includes('parakram') ||
-             e.description.toLowerCase().includes('basant') ||
-             e.description.toLowerCase().includes('sports meet') ||
-             e.description.toLowerCase().includes('orientation') ||
-             e.description.toLowerCase().includes('registration') ||
-             e.description.toLowerCase().includes('fee payment') ||
-             e.description.toLowerCase().includes('pre-registration'))
-        );
+        // Check for special events - BTech specific OR general college events
+        const specialEvents = todayEvents.filter(e => {
+            const desc = e.description.toLowerCase();
+
+            // Must be type 'Other' and not timetable/holiday/exam
+            if (e.type !== 'Other') return false;
+            if (desc.includes('timetable') || desc.includes('holiday') ||
+                desc.includes('exam') || desc.includes('working as')) return false;
+
+            // Explicitly exclude PG/PhD/Executive/Part-time ONLY events
+            const isPGPhDOnly = (
+                (desc.includes('pg students') || desc.includes('ph. d') ||
+                 desc.includes('phd') || desc.includes('m. tech') ||
+                 desc.includes('m. sc') || desc.includes('mba') ||
+                 desc.includes('executive') || desc.includes('part-time') ||
+                 desc.includes('research') || desc.includes('supervisor') ||
+                 desc.includes('thesis') || desc.includes('dissertation')) &&
+                // Not if it also mentions BTech/UG
+                !(desc.includes('b. tech') || desc.includes('btech') ||
+                  desc.includes('b tech') || desc.includes('ug students') ||
+                  desc.includes('undergraduate') || desc.includes('all students'))
+            );
+
+            if (isPGPhDOnly) return false;
+
+            // Include if it's BTech-specific OR a general college event
+            const isBTechSpecific = (
+                desc.includes('b. tech') || desc.includes('btech') ||
+                desc.includes('b tech') || desc.includes('ug students') ||
+                desc.includes('undergraduate') || desc.includes('1st year ug') ||
+                desc.includes('2nd year') || desc.includes('3rd year') ||
+                desc.includes('4th year') || desc.includes('final year ug') ||
+                desc.includes('int. m. tech') || desc.includes('dual degree') ||
+                desc.includes('bs-ms')
+            );
+
+            const isGeneralCollegeEvent = (
+                desc.includes('all students') ||
+                desc.includes('convocation') || desc.includes('foundation day') ||
+                desc.includes('srijan') || desc.includes('concetto') ||
+                desc.includes('parakram') || desc.includes('basant') ||
+                desc.includes('sports meet') || desc.includes('cultural') ||
+                desc.includes('fest') || desc.includes('techno-management') ||
+                desc.includes('orientation') || desc.includes('registration') ||
+                desc.includes('fee payment') || desc.includes('pre-registration') ||
+                desc.includes('semester classes')
+            );
+
+            return isBTechSpecific || isGeneralCollegeEvent;
+        });
 
         if (specialEvents.length > 0 && !infoMessage) {
             const eventDescriptions = specialEvents.map(e => e.description).join(', ');
@@ -510,36 +531,50 @@ const Dashboard: React.FC = () => {
         }
 
 
-        // Check for other academic events that might affect schedule - only BTech relevant
-        const otherEvents = todayEvents.filter(e => 
-            e.type === 'Other' && 
-            !e.description.toLowerCase().includes('timetable') &&
-            !e.description.toLowerCase().includes('holiday') &&
-            !e.description.toLowerCase().includes('exam') &&
-            !e.description.toLowerCase().includes('working as') &&
-            !specialEvents.includes(e) &&
-            // Must be BTech-relevant OR affect all students
-            (e.description.toLowerCase().includes('b. tech') || 
-             e.description.toLowerCase().includes('btech') ||
-             e.description.toLowerCase().includes('b tech') ||
-             e.description.toLowerCase().includes('ug students') ||
-             e.description.toLowerCase().includes('undergraduate') ||
-             e.description.toLowerCase().includes('all students') ||
-             e.description.toLowerCase().includes('semester classes') ||
-             e.description.toLowerCase().includes('semester start') ||
-             e.description.toLowerCase().includes('semester end') ||
-             e.description.toLowerCase().includes('convocation') ||
-             e.description.toLowerCase().includes('foundation day') ||
-             e.description.toLowerCase().includes('srijan') ||
-             e.description.toLowerCase().includes('concetto') ||
-             e.description.toLowerCase().includes('parakram') ||
-             e.description.toLowerCase().includes('basant') ||
-             e.description.toLowerCase().includes('sports meet') ||
-             e.description.toLowerCase().includes('orientation') ||
-             e.description.toLowerCase().includes('registration') ||
-             e.description.toLowerCase().includes('fee payment') ||
-             e.description.toLowerCase().includes('pre-registration'))
-        );
+        // Check for other academic events - BTech specific OR general college events
+        const otherEvents = todayEvents.filter(e => {
+            const desc = e.description.toLowerCase();
+
+            // Must be type 'Other' and not timetable/holiday/exam and not already in specialEvents
+            if (e.type !== 'Other') return false;
+            if (desc.includes('timetable') || desc.includes('holiday') ||
+                desc.includes('exam') || desc.includes('working as')) return false;
+            if (specialEvents.includes(e)) return false;
+
+            // Explicitly exclude PG/PhD/Executive/Part-time ONLY events
+            const isPGPhDOnly = (
+                (desc.includes('pg students') || desc.includes('ph. d') ||
+                 desc.includes('phd') || desc.includes('m. tech') ||
+                 desc.includes('m. sc') || desc.includes('mba') ||
+                 desc.includes('executive') || desc.includes('part-time') ||
+                 desc.includes('research') || desc.includes('supervisor') ||
+                 desc.includes('thesis') || desc.includes('dissertation')) &&
+                // Not if it also mentions BTech/UG
+                !(desc.includes('b. tech') || desc.includes('btech') ||
+                  desc.includes('b tech') || desc.includes('ug students') ||
+                  desc.includes('undergraduate') || desc.includes('all students'))
+            );
+
+            if (isPGPhDOnly) return false;
+
+            // Include if it's BTech-specific OR a general college event
+            const isBTechSpecific = (
+                desc.includes('b. tech') || desc.includes('btech') ||
+                desc.includes('b tech') || desc.includes('ug students') ||
+                desc.includes('undergraduate') || desc.includes('1st year ug') ||
+                desc.includes('2nd year') || desc.includes('3rd year') ||
+                desc.includes('4th year') || desc.includes('final year ug') ||
+                desc.includes('int. m. tech') || desc.includes('dual degree') ||
+                desc.includes('bs-ms')
+            );
+
+            const isGeneralCollegeEvent = (
+                desc.includes('all students') ||
+                desc.includes('semester start') || desc.includes('semester end')
+            );
+
+            return isBTechSpecific || isGeneralCollegeEvent;
+        });
 
         if (otherEvents.length > 0 && !infoMessage) {
             const eventDescriptions = otherEvents.map(e => e.description).join(', ');
