@@ -805,28 +805,30 @@ const Schedule: React.FC = () => {
                                             draggable={true}
                                             onDragStart={(e) => e.dataTransfer.setData('application/json', JSON.stringify(item))}
                                             onClick={() => setEditingItem(item)}
-                                            className={`group relative flex flex-col p-3 m-1 rounded-xl border-2 text-xs shadow-lg hover:shadow-2xl transition-all duration-300 cursor-move hover:-translate-y-1 hover:scale-105 active:scale-95 overflow-hidden ${colorClass}`}
+                                            className={`group relative flex flex-col p-2 m-0.5 rounded-lg border-2 shadow-md hover:shadow-xl transition-all duration-300 cursor-move hover:-translate-y-0.5 hover:scale-[1.02] active:scale-95 overflow-hidden ${colorClass}`}
                                             style={getGridPosition(item)}
                                         >
                                             {/* Animated gradient background on hover */}
-                                            <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                            <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                                            <div className="relative z-10 h-full flex flex-col">
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <div className="font-black text-sm group-hover:scale-105 transition-transform">{item.courseCode}</div>
-                                                    <svg className="w-4 h-4 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
+                                            <div className="relative z-10 h-full flex flex-col justify-between gap-0.5">
+                                                {/* Course Code - Always visible */}
+                                                <div className="font-extrabold text-xs leading-tight">
+                                                    {item.courseCode}
                                                 </div>
-                                                <div className="text-xs font-bold mb-2 leading-snug line-clamp-2 flex-grow">{item.courseName}</div>
-                                                <div className="mt-auto flex items-center justify-between">
-                                                    <div className="flex items-center opacity-90 group-hover:opacity-100 transition-opacity min-w-0">
-                                                        <svg className="w-3.5 h-3.5 mr-1 flex-shrink-0 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        </svg>
-                                                        <span className="text-[10px] truncate font-semibold">{item.location}</span>
-                                                    </div>
+
+                                                {/* Course Name - Line clamp based on available space */}
+                                                <div className="text-[10px] font-semibold leading-tight line-clamp-3 flex-grow overflow-hidden">
+                                                    {item.courseName}
+                                                </div>
+
+                                                {/* Location - Always visible at bottom */}
+                                                <div className="flex items-center gap-0.5 text-[9px] font-medium opacity-80 group-hover:opacity-100 transition-opacity mt-auto">
+                                                    <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                    <span className="truncate">{item.location}</span>
                                                 </div>
                                             </div>
                                         </div>
