@@ -110,22 +110,50 @@ const Schedule: React.FC = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    // Initialize and sync selectedCourseCodes with scheduleData
     useEffect(() => {
-        if (!scheduleLoading && !isInitialized.current) {
-            if (scheduleData && scheduleData.length > 0) {
-                const codesFromFirestore = [...new Set(scheduleData.map(item => item.courseCode))];
-                setSelectedCourseCodes(codesFromFirestore);
+        if (scheduleData && scheduleData.length > 0) {
+            const currentCodesInSchedule = [...new Set(scheduleData.map((item: any) => item.courseCode))];
+
+            // On first load, just set the codes
+            if (!isInitialized.current) {
+                setSelectedCourseCodes(currentCodesInSchedule);
+                isInitialized.current = true;
+            } else {
+                // After initialization, only update if different
+                const currentSorted = currentCodesInSchedule.sort().join(',');
+                const selectedSorted = [...selectedCourseCodes].sort().join(',');
+
+                if (currentSorted !== selectedSorted) {
+                    setSelectedCourseCodes(currentCodesInSchedule);
+                }
             }
-            isInitialized.current = true;
+        } else if (!scheduleLoading && scheduleData && scheduleData.length === 0) {
+            // If schedule is empty, initialize as empty
+            if (!isInitialized.current) {
+                isInitialized.current = true;
+            }
         }
-    }, [scheduleLoading, scheduleData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [scheduleData, scheduleLoading]);
+
+    // Calculate unique courses from actual schedule data
+    const uniqueCoursesFromSchedule = useMemo(() => {
+        if (!scheduleData) return [];
+        return [...new Set(scheduleData.map(item => item.courseCode))];
+    }, [scheduleData]);
+
+    // Display the actual count from schedule, not just selected codes
+    const displayCoursesCount = uniqueCoursesFromSchedule.length || selectedCourseCodes.length;
 
     const totalCredits = useMemo(() => {
-        return selectedCourseCodes.reduce((acc, code) => {
+        // Use courses from actual schedule data
+        const coursesToCount = uniqueCoursesFromSchedule.length > 0 ? uniqueCoursesFromSchedule : selectedCourseCodes;
+        return coursesToCount.reduce((acc, code) => {
             const course = TIMETABLE_DATA.find(c => c.courseCode === code);
             return acc + (course?.credits || 0);
         }, 0);
-    }, [selectedCourseCodes]);
+    }, [uniqueCoursesFromSchedule, selectedCourseCodes]);
 
     const todaysClasses = useMemo(() => {
         if (!scheduleData || !today) return [];
@@ -479,7 +507,7 @@ const Schedule: React.FC = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-blue-100 text-sm">Total Courses</p>
-                            <p className="text-3xl font-bold">{selectedCourseCodes.length}</p>
+                            <p className="text-3xl font-bold">{displayCoursesCount}</p>
                         </div>
                         <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -564,10 +592,10 @@ const Schedule: React.FC = () => {
                                     <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                     </svg>
-                                    {selectedCourseCodes.length > 0 ? (
+                                    {displayCoursesCount > 0 ? (
                                         <>
-                                            <span className="font-semibold">{selectedCourseCodes.length}</span>
-                                            <span className="ml-1">course{selectedCourseCodes.length !== 1 ? 's' : ''} selected</span>
+                                            <span className="font-semibold">{displayCoursesCount}</span>
+                                            <span className="ml-1">course{displayCoursesCount !== 1 ? 's' : ''} selected</span>
                                         </>
                                     ) : 'Select your courses'}
                                 </span>
