@@ -132,52 +132,61 @@ const CGPAForecaster: React.FC = () => {
         <div className="space-y-6">
             {/* Performance Projections */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
-                    <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-blue-100 text-sm font-medium">Current CGPA</h4>
-                        <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
+                <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-blue-100 text-sm font-medium">Current CGPA</h4>
+                            <svg className="w-5 h-5 opacity-80 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <p className="text-3xl font-bold group-hover:scale-110 transition-transform origin-left">{gradesData?.cgpa.toFixed(2)}</p>
+                        <p className="text-blue-100 text-xs mt-1">After {gradesData?.totalCredits} credits</p>
                     </div>
-                    <p className="text-3xl font-bold">{gradesData?.cgpa.toFixed(2)}</p>
-                    <p className="text-blue-100 text-xs mt-1">After {gradesData?.totalCredits} credits</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
-                    <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-green-100 text-sm font-medium">Projected SGPA</h4>
-                        <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg>
+                <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-green-100 text-sm font-medium">Projected SGPA</h4>
+                            <svg className="w-5 h-5 opacity-80 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                        </div>
+                        <p className="text-3xl font-bold group-hover:scale-110 transition-transform origin-left">{calculations.projectedSgpa.toFixed(2)}</p>
+                        <p className="text-green-100 text-xs mt-1">This semester</p>
                     </div>
-                    <p className="text-3xl font-bold">{calculations.projectedSgpa.toFixed(2)}</p>
-                    <p className="text-green-100 text-xs mt-1">This semester</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
-                    <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-purple-100 text-sm font-medium">New CGPA</h4>
-                        <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                        </svg>
-                    </div>
-                    <p className="text-3xl font-bold">{calculations.projectedCgpa.toFixed(2)}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                        {calculations.projectedCgpa > (gradesData?.cgpa || 0) ? (
-                            <>
-                                <svg className="w-3 h-3 text-green-300" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                </svg>
-                                <span className="text-purple-100 text-xs">+{(calculations.projectedCgpa - (gradesData?.cgpa || 0)).toFixed(2)}</span>
-                            </>
-                        ) : (
-                            <>
-                                <svg className="w-3 h-3 text-red-300" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                                <span className="text-purple-100 text-xs">{(calculations.projectedCgpa - (gradesData?.cgpa || 0)).toFixed(2)}</span>
-                            </>
-                        )}
+                <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-purple-100 text-sm font-medium">New CGPA</h4>
+                            <svg className="w-5 h-5 opacity-80 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                            </svg>
+                        </div>
+                        <p className="text-3xl font-bold group-hover:scale-110 transition-transform origin-left">{calculations.projectedCgpa.toFixed(2)}</p>
+                        <div className="flex items-center gap-1 mt-1">
+                            {calculations.projectedCgpa > (gradesData?.cgpa || 0) ? (
+                                <>
+                                    <svg className="w-3 h-3 text-green-300 group-hover:scale-125 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                    <span className="text-purple-100 text-xs">+{(calculations.projectedCgpa - (gradesData?.cgpa || 0)).toFixed(2)}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-3 h-3 text-red-300 group-hover:scale-125 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                    <span className="text-purple-100 text-xs">{(calculations.projectedCgpa - (gradesData?.cgpa || 0)).toFixed(2)}</span>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -250,28 +259,29 @@ const CGPAForecaster: React.FC = () => {
                 <div className="p-6">
                     <div className="space-y-4">
                         {currentCourses.map(course => (
-                            <div key={course.courseCode} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-shadow">
-                                <div className="flex-grow">
-                                    <p className="font-semibold text-slate-900 dark:text-white">
+                            <div key={course.courseCode} className="group relative overflow-hidden flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99]">
+                                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <div className="relative z-10 flex-grow">
+                                    <p className="font-semibold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
                                         {course.courseCode}
                                     </p>
                                     <p className="text-sm text-slate-600 dark:text-slate-400">
                                         {course.courseName}
                                     </p>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-xs px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded-full">
+                                        <span className="text-xs px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded-full group-hover:bg-primary/20 transition-colors">
                                             {course.credits} Credits
                                         </span>
-                                        <span className="text-xs text-slate-500">
+                                        <span className="text-xs text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">
                                             Points: {(gradePoints[projectedGrades[course.courseCode]] * course.credits).toFixed(1)}
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <select 
+                                <div className="relative z-10 flex items-center gap-3">
+                                    <select
                                         value={projectedGrades[course.courseCode] || 'A'}
                                         onChange={(e) => handleGradeChange(course.courseCode, e.target.value)}
-                                        className={`px-4 py-2 font-semibold rounded-lg border-2 focus:outline-none focus:ring-2 focus:ring-primary transition-all ${getGradeColor(projectedGrades[course.courseCode])}`}
+                                        className={`px-4 py-2 font-semibold rounded-lg border-2 focus:outline-none focus:ring-2 focus:ring-primary transition-all hover:scale-105 ${getGradeColor(projectedGrades[course.courseCode])}`}
                                     >
                                         {gradeOptions.map(grade => (
                                             <option key={grade} value={grade}>{grade}</option>
@@ -338,18 +348,18 @@ const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => 
             </h3>
 
             {/* SGPA Trend */}
-            <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-lg">
+            <div className="group bg-white dark:bg-dark-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <h4 className="font-medium mb-4">SGPA Trend</h4>
                 <div className="space-y-3">
                     {performanceTrend.map((item, index) => (
-                        <div key={index} className="flex items-center gap-3">
+                        <div key={index} className="flex items-center gap-3 hover:scale-[1.02] transition-transform duration-300">
                             <span className="text-sm font-medium w-16">{item.semester}</span>
-                            <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-8 relative overflow-hidden">
-                                <div 
-                                    className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary to-secondary flex items-center justify-end pr-3"
+                            <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-8 relative overflow-hidden group/bar">
+                                <div
+                                    className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary to-secondary flex items-center justify-end pr-3 transition-all duration-500 group-hover/bar:shadow-lg"
                                     style={{ width: `${(item.sgpa / 10) * 100}%` }}
                                 >
-                                    <span className="text-white text-sm font-semibold">{item.sgpa.toFixed(2)}</span>
+                                    <span className="text-white text-sm font-semibold group-hover/bar:scale-110 transition-transform">{item.sgpa.toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -358,12 +368,12 @@ const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => 
             </div>
 
             {/* Grade Distribution */}
-            <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-lg">
+            <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <h4 className="font-medium mb-4">Grade Distribution</h4>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {Object.entries(gradeDistribution).map(([grade, count]) => (
-                        <div key={grade} className={`text-center p-3 rounded-lg ${getGradeColor(grade)}`}>
-                            <p className="text-2xl font-bold">{count}</p>
+                        <div key={grade} className={`group text-center p-3 rounded-lg transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer hover:shadow-lg ${getGradeColor(grade)}`}>
+                            <p className="text-2xl font-bold group-hover:scale-110 transition-transform">{count}</p>
                             <p className="text-sm font-medium">{grade}</p>
                         </div>
                     ))}
@@ -371,13 +381,14 @@ const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => 
             </div>
 
             {/* Subject Category Performance */}
-            <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-lg">
+            <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <h4 className="font-medium mb-4">Subject Category Performance</h4>
                 <div className="space-y-2">
                     {subjectPerformance.map((subject, index) => (
-                        <div key={index} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                            <span className="font-medium">{subject.category} Courses</span>
-                            <span className="text-lg font-semibold text-primary">{subject.average}</span>
+                        <div key={index} className="group relative overflow-hidden flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <span className="relative z-10 font-medium group-hover:text-primary transition-colors">{subject.category} Courses</span>
+                            <span className="relative z-10 text-lg font-semibold text-primary group-hover:scale-110 transition-transform">{subject.average}</span>
                         </div>
                     ))}
                 </div>
@@ -584,57 +595,69 @@ const Grades: React.FC = () => {
             </div>
 
             {/* Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-blue-100 text-sm font-medium">CGPA</h3>
-                        <svg className="w-6 h-6 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-blue-100 text-sm font-semibold">CGPA</h3>
+                            <svg className="w-7 h-7 opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <p className="text-4xl md:text-5xl font-black mb-2 group-hover:scale-110 transition-transform origin-left">{sortedGradesData.cgpa.toFixed(2)}</p>
+                        {cgpaStatus && (
+                            <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full ${cgpaStatus.bg} shadow-md`}>
+                                {cgpaStatus.text}
+                            </span>
+                        )}
                     </div>
-                    <p className="text-4xl font-bold mb-1">{sortedGradesData.cgpa.toFixed(2)}</p>
-                    {cgpaStatus && (
-                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${cgpaStatus.bg}`}>
-                            {cgpaStatus.text}
-                        </span>
-                    )}
                 </div>
 
-                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-green-100 text-sm font-medium">Total Credits</h3>
-                        <svg className="w-6 h-6 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
+                <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-green-100 text-sm font-semibold">Total Credits</h3>
+                            <svg className="w-7 h-7 opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </div>
+                        <p className="text-4xl md:text-5xl font-black group-hover:scale-110 transition-transform origin-left">{sortedGradesData.totalCredits}</p>
+                        <p className="text-green-100 text-sm font-semibold mt-1">Completed</p>
                     </div>
-                    <p className="text-4xl font-bold">{sortedGradesData.totalCredits}</p>
-                    <p className="text-green-100 text-xs mt-1">Completed</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-purple-100 text-sm font-medium">Semesters</h3>
-                        <svg className="w-6 h-6 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-purple-100 text-sm font-semibold">Semesters</h3>
+                            <svg className="w-7 h-7 opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <p className="text-4xl md:text-5xl font-black group-hover:scale-110 transition-transform origin-left">{sortedGradesData.semesters.length}</p>
+                        <p className="text-purple-100 text-sm font-semibold mt-1">Completed</p>
                     </div>
-                    <p className="text-4xl font-bold">{sortedGradesData.semesters.length}</p>
-                    <p className="text-purple-100 text-xs mt-1">Completed</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-orange-100 text-sm font-medium">Latest SGPA</h3>
-                        <svg className="w-6 h-6 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg>
+                <div className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-orange-100 text-sm font-semibold">Latest SGPA</h3>
+                            <svg className="w-7 h-7 opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                        </div>
+                        <p className="text-4xl md:text-5xl font-black group-hover:scale-110 transition-transform origin-left">
+                            {latestSemester?.sgpa.toFixed(2)}
+                        </p>
+                        <p className="text-orange-100 text-sm font-semibold mt-1">
+                            Semester {latestSemester?.semester}
+                        </p>
                     </div>
-                    <p className="text-4xl font-bold">
-                        {latestSemester?.sgpa.toFixed(2)}
-                    </p>
-                    <p className="text-orange-100 text-xs mt-1">
-                        Semester {latestSemester?.semester}
-                    </p>
                 </div>
             </div>
 
@@ -696,34 +719,37 @@ const Grades: React.FC = () => {
                             return (
                                 <div
                                     key={semester.semester}
-                                    className="p-5 bg-slate-50 dark:bg-slate-800 rounded-xl hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-primary"
+                                    className="group relative overflow-hidden p-5 bg-slate-50 dark:bg-slate-800 rounded-xl hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-primary hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
                                     onClick={() => setSelectedSemester(selectedSemester === semester.semester ? null : semester.semester)}
                                 >
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h4 className="font-semibold text-lg">Semester {semester.semester}</h4>
-                                        <svg
-                                            className={`w-5 h-5 transition-transform ${
-                                                selectedSemester === semester.semester ? 'rotate-180' : ''
-                                            }`}
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm text-slate-600 dark:text-slate-400">SGPA</span>
-                                            <span className="text-2xl font-bold text-primary">{semester.sgpa.toFixed(2)}</span>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="font-semibold text-lg group-hover:text-primary transition-colors">Semester {semester.semester}</h4>
+                                            <svg
+                                                className={`w-5 h-5 transition-all duration-300 group-hover:scale-110 ${
+                                                    selectedSemester === semester.semester ? 'rotate-180' : ''
+                                                }`}
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
                                         </div>
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-slate-600 dark:text-slate-400">Credits</span>
-                                            <span className="font-medium">{semesterCredits}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-slate-600 dark:text-slate-400">Courses</span>
-                                            <span className="font-medium">{semester.grades.length}</span>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-slate-600 dark:text-slate-400">SGPA</span>
+                                                <span className="text-2xl font-bold text-primary group-hover:scale-110 transition-transform origin-right">{semester.sgpa.toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-slate-600 dark:text-slate-400">Credits</span>
+                                                <span className="font-medium group-hover:text-primary transition-colors">{semesterCredits}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-slate-600 dark:text-slate-400">Courses</span>
+                                                <span className="font-medium group-hover:text-primary transition-colors">{semester.grades.length}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -744,14 +770,15 @@ const Grades: React.FC = () => {
                                 {selectedSemesterData.grades.map((grade: Grade, index: number) => (
                                     <div
                                         key={index}
-                                        className="flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-lg shadow-sm"
+                                        className="group relative overflow-hidden flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99]"
                                     >
-                                        <div className="flex-grow">
-                                            <p className="font-semibold">{grade.subjectCode}</p>
+                                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <div className="relative z-10 flex-grow">
+                                            <p className="font-semibold group-hover:text-primary transition-colors">{grade.subjectCode}</p>
                                             <p className="text-sm text-slate-600 dark:text-slate-400">{grade.subjectName}</p>
                                             <p className="text-xs text-slate-500 mt-1">{grade.credits} Credits</p>
                                         </div>
-                                        <div className={`px-4 py-2 rounded-lg font-bold text-lg ${getGradeColor(grade.grade)}`}>
+                                        <div className={`relative z-10 px-4 py-2 rounded-lg font-bold text-lg transition-transform group-hover:scale-110 ${getGradeColor(grade.grade)}`}>
                                             {grade.grade}
                                         </div>
                                     </div>
