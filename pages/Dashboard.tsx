@@ -120,6 +120,7 @@ const Dashboard: React.FC = () => {
         }
         return new Date();
     });
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     // Helper function to format a Date object into 'YYYY-MM-DD' string for the input
     const toInputDateString = (date: Date) => {
@@ -148,6 +149,37 @@ const Dashboard: React.FC = () => {
         const today = new Date();
         setSelectedDate(today);
         localStorage.setItem('dashboardSelectedDate', today.toISOString());
+    };
+
+    // Navigate to previous day
+    const handlePreviousDay = () => {
+        const newDate = new Date(selectedDate);
+        newDate.setDate(newDate.getDate() - 1);
+        setSelectedDate(newDate);
+        localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
+    };
+
+    // Navigate to next day
+    const handleNextDay = () => {
+        const newDate = new Date(selectedDate);
+        newDate.setDate(newDate.getDate() + 1);
+        setSelectedDate(newDate);
+        localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
+    };
+
+    // Navigate by weeks
+    const handlePreviousWeek = () => {
+        const newDate = new Date(selectedDate);
+        newDate.setDate(newDate.getDate() - 7);
+        setSelectedDate(newDate);
+        localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
+    };
+
+    const handleNextWeek = () => {
+        const newDate = new Date(selectedDate);
+        newDate.setDate(newDate.getDate() + 7);
+        setSelectedDate(newDate);
+        localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
     };
 
     // Load quick links from localStorage on mount
@@ -828,26 +860,174 @@ const Dashboard: React.FC = () => {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Today's Classes - Enhanced */}
                     <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                            <h2 className="text-xl font-semibold">{scheduleInfo.title}</h2>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="date"
-                                    value={toInputDateString(selectedDate)}
-                                    onChange={handleDateChange}
-                                    className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                                    aria-label="Select date to view schedule"
-                                />
-                                <button
-                                    onClick={handleResetToToday}
-                                    className="px-3 py-1.5 text-xs bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-300 rounded-lg transition-colors font-medium"
-                                    title="Reset to today"
-                                >
-                                    Today
-                                </button>
+                        <div className="flex flex-col justify-between items-start mb-6 gap-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
+                                <h2 className="text-xl font-semibold">{scheduleInfo.title}</h2>
                                 <Link to="/schedule" className="text-sm text-primary hover:text-primary-dark transition-colors whitespace-nowrap">
                                     Full Schedule →
                                 </Link>
+                            </div>
+
+                            {/* Enhanced Date Navigation */}
+                            <div className="w-full space-y-3">
+                                {/* Main date display and quick actions */}
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <button
+                                        onClick={handlePreviousDay}
+                                        className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                        title="Previous day (←)"
+                                        aria-label="Previous day"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setShowDatePicker(!showDatePicker)}
+                                            className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2 min-w-[150px]"
+                                            title="Click to pick a date"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </button>
+
+                                        {showDatePicker && (
+                                            <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-3 z-10 min-w-[250px]">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <select
+                                                        value={selectedDate.getMonth()}
+                                                        onChange={(e) => {
+                                                            const newDate = new Date(selectedDate);
+                                                            newDate.setMonth(parseInt(e.target.value));
+                                                            setSelectedDate(newDate);
+                                                            localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
+                                                        }}
+                                                        className="flex-1 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+                                                    >
+                                                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, idx) => (
+                                                            <option key={idx} value={idx}>{month}</option>
+                                                        ))}
+                                                    </select>
+                                                    <input
+                                                        type="number"
+                                                        min="2000"
+                                                        max="2100"
+                                                        value={selectedDate.getFullYear()}
+                                                        onChange={(e) => {
+                                                            const year = parseInt(e.target.value);
+                                                            if (!isNaN(year) && year >= 2000 && year <= 2100) {
+                                                                const newDate = new Date(selectedDate);
+                                                                newDate.setFullYear(year);
+                                                                setSelectedDate(newDate);
+                                                                localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
+                                                            }
+                                                        }}
+                                                        placeholder="YYYY"
+                                                        className="w-20 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:outline-none text-center"
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-7 gap-1 mb-2">
+                                                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                                                        <div key={day} className="text-center text-xs font-semibold text-slate-500 dark:text-slate-400 py-1">
+                                                            {day}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="grid grid-cols-7 gap-1">
+                                                    {(() => {
+                                                        const year = selectedDate.getFullYear();
+                                                        const month = selectedDate.getMonth();
+                                                        const firstDay = new Date(year, month, 1).getDay();
+                                                        const daysInMonth = new Date(year, month + 1, 0).getDate();
+                                                        const days = [];
+
+                                                        // Empty cells for days before month starts
+                                                        for (let i = 0; i < firstDay; i++) {
+                                                            days.push(<div key={`empty-${i}`} />);
+                                                        }
+
+                                                        // Days of the month
+                                                        for (let day = 1; day <= daysInMonth; day++) {
+                                                            const isSelected = day === selectedDate.getDate();
+                                                            const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
+                                                            days.push(
+                                                                <button
+                                                                    key={day}
+                                                                    onClick={() => {
+                                                                        const newDate = new Date(year, month, day);
+                                                                        setSelectedDate(newDate);
+                                                                        localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
+                                                                        setShowDatePicker(false);
+                                                                    }}
+                                                                    className={`
+                                                                        text-sm py-1.5 rounded transition-colors
+                                                                        ${isSelected ? 'bg-primary text-white font-bold' :
+                                                                          isToday ? 'bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold' :
+                                                                          'hover:bg-slate-100 dark:hover:bg-slate-700'}
+                                                                    `}
+                                                                >
+                                                                    {day}
+                                                                </button>
+                                                            );
+                                                        }
+
+                                                        return days;
+                                                    })()}
+                                                </div>
+                                                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+                                                    <button
+                                                        onClick={() => setShowDatePicker(false)}
+                                                        className="px-3 py-1 text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded transition-colors"
+                                                    >
+                                                        Close
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        onClick={handleNextDay}
+                                        className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                        title="Next day (→)"
+                                        aria-label="Next day"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+
+                                    <button
+                                        onClick={handleResetToToday}
+                                        className="px-3 py-2 text-xs bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors font-medium"
+                                        title="Jump to today (T)"
+                                    >
+                                        Today
+                                    </button>
+                                </div>
+
+                                {/* Week navigation */}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Quick jump:</span>
+                                    <button
+                                        onClick={handlePreviousWeek}
+                                        className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded transition-colors"
+                                        title="Previous week"
+                                    >
+                                        ← Week
+                                    </button>
+                                    <button
+                                        onClick={handleNextWeek}
+                                        className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded transition-colors"
+                                        title="Next week"
+                                    >
+                                        Week →
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
@@ -1405,7 +1585,7 @@ const Dashboard: React.FC = () => {
                                             </div>
                                         </button>
                                     ))}
-                                </div>
+                                </div> 
                             </div>
 
                             <div className="flex gap-2 pt-2">
