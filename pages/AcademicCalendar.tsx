@@ -919,68 +919,135 @@ const AcademicCalendar: React.FC = () => {
                             </svg>
                             List View
                         </h2>
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
                             <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-slate-200 dark:border-slate-700">
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Date</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Event</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Type</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Status</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Actions</th>
+                                <thead className="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/50">
+                                    <tr className="border-b-2 border-slate-300 dark:border-slate-600">
+                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Date</th>
+                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Event</th>
+                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Type</th>
+                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Status</th>
+                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                                     {filteredEvents.map((event: CalendarEvent, index: number) => {
                                         const daysUntil = getDaysUntil(event.date);
                                         const isPast = getDaysUntil(event.endDate || event.date) < 0;
+                                        const isUrgent = daysUntil >= 0 && daysUntil <= 3;
+                                        const isUpcoming = daysUntil > 3 && daysUntil <= 7;
+                                        const hasReminder = reminderPreferences.includes(getEventKey(event));
+
                                         return (
-                                            <tr key={index} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => handleShowEventDetails(event, index)}>
-                                                <td className="py-3 px-4">
-                                                    <div>
-                                                        <p className="font-medium">
-                                                            {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                                            {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                                                            , {new Date(event.date).getFullYear()}
-                                                        </p>
-                                                        <p className="text-xs text-slate-500">
-                                                            {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long' })}
-                                                            {event.endDate && ` to ${new Date(event.endDate).toLocaleDateString('en-US', { weekday: 'long' })}`}
-                                                        </p>
+                                            <tr
+                                                key={index}
+                                                onClick={() => handleShowEventDetails(event, index)}
+                                                className={`
+                                                    group cursor-pointer
+                                                    bg-white dark:bg-slate-900/30
+                                                    hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50
+                                                    dark:hover:from-slate-800/80 dark:hover:to-slate-800/60
+                                                    transition-all duration-300 ease-out
+                                                    hover:shadow-lg hover:shadow-primary/5
+                                                    hover:scale-[1.01] hover:-translate-y-0.5
+                                                    active:scale-[0.99] active:translate-y-0
+                                                    ${isUrgent ? 'border-l-4 border-l-red-500 bg-red-50/30 dark:bg-red-900/10' :
+                                                      isUpcoming ? 'border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-900/10' :
+                                                      'border-l-4 border-l-transparent hover:border-l-primary'}
+                                                `}
+                                            >
+                                                <td className="py-5 px-6">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:from-primary/20 group-hover:to-secondary/20 rounded-lg p-2 transition-colors">
+                                                            <div className="text-center">
+                                                                <p className="text-2xl font-black text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                                                    {new Date(event.date).getDate()}
+                                                                </p>
+                                                                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">
+                                                                    {new Date(event.date).toLocaleDateString('en-US', { month: 'short' })}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-slate-700 dark:text-slate-300">
+                                                                {event.endDate && `${new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(event.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                                                                {!event.endDate && new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                                , {new Date(event.date).getFullYear()}
+                                                            </p>
+                                                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                                                                {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long' })}
+                                                                {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString('en-US', { weekday: 'long' })}`}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-3 px-4">
-                                                    <div className="flex items-center">
-                                                        <span className="mr-2 text-xl">{getEventTypeIcon(event.type)}</span>
-                                                        <span className="font-medium">{event.description}</span>
+                                                <td className="py-5 px-6">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-3xl group-hover:scale-125 transition-transform duration-300">
+                                                            {getEventTypeIcon(event.type)}
+                                                        </span>
+                                                        <div className="flex-1">
+                                                            <p className="font-bold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors line-clamp-1">
+                                                                {event.description}
+                                                            </p>
+                                                            {hasReminder && (
+                                                                <div className="inline-flex items-center gap-1 mt-1 bg-purple-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                                                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                        <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                                    </svg>
+                                                                    <span>Reminder</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-3 px-4">
-                                                    <span className={`text-xs font-semibold py-1 px-2 rounded-full ${getEventTypeColor(event.type)}`}>
+                                                <td className="py-5 px-6">
+                                                    <span className={`inline-flex text-xs font-bold py-2 px-3 rounded-full shadow-sm group-hover:shadow-md transition-all ${getEventTypeColor(event.type)}`}>
                                                         {event.type}
                                                     </span>
                                                 </td>
-                                                <td className="py-3 px-4">
+                                                <td className="py-5 px-6">
                                                     {isPast ? (
-                                                        <span className="text-xs font-medium text-slate-500">Completed</span>
+                                                        <span className="inline-flex items-center text-sm font-semibold text-slate-500 dark:text-slate-400">
+                                                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                            Completed
+                                                        </span>
                                                     ) : daysUntil <= 0 ? (
-                                                        <span className="text-xs font-medium text-green-600">Ongoing</span>
+                                                        <span className="inline-flex items-center text-sm font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-3 py-1.5 rounded-full">
+                                                            <span className="animate-pulse mr-1.5">●</span>
+                                                            Ongoing
+                                                        </span>
+                                                    ) : isUrgent ? (
+                                                        <span className="inline-flex items-center text-sm font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-3 py-1.5 rounded-full">
+                                                            ⚠️ {daysUntil} day{daysUntil === 1 ? '' : 's'}
+                                                        </span>
+                                                    ) : isUpcoming ? (
+                                                        <span className="inline-flex items-center text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-3 py-1.5 rounded-full">
+                                                            📅 {daysUntil} days
+                                                        </span>
                                                     ) : (
-                                                        <span className="text-xs font-medium text-blue-600">In {daysUntil} days</span>
+                                                        <span className="inline-flex items-center text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
+                                                            In {daysUntil} days
+                                                        </span>
                                                     )}
                                                 </td>
-                                                <td className="py-3 px-4">
-                                                    <button
-                                                        onClick={(e: React.MouseEvent) => {
-                                                            e.stopPropagation();
-                                                            handleShowEventDetails(event, index);
-                                                        }}
-                                                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
-                                                    >
-                                                        <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                                        </svg>
-                                                    </button>
+                                                <td className="py-5 px-6">
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                                                        <button
+                                                            onClick={(e: React.MouseEvent) => {
+                                                                e.stopPropagation();
+                                                                handleShowEventDetails(event, index);
+                                                            }}
+                                                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-md hover:shadow-lg transition-all group/btn"
+                                                        >
+                                                            <span className="text-sm font-bold">Details</span>
+                                                            <svg className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
