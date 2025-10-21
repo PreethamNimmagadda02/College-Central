@@ -502,50 +502,54 @@ const Schedule: React.FC = () => {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-xl shadow-lg">
-                    <div className="flex items-center justify-between">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-blue-100 text-sm">Total Courses</p>
-                            <p className="text-3xl font-bold">{displayCoursesCount}</p>
+                            <p className="text-blue-100 text-sm font-semibold mb-1">Total Courses</p>
+                            <p className="text-4xl font-black group-hover:scale-110 transition-transform origin-left">{displayCoursesCount}</p>
                         </div>
-                        <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-12 h-12 opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-xl shadow-lg">
-                    <div className="flex items-center justify-between">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-green-100 text-sm">Total Credits</p>
-                            <p className="text-3xl font-bold">{totalCredits}</p>
+                            <p className="text-green-100 text-sm font-semibold mb-1">Total Credits</p>
+                            <p className="text-4xl font-black group-hover:scale-110 transition-transform origin-left">{totalCredits}</p>
                         </div>
-                        <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-12 h-12 opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                         </svg>
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-xl shadow-lg">
-                    <div className="flex items-center justify-between">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-purple-100 text-sm">Today's Classes</p>
-                            <p className="text-3xl font-bold">{todaysClasses.length}</p>
+                            <p className="text-purple-100 text-sm font-semibold mb-1">Today's Classes</p>
+                            <p className="text-4xl font-black group-hover:scale-110 transition-transform origin-left">{todaysClasses.length}</p>
                         </div>
-                        <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-12 h-12 opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-xl shadow-lg">
-                    <div className="flex items-center justify-between">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-orange-100 text-sm">Total Classes</p>
-                            <p className="text-3xl font-bold">{scheduleData?.length || 0}</p>
+                            <p className="text-orange-100 text-sm font-semibold mb-1">Total Classes</p>
+                            <p className="text-4xl font-black group-hover:scale-110 transition-transform origin-left">{scheduleData?.length || 0}</p>
                         </div>
-                        <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-12 h-12 opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </div>
@@ -796,22 +800,37 @@ const Schedule: React.FC = () => {
                                 {filteredSchedule.map((item) => {
                                     const colorClass = getClassColor(item.courseCode);
                                     return (
-                                        <div 
-                                            key={item.slotId} 
+                                        <div
+                                            key={item.slotId}
                                             draggable={true}
                                             onDragStart={(e) => e.dataTransfer.setData('application/json', JSON.stringify(item))}
                                             onClick={() => setEditingItem(item)}
-                                            className={`relative flex flex-col p-2 m-1 rounded-lg border-2 text-xs shadow-md hover:shadow-lg transition-all cursor-move hover:-translate-y-0.5 ${colorClass}`} 
+                                            className={`group relative flex flex-col p-3 m-1 rounded-xl border-2 text-xs shadow-lg hover:shadow-2xl transition-all duration-300 cursor-move hover:-translate-y-1 hover:scale-105 active:scale-95 overflow-hidden ${colorClass}`}
                                             style={getGridPosition(item)}
                                         >
-                                            <div className="font-bold truncate">{item.courseCode}</div>
-                                            <div className="text-xs opacity-90 truncate">{item.courseName}</div>
-                                            <div className="mt-auto flex items-center opacity-80">
-                                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                                <span className="text-xs truncate">{item.location}</span>
+                                            {/* Animated gradient background on hover */}
+                                            <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                                            <div className="relative z-10">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <div className="font-extrabold text-sm truncate group-hover:scale-105 transition-transform">{item.courseCode}</div>
+                                                    <svg className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </div>
+                                                <div className="text-xs opacity-90 truncate mb-2 leading-tight">{item.courseName}</div>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center opacity-80 group-hover:opacity-100 transition-opacity">
+                                                        <svg className="w-3.5 h-3.5 mr-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        </svg>
+                                                        <span className="text-xs truncate font-medium">{item.location}</span>
+                                                    </div>
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold">
+                                                        ✎
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -827,38 +846,47 @@ const Schedule: React.FC = () => {
                                 if (dayClasses.length === 0 && filterCourse !== 'all') return null;
                                 
                                 return (
-                                    <div key={day} className={`border rounded-lg overflow-hidden ${day === today ? 'border-primary/30 bg-primary/5 dark:bg-primary/10' : 'border-slate-200 dark:border-slate-700'}`}>
-                                        <div className={`px-4 py-2 font-semibold ${day === today ? 'bg-primary/20 text-primary dark:text-secondary' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                                            {day} {day === today && <span className="text-xs ml-2">(Today)</span>}
+                                    <div key={day} className={`border-2 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${day === today ? 'border-primary/50 bg-primary/5 dark:bg-primary/10 ring-2 ring-primary/20' : 'border-slate-200 dark:border-slate-700'}`}>
+                                        <div className={`px-5 py-3 font-bold text-lg ${day === today ? 'bg-gradient-to-r from-primary/30 to-secondary/30 text-primary dark:text-secondary' : 'bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/50'}`}>
+                                            {day} {day === today && <span className="text-sm ml-2 bg-primary text-white px-2 py-0.5 rounded-full">Today</span>}
                                         </div>
                                         {dayClasses.length > 0 ? (
-                                            <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                                            <div className="divide-y-2 divide-slate-200 dark:divide-slate-700">
                                                 {dayClasses.map(item => {
                                                     const colorClass = getClassColor(item.courseCode);
                                                     return (
-                                                        <div key={item.slotId} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => setEditingItem(item)}>
+                                                        <div
+                                                            key={item.slotId}
+                                                            className="group p-5 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white dark:hover:from-slate-800/70 dark:hover:to-slate-800/50 transition-all duration-300 cursor-pointer hover:scale-[1.01] hover:shadow-lg active:scale-[0.99]"
+                                                            onClick={() => setEditingItem(item)}
+                                                        >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex-1">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="text-lg font-semibold">{formatTime(item.startTime)} - {formatTime(item.endTime)}</div>
-                                                                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
+                                                                    <div className="flex items-center gap-3 mb-2">
+                                                                        <div className="text-lg font-bold text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                                                            {formatTime(item.startTime)} - {formatTime(item.endTime)}
+                                                                        </div>
+                                                                        <div className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm group-hover:shadow-md transition-all ${colorClass}`}>
                                                                             {item.courseCode}
                                                                         </div>
                                                                     </div>
-                                                                    <div className="mt-1 font-medium">{item.courseName}</div>
-                                                                    <div className="mt-1 text-sm text-slate-500 flex items-center">
-                                                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <div className="mt-1 font-bold text-slate-700 dark:text-slate-300">{item.courseName}</div>
+                                                                    <div className="mt-2 text-sm text-slate-500 dark:text-slate-400 flex items-center">
+                                                                        <svg className="w-4 h-4 mr-1.5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                                         </svg>
-                                                                        {item.location}
+                                                                        <span className="font-medium">{item.location}</span>
                                                                     </div>
                                                                 </div>
-                                                                <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
-                                                                    <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                                    </svg>
-                                                                </button>
+                                                                <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                                                                    <button className="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+                                                                        <span className="font-bold text-sm">Edit</span>
+                                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     );
@@ -877,7 +905,7 @@ const Schedule: React.FC = () => {
                 ) : (
                     // Compact View
                     <div className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             {filteredSchedule.sort((a, b) => {
                                 const dayOrder = days.indexOf(a.day) - days.indexOf(b.day);
                                 if (dayOrder !== 0) return dayOrder;
@@ -885,25 +913,40 @@ const Schedule: React.FC = () => {
                             }).map(item => {
                                 const colorClass = getClassColor(item.courseCode);
                                 return (
-                                    <div key={item.slotId} className={`border-2 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer ${colorClass}`} onClick={() => setEditingItem(item)}>
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="font-bold text-sm">{item.courseCode}</div>
-                                            <div className="text-xs opacity-80">{item.day}</div>
-                                        </div>
-                                        <div className="text-sm font-medium mb-1">{item.courseName}</div>
-                                        <div className="text-xs opacity-90">
-                                            <div className="flex items-center gap-1 mb-1">
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                {formatTime(item.startTime)} - {formatTime(item.endTime)}
+                                    <div
+                                        key={item.slotId}
+                                        className={`group relative overflow-hidden border-2 rounded-xl p-5 hover:shadow-2xl transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:scale-105 active:scale-95 ${colorClass}`}
+                                        onClick={() => setEditingItem(item)}
+                                    >
+                                        {/* Hover gradient overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                                        <div className="relative z-10">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="font-extrabold text-base group-hover:scale-110 transition-transform origin-left">{item.courseCode}</div>
+                                                <div className="text-xs font-bold px-2 py-1 bg-white/50 dark:bg-black/20 rounded-full">{item.day}</div>
                                             </div>
-                                            <div className="flex items-center gap-1">
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <div className="text-sm font-bold mb-3 leading-tight">{item.courseName}</div>
+                                            <div className="text-xs space-y-2">
+                                                <div className="flex items-center gap-1.5 font-semibold">
+                                                    <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    {formatTime(item.startTime)} - {formatTime(item.endTime)}
+                                                </div>
+                                                <div className="flex items-center gap-1.5 font-semibold">
+                                                    <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                    {item.location}
+                                                </div>
+                                            </div>
+                                            {/* Edit indicator */}
+                                            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                 </svg>
-                                                {item.location}
                                             </div>
                                         </div>
                                     </div>
