@@ -299,6 +299,7 @@ const CGPAForecaster: React.FC = () => {
 
 const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
 
     // Calculate performance trends
     const performanceTrend = useMemo(() => {
@@ -309,16 +310,27 @@ const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => 
         }));
     }, [gradesData]);
 
-    // Calculate grade distribution
+    // Calculate grade distribution with courses
     const gradeDistribution = useMemo(() => {
-        const distribution: { [key: string]: number } = {};
+        const distribution: { [key: string]: { count: number, courses: any[] } } = {};
         gradesData.semesters.forEach((sem: Semester) => {
             sem.grades.forEach((grade: Grade) => {
-                distribution[grade.grade] = (distribution[grade.grade] || 0) + 1;
+                if (!distribution[grade.grade]) {
+                    distribution[grade.grade] = { count: 0, courses: [] };
+                }
+                distribution[grade.grade].count += 1;
+                distribution[grade.grade].courses.push({
+                    ...grade,
+                    semester: sem.semester
+                });
             });
         });
         return distribution;
     }, [gradesData]);
+
+    const getGradeCourses = (grade: string) => {
+        return gradeDistribution[grade]?.courses || [];
+    };
 
     // Calculate subject performance with courses
     const subjectPerformance = useMemo(() => {
@@ -382,13 +394,62 @@ const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => 
             {/* Grade Distribution */}
             <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <h4 className="font-medium mb-4">Grade Distribution</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {Object.entries(gradeDistribution).map(([grade, count]) => (
-                        <div key={grade} className={`group text-center p-3 rounded-lg transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer hover:shadow-lg ${getGradeColor(grade)}`}>
-                            <p className="text-2xl font-bold group-hover:scale-110 transition-transform">{count}</p>
-                            <p className="text-sm font-medium">{grade}</p>
+                <div className="space-y-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {Object.entries(gradeDistribution).map(([grade, data]) => (
+                            <div
+                                key={grade}
+                                onClick={() => setSelectedGrade(selectedGrade === grade ? null : grade)}
+                                className={`group text-center p-3 rounded-lg transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer hover:shadow-lg ${getGradeColor(grade)}`}
+                            >
+                                <p className="text-2xl font-bold group-hover:scale-110 transition-transform">
+                                    {typeof data === 'object' && data !== null && 'count' in data ? data.count : 0}
+                                </p>
+                                <p className="text-sm font-medium">{grade}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {selectedGrade && (
+                        <div className="mt-4 space-y-2 animate-fadeIn">
+                            <div className="flex items-center justify-between mb-3 px-2">
+                                <h5 className="font-semibold text-slate-700 dark:text-slate-300">
+                                    Courses with grade {selectedGrade}
+                                </h5>
+                                <button
+                                    onClick={() => setSelectedGrade(null)}
+                                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            {getGradeCourses(selectedGrade).map((course: any, courseIndex: number) => (
+                                <div
+                                    key={courseIndex}
+                                    className="group relative overflow-hidden flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-primary/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10 flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium text-sm">{course.subjectCode}</span>
+                                            <span className="text-xs px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded-full">
+                                                Sem {course.semester}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{course.subjectName}</p>
+                                    </div>
+                                    <div className="relative z-10 flex items-center gap-3">
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">{course.credits} credits</span>
+                                        <span className={`px-3 py-1 rounded-full text-sm font-bold ${getGradeColor(course.grade)}`}>
+                                            {course.grade}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
+                    )}
                 </div>
             </div>
 
