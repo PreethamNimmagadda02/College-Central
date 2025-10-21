@@ -43,7 +43,8 @@ const Directory = () => {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedBranch, setSelectedBranch] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'card'
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
 
  useEffect(() => {
         const loadDirectories = async () => {
@@ -277,24 +278,55 @@ const Directory = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all duration-300 hover:scale-105 active:scale-95 ${
                     showFilters
-                      ? 'bg-primary text-white border-primary dark:bg-secondary dark:border-secondary'
+                      ? 'bg-primary text-white border-primary dark:bg-secondary dark:border-secondary shadow-md'
                       : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
                   }`}
                 >
                   <Filter className="w-4 h-4" />
-                  Filters
+                  <span className="hidden sm:inline">Filters</span>
                 </button>
+
+                {/* View Mode Toggle */}
+                <div className="flex bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`px-3 py-2.5 transition-all duration-300 ${
+                      viewMode === 'table'
+                        ? 'bg-primary text-white dark:bg-secondary'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    }`}
+                    title="Table View"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('card')}
+                    className={`px-3 py-2.5 transition-all duration-300 ${
+                      viewMode === 'card'
+                        ? 'bg-primary text-white dark:bg-secondary'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    }`}
+                    title="Card View"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                  </button>
+                </div>
+
                 <button
                   onClick={exportToCSV}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-md"
                 >
                   <Download className="w-4 h-4" />
-                  Export
+                  <span className="hidden sm:inline">Export</span>
                 </button>
               </div>
             </div>
@@ -357,11 +389,97 @@ const Directory = () => {
         <div className="bg-white dark:bg-dark-card rounded-xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
           {activeCount === 0 ? (
             <div className="text-center py-12">
-              <Search className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+              <Search className="w-12 h-12 text-slate-400 mx-auto mb-4 animate-pulse" />
               <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No results found</h3>
               <p className="text-slate-600 dark:text-slate-400">Try adjusting your search or filters</p>
             </div>
+          ) : viewMode === 'card' ? (
+            /* Card View */
+            <div className="p-4 md:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {activeTab === 'faculty' ? (
+                  filteredFaculty.map(entry => (
+                    <div
+                      key={entry.id}
+                      className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                              {entry.name}
+                            </h3>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{entry.designation}</p>
+                          </div>
+                          <Building2 className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Dept:</span>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{entry.department}</span>
+                          </div>
+                          <a
+                            href={`mailto:${entry.email}`}
+                            className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link"
+                          >
+                            <Mail className="w-4 h-4 flex-shrink-0" />
+                            <span className="group-hover/link:underline truncate">{entry.email}</span>
+                          </a>
+                          {isValidIndianPhoneNumber(entry.phone) && (
+                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
+                              <Phone className="w-4 h-4 flex-shrink-0" />
+                              <span>{entry.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  filteredStudents.map(student => (
+                    <div
+                      key={student.id}
+                      className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                              {student.name}
+                            </h3>
+                            <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">{student.admNo}</p>
+                          </div>
+                          <GraduationCap className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Branch:</span>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{student.branch}</span>
+                          </div>
+                          {student.year && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Year:</span>
+                              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{student.year}</span>
+                            </div>
+                          )}
+                          <a
+                            href={`mailto:${student.admNo.toLowerCase()}@iitism.ac.in`}
+                            className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link"
+                          >
+                            <Mail className="w-4 h-4 flex-shrink-0" />
+                            <span className="group-hover/link:underline truncate">{student.admNo.toLowerCase()}@iitism.ac.in</span>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           ) : (
+            /* Table View */
             <div className="overflow-x-auto">
               {activeTab === 'faculty' ? (
                 <table className="w-full">
