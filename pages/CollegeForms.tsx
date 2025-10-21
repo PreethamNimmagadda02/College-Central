@@ -77,8 +77,7 @@ const CollegeForms: React.FC = () => {
     const { userFormsData, loading, toggleFavorite, addRecentDownload } = useForms();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
-    const [showTips, setShowTips] = useState(true);
-    
+
     const safeUserFormsData = userFormsData || { favorites: [], recentDownloads: [] };
 
     const filters = ['All', 'Favorites', 'General', 'UG', 'PG', 'PhD'];
@@ -185,59 +184,6 @@ const CollegeForms: React.FC = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Recent Downloads Section */}
-            {safeUserFormsData.recentDownloads.length > 0 && (
-                <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-md">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <ClockIcon />
-                        Recent Downloads
-                    </h3>
-                    <div className="space-y-2">
-                        {safeUserFormsData.recentDownloads.slice(0, 5).map((download, index) => (
-                            <div key={index} className="flex items-center justify-between py-2 px-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                                <div>
-                                    <p className="font-medium text-sm">{download.title}</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        {new Date(download.timestamp).toLocaleDateString()} at {new Date(download.timestamp).toLocaleTimeString()}
-                                    </p>
-                                </div>
-                                <span className="text-xs font-semibold bg-primary/10 text-primary py-1 px-2 rounded-full">
-                                    {download.formNumber}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Helpful Tips */}
-            {showTips && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-6 rounded-lg">
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3">
-                            <div className="text-blue-500 mt-1">
-                                <InfoIcon />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Helpful Tips</h3>
-                                <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
-                                    <li>Use the search bar to quickly find forms by name, number, or submission office</li>
-                                    <li>Click the bookmark icon to save frequently used forms to favorites</li>
-                                    <li>All forms are official IIT ISM documents - ensure you submit to the correct office</li>
-                                    <li>Check "Submit to" field carefully before downloading</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => setShowTips(false)}
-                            className="text-blue-500 hover:text-blue-700 text-xl font-bold"
-                        >
-                            ×
-                        </button>
-                    </div>
-                </div>
-            )}
 
             <div className="space-y-4 bg-white dark:bg-dark-card p-4 rounded-lg shadow-md">
                  <div className="relative">
