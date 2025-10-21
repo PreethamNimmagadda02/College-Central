@@ -865,52 +865,58 @@ const Dashboard: React.FC = () => {
             </div>
 
             {/* Quick Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="group bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                    <div className="flex items-center justify-between">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-blue-100 font-medium">Today's Classes</p>
-                            <p className="text-4xl font-bold text-white mt-2">{scheduleInfo.classes.length}</p>
+                            <p className="text-sm text-blue-100 font-semibold mb-1">Today's Classes</p>
+                            <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">{scheduleInfo.classes.length}</p>
                         </div>
-                        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                            <span className="text-3xl">📚</span>
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                            <span className="text-4xl">📚</span>
                         </div>
                     </div>
                 </div>
-                <div className="group bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                    <div className="flex items-center justify-between">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-purple-100 font-medium">CGPA</p>
-                            <p className="text-4xl font-bold text-white mt-2">{displayCgpa != null ? displayCgpa.toFixed(2) : 'N/A'}</p>
+                            <p className="text-sm text-purple-100 font-semibold mb-1">CGPA</p>
+                            <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">{displayCgpa != null ? displayCgpa.toFixed(2) : 'N/A'}</p>
                         </div>
-                        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                            <span className="text-3xl">🎯</span>
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                            <span className="text-4xl">🎯</span>
                         </div>
                     </div>
                 </div>
-                <div className="group bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                    <div className="flex items-center justify-between">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-green-100 font-medium">Credits Achieved</p>
-                            <p className="text-4xl font-bold text-white mt-2">{gradesData?.totalCredits ?? 'N/A'}</p>
+                            <p className="text-sm text-green-100 font-semibold mb-1">Credits Achieved</p>
+                            <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">{gradesData?.totalCredits ?? 'N/A'}</p>
                         </div>
-                        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                            <span className="text-3xl">✨</span>
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                            <span className="text-4xl">✨</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 md:gap-6">
                 {/* Left Column - 2/3 width */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="xl:col-span-2 space-y-5 md:space-y-6">
                     {/* Today's Classes - Enhanced */}
-                    <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
+                    <div className="group bg-white dark:bg-dark-card p-4 sm:p-6 rounded-2xl shadow-lg hover:shadow-xl border-2 border-slate-200 dark:border-slate-700 hover:border-primary/30 transition-all duration-300">
                         <div className="flex flex-col justify-between items-start mb-6 gap-4">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
-                                <h2 className="text-xl font-semibold">{scheduleInfo.title}</h2>
-                                <Link to="/schedule" className="text-sm text-primary hover:text-primary-dark transition-colors whitespace-nowrap">
-                                    Full Schedule →
+                                <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">{scheduleInfo.title}</h2>
+                                <Link to="/schedule" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark bg-primary/10 hover:bg-primary/20 px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap">
+                                    <span>Full Schedule</span>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
                                 </Link>
                             </div>
 
@@ -920,12 +926,12 @@ const Dashboard: React.FC = () => {
                                 <div className="flex flex-wrap items-center gap-2">
                                     <button
                                         onClick={handlePreviousDay}
-                                        className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                        className="p-2.5 md:p-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all duration-200 hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
                                         title="Previous day (←)"
                                         aria-label="Previous day"
                                     >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                                         </svg>
                                     </button>
 
