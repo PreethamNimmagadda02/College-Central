@@ -579,8 +579,18 @@ const AcademicCalendar: React.FC = () => {
                     <div className="space-y-3">
                         {upcomingEvents.map((event, index) => {
                             const daysUntil = getDaysUntil(event.date);
+                            // Find the global index for this event in filteredEvents
+                            const globalIndex = filteredEvents.findIndex(e =>
+                                e.date === event.date &&
+                                e.description === event.description &&
+                                e.type === event.type
+                            );
                             return (
-                                <div key={index} className="group relative overflow-hidden flex items-center justify-between bg-white dark:bg-dark-card p-3 md:p-4 rounded-lg hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
+                                <div
+                                    key={index}
+                                    onClick={() => handleShowEventDetails(event, globalIndex)}
+                                    className="group relative overflow-hidden flex items-center justify-between bg-white dark:bg-dark-card p-3 md:p-4 rounded-lg hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                                >
                                     <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     <div className="relative z-10 flex items-center space-x-3 flex-1 min-w-0">
                                         <span className="text-2xl md:text-3xl group-hover:scale-110 transition-transform duration-300 flex-shrink-0">{getEventTypeIcon(event.type)}</span>
