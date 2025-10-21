@@ -483,106 +483,113 @@ const AcademicCalendar: React.FC = () => {
                         {new Date(calendarData.semesterStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - {new Date(calendarData.semesterEndDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </p>
                 </div>
-                <div className="flex space-x-3">
+                <div className="flex flex-wrap gap-2 md:gap-3">
                     <button
                         onClick={handleExportPDF}
-                        className="px-5 py-2.5 text-sm font-medium rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transition-all duration-200 shadow-md hover:shadow-lg"
+                        className="group px-3 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-medium rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 hover:scale-105 active:scale-95"
                     >
-                        <div className="flex items-center space-x-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center space-x-1.5 md:space-x-2">
+                            <svg className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            <span>Export PDF</span>
+                            <span className="hidden sm:inline">Export PDF</span>
+                            <span className="sm:hidden">Export</span>
                         </div>
                     </button>
                     <button
                         onClick={() => setShowAddEventModal(true)}
-                        className="px-5 py-2.5 text-sm font-medium rounded-lg bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white transition-all duration-200 shadow-md hover:shadow-lg"
+                        className="group px-3 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-medium rounded-lg bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 hover:scale-105 active:scale-95"
                     >
-                        <div className="flex items-center space-x-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center space-x-1.5 md:space-x-2">
+                            <svg className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
-                            <span>Add Event</span>
+                            <span className="hidden sm:inline">Add Event</span>
+                            <span className="sm:hidden">Add</span>
                         </div>
                     </button>
                 </div>
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-xl">
-                    <div className="flex items-center justify-between">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-blue-100 text-sm">Total Events</p>
-                            <p className="text-2xl font-bold">{calendarData.events.length}</p>
+                            <p className="text-blue-100 text-xs md:text-sm font-semibold">Total Events</p>
+                            <p className="text-2xl md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">{calendarData.events.length}</p>
                         </div>
-                        <div className="text-3xl opacity-80">📅</div>
+                        <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">📅</div>
                     </div>
                 </div>
-                
-                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-xl">
-                    <div className="flex items-center justify-between">
+
+                <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-green-100 text-sm">Days Remaining</p>
-                            <p className="text-2xl font-bold">{getDaysUntil(calendarData.semesterEndDate)}</p>
+                            <p className="text-green-100 text-xs md:text-sm font-semibold">Days Remaining</p>
+                            <p className="text-2xl md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">{getDaysUntil(calendarData.semesterEndDate)}</p>
                         </div>
-                        <div className="text-3xl opacity-80">⏳</div>
+                        <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">⏳</div>
                     </div>
                 </div>
-                
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-xl">
-                    <div className="flex items-center justify-between">
+
+                <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-purple-100 text-sm">Upcoming</p>
-                            <p className="text-2xl font-bold">{upcomingEvents.length}</p>
+                            <p className="text-purple-100 text-xs md:text-sm font-semibold">Upcoming</p>
+                            <p className="text-2xl md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">{upcomingEvents.length}</p>
                         </div>
-                        <div className="text-3xl opacity-80">🎯</div>
+                        <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">🎯</div>
                     </div>
                 </div>
-                
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-xl">
-                    <div className="flex items-center justify-between">
+
+                <div className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-orange-100 text-sm">Holidays</p>
-                            <p className="text-2xl font-bold">
+                            <p className="text-orange-100 text-xs md:text-sm font-semibold">Holidays</p>
+                            <p className="text-2xl md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">
                                 {calendarData.events.filter(e => e.type === 'Holiday').length}
                             </p>
                         </div>
-                        <div className="text-3xl opacity-80">🎉</div>
+                        <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">🎉</div>
                     </div>
                 </div>
             </div>
 
             {/* Upcoming Events Widget */}
             {upcomingEvents.length > 0 && (
-                <div className="bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 p-6 rounded-xl border border-primary/20">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center">
-                        <span className="mr-2">⚡</span> Upcoming Events
+                <div className="bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 p-4 md:p-6 rounded-xl border border-primary/20 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <h3 className="text-base md:text-lg font-semibold mb-4 flex items-center">
+                        <span className="mr-2 text-xl md:text-2xl">⚡</span> Upcoming Events
                     </h3>
                     <div className="space-y-3">
                         {upcomingEvents.map((event, index) => {
                             const daysUntil = getDaysUntil(event.date);
                             return (
-                                <div key={index} className="flex items-center justify-between bg-white dark:bg-dark-card p-3 rounded-lg">
-                                    <div className="flex items-center space-x-3">
-                                        <span className="text-2xl">{getEventTypeIcon(event.type)}</span>
-                                        <div>
-                                            <p className="font-medium">{event.description}</p>
-                                            <p className="text-sm text-slate-500">
+                                <div key={index} className="group relative overflow-hidden flex items-center justify-between bg-white dark:bg-dark-card p-3 md:p-4 rounded-lg hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10 flex items-center space-x-3 flex-1 min-w-0">
+                                        <span className="text-2xl md:text-3xl group-hover:scale-110 transition-transform duration-300 flex-shrink-0">{getEventTypeIcon(event.type)}</span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm md:text-base group-hover:text-primary transition-colors truncate">{event.description}</p>
+                                            <p className="text-xs md:text-sm text-slate-500 truncate">
                                                 {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                                 {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="relative z-10 text-right flex-shrink-0 ml-3">
                                         {daysUntil < 0 ? (
-                                            <p className="text-lg font-bold text-green-600 dark:text-green-400">Ongoing</p>
+                                            <p className="text-sm md:text-lg font-bold text-green-600 dark:text-green-400">Ongoing</p>
                                         ) : daysUntil === 0 ? (
-                                            <p className="text-lg font-bold text-orange-500 dark:text-orange-400">Today</p>
+                                            <p className="text-sm md:text-lg font-bold text-orange-500 dark:text-orange-400">Today</p>
                                         ) : (
                                             <>
-                                                <p className="text-2xl font-bold text-primary">{daysUntil}</p>
+                                                <p className="text-xl md:text-2xl font-bold text-primary group-hover:scale-110 transition-transform">{daysUntil}</p>
                                                 <p className="text-xs text-slate-500">days left</p>
                                             </>
                                         )}
@@ -595,20 +602,20 @@ const AcademicCalendar: React.FC = () => {
             )}
 
             {/* Controls */}
-            <div className="bg-white dark:bg-dark-card p-4 rounded-xl shadow-md">
-                <div className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
+            <div className="bg-white dark:bg-dark-card p-4 md:p-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+                <div className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0 lg:space-x-4">
                     {/* View Mode Selector */}
-                    <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400">View:</span>
-                        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+                    <div className="flex items-center space-x-2 w-full lg:w-auto">
+                        <span className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">View:</span>
+                        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 flex-1 lg:flex-initial">
                             {(['timeline', 'grid', 'list'] as const).map((mode) => (
                                 <button
                                     key={mode}
                                     onClick={() => setViewMode(mode)}
-                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
-                                        viewMode === mode 
-                                            ? 'bg-white dark:bg-slate-600 text-primary shadow-sm' 
-                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    className={`flex-1 lg:flex-initial px-3 py-1.5 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${
+                                        viewMode === mode
+                                            ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
+                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-105'
                                     }`}
                                 >
                                     {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -618,15 +625,15 @@ const AcademicCalendar: React.FC = () => {
                     </div>
 
                     {/* Filters */}
-                    <div className="flex items-center space-x-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
                         {/* Search */}
-                        <div className="relative">
+                        <div className="relative w-full sm:w-auto">
                             <input
                                 type="text"
                                 placeholder="Search events..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9 pr-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700"
+                                className="w-full sm:w-auto pl-9 pr-3 py-2 text-xs md:text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 transition-all hover:border-primary/50"
                             />
                             <svg className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -637,7 +644,7 @@ const AcademicCalendar: React.FC = () => {
                         <select
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value as CalendarEventType | 'all')}
-                            className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700"
+                            className="w-full sm:w-auto px-3 py-2 text-xs md:text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 transition-all hover:border-primary/50 cursor-pointer"
                         >
                             <option value="all">All Types</option>
                             <option value="Start of Semester">Start of Semester</option>
