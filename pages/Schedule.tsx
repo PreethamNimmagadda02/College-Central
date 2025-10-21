@@ -11,6 +11,14 @@ const ChevronDownIcon: React.FC = () => (
     </svg>
 );
 
+// Format time from 24-hour to 12-hour with AM/PM
+const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+};
+
 const getClassColor = (courseCode: string) => {
     const colors = [
         'bg-blue-400/20 border-blue-500 text-blue-700 dark:text-blue-300',
@@ -528,7 +536,7 @@ const Schedule: React.FC = () => {
                         <div className="ml-3 flex-1">
                             <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300">Next Class Alert</h3>
                             <p className="text-sm text-blue-700 dark:text-blue-400">
-                                <span className="font-semibold">{upcomingClass.courseName}</span> at {upcomingClass.startTime} in {upcomingClass.location}
+                                <span className="font-semibold">{upcomingClass.courseName}</span> at {formatTime(upcomingClass.startTime)} in {upcomingClass.location}
                             </p>
                         </div>
                     </div>
@@ -786,7 +794,7 @@ const Schedule: React.FC = () => {
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex-1">
                                                                     <div className="flex items-center gap-3">
-                                                                        <div className="text-lg font-semibold">{item.startTime} - {item.endTime}</div>
+                                                                        <div className="text-lg font-semibold">{formatTime(item.startTime)} - {formatTime(item.endTime)}</div>
                                                                         <div className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
                                                                             {item.courseCode}
                                                                         </div>
@@ -842,7 +850,7 @@ const Schedule: React.FC = () => {
                                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                {item.startTime} - {item.endTime}
+                                                {formatTime(item.startTime)} - {formatTime(item.endTime)}
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1082,7 +1090,7 @@ const Schedule: React.FC = () => {
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                         </svg>
-                                                        <span className="font-medium">{cls.courseCode}</span> - {cls.startTime} to {cls.endTime}
+                                                        <span className="font-medium">{cls.courseCode}</span> - {formatTime(cls.startTime)} to {formatTime(cls.endTime)}
                                                     </li>
                                                 ))}
                                             </ul>
