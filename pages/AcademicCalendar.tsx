@@ -513,7 +513,7 @@ const AcademicCalendar: React.FC = () => {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-                <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
@@ -524,7 +524,7 @@ const AcademicCalendar: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
@@ -535,7 +535,7 @@ const AcademicCalendar: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
@@ -546,7 +546,10 @@ const AcademicCalendar: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                <div
+                    onClick={() => setFilterType(filterType === 'Holiday' ? 'all' : 'Holiday')}
+                    className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+                >
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
@@ -557,6 +560,13 @@ const AcademicCalendar: React.FC = () => {
                         </div>
                         <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">🎉</div>
                     </div>
+                    {filterType === 'Holiday' && (
+                        <div className="absolute top-2 right-2 bg-white/30 backdrop-blur-sm rounded-full p-1">
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    )}
                 </div>
             </div>
 
