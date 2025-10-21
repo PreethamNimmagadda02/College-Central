@@ -735,7 +735,7 @@ const Schedule: React.FC = () => {
                                 {/* Time labels */}
                                 {timeSlots.map((time, index) => (
                                     <div key={time} className="sticky left-0 z-10 text-right pr-3 text-sm font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 flex items-center justify-end" style={{ gridColumn: 1, gridRow: index * 2 + 2, gridRowEnd: index * 2 + 4 }}>
-                                        {time}
+                                        {formatTime(time)}
                                     </div>
                                 ))}
 
