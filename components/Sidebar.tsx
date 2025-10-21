@@ -11,7 +11,7 @@ interface SidebarProps {
   setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarCollapsed }) => {
+const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed }) => {
   const trigger = useRef<HTMLButtonElement>(null);
   const sidebar = useRef<HTMLElement>(null);
   const { logout } = useAuth();
@@ -28,6 +28,21 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
         console.error("Failed to log out:", error);
     }
   }
+
+  // Handle edge hover detection
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (sidebarCollapsed && !isArrowClicked) {
+        const isNearLeftEdge = e.clientX <= 20; // 20px from left edge
+        setIsHoveringEdge(isNearLeftEdge);
+      }
+    };
+
+    if (sidebarCollapsed) {
+      document.addEventListener('mousemove', handleMouseMove);
+      return () => document.removeEventListener('mousemove', handleMouseMove);
+    }
+  }, [sidebarCollapsed, isArrowClicked]);
 
   // close on click outside
   useEffect(() => {
@@ -90,11 +105,12 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
               }
             }}
           />
-          <button
-            onClick={() => {
-              setIsArrowClicked(!isArrowClicked);
-              setIsHoveringEdge(false);
-            }}
+           <button
+             onClick={() => {
+               setSidebarCollapsed(!sidebarCollapsed);
+               setIsArrowClicked(false);
+               setIsHoveringEdge(false);
+             }}
             onMouseEnter={() => {
               if (!isArrowClicked) {
                 setIsHoveringEdge(true);
