@@ -685,7 +685,18 @@ const Dashboard: React.FC = () => {
     const displayCgpa = gradesData?.cgpa;
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    const upcomingClassIndex = scheduleInfo.classes.findIndex(c => c.endTime > currentTime);
+
+    // Check if the selected date is today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDateOnly = new Date(selectedDate);
+    selectedDateOnly.setHours(0, 0, 0, 0);
+    const isSelectedDateToday = selectedDateOnly.getTime() === today.getTime();
+
+    // Only calculate upcoming class if viewing today's schedule
+    const upcomingClassIndex = isSelectedDateToday
+        ? scheduleInfo.classes.findIndex(c => c.endTime > currentTime)
+        : -1;
 
     const { semesterProgress, currentWeek } = (() => {
         const defaultStartDate = new Date(now.getFullYear(), 0, 15);
