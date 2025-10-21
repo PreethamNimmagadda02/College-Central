@@ -514,55 +514,67 @@ const Profile: React.FC = () => {
                             </div>
 
                             {/* Quick Stats */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 shadow-lg">
-                                    <div className="flex items-center justify-between">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                                <Link to="/forms" className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10 flex items-center justify-between">
                                         <div>
-                                            <p className="text-green-100 text-xs">Saved Forms</p>
-                                            <p className="text-2xl font-bold">{savedFormsCount}</p>
+                                            <p className="text-green-100 text-xs md:text-sm font-medium mb-1">Saved Forms</p>
+                                            <p className="text-2xl md:text-3xl font-black group-hover:scale-110 transition-transform origin-left">{savedFormsCount}</p>
                                         </div>
-                                        <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
+                                        <div className="bg-white/20 backdrop-blur-sm p-2 md:p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                                            <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
 
-                                <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 shadow-lg">
-                                    <div className="flex items-center justify-between">
+                                <Link to="/calendar" className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10 flex items-center justify-between">
                                         <div>
-                                            <p className="text-blue-100 text-xs">Events</p>
-                                            <p className="text-2xl font-bold">{userAddedEventsCount}</p>
+                                            <p className="text-blue-100 text-xs md:text-sm font-medium mb-1">Events</p>
+                                            <p className="text-2xl md:text-3xl font-black group-hover:scale-110 transition-transform origin-left">{userAddedEventsCount}</p>
                                         </div>
-                                        <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
+                                        <div className="bg-white/20 backdrop-blur-sm p-2 md:p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                                            <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
 
-                                <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-4 shadow-lg">
-                                    <div className="flex items-center justify-between">
+                                <Link to="/calendar" className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10 flex items-center justify-between">
                                         <div>
-                                            <p className="text-purple-100 text-xs">Reminders</p>
-                                            <p className="text-2xl font-bold">{remindersCount}</p>
+                                            <p className="text-purple-100 text-xs md:text-sm font-medium mb-1">Reminders</p>
+                                            <p className="text-2xl md:text-3xl font-black group-hover:scale-110 transition-transform origin-left">{remindersCount}</p>
                                         </div>
-                                        <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                        </svg>
+                                        <div className="bg-white/20 backdrop-blur-sm p-2 md:p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                                            <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                            </svg>
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
 
-                                <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-4 shadow-lg">
-                                    <div className="flex items-center justify-between">
+                                <Link to="/campus-map" className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10 flex items-center justify-between">
                                         <div>
-                                            <p className="text-orange-100 text-xs">Saved Places</p>
-                                            <p className="text-2xl font-bold">{savedPlacesCount}</p>
+                                            <p className="text-orange-100 text-xs md:text-sm font-medium mb-1">Saved Places</p>
+                                            <p className="text-2xl md:text-3xl font-black group-hover:scale-110 transition-transform origin-left">{savedPlacesCount}</p>
                                         </div>
-                                        <svg className="w-10 h-10 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
+                                        <div className="bg-white/20 backdrop-blur-sm p-2 md:p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                                            <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
                             </div>
                         </div>
                     )}
