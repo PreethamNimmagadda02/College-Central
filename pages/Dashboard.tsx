@@ -269,6 +269,7 @@ const Dashboard: React.FC = () => {
             title: "Today's Schedule",
             classes: [] as ClassSchedule[],
             isHoliday: false,
+            isExam: false,
             holidayDescription: null as string | null,
             infoMessage: null as string | null,
         };
@@ -367,11 +368,25 @@ const Dashboard: React.FC = () => {
 
         let titleText = isToday ? "Today's Schedule" : `${dateToDisplay.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}'s Schedule`;
     
-        // Check for holidays and special events - suspend classes for ALL holidays, breaks, vacations, and exams
-        const holidayEvent = todayEvents.find(e => 
+        // Check for exam periods FIRST (before holidays)
+        const examEvent = todayEvents.find(e =>
+            e.type === 'Mid-Semester Exams' ||
+            e.type === 'End-Semester Exams'
+        );
+
+        if (examEvent) {
+            return {
+                ...defaultState,
+                title: "Exam Period 📝",
+                isHoliday: true,
+                isExam: true,
+                holidayDescription: examEvent.description,
+            };
+        }
+
+        // Check for holidays and special events - suspend classes for ALL holidays, breaks, vacations
+        const holidayEvent = todayEvents.find(e =>
             e.type === 'Holiday' ||
-            e.type === 'Mid-Semester Exams' || 
-            e.type === 'End-Semester Exams' ||
             e.description.toLowerCase().includes('semester break') ||
             e.description.toLowerCase().includes('mid semester break') ||
             e.description.toLowerCase().includes('winter break') ||
@@ -385,21 +400,6 @@ const Dashboard: React.FC = () => {
                 title: "It's a Holiday! 🎉",
                 isHoliday: true,
                 holidayDescription: holidayEvent.description,
-            };
-        }
-
-        // Check for exam periods (already handled in holidayEvent, but keep for specific messaging)
-        const examEvent = todayEvents.find(e => 
-            e.type === 'Mid-Semester Exams' || 
-            e.type === 'End-Semester Exams'
-        );
-
-        if (examEvent && !holidayEvent) {
-            return {
-                ...defaultState,
-                title: "Exam Period 📝",
-                isHoliday: true,
-                holidayDescription: `${examEvent.description} - Regular classes may be suspended.`,
             };
         }
 
@@ -1033,11 +1033,23 @@ const Dashboard: React.FC = () => {
                         
                         {scheduleInfo.isHoliday ? (
                              <div className="text-center py-12">
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
-                                    <span className="text-4xl">🎉</span>
-                                </div>
-                                <h3 className="text-lg font-medium text-slate-900 dark:text-white">{scheduleInfo.holidayDescription}</h3>
-                                <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your day off!</p>
+                                {scheduleInfo.isExam ? (
+                                    <>
+                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 mb-4">
+                                            <span className="text-4xl">📝</span>
+                                        </div>
+                                        <h3 className="text-lg font-medium text-slate-900 dark:text-white">{scheduleInfo.holidayDescription}</h3>
+                                        <p className="mt-1 text-slate-600 dark:text-slate-400 font-medium">Classes are suspended - Focus on exam preparation! 📚</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
+                                            <span className="text-4xl">🎉</span>
+                                        </div>
+                                        <h3 className="text-lg font-medium text-slate-900 dark:text-white">{scheduleInfo.holidayDescription}</h3>
+                                        <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your day off!</p>
+                                    </>
+                                )}
                             </div>
                         ) : (
                             <>
