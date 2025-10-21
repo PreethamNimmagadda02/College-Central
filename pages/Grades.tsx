@@ -298,6 +298,8 @@ const CGPAForecaster: React.FC = () => {
 };
 
 const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => {
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
     // Calculate performance trends
     const performanceTrend = useMemo(() => {
         return gradesData.semesters.map((sem: Semester) => ({
@@ -318,25 +320,35 @@ const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => 
         return distribution;
     }, [gradesData]);
 
-    // Calculate subject performance
+    // Calculate subject performance with courses
     const subjectPerformance = useMemo(() => {
-        const subjects: { [key: string]: { total: number, count: number } } = {};
+        const subjects: { [key: string]: { total: number, count: number, courses: any[] } } = {};
         gradesData.semesters.forEach((sem: Semester) => {
             sem.grades.forEach((grade: Grade) => {
                 const category = grade.subjectCode.substring(0, 2);
                 if (!subjects[category]) {
-                    subjects[category] = { total: 0, count: 0 };
+                    subjects[category] = { total: 0, count: 0, courses: [] };
                 }
                 subjects[category].total += gradePoints[grade.grade] || 0;
                 subjects[category].count += 1;
+                subjects[category].courses.push({
+                    ...grade,
+                    semester: sem.semester
+                });
             });
         });
-        
+
         return Object.entries(subjects).map(([category, data]) => ({
             category,
-            average: (data.total / data.count).toFixed(2)
+            average: (data.total / data.count).toFixed(2),
+            courses: data.courses
         }));
     }, [gradesData]);
+
+    const getCategoryCourses = (category: string) => {
+        const categoryData = subjectPerformance.find(s => s.category === category);
+        return categoryData?.courses || [];
+    };
 
     return (
         <div className="space-y-6">
@@ -385,10 +397,56 @@ const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => 
                 <h4 className="font-medium mb-4">Subject Category Performance</h4>
                 <div className="space-y-2">
                     {subjectPerformance.map((subject, index) => (
-                        <div key={index} className="group relative overflow-hidden flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
-                            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            <span className="relative z-10 font-medium group-hover:text-primary transition-colors">{subject.category} Courses</span>
-                            <span className="relative z-10 text-lg font-semibold text-primary group-hover:scale-110 transition-transform">{subject.average}</span>
+                        <div key={index}>
+                            <div
+                                onClick={() => setSelectedCategory(selectedCategory === subject.category ? null : subject.category)}
+                                className="group relative overflow-hidden flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <div className="relative z-10 flex items-center gap-2">
+                                    <span className="font-medium group-hover:text-primary transition-colors">{subject.category} Courses</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">({subject.courses.length})</span>
+                                </div>
+                                <div className="relative z-10 flex items-center gap-2">
+                                    <span className="text-lg font-semibold text-primary group-hover:scale-110 transition-transform">{subject.average}</span>
+                                    <svg
+                                        className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${selectedCategory === subject.category ? 'rotate-180' : ''}`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            {selectedCategory === subject.category && (
+                                <div className="mt-2 ml-4 space-y-2 animate-fadeIn">
+                                    {getCategoryCourses(subject.category).map((course: any, courseIndex: number) => (
+                                        <div
+                                            key={courseIndex}
+                                            className="group relative overflow-hidden flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
+                                        >
+                                            <div className="absolute inset-0 bg-gradient-to-r from-primary/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                            <div className="relative z-10 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium text-sm">{course.subjectCode}</span>
+                                                    <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-600 rounded-full">
+                                                        Sem {course.semester}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{course.subjectName}</p>
+                                            </div>
+                                            <div className="relative z-10 flex items-center gap-3">
+                                                <span className="text-xs text-slate-500 dark:text-slate-400">{course.credits} credits</span>
+                                                <span className={`px-3 py-1 rounded-full text-sm font-bold ${getGradeColor(course.grade)}`}>
+                                                    {course.grade}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
