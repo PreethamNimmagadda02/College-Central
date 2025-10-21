@@ -596,7 +596,7 @@ const Grades: React.FC = () => {
 
             {/* Overview Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-                <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-3">
@@ -614,7 +614,7 @@ const Grades: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-3">
@@ -628,7 +628,7 @@ const Grades: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-3">
@@ -642,7 +642,7 @@ const Grades: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white p-5 md:p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-3">
