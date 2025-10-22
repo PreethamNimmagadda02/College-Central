@@ -7,17 +7,25 @@ import { App as CapacitorApp } from '@capacitor/app';
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    // Check localStorage for user's preference, default to true (collapsed)
-    const stored = localStorage.getItem('sidebar-collapsed');
-    return stored !== null ? stored === 'true' : true;
-  });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [sidebarHovering, setSidebarHovering] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Initialize sidebar state from localStorage on mount
   useEffect(() => {
-    localStorage.setItem('sidebar-collapsed', String(sidebarCollapsed));
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('sidebar-collapsed');
+      const initialCollapsed = stored !== null ? stored === 'true' : true;
+      setSidebarCollapsed(initialCollapsed);
+    }
+  }, []);
+
+  // Save sidebar state to localStorage when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebar-collapsed', String(sidebarCollapsed));
+    }
   }, [sidebarCollapsed]);
 
   useEffect(() => {
