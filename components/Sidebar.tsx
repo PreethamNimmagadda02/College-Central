@@ -31,6 +31,9 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
 
   // Handle edge hover detection
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (sidebarCollapsed) {
         // When sidebar is visible (hovering), keep it visible if mouse is within sidebar width
@@ -50,8 +53,16 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
     };
 
     if (sidebarCollapsed) {
-      document.addEventListener('mousemove', handleMouseMove);
-      return () => document.removeEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mousemove', handleMouseMove, { passive: true });
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+      };
+    } else {
+      // Reset hover state when sidebar is not collapsed
+      if (isHoveringEdge) {
+        setIsHoveringEdge(false);
+        onHoverChange?.(false);
+      }
     }
   }, [sidebarCollapsed, isHoveringEdge, onHoverChange]);
 
@@ -133,6 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
         onMouseEnter={() => {
           if (sidebarCollapsed) {
             setIsHoveringEdge(true);
+            onHoverChange?.(true);
           }
         }}
         onMouseLeave={() => {
