@@ -56,6 +56,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   phone: authUser.phoneNumber ?? 'Not Set',
                   profilePicture: authUser.photoURL ?? null,
                   profilePicturePath: null, // No path for external URLs
+                  courseOption: 'CBCS', // Default to CBCS
                 };
                 
                 await userDocRef.set(newUserProfile); // Use compat API
