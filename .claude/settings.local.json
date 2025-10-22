@@ -25,7 +25,11 @@
       "Bash(git push:*)",
       "Bash(git rebase:*)",
       "Bash(git filter-repo:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": []

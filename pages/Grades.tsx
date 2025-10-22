@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useGrades } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
+import { useUser } from '../contexts/UserContext';
 import { TIMETABLE_DATA } from '../data/courseData';
 import { TimeTableCourse, Grade, Semester } from '../types';
+import { calculateCreditsFromLTP } from '../utils/creditCalculator';
 
 const gradeOptions = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'];
 const gradePoints: { [key: string]: number } = { 'A+': 10, 'A': 9, 'B+': 8, 'B': 7, 'C+': 6, 'C': 5, 'D': 4, 'F': 0 };
@@ -32,6 +34,8 @@ const getCGPAStatus = (cgpa: number) => {
 const CGPAForecaster: React.FC = () => {
     const { gradesData } = useGrades();
     const { scheduleData } = useSchedule();
+    const { user } = useUser();
+    const courseOption = user?.courseOption || 'CBCS';
     const isInitialMount = useRef(true);
     const [targetCGPA, setTargetCGPA] = useState(8.0);
     const [semestersRemaining, setSemestersRemaining] = useState(1);
@@ -41,8 +45,12 @@ const CGPAForecaster: React.FC = () => {
         const uniqueCourseCodes = [...new Set(scheduleData.map(slot => slot.courseCode))];
         return TIMETABLE_DATA
             .filter(course => uniqueCourseCodes.includes(course.courseCode))
+            .map(course => ({
+                ...course,
+                credits: calculateCreditsFromLTP(course.ltp, courseOption)
+            }))
             .sort((a, b) => a.courseCode.localeCompare(b.courseCode));
-    }, [scheduleData]);
+    }, [scheduleData, courseOption]);
 
     const [projectedGrades, setProjectedGrades] = useState<{ [courseCode: string]: string }>({});
 
@@ -529,6 +537,9 @@ const Grades: React.FC = () => {
         resetGradesState,
     } = useGrades();
 
+    const { user } = useUser();
+    const courseOption = user?.courseOption || 'CBCS';
+
     const [showForecaster, setShowForecaster] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [selectedSemester, setSelectedSemester] = useState<number | null>(null);
@@ -698,9 +709,14 @@ const Grades: React.FC = () => {
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                         Academic Performance
                     </h1>
-                    <p className="text-slate-600 dark:text-slate-400 mt-1">
-                        Track and analyze your academic journey
-                    </p>
+                    <div className="flex items-center gap-3 mt-1">
+                        <p className="text-slate-600 dark:text-slate-400">
+                            Track and analyze your academic journey
+                        </p>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                            {courseOption === 'NEP' ? '📚 NEP (L+T+P)' : '📖 CBCS (3L+2T+P)'}
+                        </span>
+                    </div>
                 </div>
                 <button
                     onClick={resetGradesState}

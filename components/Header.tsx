@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { SunIcon, MoonIcon, LogoIcon } from './icons/SidebarIcons';
@@ -17,7 +17,8 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  const { user } = useUser();
+  const { user, updateUser } = useUser();
+  const [isTogglingCourse, setIsTogglingCourse] = useState(false);
 
   React.useEffect(() => {
     const root = document.documentElement;
@@ -39,6 +40,21 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
   }, [isDark]);
 
   const toggleTheme = () => setIsDark(!isDark);
+
+  const toggleCourseOption = async () => {
+    if (!user || isTogglingCourse) return;
+
+    setIsTogglingCourse(true);
+    const newCourseOption = user.courseOption === 'CBCS' ? 'NEP' : 'CBCS';
+
+    try {
+      await updateUser({ courseOption: newCourseOption });
+    } catch (error) {
+      console.error('Error updating course option:', error);
+    } finally {
+      setIsTogglingCourse(false);
+    }
+  };
 
   return (
     <header className="fixed top-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl z-50 border-b border-slate-200/50 dark:border-slate-700/50 shadow-lg">
@@ -80,6 +96,28 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
 
           {/* Header: Right side */}
           <div className="flex items-center gap-2">
+            {/* Course Type Toggle */}
+            {user && user.courseOption && (
+              <button
+                onClick={toggleCourseOption}
+                disabled={isTogglingCourse}
+                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed"
+                title={`Switch to ${user.courseOption === 'CBCS' ? 'NEP' : 'CBCS'}`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {user.courseOption === 'CBCS' ? '📖' : '📚'}
+                  </span>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {user.courseOption || 'CBCS'}
+                  </span>
+                </div>
+                <svg className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+              </button>
+            )}
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}

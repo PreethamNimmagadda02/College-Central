@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSchedule } from '../contexts/ScheduleContext';
+import { useUser } from '../contexts/UserContext';
 import { ClassSchedule, TimeTableCourse } from '../types';
 import { TIMETABLE_DATA } from '../data/courseData';
 import { useAuth } from '../hooks/useAuth';
 import { logActivity } from '../services/activityService';
+import { calculateCreditsFromLTP } from '../utils/creditCalculator';
 
 const ChevronDownIcon: React.FC = () => (
     <svg className="w-5 h-5 ml-2 -mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -38,7 +40,9 @@ const getClassColor = (courseCode: string) => {
 const Schedule: React.FC = () => {
     const { scheduleData, setScheduleData, loading: scheduleLoading } = useSchedule();
     const { currentUser } = useAuth();
-    
+    const { user } = useUser();
+    const courseOption = user?.courseOption || 'CBCS';
+
     const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -151,9 +155,11 @@ const Schedule: React.FC = () => {
         const coursesToCount = uniqueCoursesFromSchedule.length > 0 ? uniqueCoursesFromSchedule : selectedCourseCodes;
         return coursesToCount.reduce((acc, code) => {
             const course = TIMETABLE_DATA.find(c => c.courseCode === code);
-            return acc + (course?.credits || 0);
+            if (!course) return acc;
+            const credits = calculateCreditsFromLTP(course.ltp, courseOption);
+            return acc + credits;
         }, 0);
-    }, [uniqueCoursesFromSchedule, selectedCourseCodes]);
+    }, [uniqueCoursesFromSchedule, selectedCourseCodes, courseOption]);
 
     const todaysClasses = useMemo(() => {
         if (!scheduleData || !today) return [];
@@ -635,7 +641,7 @@ const Schedule: React.FC = () => {
                                                     <div className="ml-3 flex-1">
                                                         <p className="font-medium text-slate-900 dark:text-white">{course.courseCode}</p>
                                                         <p className="text-sm text-slate-500 dark:text-slate-400">{course.courseName}</p>
-                                                        <p className="text-xs text-slate-400 dark:text-slate-500">{course.credits} credits</p>
+                                                        <p className="text-xs text-slate-400 dark:text-slate-500">{calculateCreditsFromLTP(course.ltp, courseOption)} credits • {course.ltp}</p>
                                                     </div>
                                                 </label>
                                             </li>

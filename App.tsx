@@ -13,7 +13,6 @@ import Layout from './pages/Layout';
 import Dashboard from './pages/Dashboard';
 import Grades from './pages/Grades';
 import Schedule from './pages/Schedule';
-import Events from './pages/Events';
 import Directory from './pages/Directory';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
@@ -41,7 +40,6 @@ const router = createHashRouter([
       { index: true, element: <Dashboard /> },
       { path: 'grades', element: <Grades /> },
       { path: 'schedule', element: <Schedule /> },
-      { path: 'news-and-events', element: <Events /> },
       { path: 'directory', element: <Directory /> },
       { path: 'campus-map', element: <CampusMap /> },
       { path: 'college-forms', element: <CollegeForms /> },

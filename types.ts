@@ -13,6 +13,7 @@ export interface User {
   rollNumber?: string;
   year?: string;
   semester?: number;
+  courseOption?: 'CBCS' | 'NEP';
 }
 
 export interface Grade {
@@ -21,6 +22,7 @@ export interface Grade {
   credits: number;
   grade: string;
   attendance: number;
+  ltp?: string; // L-T-P format (e.g., "3-1-0")
 }
 
 export type SessionType = 'Monsoon' | 'Winter' | 'Summer';
