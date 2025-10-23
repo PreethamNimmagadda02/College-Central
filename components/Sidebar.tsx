@@ -19,6 +19,8 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
   const { user } = useUser();
   const navigate = useNavigate();
   const [isHoveringEdge, setIsHoveringEdge] = React.useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   const handleLogout = async () => {
     try {
@@ -29,33 +31,65 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
     }
   }
 
-  // Handle edge hover detection
+  // Optimized edge hover detection with RAF throttling
   useEffect(() => {
-    // Only run on client side
     if (typeof window === 'undefined') return;
 
+    let isScheduled = false;
+    let lastX = -1;
+
     const handleMouseMove = (e: MouseEvent) => {
-      if (sidebarCollapsed) {
-        // When sidebar is visible (hovering), keep it visible if mouse is within sidebar width
-        // Otherwise, detect if mouse is within edge detection area to trigger show
-        const sidebarWidth = 256; // w-64 = 256px
-        const edgeDetectionWidth = 100; // Wide area to make sidebar easily accessible
+      if (!sidebarCollapsed) return;
 
-        const shouldShowSidebar = isHoveringEdge
-          ? e.clientX <= sidebarWidth // Keep visible if within sidebar area
-          : e.clientX <= edgeDetectionWidth; // Show if near left edge
+      // Throttle with requestAnimationFrame for 60fps smoothness
+      if (!isScheduled) {
+        isScheduled = true;
 
-        if (shouldShowSidebar !== isHoveringEdge) {
-          setIsHoveringEdge(shouldShowSidebar);
-          onHoverChange?.(shouldShowSidebar);
+        if (rafRef.current) {
+          cancelAnimationFrame(rafRef.current);
         }
+
+        rafRef.current = requestAnimationFrame(() => {
+          isScheduled = false;
+          const x = e.clientX;
+
+          // Skip if mouse hasn't moved significantly
+          if (Math.abs(x - lastX) < 2) return;
+          lastX = x;
+
+          const edgeDetectionWidth = 40; // Tighter for instant response
+          const extendedWidth = 270; // Keep visible area
+
+          const shouldShowSidebar = isHoveringEdge
+            ? x <= extendedWidth
+            : x <= edgeDetectionWidth;
+
+          if (shouldShowSidebar !== isHoveringEdge) {
+            // Clear any pending timeout
+            if (hoverTimeoutRef.current) {
+              clearTimeout(hoverTimeoutRef.current);
+              hoverTimeoutRef.current = null;
+            }
+
+            // Both show and hide instantly - no delays
+            setIsHoveringEdge(shouldShowSidebar);
+            onHoverChange?.(shouldShowSidebar);
+          }
+        });
       }
     };
 
     if (sidebarCollapsed) {
       document.addEventListener('mousemove', handleMouseMove, { passive: true });
+
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
+        if (hoverTimeoutRef.current) {
+          clearTimeout(hoverTimeoutRef.current);
+        }
+        if (rafRef.current) {
+          cancelAnimationFrame(rafRef.current);
+        }
       };
     } else {
       // Reset hover state when sidebar is not collapsed
@@ -113,13 +147,17 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
       {/* Edge hover marker for collapsed sidebar */}
       {sidebarCollapsed && (
         <div
-          className={`hidden lg:flex fixed top-1/2 -translate-y-1/2 z-50 items-center justify-center w-6 h-16 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-r-lg shadow-lg transition-all duration-300 pointer-events-none ${
+          className={`hidden lg:flex fixed top-1/2 -translate-y-1/2 z-50 items-center justify-center w-6 h-16 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-r-lg shadow-lg transition-all duration-150 ease-out pointer-events-none ${
             isHoveringEdge && sidebarCollapsed ? 'left-64' : 'left-0'
           }`}
           aria-label="Sidebar marker"
+          style={{
+            willChange: 'left',
+            left: isHoveringEdge ? '16rem' : '0',
+          }}
         >
           <svg
-            className={`w-4 h-4 transition-transform duration-300 ${isHoveringEdge ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 transition-transform duration-150 ease-out ${isHoveringEdge ? 'rotate-180' : ''}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -143,6 +181,10 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
         ref={sidebar}
         onMouseEnter={() => {
           if (sidebarCollapsed) {
+            if (hoverTimeoutRef.current) {
+              clearTimeout(hoverTimeoutRef.current);
+              hoverTimeoutRef.current = null;
+            }
             setIsHoveringEdge(true);
             onHoverChange?.(true);
           }
@@ -152,12 +194,20 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
           // when the cursor moves beyond the sidebar boundary
         }}
         className={`fixed left-0 top-16 bottom-0 z-40 flex flex-col
-          ${sidebarCollapsed && isHoveringEdge ? 'bg-white/10 dark:bg-slate-900/10' : 'bg-white/95 dark:bg-slate-900/95'} backdrop-blur-xl
+          ${sidebarCollapsed && isHoveringEdge ? 'bg-white/95 dark:bg-slate-900/95 shadow-2xl' : 'bg-white/95 dark:bg-slate-900/95'} backdrop-blur-xl
           border-r border-slate-200/50 dark:border-slate-700/50
-          duration-300 ease-in-out transition-all overflow-visible
+          transition-all overflow-visible duration-150 ease-out
           ${sidebarCollapsed && !isHoveringEdge ? 'w-64 -translate-x-full' : 'w-64'}
           ${sidebarOpen ? 'translate-x-0' : sidebarCollapsed ? '' : '-translate-x-full lg:translate-x-0'}
         `}
+        style={{
+          willChange: sidebarCollapsed ? 'transform' : 'auto',
+          transform: sidebarCollapsed && !isHoveringEdge
+            ? 'translateX(-100%)'
+            : sidebarOpen || isHoveringEdge
+            ? 'translateX(0)'
+            : undefined,
+        }}
       >
         <nav
           className={`sidebar-nav flex flex-col flex-1 px-3 py-4 ${!sidebarCollapsed || isHoveringEdge ? 'overflow-y-auto' : ''}`}
@@ -181,18 +231,18 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                   to={item.path}
                   end={item.path === '/'}
                   className={({ isActive }) =>
-                    `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all duration-200 ${
+                    `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all ${
                       sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'
                     } ${
                       isActive
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02]'
-                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01]'
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02] duration-150'
+                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01] duration-200'
                     }`
                   }
                   onClick={() => sidebarOpen && setSidebarOpen(false)}
                 >
-                  <span className="shrink-0">{item.icon}</span>
-                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
+                  <span className="shrink-0 transition-transform duration-150 group-hover:scale-110">{item.icon}</span>
+                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
                   <span className={tooltipClasses}>{item.label}</span>
                 </NavLink>
               </li>
@@ -213,18 +263,18 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                 <NavLink
                   to={item.path}
                   className={({ isActive }) =>
-                    `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all duration-200 ${
+                    `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all ${
                       sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'
                     } ${
                       isActive
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02]'
-                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01]'
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02] duration-150'
+                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01] duration-200'
                     }`
                   }
                   onClick={() => sidebarOpen && setSidebarOpen(false)}
                 >
-                  <span className="shrink-0">{item.icon}</span>
-                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
+                  <span className="shrink-0 transition-transform duration-150 group-hover:scale-110">{item.icon}</span>
+                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
                   <span className={tooltipClasses}>{item.label}</span>
                 </NavLink>
               </li>
@@ -241,17 +291,17 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                   <NavLink
                     to="/profile"
                     className={({ isActive }) =>
-                      `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all duration-200 ${
+                      `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all ${
                         sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'
                       } ${
                         isActive
-                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02]'
-                          : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01]'
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02] duration-150'
+                          : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01] duration-200'
                       }`
                     }
                   >
-                    <span className="shrink-0"><ProfileIcon /></span>
-                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Profile</span>
+                    <span className="shrink-0 transition-transform duration-150 group-hover:scale-110"><ProfileIcon /></span>
+                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Profile</span>
                     <span className={tooltipClasses}>Profile</span>
                   </NavLink>
                 </li>
@@ -264,8 +314,8 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                         sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'
                       }`}
                   >
-                    <span className="shrink-0"><LogoutIcon /></span>
-                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Logout</span>
+                    <span className="shrink-0 transition-transform duration-150 group-hover:scale-110"><LogoutIcon /></span>
+                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Logout</span>
                     <span className={tooltipClasses}>Logout</span>
                   </button>
                 </li>
