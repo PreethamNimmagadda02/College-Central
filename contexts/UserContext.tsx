@@ -50,13 +50,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   id: authUser.uid,
                   name: directoryEntry?.name ?? authUser.displayName ?? 'New Student',
                   admissionNumber: directoryEntry?.admNo ?? admissionNumber,
-                  branch: directoryEntry?.branch ?? 'Not Set',
-                  hostel: 'Not Set',
+                  branch: directoryEntry?.branch ?? '',
+                  hostel: '',
                   email: authUser.email ?? '',
-                  phone: authUser.phoneNumber ?? 'Not Set',
+                  phone: authUser.phoneNumber ?? '',
                   profilePicture: authUser.photoURL ?? null,
                   profilePicturePath: null, // No path for external URLs
-                  courseOption: 'CBCS', // Default to CBCS
+                  courseOption: directoryEntry ? 'CBCS' : '', // Default to CBCS only if in directory
                 };
                 
                 await userDocRef.set(newUserProfile); // Use compat API

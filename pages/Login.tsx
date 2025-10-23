@@ -37,14 +37,12 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetSuccess, setResetSuccess] = useState('');
-  const [isResetting, setIsResetting] = useState(false);
-  const { login, register, loginWithGoogle, resetPassword, isAuthenticated, loading: authLoading } = useAuth();
+  const { login, register, loginWithGoogle, isAuthenticated, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const navigate = useNavigate();
+  const admissionInputRef = React.useRef<HTMLInputElement>(null);
+  const passwordInputRef = React.useRef<HTMLInputElement>(null);
   
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -72,19 +70,21 @@ const Login: React.FC = () => {
     };
   }, []);
 
-  // Load remembered admission number
+  // Load remembered admission number and set focus
   useEffect(() => {
     const remembered = localStorage.getItem('rememberedAdmission');
     if (remembered) {
       setAdmissionNumber(remembered);
       setRememberMe(true);
+      setTimeout(() => passwordInputRef.current?.focus(), 100);
+    } else {
+      setTimeout(() => admissionInputRef.current?.focus(), 100);
     }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setResetSuccess('');
     setIsSubmitting(true);
     const email = `${admissionNumber.trim().toLowerCase()}@iitism.ac.in`;
 
@@ -130,7 +130,6 @@ const Login: React.FC = () => {
 
   const handleGoogleSignIn = async () => {
     setError('');
-    setResetSuccess('');
     setIsGoogleSubmitting(true);
     try {
       await loginWithGoogle();
@@ -154,36 +153,6 @@ const Login: React.FC = () => {
     }
   };
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setResetSuccess('');
-    setIsResetting(true);
-
-    const email = resetEmail.includes('@')
-      ? resetEmail
-      : `${resetEmail.trim().toLowerCase()}@iitism.ac.in`;
-
-    try {
-      await resetPassword(email);
-      setResetSuccess('Password reset email sent! Check your inbox.');
-      setTimeout(() => {
-        setShowForgotPassword(false);
-        setResetEmail('');
-        setResetSuccess('');
-      }, 3000);
-    } catch (err: any) {
-      if (err.code === 'auth/user-not-found') {
-        setError('No account found with this email address.');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('Invalid email address format.');
-      } else {
-        setError('Failed to send reset email. Please try again.');
-      }
-    } finally {
-      setIsResetting(false);
-    }
-  };
 
   if (authLoading || isAuthenticated) {
      return (
@@ -232,12 +201,10 @@ const Login: React.FC = () => {
 
             {/* Login Card */}
             <div className="bg-slate-900/10 hover:bg-slate-900/90 backdrop-blur-sm hover:backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 hover:border-slate-700/50 p-8 hover:shadow-3xl transition-all duration-500 ease-in-out">
-                {!showForgotPassword ? (
-                    <>
-                        <div className="mb-6">
-                            <h2 className="text-2xl font-bold text-white mb-1">Welcome Back</h2>
-                            <p className="text-white/80 text-sm">Sign in to access your campus hub</p>
-                        </div>
+                <div className="mb-6">
+                    <h2 className="text-2xl font-bold text-white mb-1">Welcome Back</h2>
+                    <p className="text-white/80 text-sm">Sign in to access your campus hub</p>
+                </div>
             
             <form className="space-y-4" onSubmit={handleSubmit}>
                 {/* Admission Number Input */}
@@ -255,8 +222,15 @@ const Login: React.FC = () => {
                             type="text"
                             autoComplete="username"
                             required
+                            ref={admissionInputRef}
                             value={admissionNumber}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAdmissionNumber(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && admissionNumber) {
+                                    e.preventDefault();
+                                    passwordInputRef.current?.focus();
+                                }
+                            }}
                             placeholder="21JE0789"
                             className="w-full pl-10 pr-4 py-2.5 text-white bg-white/10 border-2 border-white/20 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-200 placeholder:text-white/50"
                         />
@@ -278,6 +252,7 @@ const Login: React.FC = () => {
                             type={showPassword ? 'text' : 'password'}
                             autoComplete="current-password"
                             required
+                            ref={passwordInputRef}
                             value={password}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                             placeholder="Enter your password"
@@ -294,8 +269,8 @@ const Login: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Remember Me & Forgot Password */}
-                <div className="flex items-center justify-between">
+                {/* Remember Me */}
+                <div className="flex items-center">
                     <label className="flex items-center group cursor-pointer">
                         <input
                             type="checkbox"
@@ -307,13 +282,6 @@ const Login: React.FC = () => {
                             Remember me
                         </span>
                     </label>
-                    <button
-                        type="button"
-                        onClick={() => setShowForgotPassword(true)}
-                        className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors hover:underline"
-                    >
-                        Forgot password?
-                    </button>
                 </div>
 
                 {/* Error Message */}
@@ -328,17 +296,6 @@ const Login: React.FC = () => {
                     </div>
                 )}
 
-                {/* Success Message */}
-                {resetSuccess && (
-                    <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-3">
-                        <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            <p className="text-sm font-medium text-green-600 dark:text-green-400">{resetSuccess}</p>
-                        </div>
-                    </div>
-                )}
 
                 {/* Sign In Button */}
                 <button
@@ -392,94 +349,6 @@ const Login: React.FC = () => {
                     )}
                 </button>
             </form>
-            </>
-                ) : (
-                    /* Forgot Password Form */
-                    <>
-                        <div className="flex items-center mb-6">
-                            <button
-                                onClick={() => {
-                                    setShowForgotPassword(false);
-                                    setError('');
-                                    setResetSuccess('');
-                                }}
-                                className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-all"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-                            <div className="ml-2">
-                                <h2 className="text-2xl font-bold text-white">Reset Password</h2>
-                                <p className="text-sm text-white/80 mt-1">We'll help you get back in</p>
-                            </div>
-                        </div>
-
-                        <p className="text-sm text-white/90 mb-4 bg-white/10 p-3 rounded-xl border border-white/20">
-                            Enter your admission number or email address and we'll send a secure link to reset your password.
-                        </p>
-
-                        <form className="space-y-4" onSubmit={handlePasswordReset}>
-                            <div>
-                                <label htmlFor="reset-email" className="block text-sm font-semibold text-white mb-2">
-                                    Admission Number or Email
-                                </label>
-                                <div className="relative group">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <UserIcon className="h-5 w-5 text-white/60 group-focus-within:text-blue-400 transition-colors duration-200" />
-                                    </div>
-                                    <input
-                                        id="reset-email"
-                                        type="text"
-                                        required
-                                        value={resetEmail}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setResetEmail(e.target.value)}
-                                        placeholder="21JE0789 or email@iitism.ac.in"
-                                        className="w-full pl-10 pr-4 py-2.5 text-white bg-white/10 border-2 border-white/20 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-200 placeholder:text-white/50"
-                                    />
-                                </div>
-                            </div>
-
-                            {error && (
-                                <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-3 animate-shake">
-                                    <div className="flex items-center gap-2">
-                                        <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                        </svg>
-                                        <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {resetSuccess && (
-                                <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-3">
-                                    <div className="flex items-center gap-2">
-                                        <svg className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                        </svg>
-                                        <p className="text-sm font-medium text-green-600 dark:text-green-400">{resetSuccess}</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            <button
-                                type="submit"
-                                disabled={isResetting}
-                                className="w-full flex justify-center items-center gap-2.5 py-3 px-4 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] text-base"
-                            >
-                                {isResetting ? (
-                                    <>
-                                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        <span>Sending...</span>
-                                    </>
-                                ) : 'Send Reset Link'}
-                            </button>
-                        </form>
-                    </>
-                )}
             </div>
         </div>
        </div>
