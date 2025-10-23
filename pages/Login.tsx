@@ -45,8 +45,6 @@ const Login: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const navigate = useNavigate();
-  const admissionInputRef = React.useRef<HTMLInputElement>(null);
-  const passwordInputRef = React.useRef<HTMLInputElement>(null);
   
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -74,17 +72,12 @@ const Login: React.FC = () => {
     };
   }, []);
 
-  // Load remembered admission number and auto-focus
+  // Load remembered admission number
   useEffect(() => {
     const remembered = localStorage.getItem('rememberedAdmission');
     if (remembered) {
       setAdmissionNumber(remembered);
       setRememberMe(true);
-      // Focus password field if admission is remembered
-      setTimeout(() => passwordInputRef.current?.focus(), 100);
-    } else {
-      // Focus admission field
-      setTimeout(() => admissionInputRef.current?.focus(), 100);
     }
   }, []);
 
@@ -194,14 +187,8 @@ const Login: React.FC = () => {
 
   if (authLoading || isAuthenticated) {
      return (
-        <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900">
-            <div className="flex flex-col items-center gap-4">
-                <div className="relative">
-                    <div className="w-16 h-16 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
-                    <div className="absolute inset-0 w-16 h-16 border-4 border-t-transparent border-purple-500 rounded-full animate-spin opacity-40" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-                </div>
-                <p className="text-white font-semibold text-lg animate-pulse">Loading your dashboard...</p>
-            </div>
+        <div className="flex items-center justify-center h-screen bg-light-bg dark:bg-dark-bg">
+            <div className="w-16 h-16 border-4 border-t-transparent border-primary rounded-full animate-spin"></div>
         </div>
      );
   }
@@ -244,7 +231,7 @@ const Login: React.FC = () => {
             </div>
 
             {/* Login Card */}
-            <div className="bg-slate-900/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 p-8 transition-all duration-300 ease-in-out">
+            <div className="bg-slate-900/10 hover:bg-slate-900/90 backdrop-blur-sm hover:backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 hover:border-slate-700/50 p-8 hover:shadow-3xl transition-all duration-500 ease-in-out">
                 {!showForgotPassword ? (
                     <>
                         <div className="mb-6">
@@ -263,7 +250,6 @@ const Login: React.FC = () => {
                             <UserIcon className="h-5 w-5 text-white/60 group-focus-within:text-blue-400 transition-colors duration-200" />
                         </div>
                         <input
-                            ref={admissionInputRef}
                             id="admission-number"
                             name="admission-number"
                             type="text"
@@ -271,12 +257,6 @@ const Login: React.FC = () => {
                             required
                             value={admissionNumber}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAdmissionNumber(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && admissionNumber) {
-                                e.preventDefault();
-                                passwordInputRef.current?.focus();
-                              }
-                            }}
                             placeholder="21JE0789"
                             className="w-full pl-10 pr-4 py-2.5 text-white bg-white/10 border-2 border-white/20 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-200 placeholder:text-white/50"
                         />
@@ -293,7 +273,6 @@ const Login: React.FC = () => {
                             <LockIcon className="h-5 w-5 text-white/60 group-focus-within:text-blue-400 transition-colors duration-200" />
                         </div>
                         <input
-                            ref={passwordInputRef}
                             id="password"
                             name="password"
                             type={showPassword ? 'text' : 'password'}
