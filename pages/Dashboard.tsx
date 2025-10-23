@@ -121,6 +121,15 @@ const Dashboard: React.FC = () => {
     const [recommendationLoading, setRecommendationLoading] = useState(false);
     const [recommendationError, setRecommendationError] = useState<string | null>(null);
 
+    // Weather advice cache interface
+    interface WeatherAdviceCache {
+        advice: string;
+        temp: number;
+        weatherCode: number;
+        timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
+        timestamp: number;
+    }
+
 
     // Quick Links state management
     const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
@@ -625,13 +634,88 @@ const Dashboard: React.FC = () => {
     
     }, [calendarData, scheduleData, selectedDate]);
 
-    const fetchWeatherRecommendation = async (weatherData: WeatherData) => {
+    // Helper to determine time of day
+    const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) return 'morning';
+        if (hour >= 12 && hour < 17) return 'afternoon';
+        if (hour >= 17 && hour < 21) return 'evening';
+        return 'night';
+    };
+
+    // Helper to check if cached advice is still valid
+    const getCachedAdvice = (temp: number, weatherCode: number): string | null => {
+        try {
+            const cached = localStorage.getItem('weatherAdviceCache');
+            if (!cached) return null;
+
+            const cacheData: WeatherAdviceCache = JSON.parse(cached);
+            const now = Date.now();
+            const cacheAge = now - cacheData.timestamp;
+            const threeHours = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+
+            // Cache is invalid if older than 3 hours
+            if (cacheAge > threeHours) {
+                localStorage.removeItem('weatherAdviceCache');
+                return null;
+            }
+
+            const currentTimeOfDay = getTimeOfDay();
+            const tempDiff = Math.abs(temp - cacheData.temp);
+
+            // Reuse cache if:
+            // 1. Same time of day
+            // 2. Temperature difference is less than 3°C
+            // 3. Same weather condition (code)
+            if (
+                cacheData.timeOfDay === currentTimeOfDay &&
+                tempDiff < 3 &&
+                cacheData.weatherCode === weatherCode
+            ) {
+                console.log('Using cached weather advice (saved API call)');
+                return cacheData.advice;
+            }
+
+            return null;
+        } catch (err) {
+            console.error('Cache read error:', err);
+            return null;
+        }
+    };
+
+    // Save advice to cache
+    const cacheAdvice = (advice: string, temp: number, weatherCode: number) => {
+        try {
+            const cacheData: WeatherAdviceCache = {
+                advice,
+                temp,
+                weatherCode,
+                timeOfDay: getTimeOfDay(),
+                timestamp: Date.now()
+            };
+            localStorage.setItem('weatherAdviceCache', JSON.stringify(cacheData));
+        } catch (err) {
+            console.error('Cache write error:', err);
+        }
+    };
+
+    const fetchWeatherRecommendation = async (weatherData: WeatherData, weatherCode: number) => {
         setRecommendationLoading(true);
         setRecommendationError(null);
         setRecommendation(null);
 
         try {
-            // FIX: Use process.env.API_KEY as per guidelines, which also resolves the TypeScript error with import.meta.env.
+            const temp = parseFloat(weatherData.temp);
+
+            // Check cache first
+            const cachedAdvice = getCachedAdvice(temp, weatherCode);
+            if (cachedAdvice) {
+                setRecommendation(cachedAdvice);
+                setRecommendationLoading(false);
+                return;
+            }
+
+            // No valid cache, fetch from API
             const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
             const prompt = `The current weather at my college campus in Dhanbad, India is ${weatherData.temp}°C and ${weatherData.desc}. Provide 1 short, actionable recommendation for a student keeping in the time of the day. For example, what to wear, what activities to do, or what to carry. Keep the tone friendly and concise, using bullet points with emojis. Do not use markdown formatting.`;
 
@@ -640,7 +724,12 @@ const Dashboard: React.FC = () => {
                 contents: prompt,
             });
 
-            setRecommendation(response.text);
+            const advice = response.text;
+            setRecommendation(advice);
+
+            // Cache the new advice
+            cacheAdvice(advice, temp, weatherCode);
+            console.log('Fetched new weather advice from API');
         } catch (err) {
             console.error("AI recommendation error:", err);
             setRecommendationError("Couldn't get weather advices right now.");
@@ -706,7 +795,7 @@ const Dashboard: React.FC = () => {
             };
             setDetailedWeather(detailedData);
 
-            await fetchWeatherRecommendation(weatherData);
+            await fetchWeatherRecommendation(weatherData, weather_code);
 
         } catch (err) {
             setWeatherError('Could not load weather.');
