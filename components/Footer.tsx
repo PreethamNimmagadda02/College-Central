@@ -49,12 +49,14 @@ const Footer: React.FC = () => {
                 >
                   Class Schedule
                 </Link>
-                <Link
-                  to="/college-forms"
+                <a
+                  href="https://forms.gle/kep4VdMWhXJ9879z6"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 hover:translate-x-1 inline-block"
                 >
-                  College Forms
-                </Link>
+                  Feedback Form
+                </a>
                 <a
                   href="https://drive.google.com/file/d/1mgKpdN954H7E5H9WZR0wecJQ1NgxN2Xe/view?usp=sharing"
                   target="_blank"
