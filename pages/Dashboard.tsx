@@ -868,6 +868,11 @@ const Dashboard: React.FC = () => {
         ? scheduleInfo.classes.findIndex(c => c.endTime > currentTime)
         : -1;
 
+    // Check if all classes are completed for today
+    const allClassesCompleted = isSelectedDateToday &&
+                                scheduleInfo.classes.length > 0 &&
+                                upcomingClassIndex === -1;
+
     const { semesterProgress, currentWeek } = (() => {
         const defaultStartDate = new Date(now.getFullYear(), 0, 15);
         const defaultEndDate = new Date(now.getFullYear(), 4, 15);
@@ -1057,7 +1062,19 @@ const Dashboard: React.FC = () => {
 
                             {/* Enhanced Date Navigation */}
                             <div className="w-full space-y-3">
-                                {/* Main date display and quick actions */}
+                                {/* Day of week and date - Always visible */}
+                                <div className="flex items-center gap-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+                                    <div className="flex-1">
+                                        <div className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white">
+                                            {selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}
+                                        </div>
+                                        <div className="text-sm md:text-base text-slate-600 dark:text-slate-400 font-medium">
+                                            {selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Main date navigation and quick actions */}
                                 <div className="flex flex-wrap items-center gap-2">
                                     <button
                                         onClick={handlePreviousDay}
@@ -1079,7 +1096,7 @@ const Dashboard: React.FC = () => {
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
-                                            {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            Jump to date
                                         </button>
 
                                         {showDatePicker && (
@@ -1250,58 +1267,91 @@ const Dashboard: React.FC = () => {
                                 )}
                                 {scheduleInfo.classes.length > 0 ? (
                                     <div className="relative">
-                                        <div className="absolute left-3 top-2 h-[calc(100%-8px)] w-0.5 bg-gradient-to-b from-primary/20 to-transparent" aria-hidden="true"></div>
-                                        <ul className="space-y-4">
+                                        <ul className="space-y-3">
                                             {scheduleInfo.classes.map((c, index) => {
                                                 const isPast = upcomingClassIndex !== -1 && index < upcomingClassIndex;
                                                 const isCurrentOrNext = index === upcomingClassIndex;
                                                 const isCurrent = isCurrentOrNext && c.startTime <= currentTime;
                                                 const isNext = isCurrentOrNext && !isCurrent;
-                                                
+                                                const isLastClass = index === scheduleInfo.classes.length - 1;
+
                                                 return (
-                                                    <li key={c.slotId} className={`relative pl-10 transition-all duration-300 ${isPast ? 'opacity-50' : ''}`}>
-                                                        <div className={`absolute left-0 top-2 h-6 w-6 rounded-full flex items-center justify-center ring-4 ${
-                                                            isCurrent ? 'bg-primary ring-primary/20' : 
-                                                            isNext ? 'bg-amber-500 ring-amber-500/20' : 
-                                                            isPast ? 'bg-slate-300 ring-slate-200' : 
-                                                            'bg-primary/60 ring-primary/10'
+                                                    <li key={c.slotId} className={`relative pl-8 transition-all duration-700 ease-out ${
+                                                        allClassesCompleted ? 'opacity-50' : isPast ? 'opacity-35' : ''
+                                                    }`}>
+                                                        {/* Timeline segment for this class */}
+                                                        {index < scheduleInfo.classes.length - 1 && (
+                                                            <div
+                                                                className={`absolute left-2.5 w-0.5 transition-all duration-700 ease-out ${
+                                                                    allClassesCompleted || isPast
+                                                                        ? 'bg-emerald-500/80 dark:bg-emerald-400/80'
+                                                                        : 'bg-slate-300 dark:bg-slate-600'
+                                                                }`}
+                                                                style={{
+                                                                    top: '20px',
+                                                                    height: 'calc(100% + 12px)' // Extends to next item (space-y-3 = 12px)
+                                                                }}
+                                                            />
+                                                        )}
+
+                                                        <div className={`absolute left-0 top-2.5 h-5 w-5 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
+                                                            isCurrent ? 'bg-primary ring-4 ring-primary/20 scale-110 shadow-md' :
+                                                            isNext ? 'bg-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-md' :
+                                                            isPast || allClassesCompleted ? 'bg-emerald-500/90 ring-4 ring-emerald-500/15 dark:bg-emerald-400/90 dark:ring-emerald-400/15' :
+                                                            'bg-slate-300 dark:bg-slate-600 ring-4 ring-slate-200 dark:ring-slate-700'
                                                         }`}>
-                                                            <div className="h-2 w-2 rounded-full bg-white"></div>
+                                                            {isPast || allClassesCompleted ? (
+                                                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                            ) : (
+                                                                <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+                                                            )}
                                                         </div>
-                                                        
-                                                        <div className={`rounded-lg transition-all ${
-                                                            isCurrent ? 'bg-primary/5 border-l-4 border-primary p-4 -ml-1 shadow-sm' : 
-                                                            isNext ? 'bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 -ml-1' :
-                                                            'p-3 hover:bg-slate-50 dark:hover:bg-slate-800'
+
+                                                        <div className={`transition-all duration-500 ease-out ${
+                                                            isCurrent ? 'bg-primary/5 border-l-2 border-primary pl-4 pr-3 py-3 rounded-r-lg' :
+                                                            isNext ? 'bg-amber-50 dark:bg-amber-900/10 border-l-2 border-amber-500 pl-4 pr-3 py-3 rounded-r-lg' :
+                                                            'py-2'
                                                         }`}>
-                                                            <div className="flex justify-between items-start">
-                                                                <div className="flex-1">
-                                                                    <div className="flex items-center gap-3 mb-1">
-                                                                        <p className={`font-semibold ${isCurrent ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>
+                                                            <div className="flex items-start justify-between gap-3">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <span className={`text-xs font-semibold transition-colors duration-500 ${
+                                                                            isCurrent ? 'text-primary' :
+                                                                            isPast || allClassesCompleted ? 'text-emerald-600/80 dark:text-emerald-400/80' :
+                                                                            'text-slate-500 dark:text-slate-400'
+                                                                        }`}>
                                                                             {c.startTime} - {c.endTime}
-                                                                        </p>
+                                                                        </span>
                                                                         {isCurrent && (
-                                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-primary text-white animate-pulse">
-                                                                                ONGOING
+                                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs font-bold bg-primary text-white animate-pulse">
+                                                                                NOW
                                                                             </span>
                                                                         )}
                                                                         {isNext && (
-                                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white">
-                                                                                UP NEXT
+                                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs font-bold bg-amber-500 text-white">
+                                                                                NEXT
                                                                             </span>
                                                                         )}
                                                                     </div>
-                                                                    <p className="font-bold text-slate-800 dark:text-white">{c.courseName}</p>
-                                                                    <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mt-2">
-                                                                        <span className="flex items-center gap-1.5">
-                                                                            <InstructorIcon className="w-4 h-4" />
+                                                                    <p className={`font-semibold text-sm mb-2 transition-all duration-500 ${
+                                                                        isPast || allClassesCompleted ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white'
+                                                                    }`}>{c.courseName}</p>
+                                                                    <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs transition-colors duration-500 ${
+                                                                        isPast || allClassesCompleted ? 'text-slate-400 dark:text-slate-600' : 'text-slate-500 dark:text-slate-400'
+                                                                    }`}>
+                                                                        <span className="flex items-center gap-1">
+                                                                            <InstructorIcon className="w-3.5 h-3.5" />
                                                                             {c.instructor}
                                                                         </span>
-                                                                        <span className="flex items-center gap-1.5">
-                                                                            <LocationIcon className="w-4 h-4" />
+                                                                        <span className="flex items-center gap-1">
+                                                                            <LocationIcon className="w-3.5 h-3.5" />
                                                                             {c.location}
                                                                         </span>
-                                                                        <span className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
+                                                                        <span className={`px-1.5 py-0.5 rounded text-xs transition-colors duration-500 ${
+                                                                            isPast || allClassesCompleted ? 'bg-slate-100/50 dark:bg-slate-700/50' : 'bg-slate-100 dark:bg-slate-700'
+                                                                        }`}>
                                                                             {c.courseCode}
                                                                         </span>
                                                                     </div>
