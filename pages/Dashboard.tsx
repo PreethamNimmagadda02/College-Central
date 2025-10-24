@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ClassSchedule, CampusEvent, Announcement, NewsItem, CalendarEvent } from '../types';
-// FIX: Changed import from fetchLatestNewsAndEvents to subscribeToLatestNewsAndEvents.
 import { subscribeToLatestNewsAndEvents } from '../services/api';
 import { useUser } from '../contexts/UserContext';
 import { useGrades } from '../contexts/GradesContext';
@@ -10,6 +9,18 @@ import { useSchedule } from '../contexts/ScheduleContext';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useAuth } from '../hooks/useAuth';
 import { GoogleGenAI } from '@google/genai';
+import {
+  toInputDateString,
+  formatTime,
+  isToday as checkIsToday,
+  isSameDay,
+  addDays,
+  getDayName,
+  calculateDateProgress,
+  getWeekNumber
+} from '../utils/dateUtils';
+import { getGreeting, getRandomItem } from '../utils/helpers';
+import { MOTIVATIONAL_QUOTES, TIME_INTERVALS, SEMESTER_DEFAULTS } from '../constants/app';
 import {
     InstructorIcon, LocationIcon, LibraryIcon, GymkhanaIcon,
     PortalIcon, CalendarCheckIcon, HealthIcon, FeeIcon,
@@ -137,88 +148,33 @@ const Dashboard: React.FC = () => {
     const [editingLink, setEditingLink] = useState<QuickLink | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [newLink, setNewLink] = useState({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
-    const [selectedDate, setSelectedDate] = useState(() => {
-        // Always start with today's date on page refresh
-        return new Date();
-    });
+    const [selectedDate, setSelectedDate] = useState(() => new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
-
-    // Helper function to format a Date object into 'YYYY-MM-DD' string for the input
-    const toInputDateString = (date: Date) => {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
     
-    // Handler for date picker changes
+    // Date navigation handlers
     const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const dateString = e.target.value;
         if (dateString) {
-            // Splitting the string is more robust against timezone shifts than new Date(string)
             const [year, month, day] = dateString.split('-').map(Number);
-            const newDate = new Date(year, month - 1, day);
-            setSelectedDate(newDate);
+            setSelectedDate(new Date(year, month - 1, day));
         }
     }, []);
 
-    // Reset to today's date
-    const handleResetToToday = useCallback(() => {
-        const today = new Date();
-        setSelectedDate(today);
-    }, []);
-
-    // Navigate to previous day
-    const handlePreviousDay = useCallback(() => {
-        setSelectedDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setDate(newDate.getDate() - 1);
-            return newDate;
-        });
-    }, []);
-
-    // Navigate to next day
-    const handleNextDay = useCallback(() => {
-        setSelectedDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setDate(newDate.getDate() + 1);
-            return newDate;
-        });
-    }, []);
-
-    // Navigate by weeks
-    const handlePreviousWeek = useCallback(() => {
-        setSelectedDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setDate(newDate.getDate() - 7);
-            return newDate;
-        });
-    }, []);
-
-    const handleNextWeek = useCallback(() => {
-        setSelectedDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setDate(newDate.getDate() + 7);
-            return newDate;
-        });
-    }, []);
+    const handleResetToToday = useCallback(() => setSelectedDate(new Date()), []);
+    const handlePreviousDay = useCallback(() => setSelectedDate(prev => addDays(prev, -1)), []);
+    const handleNextDay = useCallback(() => setSelectedDate(prev => addDays(prev, 1)), []);
+    const handlePreviousWeek = useCallback(() => setSelectedDate(prev => addDays(prev, -7)), []);
+    const handleNextWeek = useCallback(() => setSelectedDate(prev => addDays(prev, 7)), []);
 
     // Check if the day has changed and automatically update to current day
     useEffect(() => {
         const checkDayChange = () => {
-            const now = new Date();
-            const currentDay = now.toDateString();
-            const selectedDay = selectedDate.toDateString();
-
-            // If the day has changed from the selected date, update to today
-            if (selectedDay !== currentDay) {
-                setSelectedDate(now);
+            if (!isSameDay(selectedDate, new Date())) {
+                setSelectedDate(new Date());
             }
         };
 
-        // Check every minute if the day has changed
-        const intervalId = setInterval(checkDayChange, 60000);
-
+        const intervalId = setInterval(checkDayChange, TIME_INTERVALS.DAY_CHECK);
         return () => clearInterval(intervalId);
     }, [selectedDate]);
 
@@ -841,25 +797,7 @@ const Dashboard: React.FC = () => {
         setIsRefreshing(false);
     };
 
-    const getGreeting = () => {
-        const hour = new Date().getHours();
-        if (hour < 12) return { emoji: '🌅', text: 'Good Morning' };
-        if (hour < 17) return { emoji: '☀️', text: 'Good Afternoon' };
-        return { emoji: '🌆', text: 'Good Evening' };
-    };
-
-    const motivationalQuote = useMemo(() => {
-        const quotes = [
-            { text: "Arise, awake and stop not until the goal is reached", author: "Swami Vivekananda" },
-            { text: "The future belongs to those who believe in the beauty of their dreams", author: "Eleanor Roosevelt" },
-            { text: "Excellence is not a skill, it's an attitude", author: "Ralph Marston" },
-            { text: "Your only limit is your mind", author: "Anonymous" },
-            { text: "Dream big, work hard, stay focused", author: "Anonymous" },
-            { text: "Success is the sum of small efforts repeated day in and day out", author: "Robert Collier" },
-            { text: "Don't watch the clock; do what it does. Keep going", author: "Sam Levenson" }
-        ];
-        return quotes[Math.floor(Math.random() * quotes.length)];
-    }, []); // Only calculate once on mount
+    const motivationalQuote = useMemo(() => getRandomItem(MOTIVATIONAL_QUOTES), []);
 
     const overallLoading = userLoading || gradesLoading || scheduleLoading || calendarLoading;
 
@@ -867,14 +805,8 @@ const Dashboard: React.FC = () => {
 
     const { now, currentTime, isSelectedDateToday } = useMemo(() => {
         const now = new Date();
-        const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const selectedDateOnly = new Date(selectedDate);
-        selectedDateOnly.setHours(0, 0, 0, 0);
-        const isSelectedDateToday = selectedDateOnly.getTime() === today.getTime();
-
+        const currentTime = formatTime(now);
+        const isSelectedDateToday = checkIsToday(selectedDate);
         return { now, currentTime, isSelectedDateToday };
     }, [selectedDate]);
 
@@ -893,23 +825,24 @@ const Dashboard: React.FC = () => {
     }, [isSelectedDateToday, scheduleInfo.classes.length, upcomingClassIndex]);
 
     const { semesterProgress, currentWeek } = useMemo(() => {
-        const defaultStartDate = new Date(now.getFullYear(), 0, 15);
-        const defaultEndDate = new Date(now.getFullYear(), 4, 15);
+        const year = now.getFullYear();
+        const defaultStartDate = new Date(year, SEMESTER_DEFAULTS.START_MONTH, SEMESTER_DEFAULTS.START_DAY);
+        const defaultEndDate = new Date(year, SEMESTER_DEFAULTS.END_MONTH, SEMESTER_DEFAULTS.END_DAY);
 
-        let semesterStartDate = defaultStartDate;
-        let semesterEndDate = defaultEndDate;
+        const semesterStartDate = calendarData?.semesterStartDate
+            ? new Date(calendarData.semesterStartDate)
+            : defaultStartDate;
+        const semesterEndDate = calendarData?.semesterEndDate
+            ? new Date(calendarData.semesterEndDate)
+            : defaultEndDate;
 
-        if (calendarData?.semesterStartDate && calendarData?.semesterEndDate) {
-            semesterStartDate = new Date(calendarData.semesterStartDate);
-            semesterEndDate = new Date(calendarData.semesterEndDate);
+        if (semesterStartDate > semesterEndDate) {
+            return { semesterProgress: 0, currentWeek: 1 };
         }
 
-        if (semesterStartDate > semesterEndDate) return { semesterProgress: 0, currentWeek: 1 };
+        const progress = calculateDateProgress(semesterStartDate, semesterEndDate, now);
+        const week = getWeekNumber(semesterStartDate, now);
 
-        const totalMs = semesterEndDate.getTime() - semesterStartDate.getTime();
-        const elapsedMs = now.getTime() - semesterStartDate.getTime();
-        const progress = Math.min(100, Math.max(0, (elapsedMs / totalMs) * 100));
-        const week = Math.max(1, Math.ceil(elapsedMs / (1000 * 60 * 60 * 24 * 7)));
         return { semesterProgress: progress, currentWeek: week };
     }, [now, calendarData?.semesterStartDate, calendarData?.semesterEndDate]);
 
