@@ -1,6 +1,6 @@
 // src/contexts/UserContext.tsx
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db, storage } from '../firebaseConfig';
 import { User } from '../types';
@@ -56,7 +56,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   phone: authUser.phoneNumber ?? '',
                   profilePicture: authUser.photoURL ?? null,
                   profilePicturePath: null, // No path for external URLs
-                  courseOption: directoryEntry ? 'CBCS' : '', // Default to CBCS only if in directory
+                  courseOption: directoryEntry ? 'CBCS' : undefined, // Default to CBCS only if in directory
                 };
                 
                 await userDocRef.set(newUserProfile); // Use compat API
@@ -98,13 +98,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
 
-  const updateUser = async (newDetails: Partial<User>) => {
+  const updateUser = useCallback(async (newDetails: Partial<User>) => {
     const currentUserId = auth.currentUser?.uid;
     if (currentUserId) {
       try {
         const userDocRef = db.collection('users').doc(currentUserId); // Use compat API
         await userDocRef.update(newDetails); // Use compat API
-        
+
         if (!newDetails.profilePicture) {
             await logActivity(currentUserId, {
                 type: 'update',
@@ -120,9 +120,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw e;
       }
     }
-  };
-  
-  const uploadProfilePicture = async (file: File) => {
+  }, []);
+
+  const uploadProfilePicture = useCallback(async (file: File) => {
     const currentUser = auth.currentUser;
     if (!currentUser || !user) throw new Error("Not authenticated or user data not loaded");
 
@@ -194,10 +194,15 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         );
     });
-  };
+  }, [user, updateUser]);
+
+  const contextValue = useMemo(
+    () => ({ user, updateUser, uploadProfilePicture, loading, error }),
+    [user, updateUser, uploadProfilePicture, loading, error]
+  );
 
   return (
-    <UserContext.Provider value={{ user, updateUser, uploadProfilePicture, loading, error }}>
+    <UserContext.Provider value={contextValue}>
       {children}
     </UserContext.Provider>
   );
