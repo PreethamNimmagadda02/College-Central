@@ -138,15 +138,7 @@ const Dashboard: React.FC = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [newLink, setNewLink] = useState({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
     const [selectedDate, setSelectedDate] = useState(() => {
-        // Try to load selected date from localStorage, fallback to today
-        const savedDate = localStorage.getItem('dashboardSelectedDate');
-        if (savedDate) {
-            try {
-                return new Date(savedDate);
-            } catch (e) {
-                console.warn('Invalid saved date, using today');
-            }
-        }
+        // Always start with today's date on page refresh
         return new Date();
     });
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -167,9 +159,6 @@ const Dashboard: React.FC = () => {
             const [year, month, day] = dateString.split('-').map(Number);
             const newDate = new Date(year, month - 1, day);
             setSelectedDate(newDate);
-            
-            // Save to localStorage to persist across page refreshes
-            localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
         }
     };
 
@@ -177,7 +166,6 @@ const Dashboard: React.FC = () => {
     const handleResetToToday = () => {
         const today = new Date();
         setSelectedDate(today);
-        localStorage.setItem('dashboardSelectedDate', today.toISOString());
     };
 
     // Navigate to previous day
@@ -185,7 +173,6 @@ const Dashboard: React.FC = () => {
         const newDate = new Date(selectedDate);
         newDate.setDate(newDate.getDate() - 1);
         setSelectedDate(newDate);
-        localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
     };
 
     // Navigate to next day
@@ -193,7 +180,6 @@ const Dashboard: React.FC = () => {
         const newDate = new Date(selectedDate);
         newDate.setDate(newDate.getDate() + 1);
         setSelectedDate(newDate);
-        localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
     };
 
     // Navigate by weeks
@@ -201,15 +187,32 @@ const Dashboard: React.FC = () => {
         const newDate = new Date(selectedDate);
         newDate.setDate(newDate.getDate() - 7);
         setSelectedDate(newDate);
-        localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
     };
 
     const handleNextWeek = () => {
         const newDate = new Date(selectedDate);
         newDate.setDate(newDate.getDate() + 7);
         setSelectedDate(newDate);
-        localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
     };
+
+    // Check if the day has changed and automatically update to current day
+    useEffect(() => {
+        const checkDayChange = () => {
+            const now = new Date();
+            const currentDay = now.toDateString();
+            const selectedDay = selectedDate.toDateString();
+
+            // If the day has changed from the selected date, update to today
+            if (selectedDay !== currentDay) {
+                setSelectedDate(now);
+            }
+        };
+
+        // Check every minute if the day has changed
+        const intervalId = setInterval(checkDayChange, 60000);
+
+        return () => clearInterval(intervalId);
+    }, [selectedDate]);
 
     // Load quick links from localStorage on mount
     useEffect(() => {
@@ -395,7 +398,7 @@ const Dashboard: React.FC = () => {
             return true;
         });
 
-        let titleText = isToday ? "Today's Schedule" : `${dateToDisplay.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}'s Schedule`;
+        let titleText = isToday ? "Today's Schedule" : "Schedule";
     
         // Check for exam periods FIRST (before holidays)
         const examEvent = todayEvents.find(e =>
@@ -617,11 +620,11 @@ const Dashboard: React.FC = () => {
         // Update title based on events and schedule changes
         if (infoMessage) {
             if (timetableEvent) {
-                titleText = `Schedule for ${dateToDisplay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (${effectiveDay})`;
+                titleText = isToday ? "Today's Schedule" : "Schedule";
             } else if (specialEvents.length > 0) {
-                titleText = `${dateToDisplay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - Special Day`;
+                titleText = isToday ? "Today - Special Day" : "Special Day";
             } else if (otherEvents.length > 0) {
-                titleText = `${dateToDisplay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - Academic Day`;
+                titleText = isToday ? "Today - Academic Day" : "Academic Day";
             }
         }
     
