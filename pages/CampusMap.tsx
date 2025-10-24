@@ -303,7 +303,7 @@ const CampusMap: React.FC = () => {
                 Campus Locations
               </h3>
             </div>
-            <div className="max-h-[500px] overflow-y-auto">
+            <div className="max-h-[500px] overflow-y-auto overflow-x-hidden">
               {searchedLocations.length > 0 ? (
                 searchedLocations.map(location => (
                   <div
