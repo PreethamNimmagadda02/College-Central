@@ -86,7 +86,11 @@ const AcademicCalendar: React.FC = () => {
         if (!calendarData) return [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-    
+
+        // Calculate one week from today
+        const oneWeekFromToday = new Date(today);
+        oneWeekFromToday.setDate(oneWeekFromToday.getDate() + 7);
+
         const relevantKeywords = [
             'b. tech', 'm. tech', 'ug', 'pg', 'dual degree', 'all students', 'int. m. tech'
         ];
@@ -95,37 +99,50 @@ const AcademicCalendar: React.FC = () => {
             ...relevantKeywords,
             'ph. d', 'executive m. tech', 'executive mba', 'part-time', 'm. sc', 'ma students', 'scholars'
         ];
-    
-        const futureAndOngoingEvents = calendarData.events
-          .filter(event => new Date(event.endDate || event.date) >= today);
-    
-        const relevantEvents = futureAndOngoingEvents.filter(event => {
+
+        // Filter events that are ongoing (started in the past but not yet ended) OR will start within the next week
+        const upcomingAndOngoingEvents = calendarData.events.filter(event => {
+            const eventStartDate = new Date(event.date);
+            const eventEndDate = new Date(event.endDate || event.date);
+            eventStartDate.setHours(0, 0, 0, 0);
+            eventEndDate.setHours(0, 0, 0, 0);
+
+            // Event is ongoing if it has already started but hasn't ended yet
+            const isOngoing = eventStartDate < today && eventEndDate >= today;
+
+            // Event is upcoming if it starts within the next week
+            const isUpcomingThisWeek = eventStartDate >= today && eventStartDate <= oneWeekFromToday;
+
+            return isOngoing || isUpcomingThisWeek;
+        });
+
+        const relevantEvents = upcomingAndOngoingEvents.filter(event => {
             const desc = event.description.toLowerCase();
-            
+
             // Is it explicitly relevant?
             const isForRelevantGroup = relevantKeywords.some(kw => desc.includes(kw));
             if (isForRelevantGroup) {
                 return true;
             }
-    
+
             // Is it a general holiday?
             if (event.type === 'Holiday') {
                 return true;
             }
-    
+
             // Is it a general event (doesn't mention any specific group)?
             const isSpecificToAnyGroup = specificGroupKeywords.some(kw => desc.includes(kw));
             if (!isSpecificToAnyGroup) {
                 return true; // It's a general event like CONVOCATION
             }
-    
+
             // Otherwise, it's for a specific, non-relevant group
             return false;
         });
-        
+
         // Sort events by their start date to get the soonest ones first
         relevantEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
+
         return relevantEvents.slice(0, 3);
     }, [calendarData]);
 
