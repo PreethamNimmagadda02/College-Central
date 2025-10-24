@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ClassSchedule, CampusEvent, Announcement, NewsItem, CalendarEvent } from '../types';
 // FIX: Changed import from fetchLatestNewsAndEvents to subscribeToLatestNewsAndEvents.
@@ -152,7 +152,7 @@ const Dashboard: React.FC = () => {
     };
     
     // Handler for date picker changes
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const dateString = e.target.value;
         if (dateString) {
             // Splitting the string is more robust against timezone shifts than new Date(string)
@@ -160,40 +160,48 @@ const Dashboard: React.FC = () => {
             const newDate = new Date(year, month - 1, day);
             setSelectedDate(newDate);
         }
-    };
+    }, []);
 
     // Reset to today's date
-    const handleResetToToday = () => {
+    const handleResetToToday = useCallback(() => {
         const today = new Date();
         setSelectedDate(today);
-    };
+    }, []);
 
     // Navigate to previous day
-    const handlePreviousDay = () => {
-        const newDate = new Date(selectedDate);
-        newDate.setDate(newDate.getDate() - 1);
-        setSelectedDate(newDate);
-    };
+    const handlePreviousDay = useCallback(() => {
+        setSelectedDate(prev => {
+            const newDate = new Date(prev);
+            newDate.setDate(newDate.getDate() - 1);
+            return newDate;
+        });
+    }, []);
 
     // Navigate to next day
-    const handleNextDay = () => {
-        const newDate = new Date(selectedDate);
-        newDate.setDate(newDate.getDate() + 1);
-        setSelectedDate(newDate);
-    };
+    const handleNextDay = useCallback(() => {
+        setSelectedDate(prev => {
+            const newDate = new Date(prev);
+            newDate.setDate(newDate.getDate() + 1);
+            return newDate;
+        });
+    }, []);
 
     // Navigate by weeks
-    const handlePreviousWeek = () => {
-        const newDate = new Date(selectedDate);
-        newDate.setDate(newDate.getDate() - 7);
-        setSelectedDate(newDate);
-    };
+    const handlePreviousWeek = useCallback(() => {
+        setSelectedDate(prev => {
+            const newDate = new Date(prev);
+            newDate.setDate(newDate.getDate() - 7);
+            return newDate;
+        });
+    }, []);
 
-    const handleNextWeek = () => {
-        const newDate = new Date(selectedDate);
-        newDate.setDate(newDate.getDate() + 7);
-        setSelectedDate(newDate);
-    };
+    const handleNextWeek = useCallback(() => {
+        setSelectedDate(prev => {
+            const newDate = new Date(prev);
+            newDate.setDate(newDate.getDate() + 7);
+            return newDate;
+        });
+    }, []);
 
     // Check if the day has changed and automatically update to current day
     useEffect(() => {
@@ -840,7 +848,7 @@ const Dashboard: React.FC = () => {
         return { emoji: '🌆', text: 'Good Evening' };
     };
 
-    const getMotivationalQuote = () => {
+    const motivationalQuote = useMemo(() => {
         const quotes = [
             { text: "Arise, awake and stop not until the goal is reached", author: "Swami Vivekananda" },
             { text: "The future belongs to those who believe in the beauty of their dreams", author: "Eleanor Roosevelt" },
@@ -851,32 +859,40 @@ const Dashboard: React.FC = () => {
             { text: "Don't watch the clock; do what it does. Keep going", author: "Sam Levenson" }
         ];
         return quotes[Math.floor(Math.random() * quotes.length)];
-    };
+    }, []); // Only calculate once on mount
 
     const overallLoading = userLoading || gradesLoading || scheduleLoading || calendarLoading;
 
     const displayCgpa = gradesData?.cgpa;
-    const now = new Date();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    // Check if the selected date is today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const selectedDateOnly = new Date(selectedDate);
-    selectedDateOnly.setHours(0, 0, 0, 0);
-    const isSelectedDateToday = selectedDateOnly.getTime() === today.getTime();
+    const { now, currentTime, isSelectedDateToday } = useMemo(() => {
+        const now = new Date();
+        const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selectedDateOnly = new Date(selectedDate);
+        selectedDateOnly.setHours(0, 0, 0, 0);
+        const isSelectedDateToday = selectedDateOnly.getTime() === today.getTime();
+
+        return { now, currentTime, isSelectedDateToday };
+    }, [selectedDate]);
 
     // Only calculate upcoming class if viewing today's schedule
-    const upcomingClassIndex = isSelectedDateToday
-        ? scheduleInfo.classes.findIndex(c => c.endTime > currentTime)
-        : -1;
+    const upcomingClassIndex = useMemo(() => {
+        return isSelectedDateToday
+            ? scheduleInfo.classes.findIndex((c: ClassSchedule) => c.endTime > currentTime)
+            : -1;
+    }, [isSelectedDateToday, scheduleInfo.classes, currentTime]);
 
     // Check if all classes are completed for today
-    const allClassesCompleted = isSelectedDateToday &&
-                                scheduleInfo.classes.length > 0 &&
-                                upcomingClassIndex === -1;
+    const allClassesCompleted = useMemo(() => {
+        return isSelectedDateToday &&
+               scheduleInfo.classes.length > 0 &&
+               upcomingClassIndex === -1;
+    }, [isSelectedDateToday, scheduleInfo.classes.length, upcomingClassIndex]);
 
-    const { semesterProgress, currentWeek } = (() => {
+    const { semesterProgress, currentWeek } = useMemo(() => {
         const defaultStartDate = new Date(now.getFullYear(), 0, 15);
         const defaultEndDate = new Date(now.getFullYear(), 4, 15);
 
@@ -889,13 +905,13 @@ const Dashboard: React.FC = () => {
         }
 
         if (semesterStartDate > semesterEndDate) return { semesterProgress: 0, currentWeek: 1 };
-        
+
         const totalMs = semesterEndDate.getTime() - semesterStartDate.getTime();
         const elapsedMs = now.getTime() - semesterStartDate.getTime();
         const progress = Math.min(100, Math.max(0, (elapsedMs / totalMs) * 100));
         const week = Math.max(1, Math.ceil(elapsedMs / (1000 * 60 * 60 * 24 * 7)));
         return { semesterProgress: progress, currentWeek: week };
-    })();
+    }, [now, calendarData?.semesterStartDate, calendarData?.semesterEndDate]);
 
     if (overallLoading || loading || !user) {
         return (
@@ -909,7 +925,7 @@ const Dashboard: React.FC = () => {
     }
     
     const greeting = getGreeting();
-    const quote = getMotivationalQuote();
+    const quote = motivationalQuote;
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
