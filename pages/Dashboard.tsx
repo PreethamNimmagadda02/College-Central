@@ -1426,12 +1426,23 @@ const Dashboard: React.FC = () => {
 
                                         if (!isUserCreatedWithReminder && !isPreloadedWithReminder) return false;
 
-                                        // Check if event is upcoming
-                                        const eventDate = new Date(event.date);
-                                        eventDate.setHours(0, 0, 0, 0);
-                                        const isUpcoming = eventDate >= today;
+                                        // Calculate one week from today
+                                        const oneWeekFromToday = new Date(today);
+                                        oneWeekFromToday.setDate(oneWeekFromToday.getDate() + 7);
 
-                                        return isUpcoming;
+                                        // Check if event is ongoing or upcoming within the next week
+                                        const eventStartDate = new Date(event.date);
+                                        const eventEndDate = new Date(event.endDate || event.date);
+                                        eventStartDate.setHours(0, 0, 0, 0);
+                                        eventEndDate.setHours(0, 0, 0, 0);
+
+                                        // Event is ongoing if it has already started but hasn't ended yet
+                                        const isOngoing = eventStartDate < today && eventEndDate >= today;
+
+                                        // Event is upcoming if it starts within the next week
+                                        const isUpcomingThisWeek = eventStartDate >= today && eventStartDate <= oneWeekFromToday;
+
+                                        return isOngoing || isUpcomingThisWeek;
                                     })
                                     .sort((a: CalendarEvent, b: CalendarEvent) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -1448,19 +1459,24 @@ const Dashboard: React.FC = () => {
                                 }
 
                                 return reminderEvents.map((event, index) => {
-                                    const eventDate = new Date(event.date);
-                                    eventDate.setHours(0, 0, 0, 0);
+                                    const eventStartDate = new Date(event.date);
+                                    const eventEndDate = new Date(event.endDate || event.date);
                                     const todayDate = new Date();
+                                    eventStartDate.setHours(0, 0, 0, 0);
+                                    eventEndDate.setHours(0, 0, 0, 0);
                                     todayDate.setHours(0, 0, 0, 0);
-                                    const daysUntil = Math.ceil((eventDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
-                                    const isUrgent = daysUntil <= 2;
-                                    const isWarning = daysUntil > 2 && daysUntil <= 7;
+
+                                    const daysUntil = Math.ceil((eventStartDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+                                    const isOngoing = eventStartDate < todayDate && eventEndDate >= todayDate;
+                                    const isUrgent = !isOngoing && daysUntil <= 2;
+                                    const isWarning = !isOngoing && daysUntil > 2 && daysUntil <= 7;
                                     const isUserEvent = !!event.userId;
 
                                     return (
                                         <div
                                             key={event.id || index}
                                             className={`group flex items-center justify-between p-3 rounded-lg border-l-4 ${
+                                                isOngoing ? 'bg-green-50 dark:bg-green-900/20 border-green-500' :
                                                 isUrgent ? 'bg-red-50 dark:bg-red-900/20 border-red-500' :
                                                 isWarning ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-500' :
                                                 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
@@ -1483,11 +1499,12 @@ const Dashboard: React.FC = () => {
                                             <div className="flex items-center flex-shrink-0 ml-4">
                                                 <div className="text-right">
                                                     <p className={`text-sm font-semibold ${
+                                                        isOngoing ? 'text-green-600' :
                                                         isUrgent ? 'text-red-600' :
                                                         isWarning ? 'text-amber-600' :
                                                         'text-blue-600'
                                                     }`}>
-                                                        {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`}
+                                                        {isOngoing ? 'Ongoing' : daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`}
                                                     </p>
                                                     <p className="text-xs text-slate-500">
                                                         {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
