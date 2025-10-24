@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { DirectoryEntry, StudentDirectoryEntry } from '../types';
 import { fetchDirectory, fetchStudentDirectory } from '../services/api';
-import { Search, Mail, Phone, Users, GraduationCap, Building2, Download, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Mail, Phone, Users, GraduationCap, Building2, Download, X, ChevronDown, ChevronUp } from 'lucide-react';
 
 const isValidIndianPhoneNumber = (phone: string): boolean => {
   if (!phone || typeof phone !== 'string' || !/\d/.test(phone)) {
@@ -40,10 +40,8 @@ const Directory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('faculty');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
-  const [selectedDepartment, setSelectedDepartment] = useState('all');
-  const [selectedBranch, setSelectedBranch] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
  useEffect(() => {
         const loadDirectories = async () => {
@@ -63,16 +61,24 @@ const Directory = () => {
         loadDirectories();
     }, []);
 
-  // Get unique departments and branches
-  const departments = useMemo(() => {
-    const depts = [...new Set(facultyDirectory.map(f => f.department))];
-    return ['all', ...depts.sort()];
-  }, [facultyDirectory]);
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.export-menu-container')) {
+        setShowExportMenu(false);
+      }
+    };
 
-  const branches = useMemo(() => {
-    const brs = [...new Set(studentDirectory.map(s => s.branch))];
-    return ['all', ...brs.sort()];
-  }, [studentDirectory]);
+    if (showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportMenu]);
+
 
   // Sorting function
   const handleSort = (key: string) => {
@@ -83,55 +89,60 @@ const Directory = () => {
     setSortConfig({ key, direction });
   };
 
-  // Filter and sort faculty
-  const filteredFaculty = useMemo(() => {
-    let filtered = facultyDirectory.filter(entry =>
-      (entry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       entry.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       entry.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       entry.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (selectedDepartment === 'all' || entry.department === selectedDepartment)
-    );
+  // Group faculty by name first, then filter
+  const groupedFaculty = useMemo(() => {
+    // First group all faculty by name
+    const grouped = new Map<string, DirectoryEntry[]>();
+    facultyDirectory.forEach(entry => {
+      const existing = grouped.get(entry.name);
+      if (existing) {
+        if (!existing.some(e => e.id === entry.id)) {
+            existing.push(entry);
+        }
+      } else {
+        grouped.set(entry.name, [entry]);
+      }
+    });
 
+    // Convert to array of groups
+    let groupedArray = Array.from(grouped.values());
+
+    // Filter groups based on search term only
+    groupedArray = groupedArray.filter(group => {
+      // Check if any entry in the group matches the search term
+      return group.some(entry =>
+        entry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        entry.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        entry.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        entry.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
+
+    // Sort groups if needed
     if (sortConfig.key) {
-      filtered.sort((a, b) => {
+      groupedArray.sort((a, b) => {
         const key = sortConfig.key as keyof DirectoryEntry;
-        if (a[key] < b[key]) {
+        const aValue = a[0][key];
+        const bValue = b[0][key];
+        if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
-        if (a[key] > b[key]) {
+        if (aValue > bValue) {
           return sortConfig.direction === 'asc' ? 1 : -1;
         }
         return 0;
       });
     }
 
-    return filtered;
-  }, [facultyDirectory, searchTerm, selectedDepartment, sortConfig]);
-
-  // Group faculty by name
-  const groupedFaculty = useMemo(() => {
-    const map = new Map<string, DirectoryEntry[]>();
-    filteredFaculty.forEach(entry => {
-      const existing = map.get(entry.name);
-      if (existing) {
-        if (!existing.some(e => e.id === entry.id)) {
-            existing.push(entry);
-        }
-      } else {
-        map.set(entry.name, [entry]);
-      }
-    });
-    return Array.from(map.values());
-  }, [filteredFaculty]);
+    return groupedArray;
+  }, [facultyDirectory, searchTerm, sortConfig]);
 
   // Filter and sort students
   const filteredStudents = useMemo(() => {
     let filtered = studentDirectory.filter(entry =>
-      (entry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       entry.admNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       entry.branch.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (selectedBranch === 'all' || entry.branch === selectedBranch)
+      entry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      entry.admNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      entry.branch.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (sortConfig.key) {
@@ -148,7 +159,7 @@ const Directory = () => {
     }
 
     return filtered;
-  }, [studentDirectory, searchTerm, selectedBranch, sortConfig]);
+  }, [studentDirectory, searchTerm, sortConfig]);
 
   // Group students by name (for consistency)
   const groupedStudents = useMemo(() => {
@@ -165,17 +176,18 @@ const Directory = () => {
 
   // Export to CSV
   const exportToCSV = () => {
-    const data = activeTab === 'faculty' ? filteredFaculty : filteredStudents;
     let csv = '';
-    
+
     if (activeTab === 'faculty') {
       csv = 'Name,Department,Designation,Email,Phone\n';
-      data.forEach(entry => {
-        csv += `"${entry.name}","${entry.department}","${entry.designation}","${entry.email}","${entry.phone}"\n`;
+      groupedFaculty.forEach(group => {
+        group.forEach(entry => {
+          csv += `"${entry.name}","${entry.department}","${entry.designation}","${entry.email}","${entry.phone}"\n`;
+        });
       });
     } else {
       csv = 'Admission No,Name,Branch,Email\n';
-      data.forEach(entry => {
+      filteredStudents.forEach(entry => {
         csv += `"${entry.admNo}","${entry.name}","${entry.branch}","${entry.admNo.toLowerCase()}@iitism.ac.in"\n`;
       });
     }
@@ -186,13 +198,116 @@ const Directory = () => {
     a.href = url;
     a.download = `${activeTab}-directory.csv`;
     a.click();
+    setShowExportMenu(false);
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    // Create HTML content for PDF
+    let htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${activeTab === 'faculty' ? 'Faculty & Staff' : 'Student'} Directory - IIT(ISM) Dhanbad</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          h1 { color: #1e40af; text-align: center; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background-color: #1e40af; color: white; padding: 10px; text-align: left; border: 1px solid #ddd; }
+          td { padding: 8px; border: 1px solid #ddd; }
+          tr:nth-child(even) { background-color: #f9fafb; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>${activeTab === 'faculty' ? 'Faculty & Staff' : 'Student'} Directory</h1>
+          <p>IIT(ISM) Dhanbad</p>
+          <p>Generated on ${new Date().toLocaleDateString()}</p>
+        </div>
+        <table>
+    `;
+
+    if (activeTab === 'faculty') {
+      htmlContent += `
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Designation</th>
+            <th>Email</th>
+            <th>Phone</th>
+          </tr>
+        </thead>
+        <tbody>
+      `;
+      groupedFaculty.forEach(group => {
+        group.forEach(entry => {
+          htmlContent += `
+            <tr>
+              <td>${entry.name}</td>
+              <td>${entry.department}</td>
+              <td>${entry.designation}</td>
+              <td>${entry.email}</td>
+              <td>${entry.phone}</td>
+            </tr>
+          `;
+        });
+      });
+    } else {
+      htmlContent += `
+        <thead>
+          <tr>
+            <th>Admission No</th>
+            <th>Name</th>
+            <th>Branch</th>
+            <th>Year</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody>
+      `;
+      filteredStudents.forEach(entry => {
+        htmlContent += `
+          <tr>
+            <td>${entry.admNo}</td>
+            <td>${entry.name}</td>
+            <td>${entry.branch}</td>
+            <td>${entry.year || '-'}</td>
+            <td>${entry.admNo.toLowerCase()}@iitism.ac.in</td>
+          </tr>
+        `;
+      });
+    }
+
+    htmlContent += `
+        </tbody>
+      </table>
+      <div class="footer">
+        <p>&copy; ${new Date().getFullYear()} IIT(ISM) Dhanbad. All rights reserved.</p>
+      </div>
+      </body>
+      </html>
+    `;
+
+    // Open print dialog which allows saving as PDF
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    }
+    setShowExportMenu(false);
   };
 
   // Clear all filters
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedDepartment('all');
-    setSelectedBranch('all');
     setSortConfig({ key: null, direction: 'asc' });
   };
 
@@ -217,7 +332,9 @@ const Directory = () => {
     : "Search by name, admission number, or branch...";
 
   const activeCount = activeTab === 'faculty' ? groupedFaculty.length : groupedStudents.length;
-  const totalCount = activeTab === 'faculty' ? facultyDirectory.length : studentDirectory.length;
+  const totalCount = activeTab === 'faculty' ?
+    Array.from(new Map(facultyDirectory.map(e => [e.name, e])).values()).length :
+    studentDirectory.length;
 
   return (
     <div className="min-h-screen p-4 md:p-8">
@@ -243,9 +360,9 @@ const Directory = () => {
         </div>
 
         {/* Tabs and Controls */}
-        <div className="bg-white dark:bg-dark-card rounded-xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="bg-white dark:bg-dark-card rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
           {/* Tab Navigation */}
-          <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+          <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-t-xl overflow-hidden">
             <nav className="flex" aria-label="Tabs">
               <button
                 onClick={() => {
@@ -261,7 +378,7 @@ const Directory = () => {
                 <Building2 className="w-4 h-4" />
                 Faculty & Staff
                 <span className="bg-primary/10 text-primary dark:bg-secondary/20 dark:text-secondary px-2 py-0.5 rounded-full text-xs font-semibold">
-                  {facultyDirectory.length}
+                  {Array.from(new Map(facultyDirectory.map(e => [e.name, e])).values()).length}
                 </span>
               </button>
               <button
@@ -285,7 +402,7 @@ const Directory = () => {
           </div>
 
           {/* Search and Filter Controls */}
-          <div className="p-6 space-y-4">
+          <div className="p-6 space-y-4 overflow-visible">
             <div className="flex flex-col md:flex-row gap-4">
               {/* Search Bar */}
               <div className="flex-1 relative">
@@ -309,18 +426,6 @@ const Directory = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all duration-300 hover:scale-105 active:scale-95 ${
-                    showFilters
-                      ? 'bg-primary text-white border-primary dark:bg-secondary dark:border-secondary shadow-md'
-                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
-                  }`}
-                >
-                  <Filter className="w-4 h-4" />
-                  <span className="hidden sm:inline">Filters</span>
-                </button>
-
                 {/* View Mode Toggle */}
                 <div className="flex bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden">
                   <button
@@ -351,67 +456,62 @@ const Directory = () => {
                   </button>
                 </div>
 
-                <button
-                  onClick={exportToCSV}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-md"
-                >
-                  <Download className="w-4 h-4" />
-                  <span className="hidden sm:inline">Export</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Filter Panel */}
-            {showFilters && (
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-slate-900 dark:text-white">Filters</h3>
+                {/* Export Dropdown */}
+                <div className="relative export-menu-container">
                   <button
-                    onClick={clearFilters}
-                    className="text-sm text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 font-medium"
+                    onClick={() => setShowExportMenu(!showExportMenu)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-md"
                   >
-                    Clear all
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">Export</span>
+                    <svg className={`w-4 h-4 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {activeTab === 'faculty' ? (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Department
-                      </label>
-                      <select
-                        value={selectedDepartment}
-                        onChange={(e) => setSelectedDepartment(e.target.value)}
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
+
+                  {/* Export Menu Dropdown */}
+                  {showExportMenu && (
+                    <>
+                      {/* Backdrop overlay */}
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowExportMenu(false)}
+                      />
+                      <div
+                        className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50"
                       >
-                        {departments.map(dept => (
-                          <option key={dept} value={dept}>
-                            {dept === 'all' ? 'All Departments' : dept}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="py-1">
+                        <button
+                          onClick={exportToCSV}
+                          className="w-full px-4 py-3 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-primary/10 dark:hover:bg-secondary/10 transition-colors flex items-center gap-3 border-b border-slate-100 dark:border-slate-700"
+                        >
+                          <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <div>
+                            <div className="font-medium">CSV</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">Spreadsheet format</div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={exportToPDF}
+                          className="w-full px-4 py-3 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-primary/10 dark:hover:bg-secondary/10 transition-colors flex items-center gap-3"
+                        >
+                          <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          <div>
+                            <div className="font-medium">PDF</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">Printable document</div>
+                          </div>
+                        </button>
+                      </div>
                     </div>
-                  ) : (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Branch
-                      </label>
-                      <select
-                        value={selectedBranch}
-                        onChange={(e) => setSelectedBranch(e.target.value)}
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
-                      >
-                        {branches.map(branch => (
-                          <option key={branch} value={branch}>
-                            {branch === 'all' ? 'All Branches' : branch}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
