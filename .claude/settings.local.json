@@ -29,7 +29,11 @@
       "Bash(lsof:*)",
       "Bash(kill:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(for:*)",
+      "Bash(do echo \"=== $name ===\")",
+      "Bash(grep:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

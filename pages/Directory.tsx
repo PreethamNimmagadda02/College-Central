@@ -39,12 +39,11 @@ const Directory = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('faculty');
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedBranch, setSelectedBranch] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
-  const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
 
  useEffect(() => {
         const loadDirectories = async () => {
@@ -76,8 +75,8 @@ const Directory = () => {
   }, [studentDirectory]);
 
   // Sorting function
-  const handleSort = (key) => {
-    let direction = 'asc';
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
@@ -96,10 +95,11 @@ const Directory = () => {
 
     if (sortConfig.key) {
       filtered.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
+        const key = sortConfig.key as keyof DirectoryEntry;
+        if (a[key] < b[key]) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
+        if (a[key] > b[key]) {
           return sortConfig.direction === 'asc' ? 1 : -1;
         }
         return 0;
@@ -108,6 +108,22 @@ const Directory = () => {
 
     return filtered;
   }, [facultyDirectory, searchTerm, selectedDepartment, sortConfig]);
+
+  // Group faculty by name
+  const groupedFaculty = useMemo(() => {
+    const map = new Map<string, DirectoryEntry[]>();
+    filteredFaculty.forEach(entry => {
+      const existing = map.get(entry.name);
+      if (existing) {
+        if (!existing.some(e => e.id === entry.id)) {
+            existing.push(entry);
+        }
+      } else {
+        map.set(entry.name, [entry]);
+      }
+    });
+    return Array.from(map.values());
+  }, [filteredFaculty]);
 
   // Filter and sort students
   const filteredStudents = useMemo(() => {
@@ -120,10 +136,11 @@ const Directory = () => {
 
     if (sortConfig.key) {
       filtered.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
+        const key = sortConfig.key as keyof StudentDirectoryEntry;
+        if (a[key]! < b[key]!) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
+        if (a[key]! > b[key]!) {
           return sortConfig.direction === 'asc' ? 1 : -1;
         }
         return 0;
@@ -132,6 +149,19 @@ const Directory = () => {
 
     return filtered;
   }, [studentDirectory, searchTerm, selectedBranch, sortConfig]);
+
+  // Group students by name (for consistency)
+  const groupedStudents = useMemo(() => {
+    const map = new Map<string, StudentDirectoryEntry[]>();
+    filteredStudents.forEach(entry => {
+        if (map.has(entry.name)) {
+            map.get(entry.name)!.push(entry);
+        } else {
+            map.set(entry.name, [entry]);
+        }
+    });
+    return Array.from(map.values());
+  }, [filteredStudents]);
 
   // Export to CSV
   const exportToCSV = () => {
@@ -166,7 +196,7 @@ const Directory = () => {
     setSortConfig({ key: null, direction: 'asc' });
   };
 
-  const SortIcon = ({ column }) => {
+  const SortIcon: React.FC<{ column: string }> = ({ column }) => {
     if (sortConfig.key !== column) return null;
     return sortConfig.direction === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />;
   };
@@ -186,7 +216,7 @@ const Directory = () => {
     ? "Search by name, department, designation, or email..." 
     : "Search by name, admission number, or branch...";
 
-  const activeCount = activeTab === 'faculty' ? filteredFaculty.length : filteredStudents.length;
+  const activeCount = activeTab === 'faculty' ? groupedFaculty.length : groupedStudents.length;
   const totalCount = activeTab === 'faculty' ? facultyDirectory.length : studentDirectory.length;
 
   return (
@@ -398,46 +428,58 @@ const Directory = () => {
             <div className="p-4 md:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {activeTab === 'faculty' ? (
-                  filteredFaculty.map(entry => (
-                    <div
-                      key={entry.id}
-                      className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <div className="relative z-10">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
-                              {entry.name}
-                            </h3>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{entry.designation}</p>
-                          </div>
-                          <Building2 className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Dept:</span>
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{entry.department}</span>
-                          </div>
-                          <a
-                            href={`mailto:${entry.email}`}
-                            className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link"
-                          >
-                            <Mail className="w-4 h-4 flex-shrink-0" />
-                            <span className="group-hover/link:underline truncate">{entry.email}</span>
-                          </a>
-                          {isValidIndianPhoneNumber(entry.phone) && (
-                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
-                              <Phone className="w-4 h-4 flex-shrink-0" />
-                              <span>{entry.phone}</span>
+                  groupedFaculty.map(group => {
+                    const person = group[0];
+                    return (
+                      <div
+                        key={person.id}
+                        className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                {person.name}
+                              </h3>
                             </div>
-                          )}
+                            <Building2 className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
+                          </div>
+                          <div className="space-y-3">
+                            {group.map((role, index) => (
+                              <div key={role.id}>
+                                {index > 0 && <hr className="my-3 border-slate-200 dark:border-slate-700" />}
+                                <div className="space-y-2">
+                                  <div className="flex items-start gap-2">
+                                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">Role:</span>
+                                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{role.designation}</span>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">Dept:</span>
+                                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{role.department}</span>
+                                  </div>
+                                  <a href={`mailto:${role.email}`} className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link">
+                                      <Mail className="w-4 h-4 flex-shrink-0" />
+                                      <span className="group-hover/link:underline truncate">{role.email}</span>
+                                  </a>
+                                  {isValidIndianPhoneNumber(role.phone) && (
+                                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
+                                      <Phone className="w-4 h-4 flex-shrink-0" />
+                                      <span>{role.phone}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
-                  filteredStudents.map(student => (
+                  groupedStudents.map(group => {
+                    const student = group[0]; // Student data is not expected to have multiple roles.
+                    return (
                     <div
                       key={student.id}
                       className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
@@ -474,7 +516,7 @@ const Directory = () => {
                         </div>
                       </div>
                     </div>
-                  ))
+                  )})
                 )}
               </div>
             </div>
@@ -518,32 +560,47 @@ const Directory = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {filteredFaculty.map(entry => (
-                      <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-slate-900 dark:text-white">{entry.name}</div>
-                        </td>
-                        <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{entry.department}</td>
-                        <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{entry.designation}</td>
-                        <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            <a
-                              href={`mailto:${entry.email}`}
-                              className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group"
-                            >
-                              <Mail className="w-4 h-4" />
-                              <span className="group-hover:underline">{entry.email}</span>
-                            </a>
-                            {isValidIndianPhoneNumber(entry.phone) && (
-                              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
-                                <Phone className="w-4 h-4" />
-                                <span>{entry.phone}</span>
+                    {groupedFaculty.map(group => {
+                        const person = group[0];
+                        const allDepartments = [...new Set(group.map(p => p.department))];
+                        const allDesignations = [...new Set(group.map(p => p.designation))];
+                        const allEmails = [...new Set(group.map(p => p.email))];
+                        const allPhones = [...new Set(group.map(p => p.phone).filter(p => isValidIndianPhoneNumber(p)))];
+
+                        return (
+                          <tr key={person.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="font-medium text-slate-900 dark:text-white">{person.name}</div>
+                            </td>
+                            <td className="px-6 py-4 text-slate-600 dark:text-slate-300 space-y-1">
+                                {allDepartments.map((d, i) => <div key={i}>{d}</div>)}
+                            </td>
+                            <td className="px-6 py-4 text-slate-600 dark:text-slate-300 space-y-1">
+                                {allDesignations.map((d, i) => <div key={i}>{d}</div>)}
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="space-y-1">
+                                {allEmails.map(email => (
+                                    <a
+                                    key={email}
+                                    href={`mailto:${email}`}
+                                    className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group"
+                                  >
+                                    <Mail className="w-4 h-4" />
+                                    <span className="group-hover:underline">{email}</span>
+                                  </a>
+                                ))}
+                                {allPhones.map(phone => (
+                                    <div key={phone} className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
+                                        <Phone className="w-4 h-4" />
+                                        <span>{phone}</span>
+                                    </div>
+                                ))}
                               </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                            </td>
+                          </tr>
+                        );
+                    })}
                   </tbody>
                 </table>
               ) : (
@@ -583,7 +640,9 @@ const Directory = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {filteredStudents.map(student => (
+                    {groupedStudents.map(group => {
+                      const student = group[0]; // Students are not expected to have multiple roles
+                      return(
                       <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         <td className="px-6 py-4">
                           <div className="font-mono text-sm font-medium text-slate-900 dark:text-white">{student.admNo}</div>
@@ -607,7 +666,7 @@ const Directory = () => {
                           </a>
                         </td>
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
                 </table>
               )}
