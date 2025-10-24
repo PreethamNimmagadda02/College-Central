@@ -1424,25 +1424,7 @@ const Dashboard: React.FC = () => {
                                         const isUserCreatedWithReminder = event.remindMe === true && !!event.userId;
                                         const isPreloadedWithReminder = !event.userId && reminderPreferences.includes(eventKey);
 
-                                        if (!isUserCreatedWithReminder && !isPreloadedWithReminder) return false;
-
-                                        // Calculate one week from today
-                                        const oneWeekFromToday = new Date(today);
-                                        oneWeekFromToday.setDate(oneWeekFromToday.getDate() + 7);
-
-                                        // Check if event is ongoing or upcoming within the next week
-                                        const eventStartDate = new Date(event.date);
-                                        const eventEndDate = new Date(event.endDate || event.date);
-                                        eventStartDate.setHours(0, 0, 0, 0);
-                                        eventEndDate.setHours(0, 0, 0, 0);
-
-                                        // Event is ongoing if it has already started but hasn't ended yet
-                                        const isOngoing = eventStartDate < today && eventEndDate >= today;
-
-                                        // Event is upcoming if it starts within the next week
-                                        const isUpcomingThisWeek = eventStartDate >= today && eventStartDate <= oneWeekFromToday;
-
-                                        return isOngoing || isUpcomingThisWeek;
+                                        return isUserCreatedWithReminder || isPreloadedWithReminder;
                                     })
                                     .sort((a: CalendarEvent, b: CalendarEvent) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
