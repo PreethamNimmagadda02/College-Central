@@ -352,11 +352,12 @@ const Login: React.FC = () => {
             </div>
         </div>
        </div>
-       <div className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 min-h-screen flex-col justify-center items-center p-12 text-center"> 
+       <div className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 min-h-screen flex-col justify-center items-center p-12 text-center">
           {/* Animated Background Pattern */}
           <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse"></div>
-              <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse delay-1000"></div>
+              <div className="absolute top-0 left-0 w-96 h-96 bg-blue-300 rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-300 rounded-full blur-3xl animate-pulse delay-1000"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-300 rounded-full blur-3xl animate-pulse delay-500"></div>
           </div>
 
           <div className="relative flex h-full w-full flex-col justify-center items-center p-12 text-center">
