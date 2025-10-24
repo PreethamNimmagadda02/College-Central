@@ -19,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
   const { user } = useUser();
   const navigate = useNavigate();
   const [isHoveringEdge, setIsHoveringEdge] = React.useState(false);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
 
   const handleLogout = async () => {
