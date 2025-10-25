@@ -27,6 +27,44 @@ import {
     WebsiteIcon, EmailIcon, LmsIcon, CdcIcon, MapIcon, RefreshIcon, ScholarshipIcon, DirectoryIcon
 } from '../components/icons/SidebarIcons';
 
+// Color function for schedule items (matching Schedule.tsx)
+const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
+    // Custom tasks get a distinctive teal/cyan color scheme
+    if (isCustomTask) {
+        return 'bg-teal-500/25 border-2 border-teal-600 text-teal-800 dark:text-teal-200';
+    }
+
+    // Carefully curated color palette with maximum visual distinction and appeal
+    const colors = [
+        'bg-blue-500/25 border-2 border-blue-600 text-blue-800 dark:text-blue-200',
+        'bg-emerald-500/25 border-2 border-emerald-600 text-emerald-800 dark:text-emerald-200',
+        'bg-purple-500/25 border-2 border-purple-600 text-purple-800 dark:text-purple-200',
+        'bg-orange-500/25 border-2 border-orange-600 text-orange-800 dark:text-orange-200',
+        'bg-rose-500/25 border-2 border-rose-600 text-rose-800 dark:text-rose-200',
+        'bg-indigo-500/25 border-2 border-indigo-600 text-indigo-800 dark:text-indigo-200',
+        'bg-amber-500/25 border-2 border-amber-600 text-amber-800 dark:text-amber-200',
+        'bg-cyan-500/25 border-2 border-cyan-600 text-cyan-800 dark:text-cyan-200',
+        'bg-fuchsia-500/25 border-2 border-fuchsia-600 text-fuchsia-800 dark:text-fuchsia-200',
+        'bg-lime-500/25 border-2 border-lime-600 text-lime-800 dark:text-lime-200',
+        'bg-violet-500/25 border-2 border-violet-600 text-violet-800 dark:text-violet-200',
+        'bg-sky-500/25 border-2 border-sky-600 text-sky-800 dark:text-sky-200',
+        'bg-pink-500/25 border-2 border-pink-600 text-pink-800 dark:text-pink-200',
+        'bg-green-500/25 border-2 border-green-600 text-green-800 dark:text-green-200',
+        'bg-red-500/25 border-2 border-red-600 text-red-800 dark:text-red-200',
+        'bg-yellow-500/25 border-2 border-yellow-600 text-yellow-800 dark:text-yellow-200',
+    ];
+
+    // Use a better hash function for more uniform distribution
+    let hash = 0;
+    for (let i = 0; i < courseCode.length; i++) {
+        hash = ((hash << 5) - hash) + courseCode.charCodeAt(i);
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    hash = Math.abs(hash);
+
+    return colors[hash % colors.length];
+};
+
 interface QuickLink {
     id: string;
     name: string;
@@ -1301,10 +1339,12 @@ const Dashboard: React.FC = () => {
                                                                             <LocationIcon className="w-3.5 h-3.5" />
                                                                             {c.location}
                                                                         </span>
-                                                                        <span className={`px-1.5 py-0.5 rounded text-xs transition-colors duration-500 ${
-                                                                            isPast || allClassesCompleted ? 'bg-slate-100/50 dark:bg-slate-700/50' : 'bg-slate-100 dark:bg-slate-700'
-                                                                        }`}>
-                                                                            {c.courseCode}
+                                                                        <span className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-500 ${
+                                                                            isPast || allClassesCompleted
+                                                                                ? 'opacity-60'
+                                                                                : ''
+                                                                        } ${getClassColor(c.courseCode, c.isCustomTask)}`}>
+                                                                            {c.isCustomTask ? '✓ ' : ''}{c.courseCode}
                                                                         </span>
                                                                     </div>
                                                                 </div>
