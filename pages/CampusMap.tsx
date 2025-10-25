@@ -321,9 +321,6 @@ const CampusMap: React.FC = () => {
                           <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
                             {location.name}
                           </h4>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                            {location.description}
-                          </p>
                           {location.details?.openingHours && (
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                               ⏰ {location.details.openingHours}
@@ -406,7 +403,6 @@ const CampusMap: React.FC = () => {
                   <span className="text-3xl md:text-4xl animate-bounce-subtle">{selectedLocation.icon}</span>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-base md:text-lg font-semibold">{selectedLocation.name}</h3>
-                    <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400">{selectedLocation.description}</p>
                     {selectedLocation.details && (
                       <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-400">
                         {selectedLocation.details.openingHours && (
