@@ -1000,7 +1000,7 @@ const Dashboard: React.FC = () => {
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-blue-100 font-semibold mb-1">Today's Classes</p>
+                            <p className="text-sm text-blue-100 font-semibold mb-1">Today's Activities</p>
                             <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">{scheduleInfo.classes.length}</p>
                         </div>
                         <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
