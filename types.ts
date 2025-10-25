@@ -37,13 +37,14 @@ export interface Semester {
 
 export interface ClassSchedule {
   slotId: string;
-  day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
+  day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
   startTime: string;
   endTime: string;
   courseName: string;
   courseCode: string;
   instructor: string;
   location: string;
+  isCustomTask?: boolean; // Marks tasks created by user vs. auto-generated course classes
 }
 
 export interface TimeTableCourse {

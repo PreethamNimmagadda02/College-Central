@@ -33,7 +33,8 @@
       "Bash(for:*)",
       "Bash(do echo \"=== $name ===\")",
       "Bash(grep:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(xargs kill:*)"
     ],
     "deny": [],
     "ask": []
