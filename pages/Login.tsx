@@ -36,7 +36,6 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const { login, register, loginWithGoogle, isAuthenticated, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
@@ -70,16 +69,9 @@ const Login: React.FC = () => {
     };
   }, []);
 
-  // Load remembered admission number and set focus
+  // Set focus on admission number input
   useEffect(() => {
-    const remembered = localStorage.getItem('rememberedAdmission');
-    if (remembered) {
-      setAdmissionNumber(remembered);
-      setRememberMe(true);
-      setTimeout(() => passwordInputRef.current?.focus(), 100);
-    } else {
-      setTimeout(() => admissionInputRef.current?.focus(), 100);
-    }
+    setTimeout(() => admissionInputRef.current?.focus(), 100);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,13 +79,6 @@ const Login: React.FC = () => {
     setError('');
     setIsSubmitting(true);
     const email = `${admissionNumber.trim().toLowerCase()}@iitism.ac.in`;
-
-    // Handle remember me
-    if (rememberMe) {
-      localStorage.setItem('rememberedAdmission', admissionNumber.trim());
-    } else {
-      localStorage.removeItem('rememberedAdmission');
-    }
 
     try {
       await login(email, password);
@@ -261,27 +246,12 @@ const Login: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-white/60 hover:text-blue-400 transition-colors duration-200"
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-white/60 hover:text-blue-400 transition-colors duration-200 z-10 cursor-pointer"
                             aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
-                            {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                            {showPassword ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
                         </button>
                     </div>
-                </div>
-
-                {/* Remember Me */}
-                <div className="flex items-center">
-                    <label className="flex items-center group cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={rememberMe}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRememberMe(e.target.checked)}
-                            className="w-4 h-4 text-blue-500 border-white/30 bg-white/10 rounded-md focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 cursor-pointer transition-all"
-                        />
-                        <span className="ml-2 text-sm font-medium text-white/80 group-hover:text-white transition-colors">
-                            Remember me
-                        </span>
-                    </label>
                 </div>
 
                 {/* Error Message */}
