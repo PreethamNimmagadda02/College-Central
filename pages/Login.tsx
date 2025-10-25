@@ -69,10 +69,6 @@ const Login: React.FC = () => {
     };
   }, []);
 
-  // Set focus on admission number input
-  useEffect(() => {
-    setTimeout(() => admissionInputRef.current?.focus(), 100);
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
