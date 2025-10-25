@@ -22,7 +22,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const CampusMap = lazy(() => import('./pages/CampusMap'));
 const CollegeForms = lazy(() => import('./pages/CollegeForms'));
-const AcademicCalendar = lazy(() => import('./pages/AcademicCalendar'));
+const AcademicCalendar = lazy(() => import('./pages/AcademicCalendar')); 
 const Login = lazy(() => import('./pages/Login'));
 
 // Loading fallback component
