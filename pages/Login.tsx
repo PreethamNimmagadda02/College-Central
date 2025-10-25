@@ -307,7 +307,7 @@ const Login: React.FC = () => {
                         {/* Inner glow on hover */}
                         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600/0 via-purple-600/0 to-pink-600/0 group-hover/btn:from-blue-600/30 group-hover/btn:via-purple-600/30 group-hover/btn:to-pink-600/30 transition-all duration-500"></div>
 
-                        <div className="relative flex justify-center items-center gap-3 py-4 px-6 text-white font-bold text-base tracking-wide focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform active:scale-[0.98]">
+                        <div className="relative flex justify-center items-center gap-1.5 py-4 px-6 text-white font-bold text-base tracking-wide focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform active:scale-[0.98]">
                             {isSubmitting ? (
                                 <>
                                     <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
