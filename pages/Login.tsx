@@ -185,21 +185,36 @@ const Login: React.FC = () => {
             </div>
 
             {/* Login Card */}
-            <div className="bg-slate-900/10 hover:bg-slate-900/90 backdrop-blur-sm hover:backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 hover:border-slate-700/50 p-8 hover:shadow-3xl transition-all duration-500 ease-in-out">
-                <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-white mb-1">Welcome Back</h2>
-                    <p className="text-white/80 text-sm">Sign in to access your campus hub</p>
-                </div>
+            <div className="relative bg-white/[0.03] backdrop-blur-sm rounded-3xl shadow-2xl border border-white/10 p-8 overflow-hidden group">
+                {/* Animated gradient overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-purple-500/0 to-pink-500/0 group-hover:from-blue-500/[0.03] group-hover:via-purple-500/[0.03] group-hover:to-pink-500/[0.03] transition-all duration-700 rounded-3xl"></div>
+
+                {/* Decorative floating elements */}
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-400/5 rounded-full blur-2xl group-hover:bg-blue-400/10 transition-all duration-700"></div>
+                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-purple-400/5 rounded-full blur-2xl group-hover:bg-purple-400/10 transition-all duration-700"></div>
+
+                <div className="relative z-10">
+                    <div className="mb-6">
+                        <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Welcome Back</h2>
+                        <p className="text-white/70 text-sm flex items-center gap-2">
+                            <span className="inline-block w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                            Sign in to access your campus hub
+                        </p>
+                    </div>
             
             <form className="space-y-4" onSubmit={handleSubmit}>
                 {/* Admission Number Input */}
-                <div>
-                    <label htmlFor="admission-number" className="block text-sm font-semibold text-white mb-2">
+                <div className="space-y-2">
+                    <label htmlFor="admission-number" className="block text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                        <span className="w-1 h-4 bg-gradient-to-b from-blue-400 to-purple-400 rounded-full"></span>
                         Admission Number
                     </label>
                     <div className="relative group">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <UserIcon className="h-5 w-5 text-white/60 group-focus-within:text-blue-400 transition-colors duration-200" />
+                        {/* Focus glow effect */}
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400 to-purple-400 rounded-xl opacity-0 group-focus-within:opacity-20 blur transition-opacity duration-300"></div>
+
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
+                            <UserIcon className="h-5 w-5 text-white/60 group-focus-within:text-blue-300 transition-colors duration-300" />
                         </div>
                         <input
                             id="admission-number"
@@ -217,19 +232,23 @@ const Login: React.FC = () => {
                                 }
                             }}
                             placeholder="21JE0789"
-                            className="w-full pl-10 pr-4 py-2.5 text-white bg-white/10 border-2 border-white/20 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-200 placeholder:text-white/50"
+                            className="relative w-full pl-10 pr-4 py-3 text-white bg-white/10 border border-white/20 rounded-xl shadow-sm focus:outline-none focus:bg-white/15 focus:border-blue-400/50 transition-all duration-300 placeholder:text-white/40 hover:bg-white/12"
                         />
                     </div>
                 </div>
 
                 {/* Password Input */}
-                <div>
-                    <label htmlFor="password" className="block text-sm font-semibold text-white mb-2">
+                <div className="space-y-2">
+                    <label htmlFor="password" className="block text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                        <span className="w-1 h-4 bg-gradient-to-b from-purple-400 to-pink-400 rounded-full"></span>
                         Password
                     </label>
                     <div className="relative group">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <LockIcon className="h-5 w-5 text-white/60 group-focus-within:text-blue-400 transition-colors duration-200" />
+                        {/* Focus glow effect */}
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl opacity-0 group-focus-within:opacity-20 blur transition-opacity duration-300"></div>
+
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
+                            <LockIcon className="h-5 w-5 text-white/60 group-focus-within:text-purple-300 transition-colors duration-300" />
                         </div>
                         <input
                             id="password"
@@ -241,12 +260,12 @@ const Login: React.FC = () => {
                             value={password}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                             placeholder="Enter your password"
-                            className="w-full pl-10 pr-10 py-2.5 text-white bg-white/10 border-2 border-white/20 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-200 placeholder:text-white/50"
+                            className="relative w-full pl-10 pr-12 py-3 text-white bg-white/10 border border-white/20 rounded-xl shadow-sm focus:outline-none focus:bg-white/15 focus:border-purple-400/50 transition-all duration-300 placeholder:text-white/40 hover:bg-white/12"
                         />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-white/60 hover:text-blue-400 transition-colors duration-200 z-10 cursor-pointer"
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-white/60 hover:text-purple-300 transition-all duration-300 z-10 cursor-pointer hover:scale-110"
                             aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
                             {showPassword ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
@@ -256,12 +275,17 @@ const Login: React.FC = () => {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-3 animate-shake">
-                        <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
+                    <div className="relative bg-red-500/10 backdrop-blur-sm border border-red-400/30 rounded-xl p-4 animate-shake overflow-hidden">
+                        {/* Animated error glow */}
+                        <div className="absolute inset-0 bg-red-500/5 animate-pulse"></div>
+
+                        <div className="relative flex items-start gap-3">
+                            <div className="flex-shrink-0 w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center">
+                                <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <p className="text-sm font-medium text-red-200 leading-relaxed">{error}</p>
                         </div>
                     </div>
                 )}
@@ -271,24 +295,48 @@ const Login: React.FC = () => {
                 <button
                     type="submit"
                     disabled={isSubmitting || isGoogleSubmitting}
-                    className="w-full flex justify-center items-center gap-2.5 py-3 px-4 bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-blue-800 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] text-base"
+                    className="relative w-full overflow-hidden rounded-2xl mt-6 group/btn"
                 >
-                    {isSubmitting ? (
-                        <>
-                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span>Signing In...</span>
-                        </>
-                    ) : 'Sign In'}
+                    {/* Glowing border effect */}
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-2xl opacity-75 group-hover/btn:opacity-100 blur-sm group-hover/btn:blur transition-all duration-500"></div>
+
+                    {/* Button background */}
+                    <div className="relative bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl transition-all duration-500">
+                        {/* Animated shine overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/0 to-transparent group-hover/btn:via-white/25 rounded-2xl transition-all duration-700"></div>
+
+                        {/* Shimmer effect */}
+                        <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+
+                        {/* Inner glow on hover */}
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600/0 via-purple-600/0 to-pink-600/0 group-hover/btn:from-blue-600/30 group-hover/btn:via-purple-600/30 group-hover/btn:to-pink-600/30 transition-all duration-500"></div>
+
+                        <div className="relative flex justify-center items-center gap-3 py-4 px-6 text-white font-bold text-base tracking-wide focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform active:scale-[0.98]">
+                            {isSubmitting ? (
+                                <>
+                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span className="drop-shadow-lg">Signing In...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="drop-shadow-lg">Sign In</span>
+                                    <svg className="w-5 h-5 group-hover/btn:translate-x-1.5 transition-transform duration-300 drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </button>
 
                 {/* Divider */}
-                <div className="flex items-center gap-4 py-2">
-                    <div className="flex-1 border-t-2 border-white/20"></div>
-                    <span className="text-white/70 font-medium text-sm">Or</span>
-                    <div className="flex-1 border-t-2 border-white/20"></div>
+                <div className="flex items-center gap-4 py-4">
+                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/30 to-white/30"></div>
+                    <span className="text-white/70 font-medium text-sm px-3 py-1 bg-white/5 rounded-full border border-white/10">Or</span>
+                    <div className="flex-1 h-px bg-gradient-to-l from-transparent via-white/30 to-white/30"></div>
                 </div>
 
                 {/* Google Sign-In Button */}
@@ -296,7 +344,7 @@ const Login: React.FC = () => {
                     type="button"
                     onClick={handleGoogleSignIn}
                     disabled={isSubmitting || isGoogleSubmitting}
-                    className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border-2 border-white/30 rounded-xl font-semibold text-white bg-white/10 hover:bg-white/20 hover:border-white/40 focus:outline-none focus:ring-4 focus:ring-blue-400/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg"
+                    className="relative w-full flex items-center justify-center gap-3 py-3 px-4 border border-white/30 rounded-xl font-semibold text-white bg-white/5 hover:bg-white/15 hover:border-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] shadow-lg hover:shadow-xl group overflow-hidden"
                 >
                     {isGoogleSubmitting ? (
                         <>
@@ -319,6 +367,15 @@ const Login: React.FC = () => {
                     )}
                 </button>
             </form>
+
+            {/* Security badge */}
+            <div className="mt-6 flex items-center justify-center gap-2 text-white/50 text-xs">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+                <span>Secured with end-to-end encryption</span>
+            </div>
+        </div>
             </div>
         </div>
        </div>
