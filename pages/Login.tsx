@@ -181,13 +181,22 @@ const Login: React.FC = () => {
             </div>
 
             {/* Login Card */}
-            <div className="relative bg-white/[0.03] backdrop-blur-sm rounded-3xl shadow-2xl border border-white/10 p-8 overflow-hidden group">
+            <div className="relative bg-white/[0.015] backdrop-blur-sm rounded-3xl shadow-2xl border border-white/15 p-8 overflow-hidden group hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_50px_rgba(139,92,246,0.3)]">
                 {/* Animated gradient overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-purple-500/0 to-pink-500/0 group-hover:from-blue-500/[0.03] group-hover:via-purple-500/[0.03] group-hover:to-pink-500/[0.03] transition-all duration-700 rounded-3xl"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-purple-500/0 to-pink-500/0 group-hover:from-blue-500/[0.05] group-hover:via-purple-500/[0.05] group-hover:to-pink-500/[0.05] transition-all duration-700 rounded-3xl"></div>
 
-                {/* Decorative floating elements */}
-                <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-400/5 rounded-full blur-2xl group-hover:bg-blue-400/10 transition-all duration-700"></div>
-                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-purple-400/5 rounded-full blur-2xl group-hover:bg-purple-400/10 transition-all duration-700"></div>
+                {/* Animated border glow */}
+                <div className="absolute -inset-[1px] bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-3xl opacity-0 group-hover:opacity-20 blur-sm transition-opacity duration-700"></div>
+
+                {/* Moving gradient orbs */}
+                <div className="absolute -top-12 -right-12 w-40 h-40 bg-gradient-to-br from-blue-400/10 to-blue-600/10 rounded-full blur-3xl animate-blob"></div>
+                <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-gradient-to-br from-purple-400/10 to-purple-600/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+                <div className="absolute top-1/2 -right-12 w-32 h-32 bg-gradient-to-br from-pink-400/10 to-pink-600/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+
+                {/* Shimmer effect */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
+                    <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[1500ms] ease-in-out bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+                </div>
 
                 <div className="relative z-10">
                     <div className="mb-6">
