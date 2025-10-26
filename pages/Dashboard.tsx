@@ -681,7 +681,6 @@ const Dashboard: React.FC = () => {
                 tempDiff < 3 &&
                 cacheData.weatherCode === weatherCode
             ) {
-                console.log('Using cached weather advice (saved API call)');
                 return cacheData.advice;
             }
 
@@ -738,7 +737,6 @@ const Dashboard: React.FC = () => {
 
             // Cache the new advice
             cacheAdvice(advice, temp, weatherCode);
-            console.log('Fetched new weather advice from API');
         } catch (err) {
             console.error("AI recommendation error:", err);
             setRecommendationError("Couldn't get weather advices right now.");

@@ -35,7 +35,6 @@ if (typeof window !== 'undefined' && import.meta.env.PROD) {
   try {
     perf = firebase.performance();
     analytics = firebase.analytics();
-    console.log('Firebase Performance Monitoring initialized');
   } catch (error) {
     console.warn('Failed to initialize Firebase Performance Monitoring:', error);
   }

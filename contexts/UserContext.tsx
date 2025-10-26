@@ -42,7 +42,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 // Correctly set user object, including the ID from the snapshot
                 setUser({ id: snapshot.id, ...snapshot.data() } as User);
               } else {
-                console.log("New user detected. Creating profile...");
                 const admissionNumber = authUser.email?.split('@')[0]?.toUpperCase() ?? 'Unknown';
                 const directoryEntry = STUDENT_DIRECTORY.find(student => student.admNo === admissionNumber);
 
@@ -170,12 +169,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         try {
                             const oldImageRef = storage.ref(oldPhotoPath);
                             await oldImageRef.delete();
-                            console.log("Old profile picture deleted successfully:", oldPhotoPath);
                         } catch (deleteError: any) {
                             // Non-blocking error: It's okay if the old file doesn't exist.
-                            if (deleteError.code === 'storage/object-not-found') {
-                                console.log("Old profile picture not found, nothing to delete. This is expected for the first upload or for external URLs.");
-                            } else {
+                            if (deleteError.code !== 'storage/object-not-found') {
                                 console.warn("Failed to delete old profile picture:", deleteError);
                             }
                         }
