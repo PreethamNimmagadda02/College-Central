@@ -3,6 +3,8 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 import 'firebase/compat/storage';
+import 'firebase/compat/performance';
+import 'firebase/compat/analytics';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -24,4 +26,19 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-export { auth, db, storage };
+// Initialize Performance Monitoring
+let perf: firebase.performance.Performance | null = null;
+let analytics: firebase.analytics.Analytics | null = null;
+
+// Only initialize performance monitoring in production and browser environment
+if (typeof window !== 'undefined' && import.meta.env.PROD) {
+  try {
+    perf = firebase.performance();
+    analytics = firebase.analytics();
+    console.log('Firebase Performance Monitoring initialized');
+  } catch (error) {
+    console.warn('Failed to initialize Firebase Performance Monitoring:', error);
+  }
+}
+
+export { auth, db, storage, perf, analytics };

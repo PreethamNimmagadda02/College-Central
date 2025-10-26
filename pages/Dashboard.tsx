@@ -8,6 +8,7 @@ import { useGrades } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useCalendar } from '../contexts/CalendarContext';
 import { useAuth } from '../hooks/useAuth';
+import { usePageLoadTrace } from '../hooks/usePerformanceTrace';
 import { GoogleGenAI } from '@google/genai';
 import {
   toInputDateString,
@@ -150,6 +151,9 @@ const defaultQuickLinks: QuickLink[] = [
 ];
 
 const Dashboard: React.FC = () => {
+    // Performance monitoring
+    usePageLoadTrace('dashboard');
+
     const [latestItems, setLatestItems] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);

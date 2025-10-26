@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 
 import { AuthProvider } from './hooks/useAuth';
@@ -12,6 +12,7 @@ import { FormsProvider } from './contexts/FormsContext';
 import Layout from './pages/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
+import { measurePageLoad } from './utils/performance';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -130,12 +131,17 @@ const router = createHashRouter([
 ]);
 
 const App: React.FC = () => {
+  useEffect(() => {
+    // Measure initial app load performance
+    measurePageLoad('app_initial_load');
+  }, []);
+
   return (
     <AuthProvider>
       <UserProvider>
-        <GradesProvider> 
+        <GradesProvider>
           <ScheduleProvider>
-            <CalendarProvider> 
+            <CalendarProvider>
               <FormsProvider>
                 <CampusMapProvider>
                   <RouterProvider router={router} />
