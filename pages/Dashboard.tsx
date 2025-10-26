@@ -1717,7 +1717,7 @@ const Dashboard: React.FC = () => {
                                         <div className="bg-sky-100/50 dark:bg-sky-900/30 rounded-xl p-3 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors">
                                             <h4 className="text-xs sm:text-sm font-semibold text-sky-800 dark:text-sky-200 mb-2 flex items-center gap-2">
                                                 <span className="text-base">✨</span>
-                                                <span>AI Weather Advice</span>
+                                                <span>Weather Advice</span>
                                             </h4>
                                             <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300 whitespace-pre-line leading-relaxed">
                                                 {recommendation}
