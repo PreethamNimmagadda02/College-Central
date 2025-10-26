@@ -143,7 +143,8 @@ const AcademicCalendar: React.FC = () => {
         // Sort events by their start date to get the soonest ones first
         relevantEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        return relevantEvents.slice(0, 3);
+        // Return all events in the next week, not just the first 3
+        return relevantEvents;
     }, [calendarData]);
 
     const getDaysUntil = (date: string) => {
@@ -590,8 +591,12 @@ const AcademicCalendar: React.FC = () => {
             {/* Upcoming Events Widget */}
             {upcomingEvents.length > 0 && (
                 <div className="bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 p-4 md:p-6 rounded-xl border border-primary/20 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <h3 className="text-base md:text-lg font-semibold mb-4 flex items-center">
-                        <span className="mr-2 text-xl md:text-2xl">⚡</span> Upcoming Events
+                    <h3 className="text-base md:text-lg font-semibold mb-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                            <span className="mr-2 text-xl md:text-2xl">⚡</span>
+                            <span>Ongoing & Upcoming Events</span>
+                        </div>
+                        <span className="text-sm font-bold bg-primary/20 dark:bg-primary/30 px-3 py-1 rounded-full">{upcomingEvents.length}</span>
                     </h3>
                     <div className="space-y-3">
                         {upcomingEvents.map((event, index) => {

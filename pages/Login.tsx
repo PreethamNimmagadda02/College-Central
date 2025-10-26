@@ -469,7 +469,7 @@ const Login: React.FC = () => {
                   {/* Trust Badge */}
                   <div className="mt-8 pt-6 border-t border-white/20">
                       <p className="text-white/70 text-sm font-medium">
-                          Trusted by <span className="text-yellow-300 font-bold">5,000+</span> IIT (ISM) students
+                          Trusted by <span className="text-yellow-300 font-bold">500+</span> IIT (ISM) students
                       </p>
                   </div>
               </div>
