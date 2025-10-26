@@ -566,7 +566,7 @@ const defaultLocations: CampusLocation[] = [
   },
   {
     id: 'loc-52',
-    name: 'Amul & Food Court',
+    name: 'Amul Food Court',
     category: 'dining',
     coordinates: { lat: 23.81600853521701, lng: 86.4422399410473 },
     description: 'Food court with Amul, Juice Box, and South Indian options.',

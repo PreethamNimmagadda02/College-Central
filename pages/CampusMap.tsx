@@ -321,11 +321,6 @@ const CampusMap: React.FC = () => {
                           <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
                             {location.name}
                           </h4>
-                          {location.details?.openingHours && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              ⏰ {location.details.openingHours}
-                            </p>
-                          )}
                           <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full transition-all duration-300 group-hover:scale-105 ${
                             location.category === 'academic' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                             location.category === 'residential' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
@@ -403,19 +398,15 @@ const CampusMap: React.FC = () => {
                   <span className="text-3xl md:text-4xl animate-bounce-subtle">{selectedLocation.icon}</span>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-base md:text-lg font-semibold">{selectedLocation.name}</h3>
-                    {selectedLocation.details && (
-                      <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-400">
-                        {selectedLocation.details.openingHours && (
-                          <p>⏰ {selectedLocation.details.openingHours}</p>
-                        )}
-                        {selectedLocation.details.contact && (
-                          <p>📞 {selectedLocation.details.contact}</p>
-                        )}
-                        {selectedLocation.details.capacity && (
-                          <p>👥 Capacity: {selectedLocation.details.capacity}</p>
-                        )}
-                      </div>
-                    )}
+                    <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${
+                      selectedLocation.category === 'academic' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                      selectedLocation.category === 'residential' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                      selectedLocation.category === 'facilities' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                      selectedLocation.category === 'administration' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' :
+                      'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                    }`}>
+                      {selectedLocation.category}
+                    </span>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
                         onClick={() => {
