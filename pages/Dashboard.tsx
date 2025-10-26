@@ -839,7 +839,16 @@ const Dashboard: React.FC = () => {
         setIsRefreshing(false);
     };
 
-    const motivationalQuote = useMemo(() => getRandomItem(MOTIVATIONAL_QUOTES), []);
+    // Always start with the first quote, then change every 30 seconds
+    const [motivationalQuote, setMotivationalQuote] = useState(() => MOTIVATIONAL_QUOTES[0]);
+
+    useEffect(() => {
+        const quoteInterval = setInterval(() => {
+            setMotivationalQuote(getRandomItem(MOTIVATIONAL_QUOTES));
+        }, 30000); // 30 seconds
+
+        return () => clearInterval(quoteInterval);
+    }, []);
 
     const overallLoading = userLoading || gradesLoading || scheduleLoading || calendarLoading;
 
