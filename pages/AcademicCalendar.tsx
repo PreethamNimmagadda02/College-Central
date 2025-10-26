@@ -594,7 +594,7 @@ const AcademicCalendar: React.FC = () => {
                     <h3 className="text-base md:text-lg font-semibold mb-4 flex items-center justify-between">
                         <div className="flex items-center">
                             <span className="mr-2 text-xl md:text-2xl">⚡</span>
-                            <span>Ongoing & Upcoming Events</span>
+                            <span>Upcoming Events</span>
                         </div>
                         <span className="text-sm font-bold bg-primary/20 dark:bg-primary/30 px-3 py-1 rounded-full">{upcomingEvents.length}</span>
                     </h3>
