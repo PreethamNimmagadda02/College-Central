@@ -34,7 +34,8 @@
       "Bash(do echo \"=== $name ===\")",
       "Bash(grep:*)",
       "Bash(done)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []
