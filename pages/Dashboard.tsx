@@ -829,8 +829,8 @@ const Dashboard: React.FC = () => {
         setIsRefreshing(false);
     };
 
-    // Always start with the first quote, then change every 30 seconds
-    const [motivationalQuote, setMotivationalQuote] = useState(() => MOTIVATIONAL_QUOTES[0]);
+    // Start with a random quote, then change every 30 seconds
+    const [motivationalQuote, setMotivationalQuote] = useState(() => getRandomItem(MOTIVATIONAL_QUOTES));
 
     useEffect(() => {
         const quoteInterval = setInterval(() => {
