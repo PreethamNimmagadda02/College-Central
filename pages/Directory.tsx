@@ -225,7 +225,10 @@ const Directory = () => {
         <div class="header">
           <h1>${activeTab === 'faculty' ? 'Faculty & Staff' : 'Student'} Directory</h1>
           <p>IIT(ISM) Dhanbad</p>
-          <p>Generated on ${new Date().toLocaleDateString()}</p>
+          <p>Generated on ${(() => {
+            const d = new Date();
+            return d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth() + 1).toString().padStart(2, '0') + '/' + d.getFullYear();
+          })()}</p>
         </div>
         <table>
     `;

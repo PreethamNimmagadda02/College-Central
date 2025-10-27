@@ -214,13 +214,13 @@ const AcademicCalendar: React.FC = () => {
             <body>
                 <h1>Academic Calendar</h1>
                 <div class="semester-info">
-                    <p><strong>Semester Period:</strong> ${new Date(calendarData.semesterStartDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - ${new Date(calendarData.semesterEndDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                    <p><strong>Semester Period:</strong> ${formatDateRange(calendarData.semesterStartDate, calendarData.semesterEndDate)}</p>
                     <p><strong>Total Events:</strong> ${calendarData.events.length}</p>
                 </div>
                 <h2>Important Events</h2>
                 ${calendarData.events.map(event => `
                     <div class="event">
-                        <span class="event-date">${new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} ${ event.endDate ? ' - ' + new Date(event.endDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : ''}, ${new Date(event.date).getFullYear()}</span>
+                        <span class="event-date">${formatDateWithMonthName(event.date)}${event.endDate ? ' - ' + formatDateWithMonthName(event.endDate) : ''}</span>
                         <span class="event-type">${event.type}</span>
                         <p style="margin: 8px 0 0 0;">${event.description}</p>
                     </div>
@@ -498,7 +498,7 @@ const AcademicCalendar: React.FC = () => {
                         Academic Calendar
                     </h1>
                     <p className="text-slate-600 dark:text-slate-400 mt-1">
-                        {new Date(calendarData.semesterStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - {new Date(calendarData.semesterEndDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {formatDateRange(calendarData.semesterStartDate, calendarData.semesterEndDate)}
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2 md:gap-3">
@@ -619,8 +619,8 @@ const AcademicCalendar: React.FC = () => {
                                         <div className="flex-1 min-w-0">
                                             <p className="font-medium text-sm md:text-base group-hover:text-primary transition-colors truncate">{event.description}</p>
                                             <p className="text-xs md:text-sm text-slate-500 truncate">
-                                                {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                                                {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`}
+                                                {formatDateWithMonthName(event.date)}
+                                                {event.endDate && ` - ${formatDateWithMonthName(event.endDate)}`}
                                             </p>
                                         </div>
                                     </div>
@@ -910,8 +910,7 @@ const AcademicCalendar: React.FC = () => {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>
                                                 <span className="font-medium">
-                                                    {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                    {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                                                    {formatDateRange(event.date, event.endDate)}
                                                 </span>
                                             </div>
 
@@ -1015,13 +1014,10 @@ const AcademicCalendar: React.FC = () => {
                                                         </div>
                                                         <div>
                                                             <p className="font-bold text-slate-700 dark:text-slate-300">
-                                                                {event.endDate && `${new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(event.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                                                                {!event.endDate && new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                                                , {new Date(event.date).getFullYear()}
+                                                                {formatDateRange(event.date, event.endDate)}
                                                             </p>
                                                             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                                                                {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long' })}
-                                                                {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString('en-US', { weekday: 'long' })}`}
+                                                                {formatDateWithMonthName(event.date)}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1325,18 +1321,8 @@ const AcademicCalendar: React.FC = () => {
                                 <div>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">Date</p>
                                     <p className="font-medium text-slate-900 dark:text-white">
-                                        {new Date(selectedEvent.date).toLocaleDateString('en-US', {
-                                            weekday: 'long',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            year: 'numeric'
-                                        })}
-                                        {selectedEvent.endDate && ` to ${new Date(selectedEvent.endDate).toLocaleDateString('en-US', {
-                                            weekday: 'long',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            year: 'numeric'
-                                        })}`}
+                                        {formatDateWithMonthName(selectedEvent.date)}
+                                        {selectedEvent.endDate && ` to ${formatDateWithMonthName(selectedEvent.endDate)}`}
                                     </p>
                                 </div>
                             </div>
