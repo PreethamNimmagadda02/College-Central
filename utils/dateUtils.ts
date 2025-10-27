@@ -106,3 +106,42 @@ export const getWeekNumber = (startDate: Date, currentDate: Date = new Date()): 
   const elapsedMs = currentDate.getTime() - startDate.getTime();
   return Math.max(1, Math.ceil(elapsedMs / (1000 * 60 * 60 * 24 * 7)));
 };
+
+/**
+ * Format date with month name (e.g., "Jan 15, 2025")
+ */
+export const formatDateWithMonthName = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+/**
+ * Format date range (e.g., "Jan 15 - Feb 20, 2025" or "Jan 15, 2025")
+ */
+export const formatDateRange = (startDateString: string, endDateString?: string | null): string => {
+  const startDate = new Date(startDateString);
+
+  if (!endDateString) {
+    return formatDateWithMonthName(startDateString);
+  }
+
+  const endDate = new Date(endDateString);
+  const startMonth = startDate.toLocaleDateString('en-US', { month: 'short' });
+  const startDay = startDate.getDate();
+  const endMonth = endDate.toLocaleDateString('en-US', { month: 'short' });
+  const endDay = endDate.getDate();
+  const year = endDate.getFullYear();
+
+  // Same month and year
+  if (startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear()) {
+    return `${startMonth} ${startDay} - ${endDay}, ${year}`;
+  }
+
+  // Same year
+  if (startDate.getFullYear() === endDate.getFullYear()) {
+    return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
+  }
+
+  // Different years
+  return `${startMonth} ${startDay}, ${startDate.getFullYear()} - ${endMonth} ${endDay}, ${year}`;
+};

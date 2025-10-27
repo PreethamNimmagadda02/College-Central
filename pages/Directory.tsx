@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { DirectoryEntry, StudentDirectoryEntry } from '../types';
 import { fetchDirectory, fetchStudentDirectory } from '../services/api';
-import { Search, Mail, Phone, Users, GraduationCap, Building2, Download, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Mail, Phone, Users, GraduationCap, Building2, X, ChevronDown, ChevronUp } from 'lucide-react';
 
 const isValidIndianPhoneNumber = (phone: string): boolean => {
   if (!phone || typeof phone !== 'string' || !/\d/.test(phone)) {
@@ -41,7 +41,6 @@ const Directory = () => {
   const [activeTab, setActiveTab] = useState('faculty');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
-  const [showExportMenu, setShowExportMenu] = useState(false);
 
  useEffect(() => {
         const loadDirectories = async () => {
@@ -61,23 +60,6 @@ const Directory = () => {
         loadDirectories();
     }, []);
 
-  // Close export menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.export-menu-container')) {
-        setShowExportMenu(false);
-      }
-    };
-
-    if (showExportMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showExportMenu]);
 
 
   // Sorting function
@@ -174,139 +156,6 @@ const Directory = () => {
     return Array.from(map.values());
   }, [filteredStudents]);
 
-  // Export to CSV
-  const exportToCSV = () => {
-    let csv = '';
-
-    if (activeTab === 'faculty') {
-      csv = 'Name,Department,Designation,Email,Phone\n';
-      groupedFaculty.forEach(group => {
-        group.forEach(entry => {
-          csv += `"${entry.name}","${entry.department}","${entry.designation}","${entry.email}","${entry.phone}"\n`;
-        });
-      });
-    } else {
-      csv = 'Admission No,Name,Branch,Email\n';
-      filteredStudents.forEach(entry => {
-        csv += `"${entry.admNo}","${entry.name}","${entry.branch}","${entry.admNo.toLowerCase()}@iitism.ac.in"\n`;
-      });
-    }
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${activeTab}-directory.csv`;
-    a.click();
-    setShowExportMenu(false);
-  };
-
-  // Export to PDF
-  const exportToPDF = () => {
-    // Create HTML content for PDF
-    let htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>${activeTab === 'faculty' ? 'Faculty & Staff' : 'Student'} Directory - IIT(ISM) Dhanbad</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          h1 { color: #1e40af; text-align: center; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background-color: #1e40af; color: white; padding: 10px; text-align: left; border: 1px solid #ddd; }
-          td { padding: 8px; border: 1px solid #ddd; }
-          tr:nth-child(even) { background-color: #f9fafb; }
-          .header { text-align: center; margin-bottom: 20px; }
-          .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>${activeTab === 'faculty' ? 'Faculty & Staff' : 'Student'} Directory</h1>
-          <p>IIT(ISM) Dhanbad</p>
-          <p>Generated on ${(() => {
-            const d = new Date();
-            return d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth() + 1).toString().padStart(2, '0') + '/' + d.getFullYear();
-          })()}</p>
-        </div>
-        <table>
-    `;
-
-    if (activeTab === 'faculty') {
-      htmlContent += `
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Department</th>
-            <th>Designation</th>
-            <th>Email</th>
-            <th>Phone</th>
-          </tr>
-        </thead>
-        <tbody>
-      `;
-      groupedFaculty.forEach(group => {
-        group.forEach(entry => {
-          htmlContent += `
-            <tr>
-              <td>${entry.name}</td>
-              <td>${entry.department}</td>
-              <td>${entry.designation}</td>
-              <td>${entry.email}</td>
-              <td>${entry.phone}</td>
-            </tr>
-          `;
-        });
-      });
-    } else {
-      htmlContent += `
-        <thead>
-          <tr>
-            <th>Admission No</th>
-            <th>Name</th>
-            <th>Branch</th>
-            <th>Year</th>
-            <th>Email</th>
-          </tr>
-        </thead>
-        <tbody>
-      `;
-      filteredStudents.forEach(entry => {
-        htmlContent += `
-          <tr>
-            <td>${entry.admNo}</td>
-            <td>${entry.name}</td>
-            <td>${entry.branch}</td>
-            <td>${entry.year || '-'}</td>
-            <td>${entry.admNo.toLowerCase()}@iitism.ac.in</td>
-          </tr>
-        `;
-      });
-    }
-
-    htmlContent += `
-        </tbody>
-      </table>
-      <div class="footer">
-        <p>&copy; ${new Date().getFullYear()} IIT(ISM) Dhanbad. All rights reserved.</p>
-      </div>
-      </body>
-      </html>
-    `;
-
-    // Open print dialog which allows saving as PDF
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-      }, 250);
-    }
-    setShowExportMenu(false);
-  };
 
   // Clear all filters
   const clearFilters = () => {
@@ -334,7 +183,7 @@ const Directory = () => {
     ? "Search by name, department, designation, or email..." 
     : "Search by name, admission number, or branch...";
 
-  const activeCount = activeTab === 'faculty' ? groupedFaculty.length : groupedStudents.length;
+  const activeCount = activeTab === 'faculty' ? groupedFaculty.length : filteredStudents.length;
   const totalCount = activeTab === 'faculty' ?
     Array.from(new Map(facultyDirectory.map(e => [e.name, e])).values()).length :
     studentDirectory.length;
@@ -457,61 +306,6 @@ const Directory = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
                   </button>
-                </div>
-
-                {/* Export Dropdown */}
-                <div className="relative export-menu-container">
-                  <button
-                    onClick={() => setShowExportMenu(!showExportMenu)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 hover:scale-105 active:scale-95 hover:shadow-md"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span className="hidden sm:inline">Export</span>
-                    <svg className={`w-4 h-4 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  {/* Export Menu Dropdown */}
-                  {showExportMenu && (
-                    <>
-                      {/* Backdrop overlay */}
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowExportMenu(false)}
-                      />
-                      <div
-                        className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50"
-                      >
-                      <div className="py-1">
-                        <button
-                          onClick={exportToCSV}
-                          className="w-full px-4 py-3 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-primary/10 dark:hover:bg-secondary/10 transition-colors flex items-center gap-3 border-b border-slate-100 dark:border-slate-700"
-                        >
-                          <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          <div>
-                            <div className="font-medium">CSV</div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400">Spreadsheet format</div>
-                          </div>
-                        </button>
-                        <button
-                          onClick={exportToPDF}
-                          className="w-full px-4 py-3 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-primary/10 dark:hover:bg-secondary/10 transition-colors flex items-center gap-3"
-                        >
-                          <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                          <div>
-                            <div className="font-medium">PDF</div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400">Printable document</div>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                    </>
-                  )}
                 </div>
               </div>
             </div>

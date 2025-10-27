@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useCalendar } from '../contexts/CalendarContext';
 import { AcademicCalendarData, CalendarEvent, CalendarEventType } from '../types';
+import { formatDateRange, formatDateWithMonthName } from '../utils/dateUtils';
 
 const getEventTypeIcon = (type: CalendarEventType) => {
     switch (type) {
