@@ -512,13 +512,15 @@ const Schedule: React.FC = () => {
         doc.text('Custom Tasks', startX + 58, legendY + 3);
 
         // Footer
-        const currentDate = new Date().toLocaleDateString();
+        const now = new Date();
+        const currentDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
         doc.setFontSize(8);
         doc.setTextColor(149, 165, 166);
         doc.text(`Generated on ${currentDate} via IIT(ISM) College Central`, pageWidth / 2, pageHeight - 5, { align: 'center' });
 
         // Save the PDF
-        doc.save(`weekly-schedule-${new Date().toISOString().split('T')[0]}.pdf`);
+        const fileDate = `${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}`;
+        doc.save(`weekly-schedule-${fileDate}.pdf`);
 
         // Log activity
         if (currentUser) {
