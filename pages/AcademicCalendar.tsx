@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useCalendar } from '../contexts/CalendarContext';
-import { AcademicCalendarData, CalendarEvent, CalendarEventType } from '../types';
+import { CalendarEvent, CalendarEventType } from '../types';
 import { formatDateRange, formatDateWithMonthName } from '../utils/dateUtils';
 
 const getEventTypeIcon = (type: CalendarEventType) => {
@@ -26,7 +26,6 @@ const getEventTypeColor = (type: CalendarEventType) => {
 const AcademicCalendar: React.FC = () => {
     const {
         calendarData,
-        setCalendarData,
         loading: calendarLoading,
         addUserEvent,
         updateUserEvent,
@@ -238,92 +237,9 @@ const AcademicCalendar: React.FC = () => {
         printWindow.document.close();
     };
 
-    const handleSyncGoogleCalendar = () => {
-        if (!calendarData) return;
+    // Removed unused handleSyncGoogleCalendar
 
-        // Generate .ics file content
-        const icsEvents = calendarData.events.map(event => {
-            const startDateStr = event.date.replace(/-/g, '');
-            // For all-day events, DTEND must be the day AFTER the last day of the event
-            const endDateStr = event.endDate ? new Date(new Date(event.endDate).getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '') : new Date(new Date(event.date).getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '');
-
-            return [
-                'BEGIN:VEVENT',
-                `DTSTART;VALUE=DATE:${startDateStr}`,
-                `DTEND;VALUE=DATE:${endDateStr}`,
-                `SUMMARY:${event.description}`,
-                `DESCRIPTION:${event.type}`,
-                `UID:${new Date(event.date).getTime()}@academichub`,
-                'END:VEVENT'
-            ].filter(Boolean).join('\r\n');
-        }).join('\r\n');
-
-        const icsContent = [
-            'BEGIN:VCALENDAR',
-            'VERSION:2.0',
-            'PRODID:-//Academic Hub//Academic Calendar//EN',
-            'CALSCALE:GREGORIAN',
-            'METHOD:PUBLISH',
-            icsEvents,
-            'END:VCALENDAR'
-        ].join('\r\n');
-
-        // Create and download .ics file
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'academic-calendar.ics';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-
-        // Show success message
-        alert('Calendar file downloaded! You can now import it to Google Calendar:\n1. Open Google Calendar\n2. Click Settings (gear icon)\n3. Select "Import & export"\n4. Choose the downloaded .ics file');
-    };
-
-    const handleSetReminders = () => {
-        if (!calendarData) return;
-
-        // Check if browser supports notifications
-        if (!('Notification' in window)) {
-            alert('Your browser does not support notifications.');
-            return;
-        }
-
-        // Request permission
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                // Find next upcoming event
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const upcomingEvent = calendarData.events.find((event: CalendarEvent) => new Date(event.endDate || event.date) >= today);
-
-                if (upcomingEvent) {
-                    const daysUntil = getDaysUntil(upcomingEvent.date);
-
-                    // Show confirmation
-                    const message = `Reminders enabled! You'll be notified about upcoming events.\n\nNext event: ${upcomingEvent.description} in ${daysUntil} days.`;
-                    alert(message);
-
-                    // Store reminder preference in localStorage
-                    localStorage.setItem('calendar-reminders-enabled', 'true');
-                    localStorage.setItem('calendar-data', JSON.stringify(calendarData));
-
-                    // Show a test notification
-                    new Notification('Academic Calendar Reminder', {
-                        body: `Next event: ${upcomingEvent.description} on ${new Date(upcomingEvent.date).toLocaleDateString()}`,
-                        icon: '📅'
-                    });
-                } else {
-                    alert('No upcoming events to set reminders for.');
-                }
-            } else {
-                alert('Notification permission denied. Please enable notifications in your browser settings.');
-            }
-        });
-    };
+    // (Deprecated) handleSetReminders was removed as it was unused
 
     const handleAddEvent = async () => {
         if (!newEvent.date || !newEvent.description) {
@@ -401,48 +317,16 @@ const AcademicCalendar: React.FC = () => {
         }
     };
 
-    const handleSetEventReminderOld = (event: CalendarEvent) => {
-        if (!('Notification' in window)) {
-            alert('Your browser does not support notifications.');
-            return;
-        }
-
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                const daysUntil = getDaysUntil(event.date);
-
-                if (daysUntil < 0) {
-                    alert('This event has already passed.');
-                    return;
-                }
-
-                // Save reminder to localStorage
-                const reminders = JSON.parse(localStorage.getItem('event-reminders') || '[]');
-                const newReminder = {
-                    eventDate: event.date,
-                    eventDescription: event.description,
-                    reminderDate: new Date().toISOString()
-                };
-                reminders.push(newReminder);
-                localStorage.setItem('event-reminders', JSON.stringify(reminders));
-
-                new Notification('Reminder Set', {
-                    body: `You'll be reminded about: ${event.description}`,
-                    icon: '⏰'
-                });
-
-                alert(`Reminder set for: ${event.description}\nDate: ${new Date(event.date).toLocaleDateString()}`);
-            } else {
-                alert('Please enable notifications to set reminders.');
-            }
-        });
-    };
+    // (Deprecated) handleSetEventReminderOld was removed as it was unused
 
     const handleAddToPersonalCalendar = (event: CalendarEvent) => {
         const startDateStr = event.date.replace(/-/g, '');
-        // For all-day events, DTEND must be the day AFTER the last day of the event
-        const endDateStr = event.endDate ? new Date(new Date(event.endDate).getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '') : new Date(new Date(event.date).getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '');
-    
+        // DTEND must be exclusive: one day after the end (or start if single-day)
+        const end = new Date(event.endDate ?? event.date);
+        end.setDate(end.getDate() + 1);
+        const [isoDatePart] = end.toISOString().split('T');
+        const endDateStr = (isoDatePart ?? '').replace(/-/g, '');
+
         const icsContent = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
@@ -455,7 +339,7 @@ const AcademicCalendar: React.FC = () => {
             `UID:${new Date(event.date).getTime()}@academichub`,
             'END:VEVENT',
             'END:VCALENDAR'
-        ].filter(Boolean).join('\r\n');
+        ].join('\r\n');
 
         const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
         const url = window.URL.createObjectURL(blob);
@@ -1349,19 +1233,31 @@ const AcademicCalendar: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                            <button
-                                onClick={() => handleSetEventReminder(selectedEvent)}
-                                className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
-                                    reminderPreferences.includes(getEventKey(selectedEvent))
-                                        ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                                        : 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300'
-                                }`}
-                            >
-                                <svg className="w-4 h-4" fill={reminderPreferences.includes(getEventKey(selectedEvent)) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                </svg>
-                                <span className="text-sm">{reminderPreferences.includes(getEventKey(selectedEvent)) ? 'Reminder Set ✓' : 'Set Reminder'}</span>
-                            </button>
+                            {(() => {
+                                const eventEndDate = selectedEvent.endDate || selectedEvent.date;
+                                const isPast = getDaysUntil(eventEndDate) < 0;
+                                const hasReminder = reminderPreferences.includes(getEventKey(selectedEvent));
+
+                                return (
+                                    <button
+                                        onClick={() => !isPast && handleSetEventReminder(selectedEvent)}
+                                        disabled={isPast}
+                                        className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
+                                            isPast
+                                                ? 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
+                                                : hasReminder
+                                                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                                    : 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300'
+                                        }`}
+                                        title={isPast ? 'Cannot set reminder for past events' : (hasReminder ? 'Remove reminder' : 'Set reminder')}
+                                    >
+                                        <svg className="w-4 h-4" fill={hasReminder ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                        <span className="text-sm">{hasReminder ? 'Reminder Set ✓' : 'Set Reminder'}</span>
+                                    </button>
+                                );
+                            })()}
 
                             <button
                                 onClick={() => handleAddToPersonalCalendar(selectedEvent)}
