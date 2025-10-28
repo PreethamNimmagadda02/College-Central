@@ -139,13 +139,16 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   const toggleReminderPreference = async (eventKey: string) => {
     if (!currentUser) throw new Error('User must be logged in');
 
+    // Store previous state before updating
+    const previousPreferences = [...reminderPreferences];
     const newPreferences = reminderPreferences.includes(eventKey)
       ? reminderPreferences.filter(key => key !== eventKey)
       : [...reminderPreferences, eventKey];
-    
+
     const isAdding = newPreferences.length > reminderPreferences.length;
     const eventDescription = eventKey.split('-').slice(1).join('-');
 
+    // Optimistically update UI
     setReminderPreferences(newPreferences);
 
     try {
@@ -163,8 +166,8 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       });
     } catch (error) {
       console.error('Error updating reminder preferences:', error);
-      // Revert on error
-      setReminderPreferences(reminderPreferences);
+      // Revert to previous state on error
+      setReminderPreferences(previousPreferences);
     }
   };
 

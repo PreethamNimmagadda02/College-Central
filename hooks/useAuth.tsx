@@ -6,6 +6,7 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { auth } from '../firebaseConfig';
 import { logActivity } from '../services/activityService';
+import { ALLOWED_EMAIL_DOMAIN, HOSTED_DOMAIN } from '../utils/constants';
 
 type User = firebase.User;
 
@@ -40,7 +41,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       // Use compat API
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
-      await logActivity(userCredential.user!.uid, {
+      if (!userCredential.user) {
+        throw new Error('Authentication failed: No user returned');
+      }
+      await logActivity(userCredential.user.uid, {
         type: 'login',
         title: 'Signed In',
         description: 'Successfully signed into your account.',
@@ -55,7 +59,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const register = async (email: string, password: string) => {
     try {
       const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-      await logActivity(userCredential.user!.uid, {
+      if (!userCredential.user) {
+        throw new Error('Registration failed: No user returned');
+      }
+      await logActivity(userCredential.user.uid, {
         type: 'login',
         title: 'Account Created',
         description: 'Welcome! Your account has been created.',
@@ -73,19 +80,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Restrict to iitism.ac.in domain
       provider.setCustomParameters({
         prompt: 'select_account',
-        hd: 'iitism.ac.in' // Hosted domain parameter for Google Workspace
+        hd: HOSTED_DOMAIN // Hosted domain parameter for Google Workspace
       });
       const userCredential = await auth.signInWithPopup(provider);
 
       // Verify the email domain after authentication
       const email = userCredential.user?.email;
-      if (!email || !email.endsWith('@iitism.ac.in')) {
+      if (!email || !email.endsWith(ALLOWED_EMAIL_DOMAIN)) {
         // Sign out the user immediately
         await auth.signOut();
-        throw new Error('INVALID_DOMAIN: Only @iitism.ac.in email addresses are allowed.');
+        throw new Error(`INVALID_DOMAIN: Only ${ALLOWED_EMAIL_DOMAIN} email addresses are allowed.`);
       }
 
-      await logActivity(userCredential.user!.uid, {
+      if (!userCredential.user) {
+        throw new Error('Google sign-in failed: No user returned');
+      }
+
+      await logActivity(userCredential.user.uid, {
         type: 'login',
         title: 'Signed In with Google',
         description: 'Successfully signed into your account using Google.',

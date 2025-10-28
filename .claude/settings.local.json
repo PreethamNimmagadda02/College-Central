@@ -37,7 +37,8 @@
       "Bash(xargs kill:*)",
       "Bash(chmod:*)",
       "Bash(test:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []

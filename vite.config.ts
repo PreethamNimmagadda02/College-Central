@@ -25,23 +25,32 @@ export default defineConfig({
       },
       output: {
         manualChunks: {
-          // Vendor chunks for better caching
+          // Core vendor chunks
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'firebase': [
+
+          // Firebase core (always needed)
+          'firebase-core': [
             'firebase/compat/app',
             'firebase/compat/auth',
-            'firebase/compat/firestore',
-            'firebase/compat/storage'
+            'firebase/compat/firestore'
           ],
-          'ai': ['@google/genai'],
-          'pdf': ['jspdf'],
+
+          // Firebase optional (lazy loaded)
+          'firebase-storage': ['firebase/compat/storage'],
+
+          // Heavy libraries (lazy loaded in code)
+          'image-compression': ['browser-image-compression'],
+
+          // Icons
           'icons': ['lucide-react'],
         }
       }
     },
-    // Increase chunk size warning limit to 1000kb for main chunk
-    chunkSizeWarningLimit: 1000,
+    // Reduce chunk size warning limit now that we're optimizing
+    chunkSizeWarningLimit: 800,
     // Copy service worker to dist folder
-    copyPublicDir: true
+    copyPublicDir: true,
+    // Enable hidden sourcemaps for production debugging
+    sourcemap: 'hidden'
   }
 });

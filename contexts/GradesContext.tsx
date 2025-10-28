@@ -2,9 +2,8 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useMe
 import { Semester } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
-import 'firebase/firestore';
-import { GoogleGenAI, Type } from "@google/genai";
 import { logActivity } from '../services/activityService';
+import { getGoogleGenAI } from '../utils/lazyImports';
 
 export interface GradesData {
   semesters: Semester[];
@@ -124,8 +123,11 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     try {
         const base64Data = await fileToBase64(selectedFile);
+
+        // Lazy load Google GenAI
+        const { GoogleGenAI, Type } = await getGoogleGenAI();
         const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-        
+
         const schema = {
           type: Type.OBJECT,
           properties: {
@@ -223,7 +225,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       processGrades,
       resetGradesState
     }),
-    [gradesData, loading, isProcessing, error, selectedFile, imagePreview]
+    [gradesData, loading, isProcessing, error, selectedFile, imagePreview, setGradesData, selectFile, processGrades, resetGradesState]
   );
 
   return (

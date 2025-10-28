@@ -7,6 +7,8 @@ import { auth, db, storage } from '../firebaseConfig';
 import { User } from '../types';
 import { STUDENT_DIRECTORY } from '../data/studentDirectoryData';
 import { logActivity } from '../services/activityService';
+import { MAX_FILE_SIZE_BYTES, ALLOWED_IMAGE_TYPES, PROFILE_PICTURES_PATH } from '../utils/constants';
+import { getImageCompression } from '../utils/lazyImports';
 
 interface UserContextType {
   user: User | null;
@@ -128,16 +130,39 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const oldPhotoPath = user.profilePicturePath;
 
-    if (!file.type.startsWith('image/')) {
-        throw new Error('Please upload an image file.');
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        throw new Error('Please upload a valid image file (JPEG, PNG, GIF, or WebP).');
     }
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        throw new Error('File size should not exceed 5MB.');
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+        throw new Error(`File size should not exceed ${MAX_FILE_SIZE_BYTES / (1024 * 1024)}MB.`);
     }
-    
-    const filePath = `profile_pictures/${currentUser.uid}/${Date.now()}_${file.name}`;
+
+    // Compress image before upload
+    let fileToUpload = file;
+    try {
+      // Only compress if file is larger than 1MB
+      if (file.size > 1024 * 1024) {
+        // Lazy load image compression library
+        const imageCompression = await getImageCompression();
+
+        const options = {
+          maxSizeMB: 1, // Maximum file size in MB
+          maxWidthOrHeight: 1024, // Max dimension
+          useWebWorker: true,
+          fileType: file.type,
+        };
+
+        fileToUpload = await imageCompression(file, options);
+        console.log(`Image compressed from ${(file.size / 1024 / 1024).toFixed(2)}MB to ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`);
+      }
+    } catch (compressionError) {
+      console.warn('Image compression failed, uploading original:', compressionError);
+      // Continue with original file if compression fails
+    }
+
+    const filePath = `${PROFILE_PICTURES_PATH}/${currentUser.uid}/${Date.now()}_${file.name}`;
     const storageRef = storage.ref(filePath);
-    const uploadTask = storageRef.put(file);
+    const uploadTask = storageRef.put(fileToUpload);
 
     return new Promise<void>((resolve, reject) => {
         uploadTask.on(

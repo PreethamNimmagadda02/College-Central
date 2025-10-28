@@ -1,11 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { setupGlobalErrorTracking } from './utils/errorTracking';
 
-if ('serviceWorker' in navigator) {
+// Setup global error tracking
+if (import.meta.env.PROD) {
+  setupGlobalErrorTracking();
+}
+
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(err => {
-      console.error('ServiceWorker registration failed: ', err);
+      // Ignore security errors in development
+      if (err.name !== 'SecurityError') {
+        console.error('ServiceWorker registration failed: ', err);
+      }
     });
   });
 }

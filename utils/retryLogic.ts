@@ -1,3 +1,5 @@
+import { DEFAULT_MAX_RETRIES, DEFAULT_RETRY_DELAY_MS } from './constants';
+
 /**
  * Retry a function with exponential backoff
  * @param fn - The function to retry
@@ -7,8 +9,8 @@
  */
 export async function retryWithBackoff<T>(
   fn: () => Promise<T>,
-  maxRetries: number = 3,
-  delay: number = 1000
+  maxRetries: number = DEFAULT_MAX_RETRIES,
+  delay: number = DEFAULT_RETRY_DELAY_MS
 ): Promise<T> {
   let lastError: Error;
 
@@ -83,8 +85,8 @@ export function isRetryableError(error: any): boolean {
  */
 export async function retryOnlyIfRetryable<T>(
   fn: () => Promise<T>,
-  maxRetries: number = 3,
-  delay: number = 1000
+  maxRetries: number = DEFAULT_MAX_RETRIES,
+  delay: number = DEFAULT_RETRY_DELAY_MS
 ): Promise<T> {
   let lastError: Error;
 

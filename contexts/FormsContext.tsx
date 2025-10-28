@@ -1,14 +1,15 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
-import 'firebase/firestore';
 import { logActivity } from '../services/activityService';
 import { allForms } from '../data/formsData';
 import { Form, UserFormsData } from '../types';
+import { MAX_RECENT_DOWNLOADS } from '../utils/constants';
 
 interface FormsContextType {
     userFormsData: UserFormsData | null;
     loading: boolean;
+    error: Error | null;
     toggleFavorite: (formNumber: string) => Promise<void>;
     addRecentDownload: (form: Form) => Promise<void>;
 }
@@ -19,10 +20,12 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const { currentUser } = useAuth();
     const [userFormsData, setUserFormsData] = useState<UserFormsData | null>({ favorites: [], recentDownloads: [] });
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
         if (!currentUser) {
             setUserFormsData({ favorites: [], recentDownloads: [] });
+            setError(null);
             setLoading(false);
             return;
         }
@@ -37,9 +40,11 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 userDocRef.set(initialData);
                 setUserFormsData(initialData);
             }
+            setError(null);
             setLoading(false);
-        }, (error) => {
-            console.error("Error fetching user forms data:", error);
+        }, (err) => {
+            console.error("Error fetching user forms data:", err);
+            setError(err instanceof Error ? err : new Error('Failed to load forms data'));
             setLoading(false);
         });
 
@@ -86,15 +91,15 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             timestamp: Date.now()
         };
 
-        const updatedDownloads = [newDownload, ...userFormsData.recentDownloads.filter(d => d.formNumber !== form.formNumber).slice(0, 9)];
+        const updatedDownloads = [newDownload, ...userFormsData.recentDownloads.filter(d => d.formNumber !== form.formNumber).slice(0, MAX_RECENT_DOWNLOADS - 1)];
 
         const userDocRef = db.collection('userForms').doc(currentUser.uid);
         await userDocRef.update({ recentDownloads: updatedDownloads });
     };
 
     const contextValue = useMemo(
-        () => ({ userFormsData, loading, toggleFavorite, addRecentDownload }),
-        [userFormsData, loading]
+        () => ({ userFormsData, loading, error, toggleFavorite, addRecentDownload }),
+        [userFormsData, loading, error, toggleFavorite, addRecentDownload]
     );
 
     return (
