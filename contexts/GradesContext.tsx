@@ -53,19 +53,27 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (currentUser) {
       setLoading(true);
       const userDocRef = db.collection('users').doc(currentUser.uid);
-      unsubscribe = userDocRef.onSnapshot((docSnap) => {
-        if (docSnap.exists) {
-          const data = docSnap.data();
-          if (data && data.gradesData) {
-            setGradesDataState(data.gradesData as GradesData);
+      unsubscribe = userDocRef.onSnapshot(
+        (docSnap) => {
+          if (docSnap.exists) {
+            const data = docSnap.data();
+            if (data && data.gradesData) {
+              setGradesDataState(data.gradesData as GradesData);
+            } else {
+              setGradesDataState(null);
+            }
           } else {
             setGradesDataState(null);
           }
-        } else {
+          setLoading(false);
+        },
+        (error) => {
+          console.error('Error loading grades data:', error);
+          setError('Failed to load grades data. Please try again.');
           setGradesDataState(null);
+          setLoading(false);
         }
-        setLoading(false);
-      });
+      );
     } else {
       setGradesDataState(null);
       setLoading(false);
@@ -75,8 +83,14 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const setGradesData = async (data: GradesData | null) => {
     if (currentUser) {
-      const userDocRef = db.collection('users').doc(currentUser.uid);
-      await userDocRef.update({ gradesData: data });
+      try {
+        const userDocRef = db.collection('users').doc(currentUser.uid);
+        await userDocRef.update({ gradesData: data });
+      } catch (error) {
+        console.error('Error updating grades data:', error);
+        setError('Failed to save grades data. Please try again.');
+        throw error;
+      }
     }
   };
 

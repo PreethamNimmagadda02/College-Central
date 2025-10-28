@@ -1,7 +1,8 @@
 // src/contexts/UserContext.tsx
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
 import { auth, db, storage } from '../firebaseConfig';
 import { User } from '../types';
 import { STUDENT_DIRECTORY } from '../data/studentDirectoryData';
@@ -25,7 +26,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     let unsubscribeFromFirestore: (() => void) | null = null;
 
-    const unsubscribeFromAuth = onAuthStateChanged(auth, async (authUser) => {
+    const unsubscribeFromAuth = auth.onAuthStateChanged(async (authUser) => {
       if (unsubscribeFromFirestore) {
         unsubscribeFromFirestore();
       }

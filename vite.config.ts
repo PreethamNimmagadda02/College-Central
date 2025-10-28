@@ -22,8 +22,25 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),
+      },
+      output: {
+        manualChunks: {
+          // Vendor chunks for better caching
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'firebase': [
+            'firebase/compat/app',
+            'firebase/compat/auth',
+            'firebase/compat/firestore',
+            'firebase/compat/storage'
+          ],
+          'ai': ['@google/genai'],
+          'pdf': ['jspdf'],
+          'icons': ['lucide-react'],
+        }
       }
     },
+    // Increase chunk size warning limit to 1000kb for main chunk
+    chunkSizeWarningLimit: 1000,
     // Copy service worker to dist folder
     copyPublicDir: true
   }

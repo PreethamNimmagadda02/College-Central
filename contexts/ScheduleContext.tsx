@@ -22,19 +22,26 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (currentUser) {
       setLoading(true);
       const userDocRef = db.collection('users').doc(currentUser.uid);
-      unsubscribe = userDocRef.onSnapshot((docSnap) => {
-        if (docSnap.exists) {
-          const data = docSnap.data();
-          if (data && data.scheduleData) {
-            setScheduleDataState(data.scheduleData as ClassSchedule[]);
+      unsubscribe = userDocRef.onSnapshot(
+        (docSnap) => {
+          if (docSnap.exists) {
+            const data = docSnap.data();
+            if (data && data.scheduleData) {
+              setScheduleDataState(data.scheduleData as ClassSchedule[]);
+            } else {
+              setScheduleDataState(null);
+            }
           } else {
             setScheduleDataState(null);
           }
-        } else {
+          setLoading(false);
+        },
+        (error) => {
+          console.error('Error loading schedule data:', error);
           setScheduleDataState(null);
+          setLoading(false);
         }
-        setLoading(false);
-      });
+      );
     } else {
       setScheduleDataState(null);
       setLoading(false);
@@ -44,8 +51,13 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const setScheduleData = async (data: ClassSchedule[] | null) => {
     if (currentUser) {
-      const userDocRef = db.collection('users').doc(currentUser.uid);
-      await userDocRef.update({ scheduleData: data });
+      try {
+        const userDocRef = db.collection('users').doc(currentUser.uid);
+        await userDocRef.update({ scheduleData: data });
+      } catch (error) {
+        console.error('Error updating schedule data:', error);
+        throw error;
+      }
     }
   };
 
