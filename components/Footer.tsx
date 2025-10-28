@@ -50,7 +50,7 @@ const Footer: React.FC = () => {
                   Class Schedule
                 </Link>
                 <a
-                  href="https://drive.google.com/file/d/1mgKpdN954H7E5H9WZR0wecJQ1NgxN2Xe/view?usp=sharing"
+                  href="https://drive.google.com/file/d/1LZ4T36ZMcFypJy2l5-PBNkn4fZpXVsfX/view?usp=sharing"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 hover:translate-x-1 inline-flex items-center gap-1"
