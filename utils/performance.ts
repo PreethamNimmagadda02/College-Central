@@ -1,4 +1,4 @@
-import { perf } from '../firebaseConfig';
+import { getPerformance } from '../firebaseConfig';
 
 /**
  * Custom trace for monitoring specific operations
@@ -10,21 +10,36 @@ export async function tracePerformance<T>(
   traceName: string,
   callback: () => Promise<T> | T
 ): Promise<T> {
-  if (!perf) {
-    // If performance monitoring is not enabled, just run the callback
-    return await callback();
-  }
-
-  const trace = perf.trace(traceName);
-  trace.start();
-
   try {
-    const result = await callback();
-    trace.stop();
-    return result;
-  } catch (error) {
-    trace.stop();
-    throw error;
+    const perf = await getPerformance();
+    if (!perf) {
+      // If performance monitoring is not enabled, just run the callback
+      return await callback();
+    }
+
+    const trace = perf.trace(traceName);
+    if (!trace || typeof trace.start !== 'function') {
+      return await callback();
+    }
+
+    trace.start();
+
+    try {
+      const result = await callback();
+      if (typeof trace.stop === 'function') {
+        trace.stop();
+      }
+      return result;
+    } catch (error) {
+      if (typeof trace.stop === 'function') {
+        trace.stop();
+      }
+      throw error;
+    }
+  } catch (perfError) {
+    // If any performance monitoring error, just run the callback
+    console.warn('Performance monitoring error:', perfError);
+    return await callback();
   }
 }
 
@@ -33,7 +48,8 @@ export async function tracePerformance<T>(
  * @param traceName - Name of the trace
  * @returns Trace object with start/stop methods, or null if not available
  */
-export function createTrace(traceName: string) {
+export async function createTrace(traceName: string) {
+  const perf = await getPerformance();
   if (!perf) {
     return null;
   }
@@ -45,35 +61,61 @@ export function createTrace(traceName: string) {
  * @param metricName - Name of the metric
  * @param value - Value of the metric
  */
-export function logMetric(traceName: string, metricName: string, value: number) {
-  if (!perf) {
-    return;
-  }
+export async function logMetric(traceName: string, metricName: string, value: number) {
+  try {
+    const perf = await getPerformance();
+    if (!perf) {
+      return;
+    }
 
-  const trace = perf.trace(traceName);
-  trace.start();
-  trace.putMetric(metricName, value);
-  trace.stop();
+    const trace = perf.trace(traceName);
+    if (!trace || typeof trace.start !== 'function') {
+      return;
+    }
+
+    trace.start();
+    if (typeof trace.putMetric === 'function') {
+      trace.putMetric(metricName, value);
+    }
+    if (typeof trace.stop === 'function') {
+      trace.stop();
+    }
+  } catch (error) {
+    console.warn('Performance metric logging error:', error);
+  }
 }
 
 /**
  * Measure page load performance
  */
-export function measurePageLoad(pageName: string) {
-  if (!perf) {
-    return;
-  }
+export async function measurePageLoad(pageName: string) {
+  try {
+    const perf = await getPerformance();
+    if (!perf) {
+      return;
+    }
 
-  const trace = perf.trace(`page_load_${pageName}`);
-  trace.start();
+    const trace = perf.trace(`page_load_${pageName}`);
+    if (!trace || typeof trace.start !== 'function') {
+      return;
+    }
 
-  // Stop the trace when the page is fully loaded
-  if (document.readyState === 'complete') {
-    trace.stop();
-  } else {
-    window.addEventListener('load', () => {
-      trace.stop();
-    });
+    trace.start();
+
+    // Stop the trace when the page is fully loaded
+    if (document.readyState === 'complete') {
+      if (typeof trace.stop === 'function') {
+        trace.stop();
+      }
+    } else {
+      window.addEventListener('load', () => {
+        if (typeof trace.stop === 'function') {
+          trace.stop();
+        }
+      });
+    }
+  } catch (error) {
+    console.warn('Page load performance measurement error:', error);
   }
 }
 
@@ -82,7 +124,8 @@ export function measurePageLoad(pageName: string) {
  * @param componentName - Name of the component
  * @returns Object with start and stop functions
  */
-export function measureComponentRender(componentName: string) {
+export async function measureComponentRender(componentName: string) {
+  const perf = await getPerformance();
   if (!perf) {
     return {
       start: () => {},
@@ -110,23 +153,43 @@ export async function measureNetworkRequest<T>(
   url: string,
   callback: () => Promise<T>
 ): Promise<T> {
-  if (!perf) {
-    return await callback();
-  }
-
-  const trace = perf.trace(`network_${requestName}`);
-  trace.putAttribute('http_method', httpMethod);
-  trace.putAttribute('url', url);
-  trace.start();
-
   try {
-    const result = await callback();
-    trace.putMetric('success', 1);
-    trace.stop();
-    return result;
-  } catch (error) {
-    trace.putMetric('success', 0);
-    trace.stop();
-    throw error;
+    const perf = await getPerformance();
+    if (!perf) {
+      return await callback();
+    }
+
+    const trace = perf.trace(`network_${requestName}`);
+    if (!trace || typeof trace.start !== 'function') {
+      return await callback();
+    }
+
+    if (typeof trace.putAttribute === 'function') {
+      trace.putAttribute('http_method', httpMethod);
+      trace.putAttribute('url', url);
+    }
+    trace.start();
+
+    try {
+      const result = await callback();
+      if (typeof trace.putMetric === 'function') {
+        trace.putMetric('success', 1);
+      }
+      if (typeof trace.stop === 'function') {
+        trace.stop();
+      }
+      return result;
+    } catch (error) {
+      if (typeof trace.putMetric === 'function') {
+        trace.putMetric('success', 0);
+      }
+      if (typeof trace.stop === 'function') {
+        trace.stop();
+      }
+      throw error;
+    }
+  } catch (perfError) {
+    console.warn('Network request performance measurement error:', perfError);
+    return await callback();
   }
 }

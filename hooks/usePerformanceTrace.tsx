@@ -7,19 +7,41 @@ import { createTrace } from '../utils/performance';
  * @param enabled - Whether tracing is enabled (default: true)
  */
 export function usePerformanceTrace(componentName: string, enabled: boolean = true) {
-  const traceRef = useRef<ReturnType<typeof createTrace>>(null);
+  const traceRef = useRef<any>(null);
 
   useEffect(() => {
     if (!enabled) return;
 
-    const trace = createTrace(`component_${componentName}`);
-    if (!trace) return;
+    let isMounted = true;
 
-    traceRef.current = trace;
-    trace.start();
+    const initTrace = async () => {
+      try {
+        const trace = await createTrace(`component_${componentName}`);
+        if (!trace || !isMounted) return;
+
+        traceRef.current = trace;
+
+        // Check if trace has start method
+        if (typeof trace.start === 'function') {
+          trace.start();
+        }
+      } catch (error) {
+        console.warn('Failed to initialize performance trace:', error);
+      }
+    };
+
+    initTrace();
 
     return () => {
-      trace.stop();
+      isMounted = false;
+      const trace = traceRef.current;
+      if (trace && typeof trace.stop === 'function') {
+        try {
+          trace.stop();
+        } catch (e) {
+          // Trace might already be stopped
+        }
+      }
     };
   }, [componentName, enabled]);
 
@@ -32,24 +54,49 @@ export function usePerformanceTrace(componentName: string, enabled: boolean = tr
  */
 export function usePageLoadTrace(pageName: string) {
   useEffect(() => {
-    const trace = createTrace(`page_${pageName}`);
-    if (!trace) return;
+    let trace: any = null;
+    let isMounted = true;
 
-    trace.start();
+    const initTrace = async () => {
+      try {
+        trace = await createTrace(`page_${pageName}`);
+        if (!trace || !isMounted) return;
 
-    const handleLoad = () => {
-      trace.stop();
+        // Check if trace has start method
+        if (typeof trace.start === 'function') {
+          trace.start();
+        }
+
+        const handleLoad = () => {
+          if (trace && typeof trace.stop === 'function') {
+            try {
+              trace.stop();
+            } catch (e) {
+              // Trace might already be stopped
+            }
+          }
+        };
+
+        if (document.readyState === 'complete') {
+          handleLoad();
+        } else {
+          window.addEventListener('load', handleLoad);
+
+          // Cleanup listener on unmount
+          return () => {
+            window.removeEventListener('load', handleLoad);
+          };
+        }
+      } catch (error) {
+        console.warn('Failed to initialize page load trace:', error);
+      }
     };
 
-    if (document.readyState === 'complete') {
-      trace.stop();
-    } else {
-      window.addEventListener('load', handleLoad);
-    }
+    initTrace();
 
     return () => {
-      window.removeEventListener('load', handleLoad);
-      if (trace) {
+      isMounted = false;
+      if (trace && typeof trace.stop === 'function') {
         try {
           trace.stop();
         } catch (e) {

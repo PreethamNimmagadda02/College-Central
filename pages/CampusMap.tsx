@@ -780,4 +780,4 @@ const CampusMap: React.FC = () => {
   );
 };
 
-export default CampusMap;
+export default React.memo(CampusMap);

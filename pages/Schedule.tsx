@@ -6,7 +6,6 @@ import { TIMETABLE_DATA } from '../data/courseData';
 import { useAuth } from '../hooks/useAuth';
 import { logActivity } from '../services/activityService';
 import { calculateCreditsFromLTP } from '../utils/creditCalculator';
-import jsPDF from 'jspdf';
 
 const ChevronDownIcon: React.FC = () => (
     <svg className="w-5 h-5 ml-2 -mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -331,10 +330,12 @@ const Schedule: React.FC = () => {
         });
     };
 
-    // Export schedule as PDF
-    const handleExportPDF = () => {
+    // Export schedule as PDF (lazy loaded)
+    const handleExportPDF = async () => {
         if (!scheduleData || scheduleData.length === 0) return;
 
+        // Lazy load jsPDF only when needed
+        const { default: jsPDF } = await import('jspdf');
         const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
@@ -2047,4 +2048,4 @@ const Schedule: React.FC = () => {
     );
 };
 
-export default Schedule;
+export default React.memo(Schedule);

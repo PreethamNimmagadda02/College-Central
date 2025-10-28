@@ -453,4 +453,4 @@ const CollegeForms: React.FC = () => {
     );
 };
 
-export default CollegeForms;
+export default React.memo(CollegeForms);

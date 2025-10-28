@@ -1,10 +1,9 @@
 // FIX: Updated Firebase imports for v9 compatibility.
+// Only import core services - performance and analytics loaded on demand
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 import 'firebase/compat/storage';
-import 'firebase/compat/performance';
-import 'firebase/compat/analytics';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -26,18 +25,40 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-// Initialize Performance Monitoring
-let perf: firebase.performance.Performance | null = null;
-let analytics: firebase.analytics.Analytics | null = null;
+// Lazy load Performance Monitoring and Analytics only when needed
+let perf: any = null;
+let analytics: any = null;
 
-// Only initialize performance monitoring in production and browser environment
-if (typeof window !== 'undefined' && import.meta.env.PROD) {
-  try {
-    perf = firebase.performance();
-    analytics = firebase.analytics();
-  } catch (error) {
-    console.warn('Failed to initialize Firebase Performance Monitoring:', error);
+// Helper to lazy load performance monitoring
+export async function getPerformance() {
+  if (perf) return perf;
+  if (typeof window !== 'undefined' && import.meta.env.PROD) {
+    try {
+      await import('firebase/compat/performance');
+      perf = firebase.performance();
+      return perf;
+    } catch (error) {
+      console.warn('Failed to load Firebase Performance:', error);
+      return null;
+    }
   }
+  return null;
+}
+
+// Helper to lazy load analytics
+export async function getAnalytics() {
+  if (analytics) return analytics;
+  if (typeof window !== 'undefined' && import.meta.env.PROD) {
+    try {
+      await import('firebase/compat/analytics');
+      analytics = firebase.analytics();
+      return analytics;
+    } catch (error) {
+      console.warn('Failed to load Firebase Analytics:', error);
+      return null;
+    }
+  }
+  return null;
 }
 
 export { auth, db, storage, perf, analytics };

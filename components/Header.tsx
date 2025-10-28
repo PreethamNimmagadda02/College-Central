@@ -168,4 +168,4 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
   );
 };
 
-export default Header;
+export default React.memo(Header);

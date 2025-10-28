@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
 import 'firebase/firestore';
@@ -92,8 +92,13 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         await userDocRef.update({ recentDownloads: updatedDownloads });
     };
 
+    const contextValue = useMemo(
+        () => ({ userFormsData, loading, toggleFavorite, addRecentDownload }),
+        [userFormsData, loading]
+    );
+
     return (
-        <FormsContext.Provider value={{ userFormsData, loading, toggleFavorite, addRecentDownload }}>
+        <FormsContext.Provider value={contextValue}>
             {children}
         </FormsContext.Provider>
     );

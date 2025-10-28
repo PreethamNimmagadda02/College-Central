@@ -1415,4 +1415,4 @@ const AcademicCalendar: React.FC = () => {
     );
 };
 
-export default AcademicCalendar;
+export default React.memo(AcademicCalendar);

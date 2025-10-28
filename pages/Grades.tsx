@@ -927,4 +927,4 @@ const Grades: React.FC = () => {
     );
 };
 
-export default Grades;
+export default React.memo(Grades);

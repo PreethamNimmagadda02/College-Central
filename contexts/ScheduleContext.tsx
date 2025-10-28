@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { ClassSchedule } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
@@ -49,7 +49,7 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
     return () => unsubscribe();
   }, [currentUser]);
 
-  const setScheduleData = async (data: ClassSchedule[] | null) => {
+  const setScheduleData = useCallback(async (data: ClassSchedule[] | null) => {
     if (currentUser) {
       try {
         const userDocRef = db.collection('users').doc(currentUser.uid);
@@ -59,10 +59,15 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
         throw error;
       }
     }
-  };
+  }, [currentUser]);
+
+  const contextValue = useMemo(
+    () => ({ scheduleData, setScheduleData, loading }),
+    [scheduleData, setScheduleData, loading]
+  );
 
   return (
-    <ScheduleContext.Provider value={{ scheduleData, setScheduleData, loading }}>
+    <ScheduleContext.Provider value={contextValue}>
       {children}
     </ScheduleContext.Provider>
   );

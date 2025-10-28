@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { Semester } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
@@ -210,8 +210,24 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setError(null);
   };
 
+  const contextValue = useMemo(
+    () => ({
+      gradesData,
+      setGradesData,
+      loading,
+      isProcessing,
+      error,
+      selectedFile,
+      imagePreview,
+      selectFile,
+      processGrades,
+      resetGradesState
+    }),
+    [gradesData, loading, isProcessing, error, selectedFile, imagePreview]
+  );
+
   return (
-    <GradesContext.Provider value={{ gradesData, setGradesData, loading, isProcessing, error, selectedFile, imagePreview, selectFile, processGrades, resetGradesState }}>
+    <GradesContext.Provider value={contextValue}>
       {children}
     </GradesContext.Provider>
   );

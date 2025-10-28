@@ -575,4 +575,4 @@ const Directory = () => {
   );
 };
 
-export default Directory;
+export default React.memo(Directory);
