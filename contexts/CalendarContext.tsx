@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { AcademicCalendarData, CalendarEvent } from '../types';
 import { PRELOADED_CALENDAR_DATA } from '../data/academicCalendarData';
 import { useAuth } from '../hooks/useAuth';
