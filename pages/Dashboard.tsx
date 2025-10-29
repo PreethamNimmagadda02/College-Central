@@ -661,7 +661,7 @@ const Dashboard: React.FC = () => {
             const cacheData: WeatherAdviceCache = JSON.parse(cached);
             const now = Date.now();
             const cacheAge = now - cacheData.timestamp;
-            const threeHours = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+            const threeHours = 1 * 60 * 60 * 1000; // 1 hours in milliseconds
 
             // Cache is invalid if older than 3 hours
             if (cacheAge > threeHours) {
@@ -678,7 +678,7 @@ const Dashboard: React.FC = () => {
             // 3. Same weather condition (code)
             if (
                 cacheData.timeOfDay === currentTimeOfDay &&
-                tempDiff < 3 &&
+                tempDiff < 1 &&
                 cacheData.weatherCode === weatherCode
             ) {
                 return cacheData.advice;
@@ -815,10 +815,18 @@ const Dashboard: React.FC = () => {
             setError(err || null);
             setLoading(false);
         });
-        
+
         fetchWeather();
 
-        return () => unsubscribe();
+        // Auto-refresh weather every hour
+        const weatherRefreshInterval = setInterval(() => {
+            fetchWeather();
+        }, 60 * 60 * 1000); // 60 minutes (1 hour)
+
+        return () => {
+            unsubscribe();
+            clearInterval(weatherRefreshInterval);
+        };
     }, []);
 
     const handleRefresh = async () => {
