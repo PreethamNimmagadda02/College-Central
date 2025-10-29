@@ -26,6 +26,8 @@ const CampusMap = lazyWithRetry(() => import('./pages/CampusMap'));
 const CollegeForms = lazyWithRetry(() => import('./pages/CollegeForms'));
 const AcademicCalendar = lazyWithRetry(() => import('./pages/AcademicCalendar'));
 const Login = lazyWithRetry(() => import('./pages/Login'));
+const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -116,6 +118,22 @@ const router = createHashRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <Profile />
+          </Suspense>
+        )
+      },
+      {
+        path: 'privacy',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PrivacyPolicy />
+          </Suspense>
+        )
+      },
+      {
+        path: 'terms',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <TermsOfService />
           </Suspense>
         )
       },

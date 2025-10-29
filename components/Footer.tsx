@@ -129,17 +129,17 @@ const Footer: React.FC = () => {
             </p>
             <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
               <Link
-                to="/profile"
+                to="/privacy"
                 className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
               >
-                Privacy
+                Privacy Policy
               </Link>
               <span className="text-slate-300 dark:text-slate-700">•</span>
               <Link
-                to="/profile"
+                to="/terms"
                 className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
               >
-                Terms
+                Terms of Service
               </Link>
               <span className="text-slate-300 dark:text-slate-700">•</span>
               <a
