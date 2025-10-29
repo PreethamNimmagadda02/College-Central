@@ -56,8 +56,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   hostel: '',
                   email: authUser.email ?? '',
                   phone: authUser.phoneNumber ?? '',
-                  profilePicture: authUser.photoURL ?? null,
-                  profilePicturePath: null, // No path for external URLs
+                  profilePicture: authUser.photoURL ?? undefined,
+                  profilePicturePath: undefined, // No path for external URLs
                   courseOption: directoryEntry ? 'CBCS' : undefined, // Default to CBCS only if in directory
                 };
                 
