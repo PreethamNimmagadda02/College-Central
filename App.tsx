@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 
 import { AuthProvider } from './hooks/useAuth';
@@ -13,18 +13,19 @@ import Layout from './pages/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import { measurePageLoad } from './utils/performance';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 
-// Lazy load pages for better performance
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Grades = lazy(() => import('./pages/Grades'));
-const Schedule = lazy(() => import('./pages/Schedule'));
-const Directory = lazy(() => import('./pages/Directory'));
-const Profile = lazy(() => import('./pages/Profile'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const CampusMap = lazy(() => import('./pages/CampusMap'));
-const CollegeForms = lazy(() => import('./pages/CollegeForms'));
-const AcademicCalendar = lazy(() => import('./pages/AcademicCalendar')); 
-const Login = lazy(() => import('./pages/Login'));
+// Lazy load pages with automatic retry on chunk loading failure
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'));
+const Grades = lazyWithRetry(() => import('./pages/Grades'));
+const Schedule = lazyWithRetry(() => import('./pages/Schedule'));
+const Directory = lazyWithRetry(() => import('./pages/Directory'));
+const Profile = lazyWithRetry(() => import('./pages/Profile'));
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
+const CampusMap = lazyWithRetry(() => import('./pages/CampusMap'));
+const CollegeForms = lazyWithRetry(() => import('./pages/CollegeForms'));
+const AcademicCalendar = lazyWithRetry(() => import('./pages/AcademicCalendar'));
+const Login = lazyWithRetry(() => import('./pages/Login'));
 
 // Loading fallback component
 const PageLoader = () => (
