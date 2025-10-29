@@ -15,7 +15,19 @@ export interface GradesData {
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string).split(',')[1]);
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        const commaIndex = result.indexOf(',');
+        if (commaIndex !== -1) {
+          resolve(result.substring(commaIndex + 1));
+        } else {
+          reject(new Error('Invalid data URL format while reading file.'));
+        }
+      } else {
+        reject(new Error('Unexpected FileReader result type.'));
+      }
+    };
     reader.onerror = error => reject(error);
     reader.readAsDataURL(file);
   });
@@ -178,7 +190,12 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             }
         });
 
-        const result = JSON.parse(response.text.trim());
+        const rawText = (response as any)?.text;
+        const text = typeof rawText === 'string' ? rawText : (typeof rawText === 'function' ? rawText() : '');
+        if (!text) {
+            throw new Error('AI response was empty or invalid.');
+        }
+        const result = JSON.parse(text.trim());
         await setGradesData(result);
         await logActivity(currentUser.uid, {
             type: 'grades',
