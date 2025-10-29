@@ -1,4 +1,4 @@
-const CACHE_NAME = 'college-central-v1';
+const CACHE_NAME = 'college-central-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -38,7 +38,33 @@ self.addEventListener('fetch', event => {
     event.respondWith(fetch(event.request));
     return;
   }
-  
+
+  // Network-first strategy for weather and AI API requests
+  // Always try to fetch fresh data, fall back to cache if network fails
+  if (event.request.url.includes('open-meteo.com') || event.request.url.includes('generativelanguage.googleapis.com')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Clone the response to cache it
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          // Network failed, try to return cached version
+          return caches.match(event.request).then(cachedResponse => {
+            return cachedResponse || new Response('{"error": "Offline"}', {
+              status: 503,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          });
+        })
+    );
+    return;
+  }
+
   // Don't cache external images that might fail
   if (event.request.url.includes('iitism.ac.in') || event.request.url.includes('via.placeholder.com')) {
     event.respondWith(fetch(event.request).catch(() => {
