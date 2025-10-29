@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useGrades } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useUser } from '../contexts/UserContext';
 import { TIMETABLE_DATA } from '../data/courseData';
-import { TimeTableCourse, Grade, Semester } from '../types';
+import { Grade, Semester } from '../types';
 import { calculateCreditsFromLTP } from '../utils/creditCalculator';
 
 const gradeOptions = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'];
@@ -36,7 +36,6 @@ const CGPAForecaster: React.FC = () => {
     const { scheduleData } = useSchedule();
     const { user } = useUser();
     const courseOption = user?.courseOption || 'CBCS';
-    const isInitialMount = useRef(true);
     const [targetCGPA, setTargetCGPA] = useState(8.0);
     const [semestersRemaining, setSemestersRemaining] = useState(1);
 
@@ -82,7 +81,7 @@ const CGPAForecaster: React.FC = () => {
 
         currentCourses.forEach(course => {
             const grade = projectedGrades[course.courseCode];
-            const points = gradePoints[grade] || 0;
+            const points = grade ? (gradePoints[grade] || 0) : 0;
             totalPoints += course.credits * points;
         });
 
@@ -281,7 +280,7 @@ const CGPAForecaster: React.FC = () => {
                                             {course.credits} Credits
                                         </span>
                                         <span className="text-xs text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">
-                                            Points: {(gradePoints[projectedGrades[course.courseCode]] * course.credits).toFixed(1)}
+                                            Points: {(((gradePoints[projectedGrades[course.courseCode] ?? 'F'] ?? 0) * course.credits)).toFixed(1)}
                                         </span>
                                     </div>
                                 </div>
@@ -289,7 +288,7 @@ const CGPAForecaster: React.FC = () => {
                                     <select
                                         value={projectedGrades[course.courseCode] || 'A'}
                                         onChange={(e) => handleGradeChange(course.courseCode, e.target.value)}
-                                        className={`px-4 py-2 font-semibold rounded-lg border-2 focus:outline-none focus:ring-2 focus:ring-primary transition-all hover:scale-105 ${getGradeColor(projectedGrades[course.courseCode])}`}
+                                        className={`px-4 py-2 font-semibold rounded-lg border-2 focus:outline-none focus:ring-2 focus:ring-primary transition-all hover:scale-105 ${getGradeColor(projectedGrades[course.courseCode] || 'A')}`}
                                     >
                                         {gradeOptions.map(grade => (
                                             <option key={grade} value={grade}>{grade}</option>
@@ -326,11 +325,14 @@ const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => 
                 if (!distribution[grade.grade]) {
                     distribution[grade.grade] = { count: 0, courses: [] };
                 }
-                distribution[grade.grade].count += 1;
-                distribution[grade.grade].courses.push({
-                    ...grade,
-                    semester: sem.semester
-                });
+                const gradeEntry = distribution[grade.grade];
+                if (gradeEntry) {
+                    gradeEntry.count += 1;
+                    gradeEntry.courses.push({
+                        ...grade,
+                        semester: sem.semester
+                    });
+                }
             });
         });
         return distribution;
@@ -383,7 +385,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => 
             <div className="group bg-white dark:bg-dark-card p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <h4 className="font-medium mb-4">SGPA Trend</h4>
                 <div className="space-y-3">
-                    {performanceTrend.map((item, index) => (
+                    {performanceTrend.map((item: { semester: string; sgpa: number; credits: number }, index: number) => (
                         <div key={index} className="flex items-center gap-3 hover:scale-[1.02] transition-transform duration-300">
                             <span className="text-sm font-medium w-16">{item.semester}</span>
                             <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-8 relative overflow-hidden group/bar">
@@ -611,11 +613,13 @@ const Grades: React.FC = () => {
                     <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 text-center">
                         {!selectedFile && !imagePreview ? (
                             <div className="space-y-4">
-                                <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                                    <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                    </svg>
-                                </div>
+                                <label htmlFor="file-upload" className="cursor-pointer">
+                                    <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors">
+                                        <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                    </div>
+                                </label>
                                 <div>
                                     <label htmlFor="file-upload" className="cursor-pointer">
                                         <span className="text-primary font-semibold hover:text-primary-dark">Upload grade sheet</span>
