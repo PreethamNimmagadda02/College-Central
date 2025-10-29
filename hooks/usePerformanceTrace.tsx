@@ -56,6 +56,7 @@ export function usePageLoadTrace(pageName: string) {
   useEffect(() => {
     let trace: any = null;
     let isMounted = true;
+    let removeLoadListener: (() => void) | null = null;
 
     const initTrace = async () => {
       try {
@@ -81,11 +82,7 @@ export function usePageLoadTrace(pageName: string) {
           handleLoad();
         } else {
           window.addEventListener('load', handleLoad);
-
-          // Cleanup listener on unmount
-          return () => {
-            window.removeEventListener('load', handleLoad);
-          };
+          removeLoadListener = () => window.removeEventListener('load', handleLoad);
         }
       } catch (error) {
         console.warn('Failed to initialize page load trace:', error);
@@ -96,6 +93,10 @@ export function usePageLoadTrace(pageName: string) {
 
     return () => {
       isMounted = false;
+      if (removeLoadListener) {
+        removeLoadListener();
+        removeLoadListener = null;
+      }
       if (trace && typeof trace.stop === 'function') {
         try {
           trace.stop();

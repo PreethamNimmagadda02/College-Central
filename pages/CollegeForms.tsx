@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForms } from '../contexts/FormsContext';
-import { Form, UserFormsData } from '../types';
+import { Form } from '../types';
 import { allForms, generalForms, ugForms, pgForms, phdForms } from '../data/formsData';
-import { logActivity } from '../services/activityService';
 
 const DownloadIcon: React.FC = () => (
     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

@@ -8,7 +8,7 @@ const calculateCredits = (ltp: string): number => {
     if (parts.some(isNaN)) {
         return 0;
     }
-    const [l, t, p] = parts;
+    const [l = 0, t = 0, p = 0] = parts;
     return (3 * l) + (2 * t) + (1 * p);
 };
 

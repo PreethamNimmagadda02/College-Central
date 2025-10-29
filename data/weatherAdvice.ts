@@ -210,7 +210,9 @@ export const getWeatherAdvice = (
   // If exact match found, return it
   if (matchingAdvice.length > 0) {
     // Return a random one if multiple matches
-    return matchingAdvice[Math.floor(Math.random() * matchingAdvice.length)].advice;
+    const randomIndex = Math.floor(Math.random() * matchingAdvice.length);
+    const selected = matchingAdvice[randomIndex] ?? matchingAdvice[0]!;
+    return selected.advice;
   }
 
   // Fallback: match just condition and time
@@ -219,7 +221,9 @@ export const getWeatherAdvice = (
   );
 
   if (fallbackAdvice.length > 0) {
-    return fallbackAdvice[Math.floor(Math.random() * fallbackAdvice.length)].advice;
+    const randomIndex = Math.floor(Math.random() * fallbackAdvice.length);
+    const selected = fallbackAdvice[randomIndex] ?? fallbackAdvice[0]!;
+    return selected.advice;
   }
 
   // Ultimate fallback
