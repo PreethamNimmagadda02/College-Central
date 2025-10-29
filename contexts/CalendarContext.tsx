@@ -36,7 +36,7 @@ const adjustCalendarDatesToCurrentYear = (data: AcademicCalendarData): AcademicC
     // Adjust start date
     const adjustedStartDate = new Date(originalEventDate);
     adjustedStartDate.setUTCFullYear(newYear);
-    const newStartDateString = adjustedStartDate.toISOString().split('T')[0];
+    const newStartDateString = adjustedStartDate.toISOString().slice(0, 10);
 
     // Adjust end date if it exists
     let newEndDateString: string | undefined = undefined;
@@ -46,14 +46,20 @@ const adjustCalendarDatesToCurrentYear = (data: AcademicCalendarData): AcademicC
       const endYearOffset = originalEndYear - originalStartYear;
       const adjustedEndDate = new Date(originalEndDate);
       adjustedEndDate.setUTCFullYear(currentYear + endYearOffset);
-      newEndDateString = adjustedEndDate.toISOString().split('T')[0];
+      newEndDateString = adjustedEndDate.toISOString().slice(0, 10);
     }
     
-    return {
+    const adjustedEvent: CalendarEvent = {
       ...event,
       date: newStartDateString,
-      endDate: newEndDateString,
     };
+
+    // Only include endDate if it exists to avoid assigning undefined
+    if (newEndDateString) {
+      adjustedEvent.endDate = newEndDateString;
+    }
+
+    return adjustedEvent;
   });
 
   const adjustedStartDate = new Date(`${data.semesterStartDate}T12:00:00Z`);
@@ -66,8 +72,8 @@ const adjustCalendarDatesToCurrentYear = (data: AcademicCalendarData): AcademicC
 
   return {
     ...data,
-    semesterStartDate: adjustedStartDate.toISOString().split('T')[0],
-    semesterEndDate: adjustedEndDate.toISOString().split('T')[0],
+    semesterStartDate: adjustedStartDate.toISOString().slice(0, 10),
+    semesterEndDate: adjustedEndDate.toISOString().slice(0, 10),
     events: adjustedEvents,
   };
 };
