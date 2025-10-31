@@ -110,6 +110,22 @@ const Schedule: React.FC = () => {
 
     const days = daysWithContent;
 
+    // Handler to open edit modal with immediate state updates for seamless UX
+    const openEditModal = (item: ClassSchedule) => {
+        // Update all form fields synchronously before setting editingItem
+        setNewVenue(item.location);
+        setNewInstructor(item.instructor);
+        setNewDay(item.day);
+        setNewStartTime(item.startTime);
+        setNewEndTime(item.endTime);
+        setValidationErrors({});
+        setHasConflict(false);
+        setConflictingClasses([]);
+        setApplyInstructorToAll(true);
+        // Set editingItem last to trigger modal open with correct values already set
+        setEditingItem(item);
+    };
+
     useEffect(() => {
         if (editingItem) {
             setNewVenue(editingItem.location);
@@ -646,39 +662,65 @@ const Schedule: React.FC = () => {
     };
 
     // Duplicate class function
-    const handleDuplicateClass = () => {
-        if (!editingItem || !scheduleData || !currentUser) return;
-
-        // Validate form first
-        if (!validateForm()) {
+    const handleDuplicateClass = async () => {
+        if (!editingItem || !scheduleData || !currentUser) {
             return;
         }
 
         setHistory(prev => [...prev, scheduleData]);
 
+        // Create exact duplicate with same details and timings from editingItem
+        // Use a more unique slotId with random component to avoid any conflicts
+        const uniqueId = `${editingItem.courseCode}-${editingItem.day}-${editingItem.startTime}-duplicate-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
         const newClass: ClassSchedule = {
-            slotId: `${editingItem.courseCode}-${newDay}-${newStartTime}-${Date.now()}`,
-            day: newDay as ClassSchedule['day'],
-            startTime: newStartTime,
-            endTime: newEndTime,
+            slotId: uniqueId,
+            day: editingItem.day,
+            startTime: editingItem.startTime,
+            endTime: editingItem.endTime,
             courseName: editingItem.courseName,
             courseCode: editingItem.courseCode,
-            instructor: newInstructor.trim(),
-            location: newVenue.trim(),
-            isCustomTask: editingItem.isCustomTask, // Preserve custom task status when duplicating
+            instructor: editingItem.instructor,
+            location: editingItem.location,
+            ...(editingItem.isCustomTask !== undefined && { isCustomTask: editingItem.isCustomTask }),
         };
 
-        const updatedSchedule = [...scheduleData, newClass];
-        setScheduleData(updatedSchedule);
+        // Clean the schedule data: remove undefined values from all items before saving
+        const cleanSchedule = (schedule: ClassSchedule[]) => {
+            return schedule.map(item => {
+                const cleaned: any = {
+                    slotId: item.slotId,
+                    day: item.day,
+                    startTime: item.startTime,
+                    endTime: item.endTime,
+                    courseName: item.courseName,
+                    courseCode: item.courseCode,
+                    instructor: item.instructor,
+                    location: item.location,
+                };
+                if (item.isCustomTask !== undefined) {
+                    cleaned.isCustomTask = item.isCustomTask;
+                }
+                return cleaned as ClassSchedule;
+            });
+        };
 
-        logActivity(currentUser.uid, {
-            type: 'schedule',
-            title: editingItem.isCustomTask ? 'Custom Task Duplicated' : 'Class Duplicated',
-            description: `Created duplicate of ${editingItem.courseCode} on ${newDay} at ${newStartTime}.`,
-            icon: '📋',
-            link: '/schedule'
-        });
-        setEditingItem(null);
+        const updatedSchedule = cleanSchedule([...scheduleData, newClass]);
+
+        try {
+            await setScheduleData(updatedSchedule);
+
+            logActivity(currentUser.uid, {
+                type: 'schedule',
+                title: editingItem.isCustomTask ? 'Custom Task Duplicated' : 'Class Duplicated',
+                description: `Created duplicate of ${editingItem.courseCode} on ${editingItem.day} at ${editingItem.startTime}.`,
+                icon: '📋',
+                link: '/schedule'
+            });
+            setEditingItem(null);
+        } catch (error) {
+            console.error('Error duplicating class:', error);
+        }
     };
 
     const handleDeleteSlot = () => {
@@ -1249,7 +1291,7 @@ const Schedule: React.FC = () => {
                                             key={item.slotId}
                                             draggable={true}
                                             onDragStart={(e) => e.dataTransfer.setData('application/json', JSON.stringify(item))}
-                                            onClick={() => setEditingItem(item)}
+                                            onClick={() => openEditModal(item)}
                                             className={`group relative flex flex-col p-2 m-0.5 rounded-lg border-2 shadow-md hover:shadow-xl transition-all duration-300 cursor-move hover:-translate-y-0.5 hover:scale-[1.02] active:scale-95 overflow-hidden ${colorClass} ${item.isCustomTask ? 'ring-2 ring-teal-400 dark:ring-teal-500' : ''}`}
                                             style={getGridPosition(item)}
                                         >
@@ -1320,7 +1362,7 @@ const Schedule: React.FC = () => {
                                                         <div
                                                             key={item.slotId}
                                                             className={`group p-5 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white dark:hover:from-slate-800/70 dark:hover:to-slate-800/50 transition-all duration-300 cursor-pointer hover:scale-[1.01] hover:shadow-lg active:scale-[0.99] relative ${item.isCustomTask ? 'border-l-4 border-teal-400 dark:border-teal-500 bg-teal-50/30 dark:bg-teal-900/10' : ''}`}
-                                                            onClick={() => setEditingItem(item)}
+                                                            onClick={() => openEditModal(item)}
                                                         >
                                                             {/* Custom Task Label */}
                                                             {item.isCustomTask && (
@@ -1391,7 +1433,7 @@ const Schedule: React.FC = () => {
                                     <div
                                         key={item.slotId}
                                         className={`group relative overflow-hidden border-2 rounded-xl p-5 hover:shadow-2xl transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:scale-105 active:scale-95 ${colorClass} ${item.isCustomTask ? 'ring-2 ring-teal-400 dark:ring-teal-500' : ''}`}
-                                        onClick={() => setEditingItem(item)}
+                                        onClick={() => openEditModal(item)}
                                     >
                                         {/* Custom Task Top Banner */}
                                         {item.isCustomTask && (
