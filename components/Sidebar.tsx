@@ -193,20 +193,26 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
           // The global mousemove handler will handle hiding the sidebar
           // when the cursor moves beyond the sidebar boundary
         }}
-        className={`fixed left-0 top-16 bottom-0 z-40 flex flex-col
-          ${sidebarCollapsed && isHoveringEdge ? 'bg-white/95 dark:bg-slate-900/95 shadow-2xl' : 'bg-white/95 dark:bg-slate-900/95'} backdrop-blur-xl
+        className={`fixed left-0 top-16 bottom-0 z-40 flex flex-col w-64
+          bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl
+          ${sidebarCollapsed && isHoveringEdge ? 'shadow-2xl' : ''}
           border-r border-slate-200/50 dark:border-slate-700/50
           transition-all overflow-visible duration-150 ease-out
-          ${sidebarCollapsed && !isHoveringEdge ? 'w-64 -translate-x-full' : 'w-64'}
-          ${sidebarOpen ? 'translate-x-0' : sidebarCollapsed ? '' : '-translate-x-full lg:translate-x-0'}
+          ${
+            // Mobile: Always controlled by sidebarOpen
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }
+          ${
+            // Desktop: Controlled by collapse state and hover
+            !sidebarCollapsed
+              ? 'lg:translate-x-0'
+              : sidebarCollapsed && isHoveringEdge
+              ? 'lg:translate-x-0'
+              : 'lg:-translate-x-full'
+          }
         `}
         style={{
           willChange: sidebarCollapsed ? 'transform' : 'auto',
-          transform: sidebarCollapsed && !isHoveringEdge
-            ? 'translateX(-100%)'
-            : sidebarOpen || isHoveringEdge
-            ? 'translateX(0)'
-            : undefined,
         }}
       >
         <nav
