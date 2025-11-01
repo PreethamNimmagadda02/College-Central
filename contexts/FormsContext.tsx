@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
 import { logActivity } from '../services/activityService';
