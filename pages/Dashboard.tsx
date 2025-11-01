@@ -1,13 +1,11 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ClassSchedule, CampusEvent, Announcement, NewsItem, CalendarEvent } from '../types';
-import { subscribeToLatestNewsAndEvents } from '../services/api';
+import { ClassSchedule, CalendarEvent } from '../types';
 import { useUser } from '../contexts/UserContext';
 import { useGrades } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useCalendar } from '../contexts/CalendarContext';
-import { useAuth } from '../hooks/useAuth';
 import { usePageLoadTrace } from '../hooks/usePerformanceTrace';
 import { getWeatherAdvice } from '@/data/weatherAdvice';
 import {
@@ -16,16 +14,15 @@ import {
   isToday as checkIsToday,
   isSameDay,
   addDays,
-  getDayName,
   calculateDateProgress,
   getWeekNumber
 } from '../utils/dateUtils';
 import { getGreeting, getRandomItem } from '../utils/helpers';
 import { MOTIVATIONAL_QUOTES, TIME_INTERVALS, SEMESTER_DEFAULTS } from '../constants/app';
 import {
-    InstructorIcon, LocationIcon, LibraryIcon, GymkhanaIcon,
+    InstructorIcon, LocationIcon, LibraryIcon,
     PortalIcon, CalendarCheckIcon, HealthIcon, FeeIcon,
-    WebsiteIcon, EmailIcon, LmsIcon, CdcIcon, MapIcon, RefreshIcon, ScholarshipIcon, DirectoryIcon
+    WebsiteIcon, CdcIcon, ScholarshipIcon, DirectoryIcon
 } from '../components/icons/SidebarIcons';
 
 // Color function for schedule items (matching Schedule.tsx)
@@ -133,7 +130,7 @@ const getWeatherInfoFromCode = (code: number, isDay: number): { desc: string, ic
 const getWindDirection = (degrees: number): string => {
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
     const index = Math.round(degrees / 22.5) % 16;
-    return directions[index];
+    return directions[index] ?? 'N';
 };
 
 // Default quick links
@@ -154,10 +151,6 @@ const Dashboard: React.FC = () => {
     // Performance monitoring
     usePageLoadTrace('dashboard');
 
-    const [latestItems, setLatestItems] = useState<NewsItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const [weatherLoading, setWeatherLoading] = useState(true);
     const [weatherError, setWeatherError] = useState<string | null>(null);
@@ -167,7 +160,6 @@ const Dashboard: React.FC = () => {
     const { gradesData, loading: gradesLoading } = useGrades();
     const { scheduleData, loading: scheduleLoading } = useSchedule();
     const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey, toggleReminderPreference, updateUserEvent } = useCalendar();
-    const { currentUser } = useAuth();
     
     // AI Weather Recommendation State
     const [recommendation, setRecommendation] = useState<string | null>(null);
@@ -194,14 +186,6 @@ const Dashboard: React.FC = () => {
     const [showDatePicker, setShowDatePicker] = useState(false);
     
     // Date navigation handlers
-    const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const dateString = e.target.value;
-        if (dateString) {
-            const [year, month, day] = dateString.split('-').map(Number);
-            setSelectedDate(new Date(year, month - 1, day));
-        }
-    }, []);
-
     const handleResetToToday = useCallback(() => setSelectedDate(new Date()), []);
     const handlePreviousDay = useCallback(() => setSelectedDate(prev => addDays(prev, -1)), []);
     const handleNextDay = useCallback(() => setSelectedDate(prev => addDays(prev, 1)), []);
@@ -405,7 +389,65 @@ const Dashboard: React.FC = () => {
         });
 
         let titleText = isToday ? "Today's Schedule" : "Schedule";
-    
+
+        // Check for special events FIRST (before checking holidays/exams)
+        // This ensures special events are captured even on holidays/exam days
+        const specialEvents = todayEvents.filter(e => {
+            const desc = e.description.toLowerCase();
+
+            // Must be type 'Other' and not timetable/working-as (but CAN be on holiday/exam days)
+            if (e.type !== 'Other') return false;
+            if (desc.includes('timetable') || desc.includes('working as')) return false;
+
+            // Explicitly exclude PG/PhD/Executive/Part-time ONLY events
+            const isPGPhDOnly = (
+                (desc.includes('pg students') || desc.includes('ph. d') ||
+                 desc.includes('phd') || desc.includes('m. tech') ||
+                 desc.includes('m. sc') || desc.includes('mba') ||
+                 desc.includes('executive') || desc.includes('part-time') ||
+                 desc.includes('research') || desc.includes('supervisor') ||
+                 desc.includes('thesis') || desc.includes('dissertation')) &&
+                // Not if it also mentions BTech/UG
+                !(desc.includes('b. tech') || desc.includes('btech') ||
+                  desc.includes('b tech') || desc.includes('ug students') ||
+                  desc.includes('undergraduate') || desc.includes('all students'))
+            );
+
+            if (isPGPhDOnly) return false;
+
+            // Include if it's BTech-specific OR a general college event
+            const isBTechSpecific = (
+                desc.includes('b. tech') || desc.includes('btech') ||
+                desc.includes('b tech') || desc.includes('ug students') ||
+                desc.includes('undergraduate') || desc.includes('1st year ug') ||
+                desc.includes('2nd year') || desc.includes('3rd year') ||
+                desc.includes('4th year') || desc.includes('final year ug') ||
+                desc.includes('int. m. tech') || desc.includes('dual degree') ||
+                desc.includes('bs-ms')
+            );
+
+            const isGeneralCollegeEvent = (
+                desc.includes('all students') ||
+                desc.includes('convocation') || desc.includes('foundation day') ||
+                desc.includes('srijan') || desc.includes('concetto') ||
+                desc.includes('parakram') || desc.includes('basant') ||
+                desc.includes('sports meet') || desc.includes('cultural') ||
+                desc.includes('fest') || desc.includes('techno-management') ||
+                desc.includes('orientation') || desc.includes('registration') ||
+                desc.includes('fee payment') || desc.includes('pre-registration') ||
+                desc.includes('semester classes') ||
+                desc.includes('semester feedback') || desc.includes('feedback')
+            );
+
+            return isBTechSpecific || isGeneralCollegeEvent;
+        });
+
+        let specialEventMessage: string | null = null;
+        if (specialEvents.length > 0) {
+            const eventDescriptions = specialEvents.map(e => e.description).join(', ');
+            specialEventMessage = `🎉 Special Event: ${eventDescriptions}`;
+        }
+
         // Check for exam periods FIRST (before holidays)
         const examEvent = todayEvents.find(e =>
             e.type === 'Mid-Semester Exams' ||
@@ -419,6 +461,7 @@ const Dashboard: React.FC = () => {
                 isHoliday: true,
                 isExam: true,
                 holidayDescription: examEvent.description,
+                infoMessage: specialEventMessage,
             };
         }
 
@@ -438,12 +481,13 @@ const Dashboard: React.FC = () => {
                 title: "It's a Holiday! 🎉",
                 isHoliday: true,
                 holidayDescription: holidayEvent.description,
+                infoMessage: specialEventMessage,
             };
         }
 
         // Check for semester start/end
-        const semesterEvent = todayEvents.find(e => 
-            e.type === 'Start of Semester' || 
+        const semesterEvent = todayEvents.find(e =>
+            e.type === 'Start of Semester' ||
             e.description.toLowerCase().includes('semester start') ||
             e.description.toLowerCase().includes('semester end')
         );
@@ -454,6 +498,7 @@ const Dashboard: React.FC = () => {
                 title: "Semester Event 📚",
                 isHoliday: true,
                 holidayDescription: `${semesterEvent.description} - Check with your department for schedule changes.`,
+                infoMessage: specialEventMessage,
             };
         }
     
@@ -512,60 +557,9 @@ const Dashboard: React.FC = () => {
             }
         }
 
-        // Check for special events - BTech specific OR general college events
-        const specialEvents = todayEvents.filter(e => {
-            const desc = e.description.toLowerCase();
-
-            // Must be type 'Other' and not timetable/holiday/exam
-            if (e.type !== 'Other') return false;
-            if (desc.includes('timetable') || desc.includes('holiday') ||
-                desc.includes('exam') || desc.includes('working as')) return false;
-
-            // Explicitly exclude PG/PhD/Executive/Part-time ONLY events
-            const isPGPhDOnly = (
-                (desc.includes('pg students') || desc.includes('ph. d') ||
-                 desc.includes('phd') || desc.includes('m. tech') ||
-                 desc.includes('m. sc') || desc.includes('mba') ||
-                 desc.includes('executive') || desc.includes('part-time') ||
-                 desc.includes('research') || desc.includes('supervisor') ||
-                 desc.includes('thesis') || desc.includes('dissertation')) &&
-                // Not if it also mentions BTech/UG
-                !(desc.includes('b. tech') || desc.includes('btech') ||
-                  desc.includes('b tech') || desc.includes('ug students') ||
-                  desc.includes('undergraduate') || desc.includes('all students'))
-            );
-
-            if (isPGPhDOnly) return false;
-
-            // Include if it's BTech-specific OR a general college event
-            const isBTechSpecific = (
-                desc.includes('b. tech') || desc.includes('btech') ||
-                desc.includes('b tech') || desc.includes('ug students') ||
-                desc.includes('undergraduate') || desc.includes('1st year ug') ||
-                desc.includes('2nd year') || desc.includes('3rd year') ||
-                desc.includes('4th year') || desc.includes('final year ug') ||
-                desc.includes('int. m. tech') || desc.includes('dual degree') ||
-                desc.includes('bs-ms')
-            );
-
-            const isGeneralCollegeEvent = (
-                desc.includes('all students') ||
-                desc.includes('convocation') || desc.includes('foundation day') ||
-                desc.includes('srijan') || desc.includes('concetto') ||
-                desc.includes('parakram') || desc.includes('basant') ||
-                desc.includes('sports meet') || desc.includes('cultural') ||
-                desc.includes('fest') || desc.includes('techno-management') ||
-                desc.includes('orientation') || desc.includes('registration') ||
-                desc.includes('fee payment') || desc.includes('pre-registration') ||
-                desc.includes('semester classes')
-            );
-
-            return isBTechSpecific || isGeneralCollegeEvent;
-        });
-
-        if (specialEvents.length > 0 && !infoMessage) {
-            const eventDescriptions = specialEvents.map(e => e.description).join(', ');
-            infoMessage = `🎉 Special Event: ${eventDescriptions}`;
+        // Add special event message to infoMessage if we have any
+        if (specialEventMessage) {
+            infoMessage = infoMessage ? `${specialEventMessage}\n${infoMessage}` : specialEventMessage;
         }
 
 
@@ -573,10 +567,9 @@ const Dashboard: React.FC = () => {
         const otherEvents = todayEvents.filter(e => {
             const desc = e.description.toLowerCase();
 
-            // Must be type 'Other' and not timetable/holiday/exam and not already in specialEvents
+            // Must be type 'Other' and not timetable/working-as and not already in specialEvents
             if (e.type !== 'Other') return false;
-            if (desc.includes('timetable') || desc.includes('holiday') ||
-                desc.includes('exam') || desc.includes('working as')) return false;
+            if (desc.includes('timetable') || desc.includes('working as')) return false;
             if (specialEvents.includes(e)) return false;
 
             // Explicitly exclude PG/PhD/Executive/Part-time ONLY events
@@ -806,16 +799,8 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    // FIX: Replaced fetchLatestNewsAndEvents with a subscription model.
+    // Weather data fetch on mount
     useEffect(() => {
-        setLoading(true);
-        setError(null);
-        const unsubscribe = subscribeToLatestNewsAndEvents(5, (items, err) => {
-            setLatestItems(items);
-            setError(err || null);
-            setLoading(false);
-        });
-
         fetchWeather();
 
         // Auto-refresh weather every hour
@@ -824,18 +809,9 @@ const Dashboard: React.FC = () => {
         }, 60 * 60 * 1000); // 60 minutes (1 hour)
 
         return () => {
-            unsubscribe();
             clearInterval(weatherRefreshInterval);
         };
     }, []);
-
-    const handleRefresh = async () => {
-        setIsRefreshing(true);
-        // FIX: The latest news and events are now subscribed in real-time. 
-        // The refresh button will now only refresh the weather data.
-        await fetchWeather();
-        setIsRefreshing(false);
-    };
 
     // Start with a random quote, then change every 30 seconds
     const [motivationalQuote, setMotivationalQuote] = useState(() => getRandomItem(MOTIVATIONAL_QUOTES));
@@ -895,7 +871,7 @@ const Dashboard: React.FC = () => {
         return { semesterProgress: progress, currentWeek: week };
     }, [now, calendarData?.semesterStartDate, calendarData?.semesterEndDate]);
 
-    if (overallLoading || loading || !user) {
+    if (overallLoading || !user) {
         return (
             <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
                 <div className="text-center">
@@ -1237,25 +1213,35 @@ const Dashboard: React.FC = () => {
                         </div>
                         
                         {scheduleInfo.isHoliday ? (
-                             <div className="text-center py-12">
-                                {scheduleInfo.isExam ? (
-                                    <>
-                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 mb-4">
-                                            <span className="text-4xl">📝</span>
-                                        </div>
-                                        <h3 className="text-lg font-medium text-slate-900 dark:text-white">{scheduleInfo.holidayDescription}</h3>
-                                        <p className="mt-1 text-slate-600 dark:text-slate-400 font-medium">Classes are suspended - Focus on exam preparation! 📚</p>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
-                                            <span className="text-4xl">🎉</span>
-                                        </div>
-                                        <h3 className="text-lg font-medium text-slate-900 dark:text-white">{scheduleInfo.holidayDescription}</h3>
-                                        <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your day off!</p>
-                                    </>
+                            <>
+                                {scheduleInfo.infoMessage && (
+                                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg flex items-start gap-3">
+                                        <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p className="text-sm text-blue-700 dark:text-blue-300 whitespace-pre-line">{scheduleInfo.infoMessage}</p>
+                                    </div>
                                 )}
-                            </div>
+                                <div className="text-center py-12">
+                                    {scheduleInfo.isExam ? (
+                                        <>
+                                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 mb-4">
+                                                <span className="text-4xl">📝</span>
+                                            </div>
+                                            <h3 className="text-lg font-medium text-slate-900 dark:text-white">{scheduleInfo.holidayDescription}</h3>
+                                            <p className="mt-1 text-slate-600 dark:text-slate-400 font-medium">Classes are suspended - Focus on exam preparation! 📚</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
+                                                <span className="text-4xl">🎉</span>
+                                            </div>
+                                            <h3 className="text-lg font-medium text-slate-900 dark:text-white">{scheduleInfo.holidayDescription}</h3>
+                                            <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your day off!</p>
+                                        </>
+                                    )}
+                                </div>
+                            </>
                         ) : (
                             <>
                                 {scheduleInfo.infoMessage && (
@@ -1263,7 +1249,7 @@ const Dashboard: React.FC = () => {
                                         <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        <p className="text-sm text-blue-700 dark:text-blue-300">{scheduleInfo.infoMessage}</p>
+                                        <p className="text-sm text-blue-700 dark:text-blue-300 whitespace-pre-line">{scheduleInfo.infoMessage}</p>
                                     </div>
                                 )}
                                 {scheduleInfo.classes.length > 0 ? (
@@ -1274,7 +1260,6 @@ const Dashboard: React.FC = () => {
                                                 const isCurrentOrNext = index === upcomingClassIndex;
                                                 const isCurrent = isCurrentOrNext && c.startTime <= currentTime;
                                                 const isNext = isCurrentOrNext && !isCurrent;
-                                                const isLastClass = index === scheduleInfo.classes.length - 1;
 
                                                 return (
                                                     <li key={c.slotId} className={`relative pl-8 transition-all duration-700 ease-out ${
