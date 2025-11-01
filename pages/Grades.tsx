@@ -36,8 +36,7 @@ const CGPAForecaster: React.FC = () => {
     const { scheduleData } = useSchedule();
     const { user } = useUser();
     const courseOption = user?.courseOption || 'CBCS';
-    const [targetCGPA, setTargetCGPA] = useState(8.0);
-    const [semestersRemaining, setSemestersRemaining] = useState(1);
+    const [targetCGPA, setTargetCGPA] = useState('8.0');
 
     const currentCourses = useMemo(() => {
         if (!scheduleData) return [];
@@ -101,22 +100,21 @@ const CGPAForecaster: React.FC = () => {
         const totalCreditsAfterThisSem = creditsTillLastSem + currentSemCredits;
         const newCgpa = ((currentCgpa * creditsTillLastSem) + (sgpa * currentSemCredits)) / totalCreditsAfterThisSem;
 
-        // Calculate required SGPA for target
-        const avgCreditsPerSem = currentSemCredits;
-        const projectedTotalCredits = creditsTillLastSem + (avgCreditsPerSem * semestersRemaining);
-        const requiredTotalPoints = targetCGPA * projectedTotalCredits;
+        // Calculate required SGPA for target (for current semester only)
+        const targetCGPANum = parseFloat(targetCGPA) || 0;
+        const requiredTotalPoints = targetCGPANum * totalCreditsAfterThisSem;
         const currentTotalPoints = currentCgpa * creditsTillLastSem;
         const requiredNewPoints = requiredTotalPoints - currentTotalPoints;
-        const requiredSGPA = requiredNewPoints / (avgCreditsPerSem * semestersRemaining);
+        const requiredSGPA = requiredNewPoints / currentSemCredits;
 
-        return { 
-            projectedSgpa: sgpa, 
-            projectedCgpa: newCgpa, 
+        return {
+            projectedSgpa: sgpa,
+            projectedCgpa: newCgpa,
             currentSemCredits,
             requiredSGPA: requiredSGPA,
             isTargetAchievable: requiredSGPA <= 10 && requiredSGPA >= 0
         };
-    }, [projectedGrades, currentCourses, gradesData, targetCGPA, semestersRemaining]);
+    }, [projectedGrades, currentCourses, gradesData, targetCGPA]);
 
     if (currentCourses.length === 0) {
         return (
@@ -176,21 +174,21 @@ const CGPAForecaster: React.FC = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                             </svg>
                         </div>
-                        <p className="text-3xl font-bold group-hover:scale-110 transition-transform origin-left">{calculations.projectedCgpa.toFixed(2)}</p>
+                        <p className="text-3xl font-bold group-hover:scale-110 transition-transform origin-left">{calculations.projectedCgpa}</p>
                         <div className="flex items-center gap-1 mt-1">
                             {calculations.projectedCgpa > (gradesData?.cgpa || 0) ? (
                                 <>
                                     <svg className="w-3 h-3 text-green-300 group-hover:scale-125 transition-transform" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
                                     </svg>
-                                    <span className="text-purple-100 text-xs">+{(calculations.projectedCgpa - (gradesData?.cgpa || 0)).toFixed(2)}</span>
+                                    <span className="text-purple-100 text-xs">+{(calculations.projectedCgpa - (gradesData?.cgpa || 0))}</span>
                                 </>
                             ) : (
                                 <>
                                     <svg className="w-3 h-3 text-red-300 group-hover:scale-125 transition-transform" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                     </svg>
-                                    <span className="text-purple-100 text-xs">{(calculations.projectedCgpa - (gradesData?.cgpa || 0)).toFixed(2)}</span>
+                                    <span className="text-purple-100 text-xs">{(calculations.projectedCgpa - (gradesData?.cgpa || 0))}</span>
                                 </>
                             )}
                         </div>
@@ -206,47 +204,54 @@ const CGPAForecaster: React.FC = () => {
                     </svg>
                     CGPA Target Calculator
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             Target CGPA
                         </label>
                         <input
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.1"
+                            type="text"
+                            inputMode="decimal"
                             value={targetCGPA}
-                            onChange={(e) => setTargetCGPA(parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                            Semesters Remaining
-                        </label>
-                        <input
-                            type="number"
-                            min="1"
-                            max="8"
-                            value={semestersRemaining}
-                            onChange={(e) => setSemestersRemaining(parseInt(e.target.value) || 1)}
-                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700"
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                // Allow empty, numbers, and decimal points
+                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                    // Limit to 10.0
+                                    const numValue = parseFloat(value);
+                                    if (value === '' || isNaN(numValue) || numValue <= 10) {
+                                        setTargetCGPA(value);
+                                    }
+                                }
+                            }}
+                            onBlur={(e) => {
+                                // Clean up on blur
+                                const numValue = parseFloat(e.target.value);
+                                if (isNaN(numValue) || numValue < 0) {
+                                    setTargetCGPA('0.0');
+                                } else if (numValue > 10) {
+                                    setTargetCGPA('10.0');
+                                } else {
+                                    setTargetCGPA(numValue.toFixed(1));
+                                }
+                            }}
+                            placeholder="e.g., 8.5"
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 dark:text-white"
                         />
                     </div>
                     <div className="flex items-end">
                         <div className={`w-full p-3 rounded-lg text-center ${
-                            calculations.isTargetAchievable 
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
+                            calculations.isTargetAchievable
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                                 : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                         }`}>
                             {calculations.isTargetAchievable ? (
                                 <div>
-                                    <p className="text-xs font-medium mb-1">Required SGPA</p>
+                                    <p className="text-xs font-medium mb-1">Required SGPA (This Semester)</p>
                                     <p className="text-xl font-bold">{calculations.requiredSGPA.toFixed(2)}</p>
                                 </div>
                             ) : (
-                                <p className="font-medium">Target not achievable</p>
+                                <p className="font-medium">Target not achievable this semester</p>
                             )}
                         </div>
                     </div>
