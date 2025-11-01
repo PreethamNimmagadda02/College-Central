@@ -47,7 +47,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const admissionNumber = authUser.email?.split('@')[0]?.toUpperCase() ?? 'Unknown';
                 const directoryEntry = STUDENT_DIRECTORY.find(student => student.admNo === admissionNumber);
 
-                const newUserProfile: User = {
+                const newUserProfile: Partial<User> = {
                   id: authUser.uid,
                   name: directoryEntry?.name ?? authUser.displayName ?? 'New Student',
                   admissionNumber: directoryEntry?.admNo ?? admissionNumber,
@@ -55,9 +55,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   hostel: '',
                   email: authUser.email ?? '',
                   phone: authUser.phoneNumber ?? '',
-                  profilePicture: authUser.photoURL ?? undefined,
-                  profilePicturePath: undefined, // No path for external URLs
-                  courseOption: directoryEntry ? 'CBCS' : undefined, // Default to CBCS only if in directory
+                  ...(authUser.photoURL && { profilePicture: authUser.photoURL }),
+                  ...(directoryEntry && { courseOption: 'CBCS' as const }),
                 };
                 
                 await userDocRef.set(newUserProfile); // Use compat API
