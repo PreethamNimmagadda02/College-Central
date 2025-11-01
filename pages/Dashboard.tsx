@@ -444,8 +444,13 @@ const Dashboard: React.FC = () => {
 
         let specialEventMessage: string | null = null;
         if (specialEvents.length > 0) {
-            const eventDescriptions = specialEvents.map(e => e.description).join(', ');
-            specialEventMessage = `🎉 Special Event: ${eventDescriptions}`;
+            if (specialEvents.length === 1) {
+                const firstEvent = specialEvents[0];
+                specialEventMessage = firstEvent ? `🎉 Special Event: ${firstEvent.description}` : null;
+            } else {
+                const eventDescriptions = specialEvents.map(e => `• ${e.description}`).join('\n');
+                specialEventMessage = `🎉 Special Events:\n${eventDescriptions}`;
+            }
         }
 
         // Check for exam periods FIRST (before holidays)
