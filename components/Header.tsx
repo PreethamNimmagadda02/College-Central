@@ -1,3 +1,17 @@
+/**
+ * @fileoverview Application header component - sticky navigation bar
+ *
+ * Features:
+ * - Always visible at top (fixed position with z-50)
+ * - Theme toggle (light/dark mode)
+ * - Course option switcher (CBCS/NEP)
+ * - User profile link with avatar
+ * - Responsive hamburger menu for mobile
+ * - Glassmorphism design with backdrop blur
+ *
+ * @module components/Header
+ */
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
@@ -57,10 +71,10 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
   };
 
   return (
-    <header className="fixed top-0 w-full bg-gradient-to-r from-white/95 via-slate-50/95 to-white/95 dark:from-slate-900/95 dark:via-slate-900/90 dark:to-slate-900/95 backdrop-blur-xl z-50 border-b border-slate-200/50 dark:border-slate-700/50 shadow-lg relative overflow-hidden">
+    <header className="fixed top-0 left-0 right-0 w-full bg-gradient-to-r from-white/95 via-slate-50/95 to-white/95 dark:from-slate-900/95 dark:via-slate-900/90 dark:to-slate-900/95 backdrop-blur-xl z-50 border-b border-slate-200/50 dark:border-slate-700/50 shadow-lg overflow-hidden">
       {/* Animated background accent */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-blue-500/5 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-blue-500/10"></div>
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-blue-500/5 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-blue-500/10 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent pointer-events-none"></div>
 
       <div className="px-4 sm:px-6 lg:px-8 relative">
         <div className="flex items-center justify-between h-16">
