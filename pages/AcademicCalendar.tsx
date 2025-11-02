@@ -119,6 +119,18 @@ const AcademicCalendar: React.FC = () => {
         const relevantEvents = upcomingAndOngoingEvents.filter(event => {
             const desc = event.description.toLowerCase();
 
+            const eventStartDate = new Date(event.date);
+            const eventEndDate = new Date(event.endDate || event.date);
+            eventStartDate.setHours(0, 0, 0, 0);
+            eventEndDate.setHours(0, 0, 0, 0);
+            const isOngoing = eventStartDate < today && eventEndDate >= today;
+
+            // Include ALL ongoing events regardless of target group
+            if (isOngoing) {
+                return true;
+            }
+
+            // For upcoming events, apply the existing filtering logic
             // Is it explicitly relevant?
             const isForRelevantGroup = relevantKeywords.some(kw => desc.includes(kw));
             if (isForRelevantGroup) {
@@ -602,7 +614,14 @@ const AcademicCalendar: React.FC = () => {
                                 <div className="space-y-4">
                                     {(events as CalendarEvent[]).map((event, monthIndex) => {
                                         const daysUntil = getDaysUntil(event.date);
-                                        const isUrgent = daysUntil >= 0 && daysUntil <= 3;
+                                        const eventEndDate = new Date(event.endDate || event.date);
+                                        eventEndDate.setHours(0, 0, 0, 0);
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        const eventStartDate = new Date(event.date);
+                                        eventStartDate.setHours(0, 0, 0, 0);
+                                        const isOngoing = eventStartDate < today && eventEndDate >= today;
+                                        const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !isOngoing;
                                         const isUpcoming = daysUntil > 3 && daysUntil <= 7;
                                         const hasReminder = reminderPreferences.includes(getEventKey(event));
                                         // Find the global index for this event
@@ -627,7 +646,8 @@ const AcademicCalendar: React.FC = () => {
                                                     hover:-translate-y-0.5
                                                     active:scale-[0.99]
                                                     p-4 mb-3 border-2
-                                                    ${isUrgent ? 'border-red-300 dark:border-red-600/50' :
+                                                    ${isOngoing ? 'border-green-500 dark:border-green-500' :
+                                                      isUrgent ? 'border-red-300 dark:border-red-600/50' :
                                                       isUpcoming ? 'border-amber-300 dark:border-amber-600/50' :
                                                       'border-slate-200 dark:border-slate-700'}
                                                     hover:border-primary/50 dark:hover:border-primary/50
@@ -679,16 +699,22 @@ const AcademicCalendar: React.FC = () => {
                                                                         <span className={`inline-flex items-center text-xs font-bold py-1.5 px-3 rounded-full shadow-sm ${getEventTypeColor(event.type)}`}>
                                                                             {event.type}
                                                                         </span>
-                                                                        <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-lg ${
-                                                                            isUrgent ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
-                                                                            isUpcoming ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
-                                                                            'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                                                                        }`}>
-                                                                            {daysUntil >= 0
-                                                                                ? daysUntil === 0 ? '📍 Today' : `📅 ${daysUntil}d`
-                                                                                : `✓ ${Math.abs(daysUntil)}d ago`
-                                                                            }
-                                                                        </span>
+                                                                        {isOngoing ? (
+                                                                            <span className="inline-flex items-center text-xs font-bold bg-green-500 text-white px-3 py-1.5 rounded-full shadow-md">
+                                                                                ✓ ONGOING
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-lg ${
+                                                                                isUrgent ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                                                                                isUpcoming ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
+                                                                                'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                                                                            }`}>
+                                                                                {daysUntil >= 0
+                                                                                    ? daysUntil === 0 ? '📍 Today' : `📅 ${daysUntil}d`
+                                                                                    : `✓ ${Math.abs(daysUntil)}d ago`
+                                                                                }
+                                                                            </span>
+                                                                        )}
                                                                         {hasReminder && (
                                                                             <div className="inline-flex items-center gap-1 bg-purple-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-md animate-pulse">
                                                                                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
@@ -737,7 +763,14 @@ const AcademicCalendar: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {filteredEvents.map((event: CalendarEvent, index: number) => {
                                 const daysUntil = getDaysUntil(event.date);
-                                const isUrgent = daysUntil >= 0 && daysUntil <= 3;
+                                const eventEndDate = new Date(event.endDate || event.date);
+                                eventEndDate.setHours(0, 0, 0, 0);
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const eventStartDate = new Date(event.date);
+                                eventStartDate.setHours(0, 0, 0, 0);
+                                const isOngoing = eventStartDate < today && eventEndDate >= today;
+                                const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !isOngoing;
                                 const isUpcoming = daysUntil > 3 && daysUntil <= 7;
                                 const hasReminder = reminderPreferences.includes(getEventKey(event));
 
@@ -752,7 +785,8 @@ const AcademicCalendar: React.FC = () => {
                                             hover:-translate-y-2 hover:scale-[1.02]
                                             active:scale-[0.98]
                                             cursor-pointer group
-                                            border-2 border-transparent hover:border-primary/30
+                                            border-2 hover:border-primary/30
+                                            ${isOngoing ? 'border-green-500 dark:border-green-500' : 'border-transparent'}
                                             ${isUrgent ? 'ring-2 ring-red-400/50 dark:ring-red-500/50' : ''}
                                             ${isUpcoming ? 'ring-2 ring-amber-400/50 dark:ring-amber-500/50' : ''}
                                         `}
@@ -769,8 +803,12 @@ const AcademicCalendar: React.FC = () => {
                                             </div>
                                         )}
 
-                                        {/* Urgency indicator */}
-                                        {isUrgent && daysUntil >= 0 && (
+                                        {/* Ongoing/Urgency indicator */}
+                                        {isOngoing ? (
+                                            <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                                                ONGOING
+                                            </div>
+                                        ) : isUrgent && daysUntil >= 0 && (
                                             <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                                                 URGENT
                                             </div>
@@ -863,7 +901,14 @@ const AcademicCalendar: React.FC = () => {
                                     {filteredEvents.map((event: CalendarEvent, index: number) => {
                                         const daysUntil = getDaysUntil(event.date);
                                         const isPast = getDaysUntil(event.endDate || event.date) < 0;
-                                        const isUrgent = daysUntil >= 0 && daysUntil <= 3;
+                                        const eventEndDate = new Date(event.endDate || event.date);
+                                        eventEndDate.setHours(0, 0, 0, 0);
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        const eventStartDate = new Date(event.date);
+                                        eventStartDate.setHours(0, 0, 0, 0);
+                                        const isOngoing = eventStartDate < today && eventEndDate >= today;
+                                        const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !isOngoing;
                                         const isUpcoming = daysUntil > 3 && daysUntil <= 7;
                                         const hasReminder = reminderPreferences.includes(getEventKey(event));
 
@@ -880,7 +925,8 @@ const AcademicCalendar: React.FC = () => {
                                                     hover:shadow-lg hover:shadow-primary/5
                                                     hover:scale-[1.01] hover:-translate-y-0.5
                                                     active:scale-[0.99] active:translate-y-0
-                                                    ${isUrgent ? 'border-l-4 border-l-red-500 bg-red-50/30 dark:bg-red-900/10' :
+                                                    ${isOngoing ? 'border-l-4 border-l-green-500 bg-green-50/30 dark:bg-green-900/10' :
+                                                      isUrgent ? 'border-l-4 border-l-red-500 bg-red-50/30 dark:bg-red-900/10' :
                                                       isUpcoming ? 'border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-900/10' :
                                                       'border-l-4 border-l-transparent hover:border-l-primary'}
                                                 `}
@@ -933,17 +979,17 @@ const AcademicCalendar: React.FC = () => {
                                                     </span>
                                                 </td>
                                                 <td className="py-5 px-6">
-                                                    {isPast ? (
+                                                    {isOngoing ? (
+                                                        <span className="inline-flex items-center text-sm font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-3 py-1.5 rounded-full">
+                                                            <span className="animate-pulse mr-1.5">●</span>
+                                                            Ongoing
+                                                        </span>
+                                                    ) : isPast ? (
                                                         <span className="inline-flex items-center text-sm font-semibold text-slate-500 dark:text-slate-400">
                                                             <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                             </svg>
                                                             Completed
-                                                        </span>
-                                                    ) : daysUntil <= 0 ? (
-                                                        <span className="inline-flex items-center text-sm font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-3 py-1.5 rounded-full">
-                                                            <span className="animate-pulse mr-1.5">●</span>
-                                                            Ongoing
                                                         </span>
                                                     ) : isUrgent ? (
                                                         <span className="inline-flex items-center text-sm font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-3 py-1.5 rounded-full">
