@@ -182,6 +182,8 @@ const Dashboard: React.FC = () => {
     const [editingLink, setEditingLink] = useState<QuickLink | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [newLink, setNewLink] = useState({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+    const [searchQuery, setSearchQuery] = useState('');
+    const [draggedLinkId, setDraggedLinkId] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState(() => new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
     
@@ -285,6 +287,47 @@ const Dashboard: React.FC = () => {
         saveQuickLinks(defaultQuickLinks);
         setIsManagingLinks(false);
     };
+
+    // Drag and drop handlers
+    const handleDragStart = (e: React.DragEvent, linkId: string) => {
+        setDraggedLinkId(linkId);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const handleDrop = (e: React.DragEvent, targetLinkId: string) => {
+        e.preventDefault();
+        if (!draggedLinkId || draggedLinkId === targetLinkId) return;
+
+        const draggedIndex = quickLinks.findIndex(link => link.id === draggedLinkId);
+        const targetIndex = quickLinks.findIndex(link => link.id === targetLinkId);
+
+        if (draggedIndex === -1 || targetIndex === -1) return;
+
+        const newLinks = [...quickLinks];
+        const [removed] = newLinks.splice(draggedIndex, 1);
+        if (removed) {
+            newLinks.splice(targetIndex, 0, removed);
+            saveQuickLinks(newLinks);
+        }
+        setDraggedLinkId(null);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedLinkId(null);
+    };
+
+    // Filter links based on search query
+    const filteredLinks = useMemo(() => {
+        if (!searchQuery.trim()) return quickLinks;
+        return quickLinks.filter(link =>
+            link.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [quickLinks, searchQuery]);
 
     const scheduleInfo = useMemo(() => {
         const defaultState = {
@@ -1577,102 +1620,207 @@ const Dashboard: React.FC = () => {
 
                 {/* Right Column - 1/3 width */}
                 <div className="space-y-6">
-                    {/* Quick Links - Enhanced Grid */}
-                    <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-semibold">Quick Access</h3>
+                    {/* Quick Links - Compact & Flexible */}
+                    <div className="bg-gradient-to-br from-white to-slate-50 dark:from-dark-card dark:to-slate-900/50 p-4 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 backdrop-blur-sm">
+                        <div className="flex justify-between items-center mb-3">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg">
+                                    <svg className="w-4 h-4 text-primary dark:text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-base font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                                    Quick Access
+                                </h3>
+                            </div>
                             <button
                                 onClick={() => setIsManagingLinks(!isManagingLinks)}
-                                className="text-sm text-primary hover:text-primary-dark font-medium transition-colors"
+                                className="flex items-center gap-1 px-2.5 py-1 text-xs text-white bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary rounded-lg font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
                             >
-                                {isManagingLinks ? 'Done' : 'Manage'}
+                                {isManagingLinks ? (
+                                    <>
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Done
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                        </svg>
+                                        Manage
+                                    </>
+                                )}
                             </button>
                         </div>
 
+                        {/* Search Bar */}
+                        {quickLinks.length > 6 && (
+                            <div className="mb-3 relative">
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search links..."
+                                    className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-primary dark:focus:border-secondary transition-all duration-200 placeholder-slate-400 dark:placeholder-slate-500"
+                                />
+                                <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
                         {isManagingLinks && (
-                            <div className="mb-4 space-y-2">
+                            <div className="mb-3 grid grid-cols-2 gap-2 animate-fadeIn">
                                 <button
                                     onClick={() => setShowAddModal(true)}
-                                    className="w-full py-2 px-4 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors text-sm font-medium"
+                                    className="py-1.5 px-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg transition-all duration-300 text-xs font-medium shadow-md hover:shadow-lg hover:scale-105 flex items-center justify-center gap-1.5"
                                 >
-                                    + Add New Link
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Add Link
                                 </button>
                                 <button
                                     onClick={handleResetToDefault}
-                                    className="w-full py-2 px-4 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors text-sm font-medium"
+                                    className="py-1.5 px-3 bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white rounded-lg transition-all duration-300 text-xs font-medium shadow-md hover:shadow-lg hover:scale-105 flex items-center justify-center gap-1.5"
                                 >
-                                    Reset to Default
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    Reset
                                 </button>
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-3">
-                            {quickLinks.map(link => (
-                                <div key={link.id} className="relative group">
-                                    {editingLink?.id === link.id ? (
-                                        <div className="p-3 rounded-lg border-2 border-primary bg-slate-50 dark:bg-slate-800 space-y-2">
-                                            <input
-                                                type="text"
-                                                value={editingLink.name}
-                                                onChange={(e) => setEditingLink({ ...editingLink, name: e.target.value })}
-                                                className="w-full px-2 py-1 text-xs border rounded dark:bg-slate-700 dark:border-slate-600"
-                                                placeholder="Name"
-                                            />
-                                            <input
-                                                type="text"
-                                                value={editingLink.href}
-                                                onChange={(e) => setEditingLink({ ...editingLink, href: e.target.value })}
-                                                className="w-full px-2 py-1 text-xs border rounded dark:bg-slate-700 dark:border-slate-600"
-                                                placeholder="URL"
-                                            />
-                                            <button
-                                                onClick={() => handleEditLink(link)}
-                                                className="w-full py-1 bg-primary text-white rounded text-xs font-medium"
-                                            >
-                                                Save
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <a
-                                            href={link.href}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex flex-col items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all hover:shadow-md"
-                                        >
-                                            <div className={`text-2xl mb-2 ${link.color} group-hover:scale-110 transition-transform`}>
-                                                {link.icon}
-                                            </div>
-                                            <span className="text-xs text-center text-slate-600 dark:text-slate-300 group-hover:text-primary dark:group-hover:text-secondary">
-                                                {link.name}
-                                            </span>
-                                        </a>
-                                    )}
+                        {isManagingLinks && (
+                            <div className="mb-2 px-2.5 py-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-2 text-xs text-blue-700 dark:text-blue-300">
+                                <svg className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Drag to reorder • Click to edit/delete</span>
+                            </div>
+                        )}
 
-                                    {isManagingLinks && editingLink?.id !== link.id && (
-                                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => handleEditLink(link)}
-                                                className="p-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 shadow-md"
-                                                title="Edit"
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 auto-rows-fr">
+                            {filteredLinks.length > 0 ? (
+                                filteredLinks.map(link => (
+                                    <div
+                                        key={link.id}
+                                        className={`relative group ${isManagingLinks ? 'cursor-move' : ''} ${draggedLinkId === link.id ? 'opacity-50 scale-95' : ''} transition-all duration-200 h-full`}
+                                        draggable={isManagingLinks && editingLink?.id !== link.id}
+                                        onDragStart={(e) => handleDragStart(e, link.id)}
+                                        onDragOver={handleDragOver}
+                                        onDrop={(e) => handleDrop(e, link.id)}
+                                        onDragEnd={handleDragEnd}
+                                    >
+                                        {editingLink?.id === link.id ? (
+                                            <div className="h-full min-h-[110px] p-2.5 rounded-lg border-2 border-primary bg-gradient-to-br from-primary/5 to-secondary/5 space-y-1.5 shadow-lg animate-fadeIn flex flex-col">
+                                                <input
+                                                    type="text"
+                                                    value={editingLink.name}
+                                                    onChange={(e) => setEditingLink({ ...editingLink, name: e.target.value })}
+                                                    className="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 focus:border-primary dark:focus:border-secondary focus:outline-none transition-colors"
+                                                    placeholder="Name"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={editingLink.href}
+                                                    onChange={(e) => setEditingLink({ ...editingLink, href: e.target.value })}
+                                                    className="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 focus:border-primary dark:focus:border-secondary focus:outline-none transition-colors"
+                                                    placeholder="URL"
+                                                />
+                                                <button
+                                                    onClick={() => handleEditLink(link)}
+                                                    className="w-full py-1.5 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white rounded-md text-xs font-medium transition-all duration-300 shadow-md hover:shadow-lg mt-auto"
+                                                >
+                                                    Save
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <a
+                                                href={link.href}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => isManagingLinks && e.preventDefault()}
+                                                className="h-full min-h-[110px] flex flex-col items-center justify-center p-3 rounded-lg bg-white dark:bg-slate-800/50 hover:bg-gradient-to-br hover:from-primary/5 hover:to-secondary/5 transition-all duration-300 hover:shadow-lg hover:scale-105 border border-transparent hover:border-primary/20 dark:hover:border-secondary/20 backdrop-blur-sm"
                                             >
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                                </svg>
-                                            </button>
-                                            <button
-                                                onClick={() => handleRemoveLink(link.id)}
-                                                className="p-1 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-md"
-                                                title="Remove"
-                                            >
-                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    )}
+                                                <div className={`text-2xl mb-2 ${link.color} group-hover:scale-110 transition-all duration-300 transform group-hover:rotate-6 flex-shrink-0`}>
+                                                    {link.icon}
+                                                </div>
+                                                <div className="flex-1 flex flex-col items-center justify-center w-full">
+                                                    <span className="text-[11px] text-center font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary dark:group-hover:text-secondary transition-colors line-clamp-2 w-full px-1 break-words leading-tight" title={link.name}>
+                                                        {link.name}
+                                                    </span>
+                                                    {link.isCustom && (
+                                                        <span className="mt-1.5 px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full text-[9px] font-medium flex-shrink-0">
+                                                            Custom
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </a>
+                                        )}
+
+                                        {isManagingLinks && editingLink?.id !== link.id && (
+                                            <div className="absolute -top-1.5 -right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
+                                                <button
+                                                    onClick={() => handleEditLink(link)}
+                                                    className="p-1 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200"
+                                                    title="Edit"
+                                                >
+                                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRemoveLink(link.id)}
+                                                    className="p-1 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200"
+                                                    title="Delete"
+                                                >
+                                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="col-span-full py-6 text-center">
+                                    <svg className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">No links found</p>
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Try a different search term</p>
                                 </div>
-                            ))}
+                            )}
                         </div>
+
+                        {/* Link count indicator */}
+                        {quickLinks.length > 0 && (
+                            <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                                <span className="flex items-center gap-1">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    {filteredLinks.length} of {quickLinks.length} links
+                                </span>
+                                {searchQuery && (
+                                    <span className="text-primary dark:text-secondary font-medium">Filtered</span>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Weather Widget - Enhanced & Interactive */}
