@@ -943,45 +943,97 @@ const Dashboard: React.FC = () => {
                     </div>
 
                     {/* Semester Progress */}
-                    <div className="bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-800/50 dark:to-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2.5 rounded-xl shadow-md">
-                                    <span className="text-2xl">🎯</span>
-                                </div>
-                                <h3 className="text-slate-800 dark:text-white font-bold text-lg">Semester Progress</h3>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                    {Math.round(semesterProgress)}%
-                                </p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Complete</p>
-                            </div>
-                        </div> 
-
-                        {/* Progress Bar */}
-                        <div className="relative">
-                            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden shadow-inner">
-                                <div
-                                    className="bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 h-full rounded-full transition-all duration-1000 ease-out relative group"
-                                    style={{ width: `${semesterProgress}%` }}
-                                >
-                                    <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-all"></div>
-                                </div>
-                            </div>
-                            {/* Milestone markers */}
-                            <div className="flex justify-between mt-3 text-xs font-semibold">
-                                <span className={`${semesterProgress >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>🚀 Start</span>
-                                <span className={`${semesterProgress >= 50 ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500'}`}>⚡ Midpoint</span>
-                                <span className={`${semesterProgress >= 100 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>🎓 Finals</span>
-                            </div>
+                    <div className="group relative bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-800/50 dark:to-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-6 overflow-hidden hover:shadow-lg transition-all duration-300">
+                        {/* Animated background pattern */}
+                        <div className="absolute inset-0 opacity-5 dark:opacity-10">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full blur-3xl transform translate-x-8 -translate-y-8"></div>
+                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500 rounded-full blur-3xl transform -translate-x-8 translate-y-8"></div>
                         </div>
 
-                        {calendarData ? null : (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-4 text-center">
-                                Using default dates • <Link to="/academic-calendar" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">Upload your calendar</Link>
-                            </p>
-                        )}
+                        <div className="relative">
+                            <div className="flex items-center justify-between mb-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2.5 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300">
+                                        <span className="text-2xl">🎯</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-slate-800 dark:text-white font-bold text-lg">Semester Progress</h3>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Week {currentWeek}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-pulse">
+                                        {Math.round(semesterProgress)}%
+                                    </p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Complete</p>
+                                </div>
+                            </div>
+
+                            {/* Enhanced Progress Bar */}
+                            <div className="relative mb-4">
+                                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-4 overflow-hidden shadow-inner">
+                                    <div
+                                        className="bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
+                                        style={{ width: `${semesterProgress}%` }}
+                                    >
+                                        {/* Shimmer effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                                        {/* Pulse overlay */}
+                                        <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-all duration-300"></div>
+                                    </div>
+                                </div>
+
+                                {/* Milestone markers with enhanced visuals */}
+                                <div className="flex justify-between mt-4 px-1">
+                                    <div className="flex flex-col items-center gap-1 relative">
+                                        <div className={`w-2 h-2 rounded-full transition-all duration-300 ${semesterProgress >= 0 ? 'bg-blue-500 shadow-lg shadow-blue-500/50 scale-110' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                                        <span className={`text-xs font-semibold transition-all duration-300 ${semesterProgress >= 0 ? 'text-blue-600 dark:text-blue-400 scale-105' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            🚀 Start
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1 relative">
+                                        <div className={`w-2 h-2 rounded-full transition-all duration-300 ${semesterProgress >= 50 ? 'bg-purple-500 shadow-lg shadow-purple-500/50 scale-110' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                                        <span className={`text-xs font-semibold transition-all duration-300 ${semesterProgress >= 50 ? 'text-purple-600 dark:text-purple-400 scale-105' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            ⚡ Midpoint
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1 relative">
+                                        <div className={`w-2 h-2 rounded-full transition-all duration-300 ${semesterProgress >= 100 ? 'bg-blue-500 shadow-lg shadow-blue-500/50 scale-110' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                                        <span className={`text-xs font-semibold transition-all duration-300 ${semesterProgress >= 100 ? 'text-blue-600 dark:text-blue-400 scale-105' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            🎓 Finals
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-slate-200 dark:border-slate-600">
+                                <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 hover:scale-105 transition-transform duration-200">
+                                    <div className="text-xl">📅</div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Days Passed</p>
+                                        <p className="text-sm font-bold text-slate-800 dark:text-white">
+                                            {Math.floor((now.getTime() - (calendarData?.semesterStartDate ? new Date(calendarData.semesterStartDate).getTime() : new Date(now.getFullYear(), SEMESTER_DEFAULTS.START_MONTH, SEMESTER_DEFAULTS.START_DAY).getTime())) / (1000 * 60 * 60 * 24))}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 hover:scale-105 transition-transform duration-200">
+                                    <div className="text-xl">⏳</div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Days Left</p>
+                                        <p className="text-sm font-bold text-slate-800 dark:text-white">
+                                            {Math.max(0, Math.ceil(((calendarData?.semesterEndDate ? new Date(calendarData.semesterEndDate).getTime() : new Date(now.getFullYear(), SEMESTER_DEFAULTS.END_MONTH, SEMESTER_DEFAULTS.END_DAY).getTime()) - now.getTime()) / (1000 * 60 * 60 * 24)))}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {calendarData ? null : (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-4 text-center">
+                                    Using default dates • <Link to="/academic-calendar" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">Upload your calendar</Link>
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

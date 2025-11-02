@@ -194,8 +194,10 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
           // when the cursor moves beyond the sidebar boundary
         }}
         className={`fixed left-0 top-16 bottom-0 z-40 flex flex-col w-64
-          bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl
-          ${sidebarCollapsed && isHoveringEdge ? 'shadow-2xl' : ''}
+          bg-gradient-to-b from-white/95 via-white/95 to-slate-50/95
+          dark:from-slate-900/95 dark:via-slate-900/95 dark:to-slate-900/90
+          backdrop-blur-xl
+          ${sidebarCollapsed && isHoveringEdge ? 'shadow-2xl shadow-blue-500/10' : ''}
           border-r border-slate-200/50 dark:border-slate-700/50
           transition-all overflow-visible duration-150 ease-out
           ${
@@ -224,32 +226,45 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
         >
           {/* Academics Section */}
           {(!sidebarCollapsed || isHoveringEdge) && (
-            <div className="px-3 mb-2">
-              <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                Academics
-              </h3>
+            <div className="px-3 mb-3 relative">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
+                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Academics
+                </h3>
+              </div>
             </div>
           )}
-          <ul className="flex flex-col gap-1 mb-6">
-            {menuSections.academics.map((item) => (
-              <li key={item.path}>
+          <ul className="flex flex-col gap-1.5 mb-6">
+            {menuSections.academics.map((item, index) => (
+              <li key={item.path} style={{ animationDelay: `${index * 50}ms` }} className="animate-fadeIn">
                 <NavLink
                   to={item.path}
                   end={item.path === '/'}
                   className={({ isActive }) =>
-                    `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all ${
+                    `relative group flex items-center gap-3 rounded-xl py-2.5 font-medium transition-all overflow-hidden ${
                       sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'
                     } ${
                       isActive
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02] duration-150'
-                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01] duration-200'
+                        ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/40 scale-[1.02] duration-150'
+                        : 'text-slate-600 hover:bg-gradient-to-r hover:from-slate-100 hover:to-blue-50 dark:text-slate-300 dark:hover:from-slate-800 dark:hover:to-slate-800/70 hover:scale-[1.01] duration-200'
                     }`
                   }
                   onClick={() => sidebarOpen && setSidebarOpen(false)}
                 >
-                  <span className="shrink-0 transition-transform duration-150 group-hover:scale-110">{item.icon}</span>
-                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
-                  <span className={tooltipClasses}>{item.label}</span>
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                      )}
+                      <span className="shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6 relative z-10">{item.icon}</span>
+                      <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 relative z-10 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
+                      {isActive && !sidebarCollapsed && (
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>
+                      )}
+                      <span className={tooltipClasses}>{item.label}</span>
+                    </>
+                  )}
                 </NavLink>
               </li>
             ))}
@@ -257,31 +272,44 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
 
           {/* Campus Section */}
           {(!sidebarCollapsed || isHoveringEdge) && (
-            <div className="px-3 mb-2">
-              <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                Campus Life
-              </h3>
+            <div className="px-3 mb-3 relative">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 bg-gradient-to-b from-purple-500 to-blue-600 rounded-full"></div>
+                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Campus Life
+                </h3>
+              </div>
             </div>
           )}
-          <ul className="flex flex-col gap-1">
-            {menuSections.campus.map((item) => (
-              <li key={item.path}>
+          <ul className="flex flex-col gap-1.5">
+            {menuSections.campus.map((item, index) => (
+              <li key={item.path} style={{ animationDelay: `${index * 50}ms` }} className="animate-fadeIn">
                 <NavLink
                   to={item.path}
                   className={({ isActive }) =>
-                    `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all ${
+                    `relative group flex items-center gap-3 rounded-xl py-2.5 font-medium transition-all overflow-hidden ${
                       sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'
                     } ${
                       isActive
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02] duration-150'
-                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01] duration-200'
+                        ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/40 scale-[1.02] duration-150'
+                        : 'text-slate-600 hover:bg-gradient-to-r hover:from-slate-100 hover:to-blue-50 dark:text-slate-300 dark:hover:from-slate-800 dark:hover:to-slate-800/70 hover:scale-[1.01] duration-200'
                     }`
                   }
                   onClick={() => sidebarOpen && setSidebarOpen(false)}
                 >
-                  <span className="shrink-0 transition-transform duration-150 group-hover:scale-110">{item.icon}</span>
-                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
-                  <span className={tooltipClasses}>{item.label}</span>
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                      )}
+                      <span className="shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6 relative z-10">{item.icon}</span>
+                      <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 relative z-10 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>{item.label}</span>
+                      {isActive && !sidebarCollapsed && (
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>
+                      )}
+                      <span className={tooltipClasses}>{item.label}</span>
+                    </>
+                  )}
                 </NavLink>
               </li>
             ))}
@@ -291,37 +319,50 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
           <div className="flex-1"></div>
 
           {/* Bottom actions */}
-          <div className="border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
-            <ul className="flex flex-col gap-1">
+          <div className="relative border-t border-slate-200/80 dark:border-slate-700/80 pt-3 mt-3">
+            {/* Decorative gradient line */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
+
+            <ul className="flex flex-col gap-1.5">
                <li>
                   <NavLink
                     to="/profile"
                     className={({ isActive }) =>
-                      `relative group flex items-center gap-3 rounded-lg py-2.5 font-medium transition-all ${
+                      `relative group flex items-center gap-3 rounded-xl py-2.5 font-medium transition-all overflow-hidden ${
                         sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'
                       } ${
                         isActive
-                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02] duration-150'
-                          : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 hover:scale-[1.01] duration-200'
+                          ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/40 scale-[1.02] duration-150'
+                          : 'text-slate-600 hover:bg-gradient-to-r hover:from-slate-100 hover:to-blue-50 dark:text-slate-300 dark:hover:from-slate-800 dark:hover:to-slate-800/70 hover:scale-[1.01] duration-200'
                       }`
                     }
                   >
-                    <span className="shrink-0 transition-transform duration-150 group-hover:scale-110"><ProfileIcon /></span>
-                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Profile</span>
-                    <span className={tooltipClasses}>Profile</span>
+                    {({ isActive }) => (
+                      <>
+                        {isActive && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                        )}
+                        <span className="shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6 relative z-10"><ProfileIcon /></span>
+                        <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 relative z-10 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Profile</span>
+                        {isActive && !sidebarCollapsed && (
+                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>
+                        )}
+                        <span className={tooltipClasses}>Profile</span>
+                      </>
+                    )}
                   </NavLink>
                 </li>
                 <li>
                   <button
                     onClick={handleLogout}
-                    className={`relative group flex items-center gap-3 w-full rounded-lg py-2.5
-                      text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                      font-medium transition-all duration-200 hover:scale-[1.01] ${
+                    className={`relative group flex items-center gap-3 w-full rounded-xl py-2.5 overflow-hidden
+                      text-red-600 dark:text-red-400 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100/50 dark:hover:from-red-900/20 dark:hover:to-red-900/30
+                      font-medium transition-all duration-200 hover:scale-[1.01] hover:shadow-md hover:shadow-red-500/20 ${
                         sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'
                       }`}
                   >
-                    <span className="shrink-0 transition-transform duration-150 group-hover:scale-110"><LogoutIcon /></span>
-                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Logout</span>
+                    <span className="shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6 relative z-10"><LogoutIcon /></span>
+                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-150 relative z-10 ${sidebarCollapsed && !isHoveringEdge ? 'lg:w-0 lg:opacity-0' : 'lg:w-auto lg:opacity-100'}`}>Logout</span>
                     <span className={tooltipClasses}>Logout</span>
                   </button>
                 </li>
