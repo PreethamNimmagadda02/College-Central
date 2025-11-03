@@ -12,6 +12,7 @@ import { FormsProvider } from './contexts/FormsContext';
 import Layout from './pages/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
+import UpdatePrompt from './components/UpdatePrompt';
 import { measurePageLoad } from './utils/performance';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
@@ -156,21 +157,24 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <AuthProvider>
-      <UserProvider>
-        <GradesProvider>
-          <ScheduleProvider>
-            <CalendarProvider>
-              <FormsProvider>
-                <CampusMapProvider>
-                  <RouterProvider router={router} />
-                </CampusMapProvider>
-              </FormsProvider>
-            </CalendarProvider>
-          </ScheduleProvider>
-        </GradesProvider>
-      </UserProvider>
-    </AuthProvider>
+    <>
+      <AuthProvider>
+        <UserProvider>
+          <GradesProvider>
+            <ScheduleProvider>
+              <CalendarProvider>
+                <FormsProvider>
+                  <CampusMapProvider>
+                    <RouterProvider router={router} />
+                  </CampusMapProvider>
+                </FormsProvider>
+              </CalendarProvider>
+            </ScheduleProvider>
+          </GradesProvider>
+        </UserProvider>
+      </AuthProvider>
+      <UpdatePrompt />
+    </>
   );
 };
 

@@ -1,6 +1,24 @@
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import fs from 'fs';
+
+// Plugin to inject build timestamp into service worker
+const injectBuildTime = (): Plugin => {
+  return {
+    name: 'inject-build-time',
+    closeBundle() {
+      const swPath = path.resolve(__dirname, 'dist/sw.js');
+      if (fs.existsSync(swPath)) {
+        let content = fs.readFileSync(swPath, 'utf-8');
+        const buildTime = Date.now().toString();
+        content = content.replace('__BUILD_TIME__', buildTime);
+        fs.writeFileSync(swPath, content);
+        console.log(`✓ Service worker updated with build time: ${buildTime}`);
+      }
+    }
+  };
+};
 
 export default defineConfig({
   server: {
@@ -11,7 +29,7 @@ export default defineConfig({
       host: 'localhost'
     }
   },
-  plugins: [react()],
+  plugins: [react(), injectBuildTime()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),
