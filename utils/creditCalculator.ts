@@ -18,11 +18,11 @@ export const calculateCreditsFromLTP = (
     return 0;
   }
 
-  const [L, T, P] = parts;
+  const [L = 0, T = 0, P = 0] = parts;
 
   if (courseOption === 'NEP') {
     // NEP: Credits = L + T + P
-    return L + T + P;
+    return L + T + (0.5*P);
   } else {
     // CBCS: Credits = 3*L + 2*T + 1*P
     return (3 * L) + (2 * T) + P;
@@ -35,5 +35,5 @@ export const calculateCreditsFromLTP = (
  * @returns Formula description string
  */
 export const getCreditFormula = (courseOption: 'CBCS' | 'NEP' = 'CBCS'): string => {
-  return courseOption === 'NEP' ? 'L + T + P' : '3L + 2T + P';
+  return courseOption === 'NEP' ? 'L + T + 0.5*P' : '3L + 2T + P';
 };

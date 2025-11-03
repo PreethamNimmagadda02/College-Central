@@ -41,6 +41,6 @@ export const COURSE_OPTIONS: Array<{ value: 'CBCS' | 'NEP'; label: string; descr
   {
     value: 'NEP',
     label: 'NEP (National Education Policy)',
-    description: 'Credits = L + T + P'
+    description: 'Credits = L + T + 0.5×P'
   }
 ];

@@ -36,7 +36,7 @@ const CGPAForecaster: React.FC = () => {
     const { scheduleData } = useSchedule();
     const { user } = useUser();
     const courseOption = user?.courseOption || 'CBCS';
-    const [targetCGPA, setTargetCGPA] = useState('8.0');
+    const [targetCGPA, setTargetCGPA] = useState('7.0');
 
     const currentCourses = useMemo(() => {
         if (!scheduleData) return [];
@@ -723,7 +723,7 @@ const Grades: React.FC = () => {
                             Track and analyze your academic journey
                         </p>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                            {courseOption === 'NEP' ? '📚 NEP (L+T+P)' : '📖 CBCS (3L+2T+P)'}
+                            {courseOption === 'NEP' ? '📚 NEP (L+T+0.5*P)' : '📖 CBCS (3L+2T+P)'}
                         </span>
                     </div>
                 </div>
