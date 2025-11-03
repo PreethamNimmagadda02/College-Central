@@ -51,6 +51,8 @@ const Profile: React.FC = () => {
         link: string;
         linkText: string;
     } | null>(null);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
 
     const [activity, setActivity] = useState<ActivityItem[]>([]);
     const [activityLoading, setActivityLoading] = useState(true);
@@ -173,20 +175,127 @@ const Profile: React.FC = () => {
         }
     };
 
+    // Image compression function
+    const compressImage = (file: File): Promise<File> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target?.result as string;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now(),
+                            });
+                            resolve(compressedFile);
+                        } else {
+                            reject(new Error('Image compression failed'));
+                        }
+                    }, 'image/jpeg', 0.85);
+                };
+                img.onerror = () => reject(new Error('Failed to load image'));
+            };
+            reader.onerror = () => reject(new Error('Failed to read file'));
+        });
+    };
+
+    const processAndUploadImage = async (file: File) => {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            showNotification('Please upload an image file', 'error');
+            return;
+        }
+
+        // Validate file size (max 10MB before compression)
+        if (file.size > 10 * 1024 * 1024) {
+            showNotification('Image too large. Maximum size is 10MB', 'error');
+            return;
+        }
+
+        setIsUploading(true);
+        showNotification('Processing image...', 'success');
+
+        try {
+            // Create preview
+            const previewUrl = URL.createObjectURL(file);
+            setPreviewImage(previewUrl);
+
+            // Compress image
+            const compressedFile = await compressImage(file);
+            showNotification('Uploading...', 'success');
+
+            // Upload
+            await uploadProfilePicture(compressedFile);
+            showNotification('Profile picture updated! ✨', 'success');
+            setPreviewImage(null);
+        } catch (error: any) {
+            console.error(error);
+            showNotification(error instanceof Error ? error.message : 'Upload failed. Please try again.', 'error');
+            setPreviewImage(null);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setIsUploading(true);
-            showNotification('Uploading picture...', 'success');
-            try {
-                await uploadProfilePicture(file);
-                showNotification('Profile picture updated!', 'success');
-            } catch (error: any) {
-                console.error(error);
-                showNotification(error instanceof Error ? error.message : 'Upload failed. Please try again.', 'error');
-            } finally {
-                setIsUploading(false);
-            }
+            await processAndUploadImage(file);
+        }
+        // Reset input
+        if (e.target) {
+            e.target.value = '';
+        }
+    };
+
+    // Drag and drop handlers
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        if (isEditing && !isUploading) {
+            setIsDragging(true);
+        }
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+
+        if (!isEditing || isUploading) return;
+
+        const file = e.dataTransfer.files?.[0];
+        if (file) {
+            await processAndUploadImage(file);
         }
     };
 
@@ -242,6 +351,28 @@ const Profile: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 p-4 lg:p-6 pb-16 mb-12">
+            {/* Notification Toast */}
+            {notification && (
+                <div className="fixed top-20 right-4 z-50 animate-slideIn">
+                    <div className={`px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 ${
+                        notification.type === 'success'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-red-500 text-white'
+                    }`}>
+                        {notification.type === 'success' ? (
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                        ) : (
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        )}
+                        <span className="font-medium">{notification.message}</span>
+                    </div>
+                </div>
+            )}
+
             {/* Header Section */}
             <div className="bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg overflow-hidden">
                 <div className="p-8 relative">
@@ -254,44 +385,82 @@ const Profile: React.FC = () => {
                     </div>
 
                     <div className="relative flex flex-col md:flex-row items-center md:items-start gap-6">
-                        {/* Profile Picture */}
+                        {/* Profile Picture with Drag & Drop */}
                         <div
                             className={`relative group ${isEditing ? 'cursor-pointer' : (user.profilePicture && !imageError ? 'cursor-zoom-in' : 'cursor-default')}`}
                             onClick={handlePictureClick}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
                         >
-                            {user.profilePicture && !imageError ? (
+                            {/* Main Profile Image */}
+                            {(previewImage || (user.profilePicture && !imageError)) ? (
                                 <img
-                                    className="h-32 w-32 rounded-full ring-4 ring-white/50 shadow-xl object-cover"
-                                    src={user.profilePicture}
+                                    className={`h-32 w-32 rounded-full ring-4 shadow-xl object-cover transition-all duration-300 ${
+                                        isDragging ? 'ring-blue-400 ring-8 scale-105' : 'ring-white/50'
+                                    } ${isUploading ? 'opacity-50' : 'opacity-100'}`}
+                                    src={previewImage || user.profilePicture}
                                     alt="Profile"
                                     onError={() => setImageError(true)}
                                 />
                             ) : (
-                                <div className="h-32 w-32 rounded-full bg-white text-primary flex items-center justify-center text-4xl font-bold ring-4 ring-white/50 shadow-xl">
+                                <div className={`h-32 w-32 rounded-full bg-white text-primary flex items-center justify-center text-4xl font-bold ring-4 shadow-xl transition-all duration-300 ${
+                                    isDragging ? 'ring-blue-400 ring-8 scale-105' : 'ring-white/50'
+                                }`}>
                                     {getInitials(user.name)}
                                 </div>
                             )}
+
+                            {/* Hidden File Input */}
                             {isEditing && (
-                                <>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        hidden
-                                        accept="image/*"
-                                        onChange={handleImageUpload}
-                                        disabled={isUploading}
-                                    />
-                                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {isUploading ? (
-                                            <div className="w-8 h-8 border-4 border-t-transparent border-white rounded-full animate-spin"></div>
-                                        ) : (
-                                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    hidden
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    disabled={isUploading}
+                                />
+                            )}
+
+                            {/* Hover Overlay with Upload Icon */}
+                            {isEditing && (
+                                <div className={`absolute inset-0 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
+                                    isDragging
+                                        ? 'bg-blue-500/80 opacity-100'
+                                        : 'bg-black/50 opacity-0 group-hover:opacity-100'
+                                }`}>
+                                    {isUploading ? (
+                                        <div className="flex flex-col items-center">
+                                            <div className="w-10 h-10 border-4 border-t-transparent border-white rounded-full animate-spin mb-2"></div>
+                                            <span className="text-white text-xs font-medium">Uploading...</span>
+                                        </div>
+                                    ) : isDragging ? (
+                                        <div className="flex flex-col items-center text-white">
+                                            <svg className="w-10 h-10 mb-1 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
+                                            <span className="text-xs font-bold">Drop here!</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center text-white">
+                                            <svg className="w-10 h-10 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
-                                        )}
+                                            <span className="text-xs font-medium">Click or Drop</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Upload Progress Indicator */}
+                            {isUploading && (
+                                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                                    <div className="bg-white/90 backdrop-blur-sm text-primary text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
+                                        Processing...
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
 

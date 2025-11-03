@@ -8,6 +8,7 @@ import { STUDENT_DIRECTORY } from '../data/studentDirectoryData';
 import { logActivity } from '../services/activityService';
 import { MAX_FILE_SIZE_BYTES, ALLOWED_IMAGE_TYPES, PROFILE_PICTURES_PATH } from '../utils/constants';
 import { getImageCompression } from '../utils/lazyImports';
+import { getCourseOptionFromAdmissionNumber } from '../utils/courseUtils';
 
 interface UserContextType {
   user: User | null;
@@ -56,9 +57,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   email: authUser.email ?? '',
                   phone: authUser.phoneNumber ?? '',
                   ...(authUser.photoURL && { profilePicture: authUser.photoURL }),
-                  ...(directoryEntry && { courseOption: 'CBCS' as const }),
+                  // Automatically set NEP for 24JE onwards, CBCS for earlier batches (23JE and below)
+                  courseOption: getCourseOptionFromAdmissionNumber(directoryEntry?.admNo ?? admissionNumber),
                 };
-                
+
                 await userDocRef.set(newUserProfile); // Use compat API
 
                 await logActivity(authUser.uid, {
