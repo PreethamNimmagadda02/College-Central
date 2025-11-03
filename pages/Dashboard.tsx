@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ClassSchedule, CalendarEvent } from '../types';
+import { ClassSchedule, CalendarEvent, QuickLink } from '../types';
 import { useUser } from '../contexts/UserContext';
 import { useGrades } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
@@ -63,14 +63,8 @@ const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
     return colors[hash % colors.length];
 };
 
-interface QuickLink {
-    id: string;
-    name: string;
-    href: string;
+interface QuickLinkWithIcon extends QuickLink {
     icon: React.ReactNode;
-    isExternal: boolean;
-    color: string;
-    isCustom?: boolean;
 }
 
 interface WeatherData {
@@ -133,19 +127,36 @@ const getWindDirection = (degrees: number): string => {
     return directions[index] ?? 'N';
 };
 
-// Default quick links
-const defaultQuickLinks: QuickLink[] = [
-    { id: '1', name: 'MIS Portal', href: 'https://mis.iitism.ac.in/', icon: <PortalIcon />, isExternal: true, color: 'text-blue-600 dark:text-blue-400', isCustom: false },
-    { id: '2', name: 'Abhikalp Portal', href: 'https://abhikalp.iitism.ac.in/', icon: <PortalIcon />, isExternal: true, color: 'text-red-600 dark:text-red-400', isCustom: false },
-    { id: '3', name: 'ARK Portal', href: 'https://ark.iitism.ac.in/', icon: <PortalIcon />, isExternal: true, color: 'text-indigo-600 dark:text-indigo-400', isCustom: false },
-    { id: '4', name: 'CDC Portal', href: 'https://www.iitism.ac.in/career-development-centre', icon: <CdcIcon />, isExternal: true, color: 'text-green-600 dark:text-green-400', isCustom: false },
-    { id: '5', name: 'Central Library', href: 'https://library.iitism.ac.in/', icon: <LibraryIcon />, isExternal: true, color: 'text-purple-600 dark:text-purple-400', isCustom: false },
-    { id: '6', name: 'Fee Payment/Pre-Registration', href: 'https://pre-registration.iitism.ac.in/login/', icon: <FeeIcon />, isExternal: true, color: 'text-orange-600 dark:text-orange-400', isCustom: false },
-    { id: '7', name: 'Scholarships', href: 'https://www.iitism.ac.in/name-of-scholarships', icon: <ScholarshipIcon />, isExternal: true, color: 'text-teal-600 dark:text-teal-400', isCustom: false },
-    { id: '8', name: 'Health Centre', href: 'https://people.iitism.ac.in/~healthcenter/index.php', icon: <HealthIcon />, isExternal: true, color: 'text-pink-600 dark:text-pink-400', isCustom: false },
-    { id: '9', name: 'IIT(ISM) Website', href: 'https://www.iitism.ac.in/', icon: <WebsiteIcon />, isExternal: true, color: 'text-cyan-600 dark:text-cyan-400', isCustom: false },
-    { id: '10', name: 'College Directory', href: 'https://share.google/YnDiJNPeoRC7UMl5t', icon: <DirectoryIcon />, isExternal: true, color: 'text-yellow-600 dark:text-yellow-400', isCustom: false },
+// Default quick links (stored data without icons)
+const defaultQuickLinksData: QuickLink[] = [
+    { id: '1', name: 'MIS Portal', href: 'https://mis.iitism.ac.in/', isExternal: true, color: 'text-blue-600 dark:text-blue-400', isCustom: false },
+    { id: '2', name: 'Abhikalp Portal', href: 'https://abhikalp.iitism.ac.in/', isExternal: true, color: 'text-red-600 dark:text-red-400', isCustom: false },
+    { id: '3', name: 'ARK Portal', href: 'https://ark.iitism.ac.in/', isExternal: true, color: 'text-indigo-600 dark:text-indigo-400', isCustom: false },
+    { id: '4', name: 'CDC Portal', href: 'https://www.iitism.ac.in/career-development-centre', isExternal: true, color: 'text-green-600 dark:text-green-400', isCustom: false },
+    { id: '5', name: 'Central Library', href: 'https://library.iitism.ac.in/', isExternal: true, color: 'text-purple-600 dark:text-purple-400', isCustom: false },
+    { id: '6', name: 'Fee Payment/Pre-Registration', href: 'https://pre-registration.iitism.ac.in/login/', isExternal: true, color: 'text-orange-600 dark:text-orange-400', isCustom: false },
+    { id: '7', name: 'Scholarships', href: 'https://www.iitism.ac.in/name-of-scholarships', isExternal: true, color: 'text-teal-600 dark:text-teal-400', isCustom: false },
+    { id: '8', name: 'Health Centre', href: 'https://people.iitism.ac.in/~healthcenter/index.php', isExternal: true, color: 'text-pink-600 dark:text-pink-400', isCustom: false },
+    { id: '9', name: 'IIT(ISM) Website', href: 'https://www.iitism.ac.in/', isExternal: true, color: 'text-cyan-600 dark:text-cyan-400', isCustom: false },
+    { id: '10', name: 'College Directory', href: 'https://share.google/YnDiJNPeoRC7UMl5t', isExternal: true, color: 'text-yellow-600 dark:text-yellow-400', isCustom: false },
 ];
+
+// Get icon for a link based on its id
+const getIconForLink = (id: string): React.ReactNode => {
+    const iconMap: Record<string, React.ReactNode> = {
+        '1': <PortalIcon />,
+        '2': <PortalIcon />,
+        '3': <PortalIcon />,
+        '4': <CdcIcon />,
+        '5': <LibraryIcon />,
+        '6': <FeeIcon />,
+        '7': <ScholarshipIcon />,
+        '8': <HealthIcon />,
+        '9': <WebsiteIcon />,
+        '10': <DirectoryIcon />,
+    };
+    return iconMap[id] || <WebsiteIcon />;
+};
 
 const Dashboard: React.FC = () => {
     // Performance monitoring
@@ -156,7 +167,7 @@ const Dashboard: React.FC = () => {
     const [weatherError, setWeatherError] = useState<string | null>(null);
     const [detailedWeather, setDetailedWeather] = useState<DetailedWeatherData | null>(null);
     const [showWeatherModal, setShowWeatherModal] = useState(false);
-    const { user, loading: userLoading } = useUser();
+    const { user, loading: userLoading, updateUser } = useUser();
     const { gradesData, loading: gradesLoading } = useGrades();
     const { scheduleData, loading: scheduleLoading } = useSchedule();
     const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey, toggleReminderPreference, updateUserEvent } = useCalendar();
@@ -206,40 +217,28 @@ const Dashboard: React.FC = () => {
         return () => clearInterval(intervalId);
     }, [selectedDate]);
 
-    // Load quick links from localStorage on mount
+    // Load quick links from Firestore on mount (synced with user profile)
     useEffect(() => {
-        const savedLinks = localStorage.getItem('customQuickLinks');
-        if (savedLinks) {
-            try {
-                const parsed = JSON.parse(savedLinks);
-                // Reconstruct icons for saved links
-                const linksWithIcons = parsed.map((link: QuickLink) => ({
-                    ...link,
-                    icon: link.isCustom ? <WebsiteIcon /> : getDefaultIcon(link.id)
-                }));
-                setQuickLinks(linksWithIcons);
-            } catch (e) {
-                setQuickLinks(defaultQuickLinks);
-            }
+        if (user?.quickLinks && user.quickLinks.length > 0) {
+            setQuickLinks(user.quickLinks);
         } else {
-            setQuickLinks(defaultQuickLinks);
+            // Initialize with default links if user has no custom links
+            setQuickLinks(defaultQuickLinksData);
         }
-    }, []);
+    }, [user?.quickLinks]);
 
-    // Save quick links to localStorage
-    const saveQuickLinks = (links: QuickLink[]) => {
-        const linksToSave = links.map(link => ({
-            ...link,
-            icon: null // Don't save React nodes
-        }));
-        localStorage.setItem('customQuickLinks', JSON.stringify(linksToSave));
+    // Save quick links to Firestore
+    const saveQuickLinks = async (links: QuickLink[]) => {
         setQuickLinks(links);
-    };
 
-    // Get default icon for preloaded links
-    const getDefaultIcon = (id: string) => {
-        const defaultLink = defaultQuickLinks.find(link => link.id === id);
-        return defaultLink?.icon || <WebsiteIcon />;
+        // Update user profile in Firestore with new quick links
+        if (user?.id) {
+            try {
+                await updateUser({ quickLinks: links });
+            } catch (error) {
+                console.error('Failed to save quick links:', error);
+            }
+        }
     };
 
     // Add new quick link
@@ -249,7 +248,6 @@ const Dashboard: React.FC = () => {
                 id: Date.now().toString(),
                 name: newLink.name,
                 href: newLink.href.startsWith('http') ? newLink.href : `https://${newLink.href}`,
-                icon: <WebsiteIcon />,
                 isExternal: true,
                 color: newLink.color,
                 isCustom: true
@@ -284,7 +282,7 @@ const Dashboard: React.FC = () => {
 
     // Reset to default links
     const handleResetToDefault = () => {
-        saveQuickLinks(defaultQuickLinks);
+        saveQuickLinks(defaultQuickLinksData);
         setIsManagingLinks(false);
     };
 
@@ -1757,7 +1755,7 @@ const Dashboard: React.FC = () => {
                                                 className="h-full min-h-[110px] flex flex-col items-center justify-center p-3 rounded-lg bg-white dark:bg-slate-800/50 hover:bg-gradient-to-br hover:from-primary/5 hover:to-secondary/5 transition-all duration-300 hover:shadow-lg hover:scale-105 border border-transparent hover:border-primary/20 dark:hover:border-secondary/20 backdrop-blur-sm"
                                             >
                                                 <div className={`text-2xl mb-2 ${link.color} group-hover:scale-110 transition-all duration-300 transform group-hover:rotate-6 flex-shrink-0`}>
-                                                    {link.icon}
+                                                    {getIconForLink(link.id)}
                                                 </div>
                                                 <div className="flex-1 flex flex-col items-center justify-center w-full">
                                                     <span className="text-[11px] text-center font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary dark:group-hover:text-secondary transition-colors line-clamp-2 w-full px-1 break-words leading-tight" title={link.name}>

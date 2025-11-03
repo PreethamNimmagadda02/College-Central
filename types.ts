@@ -14,6 +14,7 @@ export interface User {
   year?: string;
   semester?: number;
   courseOption?: 'CBCS' | 'NEP';
+  quickLinks?: QuickLink[];
 }
 
 export interface Grade {
@@ -192,6 +193,16 @@ export interface UserFormsData {
         title: string;
         timestamp: number;
     }>;
+}
+
+// Quick Links type
+export interface QuickLink {
+    id: string;
+    name: string;
+    href: string;
+    isExternal?: boolean;
+    color?: string;
+    isCustom?: boolean;
 }
 
 // Activity Log type
