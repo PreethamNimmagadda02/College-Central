@@ -57,32 +57,47 @@ self.addEventListener('message', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Don't cache Firestore requests, let the SDK handle offline persistence.
-  if (event.request.url.includes('firestore.googleapis.com')) {
-    event.respondWith(fetch(event.request));
+  // Don't cache Firebase backend requests - let Firebase SDKs handle these
+  if (event.request.url.includes('firestore.googleapis.com') ||
+      event.request.url.includes('firebaselogging-pa.googleapis.com') ||
+      event.request.url.includes('firebase.googleapis.com')) {
+    event.respondWith(fetch(event.request).catch(() => {
+      // Silently fail for Firebase logging/analytics errors
+      return new Response('', { status: 200 });
+    }));
     return;
   }
 
   // Network-first strategy for weather and AI API requests
   // Always try to fetch fresh data, fall back to cache if network fails
+  // Only cache GET requests (POST requests cannot be cached)
   if (event.request.url.includes('open-meteo.com') || event.request.url.includes('generativelanguage.googleapis.com')) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          // Clone the response to cache it
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseToCache);
-          });
+          // Only cache GET requests
+          if (event.request.method === 'GET') {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseToCache);
+            });
+          }
           return response;
         })
         .catch(() => {
-          // Network failed, try to return cached version
-          return caches.match(event.request).then(cachedResponse => {
-            return cachedResponse || new Response('{"error": "Offline"}', {
-              status: 503,
-              headers: { 'Content-Type': 'application/json' }
+          // Network failed, try to return cached version (only works for GET requests)
+          if (event.request.method === 'GET') {
+            return caches.match(event.request).then(cachedResponse => {
+              return cachedResponse || new Response('{"error": "Offline"}', {
+                status: 503,
+                headers: { 'Content-Type': 'application/json' }
+              });
             });
+          }
+          // For non-GET requests, return error response
+          return new Response('{"error": "Offline"}', {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
           });
         })
     );
