@@ -120,15 +120,15 @@ const CampusMap: React.FC = () => {
         </div>
         
         {/* Map View Toggles */}
-        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 shadow-md hover:shadow-lg transition-all duration-300">
           {(['map', 'satellite'] as const).map((view) => (
             <button
               key={view}
               onClick={() => setMapView(view)}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+              className={`px-3 md:px-4 py-2 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${
                 mapView === view
-                  ? 'bg-white dark:bg-slate-600 text-primary shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-105'
               }`}
             >
               {view.charAt(0).toUpperCase() + view.slice(1)}
@@ -138,53 +138,73 @@ const CampusMap: React.FC = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+        <div
+          onClick={() => setSelectedCategory('academic')}
+          className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative z-10 flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-xs">Academic Buildings</p>
-              <p className="text-2xl font-bold">{locationCounts.academic}</p>
+              <p className="text-blue-100 text-xs font-semibold">Academic Buildings</p>
+              <p className="text-xl md:text-2xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">{locationCounts.academic}</p>
             </div>
-            <span className="text-3xl opacity-80">🏛️</span>
+            <span className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">🏛️</span>
           </div>
         </div>
-        <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white p-4 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between">
+        <div
+          onClick={() => setSelectedCategory('administration')}
+          className="group relative overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative z-10 flex items-center justify-between">
             <div>
-              <p className="text-indigo-100 text-xs">Administration</p>
-              <p className="text-2xl font-bold">{locationCounts.administration}</p>
+              <p className="text-indigo-100 text-xs font-semibold">Administration</p>
+              <p className="text-xl md:text-2xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">{locationCounts.administration}</p>
             </div>
-            <span className="text-3xl opacity-80">🏢</span>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100 text-xs">Residentials</p>
-              <p className="text-2xl font-bold">{locationCounts.residential}</p>
-            </div>
-            <span className="text-3xl opacity-80">🏠</span>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-100 text-xs">Facilities</p>
-              <p className="text-2xl font-bold">{locationCounts.facilities}</p>
-            </div>
-            <span className="text-3xl opacity-80">🎯</span>
+            <span className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">🏢</span>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between">
+        <div
+          onClick={() => setSelectedCategory('residential')}
+          className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative z-10 flex items-center justify-between">
             <div>
-              <p className="text-orange-100 text-xs">Food & Dining</p>
-              <p className="text-2xl font-bold">{locationCounts.dining}</p>
+              <p className="text-green-100 text-xs font-semibold">Residentials</p>
+              <p className="text-xl md:text-2xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">{locationCounts.residential}</p>
             </div>
-            <span className="text-3xl opacity-80">🍽️</span>
+            <span className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">🏠</span>
+          </div>
+        </div>
+
+        <div
+          onClick={() => setSelectedCategory('facilities')}
+          className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative z-10 flex items-center justify-between">
+            <div>
+              <p className="text-purple-100 text-xs font-semibold">Facilities</p>
+              <p className="text-xl md:text-2xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">{locationCounts.facilities}</p>
+            </div>
+            <span className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">🎯</span>
+          </div>
+        </div>
+
+        <div
+          onClick={() => setSelectedCategory('dining')}
+          className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative z-10 flex items-center justify-between">
+            <div>
+              <p className="text-orange-100 text-xs font-semibold">Food & Dining</p>
+              <p className="text-xl md:text-2xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">{locationCounts.dining}</p>
+            </div>
+            <span className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">🍽️</span>
           </div>
         </div>
       </div>
@@ -200,7 +220,7 @@ const CampusMap: React.FC = () => {
                 placeholder="Search locations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all hover:border-primary/50"
               />
               <svg className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -211,62 +231,62 @@ const CampusMap: React.FC = () => {
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedCategory('all')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  selectedCategory === 'all' 
-                    ? 'bg-primary text-white' 
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'all'
+                    ? 'bg-primary text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
                 }`}
               >
                 All
               </button>
               <button
                 onClick={() => setSelectedCategory('academic')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  selectedCategory === 'academic' 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'academic'
+                    ? 'bg-blue-500 text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
                 }`}
               >
                 Academic
               </button>
               <button
                 onClick={() => setSelectedCategory('administration')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  selectedCategory === 'administration' 
-                    ? 'bg-indigo-500 text-white' 
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'administration'
+                    ? 'bg-indigo-500 text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
                 }`}
-              > 
+              >
                 Administration
               </button>
               <button
                 onClick={() => setSelectedCategory('residential')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  selectedCategory === 'residential' 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'residential'
+                    ? 'bg-green-500 text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
                 }`}
               >
                 Residential
               </button>
               <button
                 onClick={() => setSelectedCategory('facilities')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  selectedCategory === 'facilities' 
-                    ? 'bg-purple-500 text-white' 
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'facilities'
+                    ? 'bg-purple-500 text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
                 }`}
               >
                 Facilities
               </button>
               <button
                 onClick={() => setSelectedCategory('dining')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  selectedCategory === 'dining' 
-                    ? 'bg-orange-500 text-white' 
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'dining'
+                    ? 'bg-orange-500 text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
                 }`}
-              > 
+              >
                 Dining
               </button>
             </div>
@@ -283,32 +303,25 @@ const CampusMap: React.FC = () => {
                 Campus Locations
               </h3>
             </div>
-            <div className="max-h-[500px] overflow-y-auto">
+            <div className="max-h-[500px] overflow-y-auto overflow-x-hidden">
               {searchedLocations.length > 0 ? (
                 searchedLocations.map(location => (
                   <div
                     key={location.id}
                     onClick={() => setSelectedLocation(location)}
-                    className={`p-4 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors ${
-                      selectedLocation?.id === location.id ? 'bg-primary/10 dark:bg-primary/20' : ''
+                    className={`group relative overflow-hidden p-4 border-b border-slate-100 dark:border-slate-800 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white dark:hover:from-slate-800 dark:hover:to-slate-800/50 cursor-pointer transition-all duration-300 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] ${
+                      selectedLocation?.id === location.id ? 'bg-primary/10 dark:bg-primary/20 shadow-md' : ''
                     }`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl">{location.icon}</span>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-slate-900 dark:text-white">
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        <span className="text-2xl group-hover:scale-110 transition-transform duration-300">{location.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
                             {location.name}
                           </h4>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                            {location.description}
-                          </p>
-                          {location.details?.openingHours && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              ⏰ {location.details.openingHours}
-                            </p>
-                          )}
-                          <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${
+                          <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full transition-all duration-300 group-hover:scale-105 ${
                             location.category === 'academic' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                             location.category === 'residential' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                             location.category === 'facilities' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
@@ -324,10 +337,10 @@ const CampusMap: React.FC = () => {
                           e.stopPropagation();
                           toggleSavePlace(location.id);
                         }}
-                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
+                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-300 hover:scale-110 active:scale-95"
                       >
                         <svg
-                          className={`w-5 h-5 ${savedPlaces.includes(location.id) ? 'text-yellow-500 fill-current' : 'text-slate-400'}`}
+                          className={`w-5 h-5 transition-all duration-300 ${savedPlaces.includes(location.id) ? 'text-yellow-500 fill-current scale-110' : 'text-slate-400 hover:text-yellow-500'}`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -346,38 +359,31 @@ const CampusMap: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Routes */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4">
+          {/* Campus Info - Moved Below Locations */}
+          <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4">
             <h3 className="font-semibold mb-3 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Popular Routes
+              Campus Information
             </h3>
-            <div className="space-y-2">
-              {quickRoutes.map((route, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    const url = getDirections(route.from, route.to);
-                    window.open(url, '_blank');
-                    showNotification(`Opening directions from ${route.from} to ${route.to}`);
-                  }}
-                  className="w-full bg-white dark:bg-dark-card p-3 rounded-lg hover:shadow-md transition-all cursor-pointer"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-left">
-                      <p className="font-medium">{route.from} → {route.to}</p>
-                      <p className="text-xs text-slate-500">{route.distance} • {route.time}</p>
-                    </div>
-                    <div className="text-primary">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                      </svg>
-                    </div>
-                  </div>
-                </button>
-              ))}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-600 dark:text-slate-400">Total Area</span>
+                <span className="font-medium">393 acres</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-600 dark:text-slate-400">Main Gate Hours</span>
+                <span className="font-medium">5:00 AM to 10:00 PM</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-600 dark:text-slate-400">Emergency</span>
+                <span className="font-medium text-red-500">100</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-600 dark:text-slate-400">Health Centre</span> 
+                <span className="font-medium">0326-223-5988</span>
+              </div>
             </div>
           </div>
         </div>
@@ -386,44 +392,40 @@ const CampusMap: React.FC = () => {
         <div className="lg:col-span-2 space-y-4">
           {/* Selected Location Info */}
           {selectedLocation && (
-            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/30 rounded-xl p-4">
+            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/30 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in">
               <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  <span className="text-3xl">{selectedLocation.icon}</span>
-                  <div>
-                    <h3 className="text-lg font-semibold">{selectedLocation.name}</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">{selectedLocation.description}</p>
-                    {selectedLocation.details && (
-                      <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-400">
-                        {selectedLocation.details.openingHours && (
-                          <p>⏰ {selectedLocation.details.openingHours}</p>
-                        )}
-                        {selectedLocation.details.contact && (
-                          <p>📞 {selectedLocation.details.contact}</p>
-                        )}
-                        {selectedLocation.details.capacity && (
-                          <p>👥 Capacity: {selectedLocation.details.capacity}</p>
-                        )}
-                      </div>
-                    )}
-                    <div className="mt-3 flex gap-2">
+                <div className="flex items-start gap-3 flex-1">
+                  <span className="text-3xl md:text-4xl animate-bounce-subtle">{selectedLocation.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base md:text-lg font-semibold">{selectedLocation.name}</h3>
+                    <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${
+                      selectedLocation.category === 'academic' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                      selectedLocation.category === 'residential' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                      selectedLocation.category === 'facilities' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                      selectedLocation.category === 'administration' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' :
+                      'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                    }`}>
+                      {selectedLocation.category}
+                    </span>
+                    <div className="mt-3 flex flex-wrap gap-2">
                       <button
                         onClick={() => {
                           setToLocation(selectedLocation.name);
                           setShowDirections(true);
                         }}
-                        className="px-3 py-1 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
+                        className="group px-3 py-1.5 bg-primary text-white text-xs md:text-sm rounded-lg hover:bg-primary-dark transition-all duration-300 flex items-center gap-1.5 shadow-md hover:shadow-lg hover:-translate-y-0.5 hover:scale-105 active:scale-95"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                         </svg>
-                        Get Directions
+                        <span className="hidden sm:inline">Get Directions</span>
+                        <span className="sm:hidden">Directions</span>
                       </button>
                       <button
                         onClick={() => handleShareLocation(selectedLocation.id)}
-                        className="px-3 py-1 bg-white dark:bg-dark-card text-slate-700 dark:text-slate-300 text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1"
+                        className="group px-3 py-1.5 bg-white dark:bg-dark-card text-slate-700 dark:text-slate-300 text-xs md:text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 flex items-center gap-1.5 shadow-md hover:shadow-lg hover:-translate-y-0.5 hover:scale-105 active:scale-95"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a9.001 9.001 0 01-7.432 0m9.032-4.026A9.001 9.001 0 0112 3c-2.796 0-5.29 1.28-6.716 3.284m9.032 4.026a3.001 3.001 0 00-4.632 0" />
                         </svg>
                         Share
@@ -456,90 +458,11 @@ const CampusMap: React.FC = () => {
                 title="IIT(ISM) Dhanbad Campus Map"
                 className="h-[600px] w-full"
               ></iframe>
-              
-              {/* Map Overlay Controls */}
-              <div className="absolute top-4 right-4 space-y-2">
-                <button className="p-2 bg-white dark:bg-dark-card rounded-lg shadow-lg hover:shadow-xl transition-all">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-                <button className="p-2 bg-white dark:bg-dark-card rounded-lg shadow-lg hover:shadow-xl transition-all">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                  </svg>
-                </button>
-                <button className="p-2 bg-white dark:bg-dark-card rounded-lg shadow-lg hover:shadow-xl transition-all">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Map Legend */}
-            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
-                  <span>Academic</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-indigo-500 rounded-full"></span>
-                  <span>Administration</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                  <span>Residential</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-purple-500 rounded-full"></span>
-                  <span>Facilities</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
-                  <span>Dining</span>
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <button className="p-3 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-lg transition-all flex flex-col items-center gap-2">
-              <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h11M9 21V3m0 0L3 9m6-6L15 9" />
-              </svg>
-              <span className="text-xs font-medium">Navigate</span>
-            </button>
-            <button className="p-3 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-lg transition-all flex flex-col items-center gap-2">
-              <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-xs font-medium">Schedule</span>
-            </button>
-            <button className="p-3 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-lg transition-all flex flex-col items-center gap-2">
-              <svg className="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-xs font-medium">Info</span>
-            </button>
-            <button
-              onClick={() => setShowEmergency(true)}
-              className="p-3 bg-white dark:bg-dark-card rounded-lg shadow hover:shadow-lg transition-all flex flex-col items-center gap-2"
-            >
-              <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span className="text-xs font-medium">Emergency</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Features */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Campus Information and Saved Places - Moved Below Map */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* Saved Places */}
         <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4">
           <h3 className="font-semibold mb-3 flex items-center">
@@ -549,7 +472,7 @@ const CampusMap: React.FC = () => {
             Saved Places ({savedPlaces.length})
           </h3>
           {savedPlaces.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-slate-100 dark:scrollbar-track-slate-800 pr-2">
               {locations
                 .filter(loc => savedPlaces.includes(loc.id))
                 .map(location => (
@@ -587,70 +510,41 @@ const CampusMap: React.FC = () => {
           )}
         </div>
 
-        {/* Campus Info */}
-        <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4">
+        {/* Popular Routes */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl shadow-lg p-4">
           <h3 className="font-semibold mb-3 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
             </svg>
-            Campus Information
-          </h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Total Area</span>
-              <span className="font-medium">393 acres</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Main Gate Hours</span>
-              <span className="font-medium">24/7</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Emergency</span>
-              <span className="font-medium text-red-500">100</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Health Centre</span>
-              <span className="font-medium">0326-223-5435</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Transport Options */}
-        <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4">
-          <h3 className="font-semibold mb-3 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
-            Transport Options
+            Popular Routes
           </h3>
           <div className="space-y-2">
-            <button className="w-full p-2 text-left bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span>🚌</span>
-                  <span className="text-sm font-medium">Campus Bus</span>
+            {quickRoutes.map((route, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  const url = getDirections(route.from, route.to);
+                  window.open(url, '_blank');
+                  showNotification(`Opening directions from ${route.from} to ${route.to}`);
+                }}
+                className="group relative overflow-hidden w-full bg-white dark:bg-dark-card p-3 rounded-lg hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-0.5 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10 flex items-center justify-between">
+                  <div className="text-sm text-left flex-1 min-w-0">
+                    <p className="font-medium group-hover:text-primary transition-colors truncate">{route.from} → {route.to}</p>
+                    <p className="text-xs text-slate-500">{route.distance} • {route.time}</p>
+                  </div>
+                  <div className="text-primary group-hover:scale-110 group-hover:translate-x-1 transition-all duration-300 flex-shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                  </div>
                 </div>
-                <span className="text-xs text-slate-500">Every 30min</span>
-              </div>
-            </button>
-            <button className="w-full p-2 text-left bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span>🚲</span>
-                  <span className="text-sm font-medium">Bicycle Stands</span>
-                </div>
-                <span className="text-xs text-slate-500">12 locations</span>
-              </div>
-            </button>
-            <button className="w-full p-2 text-left bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span>🚶</span>
-                  <span className="text-sm font-medium">Walking Paths</span>
-                </div>
-                <span className="text-xs text-slate-500">Well-lit</span>
-              </div>
-            </button>
+              </button>
+            ))}
+          </div>
+        </div>
           </div>
         </div>
       </div>
@@ -886,4 +780,4 @@ const CampusMap: React.FC = () => {
   );
 };
 
-export default CampusMap;
+export default React.memo(CampusMap);

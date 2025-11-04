@@ -1,3 +1,4 @@
+// FIX: Add optional properties to User interface to resolve property access errors across components.
 export interface User {
   id: string;
   name: string;
@@ -6,6 +7,14 @@ export interface User {
   hostel: string;
   email: string;
   phone: string;
+  profilePicture?: string;
+  profilePicturePath?: string;
+  fullName?: string;
+  rollNumber?: string;
+  year?: string;
+  semester?: number;
+  courseOption?: 'CBCS' | 'NEP';
+  quickLinks?: QuickLink[];
 }
 
 export interface Grade {
@@ -14,6 +23,7 @@ export interface Grade {
   credits: number;
   grade: string;
   attendance: number;
+  ltp?: string; // L-T-P format (e.g., "3-1-0")
 }
 
 export type SessionType = 'Monsoon' | 'Winter' | 'Summer';
@@ -28,13 +38,14 @@ export interface Semester {
 
 export interface ClassSchedule {
   slotId: string;
-  day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
+  day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
   startTime: string;
   endTime: string;
   courseName: string;
   courseCode: string;
   instructor: string;
   location: string;
+  isCustomTask?: boolean; // Marks tasks created by user vs. auto-generated course classes
 }
 
 export interface TimeTableCourse {
@@ -182,6 +193,16 @@ export interface UserFormsData {
         title: string;
         timestamp: number;
     }>;
+}
+
+// Quick Links type
+export interface QuickLink {
+    id: string;
+    name: string;
+    href: string;
+    isExternal?: boolean;
+    color?: string;
+    isCustom?: boolean;
 }
 
 // Activity Log type

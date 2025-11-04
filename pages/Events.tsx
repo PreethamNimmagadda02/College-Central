@@ -36,6 +36,9 @@ const getEventStatus = (dateString: string): 'upcoming' | 'today' | 'past' => {
 };
 
 const EventCard: React.FC<{ event: CampusEvent }> = ({ event }) => {
+    const [imageError, setImageError] = useState(false);
+    const [imageLoading, setImageLoading] = useState(true);
+    
     const status = getEventStatus(event.date);
     const isNew = () => {
         const createdAt = new Date();
@@ -43,17 +46,55 @@ const EventCard: React.FC<{ event: CampusEvent }> = ({ event }) => {
         return true; // Since we don't have createdAt timestamp, we'll skip this for now
     };
 
+    // Validate and provide fallback for sourceUrl
+    const getValidSourceUrl = (url: string | undefined): string | null => {
+        if (!url) return null;
+        
+        // Check if URL is from the old broken paths
+        const brokenPaths = [
+            'all-active-notices',
+            'dept-event-list', 
+            'seminar-1',
+            '~mbc/mbcpress_release.php'
+        ];
+        
+        const hasBrokenPath = brokenPaths.some(path => url.includes(path));
+        if (hasBrokenPath) {
+            // Redirect to main website instead
+            return 'https://www.iitism.ac.in/';
+        }
+        
+        return url;
+    };
+
+    const validSourceUrl = getValidSourceUrl(event.sourceUrl);
+
     const cardContent = (
         <>
             <div className="relative">
+                {imageLoading && !imageError && (
+                    <div className="w-full h-44 bg-slate-200 dark:bg-slate-700 animate-pulse flex items-center justify-center">
+                        <div className="text-slate-400 dark:text-slate-500">Loading...</div>
+                    </div>
+                )}
                 <img
                     src={event.imageUrl}
                     alt={event.title}
-                    className="w-full h-44 object-cover"
+                    className={`w-full h-44 object-cover ${imageLoading ? 'hidden' : ''}`}
+                    onLoad={() => setImageLoading(false)}
                     onError={(e) => {
-                        e.currentTarget.src = 'https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=IIT+Dhanbad';
+                        setImageError(true);
+                        setImageLoading(false);
+                        e.currentTarget.src = '/logo.svg';
+                        e.currentTarget.className = 'w-full h-44 object-contain bg-slate-100 dark:bg-slate-800 p-4';
                     }}
+                    loading="lazy"
                 />
+                {imageError && (
+                    <div className="w-full h-44 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                        <img src="/logo.svg" alt="Fallback" className="w-16 h-16 opacity-50" />
+                    </div>
+                )}
                 {status === 'today' && (
                     <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">
                         TODAY
@@ -90,7 +131,7 @@ const EventCard: React.FC<{ event: CampusEvent }> = ({ event }) => {
                         <span className="line-clamp-1">{event.location}</span>
                     </div>
                 </div>
-                {event.sourceUrl && (
+                {validSourceUrl && (
                     <div className="mt-3 flex items-center gap-1 text-xs text-primary dark:text-secondary font-medium">
                         <span>View Details</span>
                         <span>→</span>
@@ -104,10 +145,10 @@ const EventCard: React.FC<{ event: CampusEvent }> = ({ event }) => {
         status === 'past' ? 'opacity-60' : ''
     }`;
 
-    if (event.sourceUrl) {
+    if (validSourceUrl) {
         return (
             <a
-                href={event.sourceUrl}
+                href={validSourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`${cardClasses} transform hover:-translate-y-2 block group`}
@@ -121,6 +162,29 @@ const EventCard: React.FC<{ event: CampusEvent }> = ({ event }) => {
 };
 
 const AnnouncementCard: React.FC<{ announcement: Announcement }> = ({ announcement }) => {
+    // Validate and provide fallback for sourceUrl
+    const getValidSourceUrl = (url: string | undefined): string | null => {
+        if (!url) return null;
+        
+        // Check if URL is from the old broken paths
+        const brokenPaths = [
+            'all-active-notices',
+            'dept-event-list', 
+            'seminar-1',
+            '~mbc/mbcpress_release.php'
+        ];
+        
+        const hasBrokenPath = brokenPaths.some(path => url.includes(path));
+        if (hasBrokenPath) {
+            // Redirect to main website instead
+            return 'https://www.iitism.ac.in/';
+        }
+        
+        return url;
+    };
+
+    const validSourceUrl = getValidSourceUrl(announcement.sourceUrl);
+
     const cardContent = (
         <div className="p-5 flex flex-col h-full">
             <div className="flex items-start justify-between gap-3 mb-2">
@@ -139,7 +203,7 @@ const AnnouncementCard: React.FC<{ announcement: Announcement }> = ({ announceme
             <p className="text-sm text-slate-600 dark:text-slate-300 flex-grow line-clamp-4">
                 {announcement.content}
             </p>
-            {announcement.sourceUrl && (
+            {validSourceUrl && (
                 <div className="mt-4 flex items-center gap-1 text-xs text-primary dark:text-secondary font-medium">
                     <span>Read More</span>
                     <span>→</span>
@@ -150,10 +214,10 @@ const AnnouncementCard: React.FC<{ announcement: Announcement }> = ({ announceme
 
     const cardClasses = "bg-gradient-to-br from-white to-slate-50 dark:from-dark-card dark:to-slate-800/50 rounded-xl shadow-md hover:shadow-xl flex flex-col h-full border border-slate-200 dark:border-slate-700 transition-all duration-300";
 
-    if (announcement.sourceUrl) {
+    if (validSourceUrl) {
         return (
             <a
-                href={announcement.sourceUrl}
+                href={validSourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`${cardClasses} block group transform hover:-translate-y-2`}

@@ -1,22 +1,87 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ClassSchedule, CampusEvent, Announcement, NewsItem, CalendarEvent } from '../types';
-// FIX: Changed import from fetchLatestNewsAndEvents to subscribeToLatestNewsAndEvents.
-import { subscribeToLatestNewsAndEvents } from '../services/api';
+import { ClassSchedule, CalendarEvent, QuickLink } from '../types';
 import { useUser } from '../contexts/UserContext';
 import { useGrades } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useCalendar } from '../contexts/CalendarContext';
-import { 
-    InstructorIcon, LocationIcon, LibraryIcon, GymkhanaIcon, 
-    PortalIcon, CalendarCheckIcon, HealthIcon, FeeIcon, 
-    WebsiteIcon, EmailIcon, LmsIcon, CdcIcon, MapIcon, RefreshIcon, ScholarshipIcon
+import { usePageLoadTrace } from '../hooks/usePerformanceTrace';
+import { getWeatherAdvice } from '@/data/weatherAdvice';
+import {
+  toInputDateString,
+  formatTime,
+  isToday as checkIsToday,
+  isSameDay,
+  addDays,
+  calculateDateProgress,
+  getWeekNumber
+} from '../utils/dateUtils';
+import { getGreeting, getRandomItem } from '../utils/helpers';
+import { MOTIVATIONAL_QUOTES, TIME_INTERVALS, SEMESTER_DEFAULTS } from '../constants/app';
+import {
+    InstructorIcon, LocationIcon, LibraryIcon,
+    PortalIcon, CalendarCheckIcon, HealthIcon, FeeIcon,
+    WebsiteIcon, CdcIcon, ScholarshipIcon, DirectoryIcon
 } from '../components/icons/SidebarIcons';
+
+// Color function for schedule items (matching Schedule.tsx)
+const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
+    // Custom tasks get a distinctive teal/cyan color scheme
+    if (isCustomTask) {
+        return 'bg-teal-500/25 border-2 border-teal-600 text-teal-800 dark:text-teal-200';
+    }
+
+    // Carefully curated color palette with maximum visual distinction and appeal
+    const colors = [
+        'bg-blue-500/25 border-2 border-blue-600 text-blue-800 dark:text-blue-200',
+        'bg-emerald-500/25 border-2 border-emerald-600 text-emerald-800 dark:text-emerald-200',
+        'bg-purple-500/25 border-2 border-purple-600 text-purple-800 dark:text-purple-200',
+        'bg-orange-500/25 border-2 border-orange-600 text-orange-800 dark:text-orange-200',
+        'bg-rose-500/25 border-2 border-rose-600 text-rose-800 dark:text-rose-200',
+        'bg-indigo-500/25 border-2 border-indigo-600 text-indigo-800 dark:text-indigo-200',
+        'bg-amber-500/25 border-2 border-amber-600 text-amber-800 dark:text-amber-200',
+        'bg-cyan-500/25 border-2 border-cyan-600 text-cyan-800 dark:text-cyan-200',
+        'bg-fuchsia-500/25 border-2 border-fuchsia-600 text-fuchsia-800 dark:text-fuchsia-200',
+        'bg-lime-500/25 border-2 border-lime-600 text-lime-800 dark:text-lime-200',
+        'bg-violet-500/25 border-2 border-violet-600 text-violet-800 dark:text-violet-200',
+        'bg-sky-500/25 border-2 border-sky-600 text-sky-800 dark:text-sky-200',
+        'bg-pink-500/25 border-2 border-pink-600 text-pink-800 dark:text-pink-200',
+        'bg-green-500/25 border-2 border-green-600 text-green-800 dark:text-green-200',
+        'bg-red-500/25 border-2 border-red-600 text-red-800 dark:text-red-200',
+        'bg-yellow-500/25 border-2 border-yellow-600 text-yellow-800 dark:text-yellow-200',
+    ];
+
+    // Use a better hash function for more uniform distribution
+    let hash = 0;
+    for (let i = 0; i < courseCode.length; i++) {
+        hash = ((hash << 5) - hash) + courseCode.charCodeAt(i);
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    hash = Math.abs(hash);
+
+    return colors[hash % colors.length];
+};
+
+interface QuickLinkWithIcon extends QuickLink {
+    icon: React.ReactNode;
+}
 
 interface WeatherData {
     temp: string;
     desc: string;
     icon: string;
+}
+
+interface DetailedWeatherData extends WeatherData {
+    humidity: number;
+    windSpeed: number;
+    windDirection: number;
+    pressure: number;
+    feelsLike: number;
+    uvIndex: number;
+    visibility: number;
+    precipitation: number;
 }
 
 // Helper function to interpret WMO weather codes from Open-Meteo
@@ -55,65 +120,696 @@ const getWeatherInfoFromCode = (code: number, isDay: number): { desc: string, ic
     }
 };
 
+// Helper function to convert wind direction degrees to compass direction
+const getWindDirection = (degrees: number): string => {
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const index = Math.round(degrees / 22.5) % 16;
+    return directions[index] ?? 'N';
+};
+
+// Default quick links (stored data without icons)
+const defaultQuickLinksData: QuickLink[] = [
+    { id: '1', name: 'MIS Portal', href: 'https://mis.iitism.ac.in/', isExternal: true, color: 'text-blue-600 dark:text-blue-400', isCustom: false },
+    { id: '2', name: 'Abhikalp Portal', href: 'https://abhikalp.iitism.ac.in/', isExternal: true, color: 'text-red-600 dark:text-red-400', isCustom: false },
+    { id: '3', name: 'ARK Portal', href: 'https://ark.iitism.ac.in/', isExternal: true, color: 'text-indigo-600 dark:text-indigo-400', isCustom: false },
+    { id: '4', name: 'CDC Portal', href: 'https://www.iitism.ac.in/career-development-centre', isExternal: true, color: 'text-green-600 dark:text-green-400', isCustom: false },
+    { id: '5', name: 'Central Library', href: 'https://library.iitism.ac.in/', isExternal: true, color: 'text-purple-600 dark:text-purple-400', isCustom: false },
+    { id: '6', name: 'Fee Payment/Pre-Registration', href: 'https://pre-registration.iitism.ac.in/login/', isExternal: true, color: 'text-orange-600 dark:text-orange-400', isCustom: false },
+    { id: '7', name: 'Scholarships', href: 'https://www.iitism.ac.in/name-of-scholarships', isExternal: true, color: 'text-teal-600 dark:text-teal-400', isCustom: false },
+    { id: '8', name: 'Health Centre', href: 'https://people.iitism.ac.in/~healthcenter/index.php', isExternal: true, color: 'text-pink-600 dark:text-pink-400', isCustom: false },
+    { id: '9', name: 'IIT(ISM) Website', href: 'https://www.iitism.ac.in/', isExternal: true, color: 'text-cyan-600 dark:text-cyan-400', isCustom: false },
+    { id: '10', name: 'College Directory', href: 'https://share.google/YnDiJNPeoRC7UMl5t', isExternal: true, color: 'text-yellow-600 dark:text-yellow-400', isCustom: false },
+];
+
+// Get icon for a link based on its id
+const getIconForLink = (id: string): React.ReactNode => {
+    const iconMap: Record<string, React.ReactNode> = {
+        '1': <PortalIcon />,
+        '2': <PortalIcon />,
+        '3': <PortalIcon />,
+        '4': <CdcIcon />,
+        '5': <LibraryIcon />,
+        '6': <FeeIcon />,
+        '7': <ScholarshipIcon />,
+        '8': <HealthIcon />,
+        '9': <WebsiteIcon />,
+        '10': <DirectoryIcon />,
+    };
+    return iconMap[id] || <WebsiteIcon />;
+};
+
 const Dashboard: React.FC = () => {
-    const [todaysClasses, setTodaysClasses] = useState<ClassSchedule[]>([]);
-    const [latestItems, setLatestItems] = useState<NewsItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    // Performance monitoring
+    usePageLoadTrace('dashboard');
+
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const [weatherLoading, setWeatherLoading] = useState(true);
     const [weatherError, setWeatherError] = useState<string | null>(null);
-    const { user, loading: userLoading } = useUser();
+    const [detailedWeather, setDetailedWeather] = useState<DetailedWeatherData | null>(null);
+    const [showWeatherModal, setShowWeatherModal] = useState(false);
+    const { user, loading: userLoading, updateUser } = useUser();
     const { gradesData, loading: gradesLoading } = useGrades();
     const { scheduleData, loading: scheduleLoading } = useSchedule();
-    const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey, toggleReminderPreference } = useCalendar();
+    const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey, toggleReminderPreference, updateUserEvent } = useCalendar();
+    
+    // AI Weather Recommendation State
+    const [recommendation, setRecommendation] = useState<string | null>(null);
+    const [recommendationLoading, setRecommendationLoading] = useState(false);
+    const [recommendationError, setRecommendationError] = useState<string | null>(null);
 
-    // Quick Links with better organization
-    const quickLinks = [
-        { name: 'MIS Portal', href: 'https://mis.iitism.ac.in/', icon: <PortalIcon />, isExternal: true, color: 'text-blue-600 dark:text-blue-400' },
-        { name: 'Student Email', href: 'https://outlook.office.com/mail/', icon: <EmailIcon />, isExternal: true, color: 'text-red-600 dark:text-red-400' },
-        { name: 'CDC Portal', href: 'https://www.iitism.ac.in/career-development-centre', icon: <CdcIcon />, isExternal: true, color: 'text-green-600 dark:text-green-400' },
-        { name: 'Central Library', href: 'https://library.iitism.ac.in/', icon: <LibraryIcon />, isExternal: true, color: 'text-purple-600 dark:text-purple-400' },
-        { name: 'Fee Payment/Pre-Registration', href: 'https://pre-registration.iitism.ac.in/login/', icon: <FeeIcon />, isExternal: true, color: 'text-orange-600 dark:text-orange-400' },
-        { name: 'Scholarships', href: 'https://www.iitism.ac.in/name-of-scholarships', icon: <ScholarshipIcon />, isExternal: true, color: 'text-teal-600 dark:text-teal-400' },
-        { name: 'Student Gymkhana', href: 'https://sgiitism.in/', icon: <GymkhanaIcon />, isExternal: true, color: 'text-indigo-600 dark:text-indigo-400' },
-        { name: 'Health Centre', href: 'https://people.iitism.ac.in/~healthcenter/index.php', icon: <HealthIcon />, isExternal: true, color: 'text-pink-600 dark:text-pink-400' },
-        { name: 'IIT(ISM) Website', href: 'https://www.iitism.ac.in/', icon: <WebsiteIcon />, isExternal: true, color: 'text-cyan-600 dark:text-cyan-400' },
-    ];
+    // Weather advice cache interface
+    interface WeatherAdviceCache {
+        advice: string;
+        temp: number;
+        weatherCode: number;
+        timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
+        timestamp: number;
+    }
 
+
+    // Quick Links state management
+    const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
+    const [isManagingLinks, setIsManagingLinks] = useState(false);
+    const [editingLink, setEditingLink] = useState<QuickLink | null>(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newLink, setNewLink] = useState({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+    const [searchQuery, setSearchQuery] = useState('');
+    const [draggedLinkId, setDraggedLinkId] = useState<string | null>(null);
+    const [selectedDate, setSelectedDate] = useState(() => new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    
+    // Date navigation handlers
+    const handleResetToToday = useCallback(() => setSelectedDate(new Date()), []);
+    const handlePreviousDay = useCallback(() => setSelectedDate(prev => addDays(prev, -1)), []);
+    const handleNextDay = useCallback(() => setSelectedDate(prev => addDays(prev, 1)), []);
+    const handlePreviousWeek = useCallback(() => setSelectedDate(prev => addDays(prev, -7)), []);
+    const handleNextWeek = useCallback(() => setSelectedDate(prev => addDays(prev, 7)), []);
+
+    // Check if the day has changed and automatically update to current day
     useEffect(() => {
-        if (scheduleData) {
-            const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-            const classes = scheduleData
-                .filter(c => c.day === today)
-                .sort((a, b) => a.startTime.localeCompare(b.startTime));
-            setTodaysClasses(classes);
+        const checkDayChange = () => {
+            if (!isSameDay(selectedDate, new Date())) {
+                setSelectedDate(new Date());
+            }
+        };
+
+        const intervalId = setInterval(checkDayChange, TIME_INTERVALS.DAY_CHECK);
+        return () => clearInterval(intervalId);
+    }, [selectedDate]);
+
+    // Load quick links from Firestore on mount (synced with user profile)
+    useEffect(() => {
+        if (user?.quickLinks && user.quickLinks.length > 0) {
+            setQuickLinks(user.quickLinks);
         } else {
-            setTodaysClasses([]);
+            // Initialize with default links if user has no custom links
+            setQuickLinks(defaultQuickLinksData);
         }
-    }, [scheduleData]);
+    }, [user?.quickLinks]);
+
+    // Save quick links to Firestore
+    const saveQuickLinks = async (links: QuickLink[]) => {
+        setQuickLinks(links);
+
+        // Update user profile in Firestore with new quick links
+        if (user?.id) {
+            try {
+                await updateUser({ quickLinks: links });
+            } catch (error) {
+                console.error('Failed to save quick links:', error);
+            }
+        }
+    };
+
+    // Add new quick link
+    const handleAddLink = () => {
+        if (newLink.name && newLink.href) {
+            const link: QuickLink = {
+                id: Date.now().toString(),
+                name: newLink.name,
+                href: newLink.href.startsWith('http') ? newLink.href : `https://${newLink.href}`,
+                isExternal: true,
+                color: newLink.color,
+                isCustom: true
+            };
+            const updatedLinks = [...quickLinks, link];
+            saveQuickLinks(updatedLinks);
+            setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+            setShowAddModal(false);
+        }
+    };
+
+    // Remove quick link
+    const handleRemoveLink = (id: string) => {
+        const updatedLinks = quickLinks.filter(link => link.id !== id);
+        saveQuickLinks(updatedLinks);
+    };
+
+    // Edit quick link
+    const handleEditLink = (link: QuickLink) => {
+        if (editingLink && editingLink.id === link.id) {
+            const updatedLinks = quickLinks.map(l =>
+                l.id === editingLink.id
+                    ? { ...editingLink, href: editingLink.href.startsWith('http') ? editingLink.href : `https://${editingLink.href}` }
+                    : l
+            );
+            saveQuickLinks(updatedLinks);
+            setEditingLink(null);
+        } else {
+            setEditingLink({ ...link });
+        }
+    };
+
+    // Reset to default links
+    const handleResetToDefault = () => {
+        saveQuickLinks(defaultQuickLinksData);
+        setIsManagingLinks(false);
+    };
+
+    // Drag and drop handlers
+    const handleDragStart = (e: React.DragEvent, linkId: string) => {
+        setDraggedLinkId(linkId);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const handleDrop = (e: React.DragEvent, targetLinkId: string) => {
+        e.preventDefault();
+        if (!draggedLinkId || draggedLinkId === targetLinkId) return;
+
+        const draggedIndex = quickLinks.findIndex(link => link.id === draggedLinkId);
+        const targetIndex = quickLinks.findIndex(link => link.id === targetLinkId);
+
+        if (draggedIndex === -1 || targetIndex === -1) return;
+
+        const newLinks = [...quickLinks];
+        const [removed] = newLinks.splice(draggedIndex, 1);
+        if (removed) {
+            newLinks.splice(targetIndex, 0, removed);
+            saveQuickLinks(newLinks);
+        }
+        setDraggedLinkId(null);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedLinkId(null);
+    };
+
+    // Filter links based on search query
+    const filteredLinks = useMemo(() => {
+        if (!searchQuery.trim()) return quickLinks;
+        return quickLinks.filter(link =>
+            link.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [quickLinks, searchQuery]);
+
+    const scheduleInfo = useMemo(() => {
+        const defaultState = {
+            title: "Today's Schedule",
+            classes: [] as ClassSchedule[],
+            isHoliday: false,
+            isExam: false,
+            holidayDescription: null as string | null,
+            infoMessage: null as string | null,
+        };
+    
+        if (!calendarData) { // scheduleData can be null if not yet uploaded
+            return defaultState;
+        }
+    
+        const dateToDisplay = selectedDate;
+        const today = new Date();
+        const isToday = toInputDateString(dateToDisplay) === toInputDateString(today);
+    
+        // Create a YYYY-MM-DD string for the selected date for reliable comparison
+        const displayDateString = toInputDateString(dateToDisplay);
+        const displayWeekday = dateToDisplay.toLocaleDateString('en-US', { weekday: 'long' });
+    
+        // Check for academic calendar events on the selected date
+        const todayEvents = calendarData.events.filter(e => {
+            const startDate = e.date;
+            const endDate = e.endDate || e.date; // Use start date if end date is missing
+            const isOnDate = displayDateString >= startDate && displayDateString <= endDate;
+            
+            if (!isOnDate) return false;
+            
+            // Filter for BTech-relevant events only
+            const description = e.description.toLowerCase();
+            
+            // Always include holidays, exams, and timetable changes
+            if (e.type === 'Holiday' || 
+                e.type === 'Mid-Semester Exams' || 
+                e.type === 'End-Semester Exams' ||
+                description.includes('timetable') ||
+                description.includes('working as per') ||
+                description.includes('working as') ||
+                description.includes('afternoon working') ||
+                description.includes('morning working')) {
+                return true;
+            }
+            
+            // Include events that mention BTech students specifically
+            if (description.includes('b. tech') || 
+                description.includes('btech') ||
+                description.includes('b tech') ||
+                description.includes('ug students') ||
+                description.includes('undergraduate') ||
+                description.includes('final year ug') ||
+                description.includes('1st year ug') ||
+                description.includes('2nd year') ||
+                description.includes('3rd year') ||
+                description.includes('4th year') ||
+                description.includes('int. m. tech') ||
+                description.includes('dual degree') ||
+                description.includes('bs-ms')) {
+                return true;
+            }
+            
+            // Include general academic events that affect all students
+            if (description.includes('all students') ||
+                description.includes('semester classes') ||
+                description.includes('semester start') ||
+                description.includes('semester end') ||
+                description.includes('convocation') ||
+                description.includes('foundation day') ||
+                description.includes('srijan') ||
+                description.includes('concetto') ||
+                description.includes('parakram') ||
+                description.includes('basant') ||
+                description.includes('sports meet') ||
+                description.includes('orientation') ||
+                description.includes('registration') ||
+                description.includes('fee payment') ||
+                description.includes('pre-registration')) {
+                return true;
+            }
+            
+            // Exclude PG-only, PhD-only, Executive-only events
+            if (description.includes('pg students') ||
+                description.includes('ph. d') ||
+                description.includes('phd') ||
+                description.includes('m. tech') ||
+                description.includes('m. sc') ||
+                description.includes('mba') ||
+                description.includes('executive') ||
+                description.includes('part-time') ||
+                description.includes('research proposal') ||
+                description.includes('supervisor') ||
+                description.includes('project guide') ||
+                description.includes('thesis') ||
+                description.includes('dissertation')) {
+                return false;
+            }
+            
+            // Include other general events by default
+            return true;
+        });
+
+        let titleText = isToday ? "Today's Schedule" : "Schedule";
+
+        // Check for special events FIRST (before checking holidays/exams)
+        // This ensures special events are captured even on holidays/exam days
+        const specialEvents = todayEvents.filter(e => {
+            const desc = e.description.toLowerCase();
+
+            // Must be type 'Other' and not timetable/working-as (but CAN be on holiday/exam days)
+            if (e.type !== 'Other') return false;
+            if (desc.includes('timetable') || desc.includes('working as')) return false;
+
+            // Explicitly exclude PG/PhD/Executive/Part-time ONLY events
+            const isPGPhDOnly = (
+                (desc.includes('pg students') || desc.includes('ph. d') ||
+                 desc.includes('phd') || desc.includes('m. tech') ||
+                 desc.includes('m. sc') || desc.includes('mba') ||
+                 desc.includes('executive') || desc.includes('part-time') ||
+                 desc.includes('research') || desc.includes('supervisor') ||
+                 desc.includes('thesis') || desc.includes('dissertation')) &&
+                // Not if it also mentions BTech/UG
+                !(desc.includes('b. tech') || desc.includes('btech') ||
+                  desc.includes('b tech') || desc.includes('ug students') ||
+                  desc.includes('undergraduate') || desc.includes('all students'))
+            );
+
+            if (isPGPhDOnly) return false;
+
+            // Include if it's BTech-specific OR a general college event
+            const isBTechSpecific = (
+                desc.includes('b. tech') || desc.includes('btech') ||
+                desc.includes('b tech') || desc.includes('ug students') ||
+                desc.includes('undergraduate') || desc.includes('1st year ug') ||
+                desc.includes('2nd year') || desc.includes('3rd year') ||
+                desc.includes('4th year') || desc.includes('final year ug') ||
+                desc.includes('int. m. tech') || desc.includes('dual degree') ||
+                desc.includes('bs-ms')
+            );
+
+            const isGeneralCollegeEvent = (
+                desc.includes('all students') ||
+                desc.includes('convocation') || desc.includes('foundation day') ||
+                desc.includes('srijan') || desc.includes('concetto') ||
+                desc.includes('parakram') || desc.includes('basant') ||
+                desc.includes('sports meet') || desc.includes('cultural') ||
+                desc.includes('fest') || desc.includes('techno-management') ||
+                desc.includes('orientation') || desc.includes('registration') ||
+                desc.includes('fee payment') || desc.includes('pre-registration') ||
+                desc.includes('semester classes') ||
+                desc.includes('semester feedback') || desc.includes('feedback')
+            );
+
+            return isBTechSpecific || isGeneralCollegeEvent;
+        });
+
+        let specialEventMessage: string | null = null;
+        if (specialEvents.length > 0) {
+            if (specialEvents.length === 1) {
+                const firstEvent = specialEvents[0];
+                specialEventMessage = firstEvent ? `🎉 Special Event: ${firstEvent.description}` : null;
+            } else {
+                const eventDescriptions = specialEvents.map(e => `• ${e.description}`).join('\n');
+                specialEventMessage = `🎉 Special Events:\n${eventDescriptions}`;
+            }
+        }
+
+        // Check for exam periods FIRST (before holidays)
+        const examEvent = todayEvents.find(e =>
+            e.type === 'Mid-Semester Exams' ||
+            e.type === 'End-Semester Exams'
+        );
+
+        if (examEvent) {
+            return {
+                ...defaultState,
+                title: "Exam Period 📝",
+                isHoliday: true,
+                isExam: true,
+                holidayDescription: examEvent.description,
+                infoMessage: specialEventMessage,
+            };
+        }
+
+        // Check for holidays and special events - suspend classes for ALL holidays, breaks, vacations
+        const holidayEvent = todayEvents.find(e =>
+            e.type === 'Holiday' ||
+            e.description.toLowerCase().includes('semester break') ||
+            e.description.toLowerCase().includes('mid semester break') ||
+            e.description.toLowerCase().includes('winter break') ||
+            e.description.toLowerCase().includes('summer break') ||
+            e.description.toLowerCase().includes('no class')
+        );
+
+        if (holidayEvent) {
+            return {
+                ...defaultState,
+                title: "It's a Holiday! 🎉",
+                isHoliday: true,
+                holidayDescription: holidayEvent.description,
+                infoMessage: specialEventMessage,
+            };
+        }
+
+        // Check for semester start/end
+        const semesterEvent = todayEvents.find(e =>
+            e.type === 'Start of Semester' ||
+            e.description.toLowerCase().includes('semester start') ||
+            e.description.toLowerCase().includes('semester end')
+        );
+
+        if (semesterEvent) {
+            return {
+                ...defaultState,
+                title: "Semester Event 📚",
+                isHoliday: true,
+                holidayDescription: `${semesterEvent.description} - Check with your department for schedule changes.`,
+                infoMessage: specialEventMessage,
+            };
+        }
+    
+        // Check for timetable changes or special scheduling
+        const timetableEvent = todayEvents.find(e => 
+            e.description.toLowerCase().includes('timetable') ||
+            e.description.toLowerCase().includes('schedule change') ||
+            e.description.toLowerCase().includes('class schedule') ||
+            e.description.toLowerCase().includes('working as per') ||
+            e.description.toLowerCase().includes('working as') ||
+            e.description.toLowerCase().includes('afternoon working') ||
+            e.description.toLowerCase().includes('morning working')
+        );
+
+        let effectiveDay = displayWeekday;
+        let infoMessage: string | null = null;
+        const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    
+        if (timetableEvent) {
+            const desc = timetableEvent.description.toLowerCase();
+            
+            // Check for specific day timetable changes
+            for (const day of weekdays) {
+                if (desc.includes(`${day} timetable`) || desc.includes(`${day} schedule`)) {
+                    effectiveDay = day.charAt(0).toUpperCase() + day.slice(1);
+                    infoMessage = `📅 This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
+                    break;
+                }
+            }
+            
+            // Check for "working as per [day] timetable" patterns
+            if (!infoMessage) {
+                for (const day of weekdays) {
+                    if (desc.includes(`working as per ${day}`) || desc.includes(`as per ${day}`)) {
+                        effectiveDay = day.charAt(0).toUpperCase() + day.slice(1);
+                        infoMessage = `📅 This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
+                        break;
+                    }
+                }
+            }
+            
+            // Check for afternoon/morning working patterns
+            if (!infoMessage) {
+                if (desc.includes('afternoon working')) {
+                    infoMessage = `📅 ${timetableEvent.description}`;
+                } else if (desc.includes('morning working')) {
+                    infoMessage = `📅 ${timetableEvent.description}`;
+                } else if (desc.includes('working as per')) {
+                    infoMessage = `📅 ${timetableEvent.description}`;
+                }
+            }
+            
+            // If no specific pattern matched, show general timetable change message
+            if (!infoMessage) {
+                infoMessage = `📅 ${timetableEvent.description}`;
+            }
+        }
+
+        // Add special event message to infoMessage if we have any
+        if (specialEventMessage) {
+            infoMessage = infoMessage ? `${specialEventMessage}\n${infoMessage}` : specialEventMessage;
+        }
+
+
+        // Check for other academic events - BTech specific OR general college events
+        const otherEvents = todayEvents.filter(e => {
+            const desc = e.description.toLowerCase();
+
+            // Must be type 'Other' and not timetable/working-as and not already in specialEvents
+            if (e.type !== 'Other') return false;
+            if (desc.includes('timetable') || desc.includes('working as')) return false;
+            if (specialEvents.includes(e)) return false;
+
+            // Explicitly exclude PG/PhD/Executive/Part-time ONLY events
+            const isPGPhDOnly = (
+                (desc.includes('pg students') || desc.includes('ph. d') ||
+                 desc.includes('phd') || desc.includes('m. tech') ||
+                 desc.includes('m. sc') || desc.includes('mba') ||
+                 desc.includes('executive') || desc.includes('part-time') ||
+                 desc.includes('research') || desc.includes('supervisor') ||
+                 desc.includes('thesis') || desc.includes('dissertation')) &&
+                // Not if it also mentions BTech/UG
+                !(desc.includes('b. tech') || desc.includes('btech') ||
+                  desc.includes('b tech') || desc.includes('ug students') ||
+                  desc.includes('undergraduate') || desc.includes('all students'))
+            );
+
+            if (isPGPhDOnly) return false;
+
+            // Include if it's BTech-specific OR a general college event
+            const isBTechSpecific = (
+                desc.includes('b. tech') || desc.includes('btech') ||
+                desc.includes('b tech') || desc.includes('ug students') ||
+                desc.includes('undergraduate') || desc.includes('1st year ug') ||
+                desc.includes('2nd year') || desc.includes('3rd year') ||
+                desc.includes('4th year') || desc.includes('final year ug') ||
+                desc.includes('int. m. tech') || desc.includes('dual degree') ||
+                desc.includes('bs-ms')
+            );
+
+            const isGeneralCollegeEvent = (
+                desc.includes('all students') ||
+                desc.includes('semester start') || desc.includes('semester end')
+            );
+
+            return isBTechSpecific || isGeneralCollegeEvent;
+        });
+
+        if (otherEvents.length > 0 && !infoMessage) {
+            const eventDescriptions = otherEvents.map(e => e.description).join(', ');
+            infoMessage = `📋 Academic Event: ${eventDescriptions}`;
+        }
+        
+        const classesForDay = (scheduleData || [])
+            .filter(c => c.day.toLowerCase() === effectiveDay.toLowerCase())
+            .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+        // Update title based on events and schedule changes
+        if (infoMessage) {
+            if (timetableEvent) {
+                titleText = isToday ? "Today's Schedule" : "Schedule";
+            } else if (specialEvents.length > 0) {
+                titleText = isToday ? "Today - Special Day" : "Special Day";
+            } else if (otherEvents.length > 0) {
+                titleText = isToday ? "Today - Academic Day" : "Academic Day";
+            }
+        }
+    
+        return {
+            ...defaultState,
+            classes: classesForDay,
+            infoMessage,
+            title: titleText,
+        };
+    
+    }, [calendarData, scheduleData, selectedDate]);
+
+    // Helper to determine time of day
+    const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) return 'morning';
+        if (hour >= 12 && hour < 17) return 'afternoon';
+        if (hour >= 17 && hour < 21) return 'evening';
+        return 'night';
+    };
+
+    // Helper to check if cached advice is still valid
+    const getCachedAdvice = (temp: number, weatherCode: number): string | null => {
+        try {
+            const cached = localStorage.getItem('weatherAdviceCache');
+            if (!cached) return null;
+
+            const cacheData: WeatherAdviceCache = JSON.parse(cached);
+            const now = Date.now();
+            const cacheAge = now - cacheData.timestamp;
+            const threeHours = 1 * 60 * 60 * 1000; // 1 hours in milliseconds
+
+            // Cache is invalid if older than 3 hours
+            if (cacheAge > threeHours) {
+                localStorage.removeItem('weatherAdviceCache');
+                return null;
+            }
+
+            const currentTimeOfDay = getTimeOfDay();
+            const tempDiff = Math.abs(temp - cacheData.temp);
+
+            // Reuse cache if:
+            // 1. Same time of day
+            // 2. Temperature difference is less than 3°C
+            // 3. Same weather condition (code)
+            if (
+                cacheData.timeOfDay === currentTimeOfDay &&
+                tempDiff < 1 &&
+                cacheData.weatherCode === weatherCode
+            ) {
+                return cacheData.advice;
+            }
+
+            return null;
+        } catch (err) {
+            console.error('Cache read error:', err);
+            return null;
+        }
+    };
+
+    // Save advice to cache
+    const cacheAdvice = (advice: string, temp: number, weatherCode: number) => {
+        try {
+            const cacheData: WeatherAdviceCache = {
+                advice,
+                temp,
+                weatherCode,
+                timeOfDay: getTimeOfDay(),
+                timestamp: Date.now()
+            };
+            localStorage.setItem('weatherAdviceCache', JSON.stringify(cacheData));
+        } catch (err) {
+            console.error('Cache write error:', err);
+        }
+    };
+
+    const fetchWeatherRecommendation = async (weatherData: WeatherData, weatherCode: number) => {
+        setRecommendationLoading(true);
+        setRecommendationError(null);
+        setRecommendation(null);
+
+        try {
+            const temp = parseFloat(weatherData.temp);
+
+            // Check cache first
+            const cachedAdvice = getCachedAdvice(temp, weatherCode);
+            if (cachedAdvice) {
+                setRecommendation(cachedAdvice);
+                setRecommendationLoading(false);
+                return;
+            }
+
+            // Get advice from pre-stored data
+            const advice = getWeatherAdvice(weatherCode, temp);
+            setRecommendation(advice);
+
+            // Cache the new advice
+            cacheAdvice(advice, temp, weatherCode);
+        } catch (err) {
+            console.error("Weather advice error:", err);
+            setRecommendationError("Couldn't get weather advices right now.");
+        } finally {
+            setRecommendationLoading(false);
+        }
+    };
 
     const fetchWeather = async () => {
         setWeatherError(null);
         setWeatherLoading(true);
+        setRecommendation(null);
+        setRecommendationLoading(true);
+        setRecommendationError(null);
 
         try {
             const lat = 23.79;
             const lon = 86.43;
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&timezone=Asia/Kolkata`;
-            
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,apparent_temperature,precipitation,uv_index&timezone=Asia/Kolkata`;
+
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`Weather API failed with status: ${response.status}`);
             }
             const data = await response.json();
-            
+
             if (!data.current) {
                 throw new Error('Invalid weather data received.');
             }
 
-            const { temperature_2m, weather_code, is_day } = data.current;
+            const {
+                temperature_2m,
+                weather_code,
+                is_day,
+                relative_humidity_2m,
+                wind_speed_10m,
+                wind_direction_10m,
+                surface_pressure,
+                apparent_temperature,
+                precipitation,
+                uv_index
+            } = data.current;
             const { desc, icon } = getWeatherInfoFromCode(weather_code, is_day);
 
             const weatherData: WeatherData = {
@@ -123,84 +819,105 @@ const Dashboard: React.FC = () => {
             };
             setWeather(weatherData);
 
+            // Store detailed weather data
+            const detailedData: DetailedWeatherData = {
+                ...weatherData,
+                humidity: relative_humidity_2m || 0,
+                windSpeed: wind_speed_10m || 0,
+                windDirection: wind_direction_10m || 0,
+                pressure: surface_pressure || 0,
+                feelsLike: apparent_temperature || parseFloat(weatherData.temp),
+                uvIndex: uv_index || 0,
+                visibility: 10, // Open-Meteo doesn't provide visibility in free tier
+                precipitation: precipitation || 0
+            };
+            setDetailedWeather(detailedData);
+
+            await fetchWeatherRecommendation(weatherData, weather_code);
+
         } catch (err) {
             setWeatherError('Could not load weather.');
+            setRecommendationError(null);
+            setRecommendationLoading(false);
             console.error("Weather fetch error:", err);
         } finally {
             setWeatherLoading(false);
         }
     };
 
-    // FIX: Replaced fetchLatestNewsAndEvents with a subscription model.
+    // Weather data fetch on mount
     useEffect(() => {
-        setLoading(true);
-        setError(null);
-        const unsubscribe = subscribeToLatestNewsAndEvents(5, (items, err) => {
-            setLatestItems(items);
-            setError(err || null);
-            setLoading(false);
-        });
-        
         fetchWeather();
 
-        return () => unsubscribe();
+        // Auto-refresh weather every hour
+        const weatherRefreshInterval = setInterval(() => {
+            fetchWeather();
+        }, 60 * 60 * 1000); // 60 minutes (1 hour)
+
+        return () => {
+            clearInterval(weatherRefreshInterval);
+        };
     }, []);
 
-    const handleRefresh = async () => {
-        setIsRefreshing(true);
-        // FIX: The latest news and events are now subscribed in real-time. 
-        // The refresh button will now only refresh the weather data.
-        await fetchWeather();
-        setIsRefreshing(false);
-    };
+    // Start with a random quote, then change every 30 seconds
+    const [motivationalQuote, setMotivationalQuote] = useState(() => getRandomItem(MOTIVATIONAL_QUOTES));
 
-    const getGreeting = () => {
-        const hour = new Date().getHours();
-        if (hour < 12) return 'Good Morning';
-        if (hour < 18) return 'Good Afternoon';
-        return 'Good Evening';
-    };
+    useEffect(() => {
+        const quoteInterval = setInterval(() => {
+            setMotivationalQuote(getRandomItem(MOTIVATIONAL_QUOTES));
+        }, 30000); // 30 seconds
 
-    const getMotivationalQuote = () => {
-        const quotes = [
-            "Keep pushing forward, success is near!",
-            "Every class is a step toward your dreams.",
-            "Your dedication today shapes your tomorrow.",
-            "Knowledge is the passport to the future.",
-            "Excellence is not a skill, it's an attitude."
-        ];
-        return quotes[Math.floor(Math.random() * quotes.length)];
-    };
+        return () => clearInterval(quoteInterval);
+    }, []);
 
     const overallLoading = userLoading || gradesLoading || scheduleLoading || calendarLoading;
 
     const displayCgpa = gradesData?.cgpa;
-    const now = new Date();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    const upcomingClassIndex = todaysClasses.findIndex(c => c.endTime > currentTime);
 
-    const { semesterProgress, currentWeek } = (() => {
-        const defaultStartDate = new Date(now.getFullYear(), 0, 15);
-        const defaultEndDate = new Date(now.getFullYear(), 4, 15);
+    const { now, currentTime, isSelectedDateToday } = useMemo(() => {
+        const now = new Date();
+        const currentTime = formatTime(now);
+        const isSelectedDateToday = checkIsToday(selectedDate);
+        return { now, currentTime, isSelectedDateToday };
+    }, [selectedDate]);
 
-        let semesterStartDate = defaultStartDate;
-        let semesterEndDate = defaultEndDate;
+    // Only calculate upcoming class if viewing today's schedule
+    const upcomingClassIndex = useMemo(() => {
+        return isSelectedDateToday
+            ? scheduleInfo.classes.findIndex((c: ClassSchedule) => c.endTime > currentTime)
+            : -1;
+    }, [isSelectedDateToday, scheduleInfo.classes, currentTime]);
 
-        if (calendarData?.semesterStartDate && calendarData?.semesterEndDate) {
-            semesterStartDate = new Date(calendarData.semesterStartDate);
-            semesterEndDate = new Date(calendarData.semesterEndDate);
+    // Check if all classes are completed for today
+    const allClassesCompleted = useMemo(() => {
+        return isSelectedDateToday &&
+               scheduleInfo.classes.length > 0 &&
+               upcomingClassIndex === -1;
+    }, [isSelectedDateToday, scheduleInfo.classes.length, upcomingClassIndex]);
+
+    const { semesterProgress, currentWeek } = useMemo(() => {
+        const year = now.getFullYear();
+        const defaultStartDate = new Date(year, SEMESTER_DEFAULTS.START_MONTH, SEMESTER_DEFAULTS.START_DAY);
+        const defaultEndDate = new Date(year, SEMESTER_DEFAULTS.END_MONTH, SEMESTER_DEFAULTS.END_DAY);
+
+        const semesterStartDate = calendarData?.semesterStartDate
+            ? new Date(calendarData.semesterStartDate)
+            : defaultStartDate;
+        const semesterEndDate = calendarData?.semesterEndDate
+            ? new Date(calendarData.semesterEndDate)
+            : defaultEndDate;
+
+        if (semesterStartDate > semesterEndDate) {
+            return { semesterProgress: 0, currentWeek: 1 };
         }
 
-        if (semesterStartDate > semesterEndDate) return { semesterProgress: 0, currentWeek: 1 };
-        
-        const totalMs = semesterEndDate.getTime() - semesterStartDate.getTime();
-        const elapsedMs = now.getTime() - semesterStartDate.getTime();
-        const progress = Math.min(100, Math.max(0, (elapsedMs / totalMs) * 100));
-        const week = Math.max(1, Math.ceil(elapsedMs / (1000 * 60 * 60 * 24 * 7)));
-        return { semesterProgress: progress, currentWeek: week };
-    })();
+        const progress = calculateDateProgress(semesterStartDate, semesterEndDate, now);
+        const week = getWeekNumber(semesterStartDate, now);
 
-    if (overallLoading || loading || !user) {
+        return { semesterProgress: progress, currentWeek: week };
+    }, [now, calendarData?.semesterStartDate, calendarData?.semesterEndDate]);
+
+    if (overallLoading || !user) {
         return (
             <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
                 <div className="text-center">
@@ -211,251 +928,567 @@ const Dashboard: React.FC = () => {
         );
     }
     
-    // The rest of the component remains largely the same, as it consumes data from contexts.
-    // ... (rest of JSX is identical to the original)
+    const greeting = getGreeting();
+    const quote = motivationalQuote;
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
-            {/* Enhanced Header with Stats Bar */}
-            <div className="bg-gradient-to-r from-primary to-primary-dark dark:from-dark-card dark:to-dark-background rounded-2xl p-6 text-white shadow-xl">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold">{getGreeting()}, {user.name.split(' ')[0]}! 👋</h1>
-                        <p className="text-white/80 mt-1">{getMotivationalQuote()}</p>
-                    </div>
-                    <div className="flex gap-6 text-sm">
-                        <div className="text-center">
-                            <p className="text-white/70">Today</p>
-                            <p className="font-semibold">{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+            {/* Hero Section - Greeting & Progress */}
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 overflow-hidden">
+                <div className="p-6 md:p-8">
+                    {/* Greeting Section */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-30"></div>
+                                <div className="relative text-5xl md:text-6xl bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-2xl shadow-lg">
+                                    {greeting.emoji}
+                                </div>
+                            </div>
+                            <div>
+                                <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-1">
+                                    {greeting.text},
+                                </h1>
+                                <p className="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-white">
+                                    {user.fullName?.split(' ')[0] || user.name.split(' ')[0]}
+                                </p>
+                            </div>
                         </div>
-                        <div className="text-center">
-                            <p className="text-white/70">Week</p>
-                            <p className="font-semibold">Week {currentWeek}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-white/70">Semester</p>
-                            <p className="font-semibold">{Math.round(semesterProgress)}%</p>
+
+                        {/* Quick Stats Pills */}
+                        <div className="flex flex-wrap gap-3">
+                            <div className="group bg-gradient-to-br from-blue-50 to-blue-100 dark:from-slate-800 dark:to-slate-700 px-5 py-3 rounded-xl border border-blue-200 dark:border-slate-600 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105">
+                                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Today</p>
+                                <p className="text-sm font-bold text-slate-800 dark:text-white">{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                            </div>
+                            <div className="group bg-gradient-to-br from-purple-50 to-purple-100 dark:from-slate-800 dark:to-slate-700 px-5 py-3 rounded-xl border border-purple-200 dark:border-slate-600 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105">
+                                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Week</p>
+                                <p className="text-sm font-bold text-slate-800 dark:text-white">#{currentWeek}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                {/* Semester Progress Bar */}
-                <div className="mt-4">
-                    <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
-                        <div 
-                            className="bg-white/80 h-full rounded-full transition-all duration-500"
-                            style={{ width: `${semesterProgress}%` }}
-                        ></div>
+
+                    {/* Motivational Quote */}
+                    <div className="group bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800/50 dark:to-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-5 mb-6 hover:shadow-md transition-all duration-200">
+                        <div className="flex items-start gap-3">
+                            <div className="text-2xl bg-gradient-to-br from-amber-400 to-orange-500 p-2 rounded-lg shadow-sm">💡</div>
+                            <div className="flex-1">
+                                <p className="text-slate-700 dark:text-slate-200 text-base font-medium italic leading-relaxed">
+                                    "{quote.text}"
+                                </p>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium">
+                                    — {quote.author}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <p className="text-xs text-white/60 mt-1">
-                        {calendarData ? "Semester Progress" : <span>Semester Progress (using default dates - <Link to="/academic-calendar" className="underline">upload calendar</Link>)</span>}
-                    </p>
+
+                    {/* Semester Progress */}
+                    <div className="group relative bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-800/50 dark:to-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-6 overflow-hidden hover:shadow-lg transition-all duration-300">
+                        {/* Animated background pattern */}
+                        <div className="absolute inset-0 opacity-5 dark:opacity-10">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full blur-3xl transform translate-x-8 -translate-y-8"></div>
+                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500 rounded-full blur-3xl transform -translate-x-8 translate-y-8"></div>
+                        </div>
+
+                        <div className="relative">
+                            <div className="flex items-center justify-between mb-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2.5 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300">
+                                        <span className="text-2xl">🎯</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-slate-800 dark:text-white font-bold text-lg">Semester Progress</h3>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Week {currentWeek}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-pulse">
+                                        {Math.round(semesterProgress)}%
+                                    </p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Complete</p>
+                                </div>
+                            </div>
+
+                            {/* Enhanced Progress Bar */}
+                            <div className="relative mb-4">
+                                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-4 overflow-hidden shadow-inner">
+                                    <div
+                                        className="bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
+                                        style={{ width: `${semesterProgress}%` }}
+                                    >
+                                        {/* Shimmer effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                                        {/* Pulse overlay */}
+                                        <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-all duration-300"></div>
+                                    </div>
+                                </div>
+
+                                {/* Milestone markers with enhanced visuals */}
+                                <div className="flex justify-between mt-4 px-1">
+                                    <div className="flex flex-col items-center gap-1 relative">
+                                        <div className={`w-2 h-2 rounded-full transition-all duration-300 ${semesterProgress >= 0 ? 'bg-blue-500 shadow-lg shadow-blue-500/50 scale-110' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                                        <span className={`text-xs font-semibold transition-all duration-300 ${semesterProgress >= 0 ? 'text-blue-600 dark:text-blue-400 scale-105' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            🚀 Start
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1 relative">
+                                        <div className={`w-2 h-2 rounded-full transition-all duration-300 ${semesterProgress >= 50 ? 'bg-purple-500 shadow-lg shadow-purple-500/50 scale-110' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                                        <span className={`text-xs font-semibold transition-all duration-300 ${semesterProgress >= 50 ? 'text-purple-600 dark:text-purple-400 scale-105' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            ⚡ Midpoint
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1 relative">
+                                        <div className={`w-2 h-2 rounded-full transition-all duration-300 ${semesterProgress >= 100 ? 'bg-blue-500 shadow-lg shadow-blue-500/50 scale-110' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                                        <span className={`text-xs font-semibold transition-all duration-300 ${semesterProgress >= 100 ? 'text-blue-600 dark:text-blue-400 scale-105' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            🎓 Finals
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-slate-200 dark:border-slate-600">
+                                <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 hover:scale-105 transition-transform duration-200">
+                                    <div className="text-xl">📅</div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Days Passed</p>
+                                        <p className="text-sm font-bold text-slate-800 dark:text-white">
+                                            {Math.floor((now.getTime() - (calendarData?.semesterStartDate ? new Date(calendarData.semesterStartDate).getTime() : new Date(now.getFullYear(), SEMESTER_DEFAULTS.START_MONTH, SEMESTER_DEFAULTS.START_DAY).getTime())) / (1000 * 60 * 60 * 24))}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 hover:scale-105 transition-transform duration-200">
+                                    <div className="text-xl">⏳</div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Days Left</p>
+                                        <p className="text-sm font-bold text-slate-800 dark:text-white">
+                                            {Math.max(0, Math.ceil(((calendarData?.semesterEndDate ? new Date(calendarData.semesterEndDate).getTime() : new Date(now.getFullYear(), SEMESTER_DEFAULTS.END_MONTH, SEMESTER_DEFAULTS.END_DAY).getTime()) - now.getTime()) / (1000 * 60 * 60 * 24)))}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {calendarData ? null : (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-4 text-center">
+                                    Using default dates • <Link to="/academic-calendar" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">Upload your calendar</Link>
+                                </p>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Quick Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-dark-card p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Today's Classes</p>
-                    <p className="text-2xl font-bold text-slate-800 dark:text-white">{todaysClasses.length}</p>
-                </div>
-                <div className="bg-white dark:bg-dark-card p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">CGPA</p>
-                    <p className="text-2xl font-bold text-primary dark:text-secondary">{displayCgpa != null ? displayCgpa.toFixed(2) : 'N/A'}</p>
-                </div>
-                <div className="bg-white dark:bg-dark-card p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Credits</p>
-                    <p className="text-2xl font-bold text-slate-800 dark:text-white">{gradesData?.totalCredits ?? 'N/A'}</p>
-                </div>
-                <div className="bg-white dark:bg-dark-card p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Attendance</p>
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">92%</p>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <Link to="/schedule" className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-blue-100 font-semibold mb-1">Today's Activities</p>
+                            <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">{scheduleInfo.classes.length}</p>
+                        </div>
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                            <span className="text-4xl">📚</span>
+                        </div>
+                    </div>
+                </Link>
+                <Link to="/grades" className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-purple-100 font-semibold mb-1">CGPA</p>
+                            <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">{displayCgpa != null ? displayCgpa.toFixed(2) : 'N/A'}</p>
+                        </div>
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                            <span className="text-4xl">🎯</span>
+                        </div>
+                    </div>
+                </Link>
+                <Link to="/grades" className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-green-100 font-semibold mb-1">Credits Achieved</p>
+                            <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">{gradesData?.totalCredits ?? 'N/A'}</p>
+                        </div>
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                            <span className="text-4xl">✨</span>
+                        </div>
+                    </div>
+                </Link>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 md:gap-6">
                 {/* Left Column - 2/3 width */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="xl:col-span-2 space-y-5 md:space-y-6">
                     {/* Today's Classes - Enhanced */}
-                    <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-semibold">Today's Schedule</h2>
-                            <Link to="/schedule" className="text-sm text-primary hover:text-primary-dark transition-colors">
-                                View Full Schedule →
-                            </Link>
+                    <div className="group bg-white dark:bg-dark-card p-4 sm:p-6 rounded-2xl shadow-lg hover:shadow-xl border-2 border-slate-200 dark:border-slate-700 hover:border-primary/30 transition-all duration-300">
+                        <div className="flex flex-col justify-between items-start mb-6 gap-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
+                                <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">{scheduleInfo.title}</h2>
+                                <Link to="/schedule" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark bg-primary/10 hover:bg-primary/20 px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap">
+                                    <span>Full Schedule</span>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </Link>
+                            </div>
+
+                            {/* Enhanced Date Navigation */}
+                            <div className="w-full space-y-3">
+                                {/* Day of week and date - Always visible */}
+                                <div className="flex items-center gap-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+                                    <div className="flex-1">
+                                        <div className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white">
+                                            {selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}
+                                        </div>
+                                        <div className="text-sm md:text-base text-slate-600 dark:text-slate-400 font-medium">
+                                            {selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Main date navigation and quick actions */}
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <button
+                                        onClick={handlePreviousDay}
+                                        className="p-2.5 md:p-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all duration-200 hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
+                                        title="Previous day (←)"
+                                        aria-label="Previous day"
+                                    >
+                                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setShowDatePicker(!showDatePicker)}
+                                            className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2 min-w-[150px]"
+                                            title="Click to pick a date"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            Jump to date
+                                        </button>
+
+                                        {showDatePicker && (
+                                            <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-3 z-10 min-w-[250px]">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <select
+                                                        value={selectedDate.getMonth()}
+                                                        onChange={(e) => {
+                                                            const newDate = new Date(selectedDate);
+                                                            newDate.setMonth(parseInt(e.target.value));
+                                                            setSelectedDate(newDate);
+                                                            localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
+                                                        }}
+                                                        className="flex-1 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+                                                    >
+                                                        {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, idx) => (
+                                                            <option key={idx} value={idx}>{month}</option>
+                                                        ))}
+                                                    </select>
+                                                    <input
+                                                        type="number"
+                                                        min="2000"
+                                                        max="2100"
+                                                        value={selectedDate.getFullYear()}
+                                                        onChange={(e) => {
+                                                            const year = parseInt(e.target.value);
+                                                            if (!isNaN(year) && year >= 2000 && year <= 2100) {
+                                                                const newDate = new Date(selectedDate);
+                                                                newDate.setFullYear(year);
+                                                                setSelectedDate(newDate);
+                                                                localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
+                                                            }
+                                                        }}
+                                                        placeholder="YYYY"
+                                                        className="w-20 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:outline-none text-center"
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-7 gap-1 mb-2">
+                                                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                                                        <div key={day} className="text-center text-xs font-semibold text-slate-500 dark:text-slate-400 py-1">
+                                                            {day}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="grid grid-cols-7 gap-1">
+                                                    {(() => {
+                                                        const year = selectedDate.getFullYear();
+                                                        const month = selectedDate.getMonth();
+                                                        const firstDay = new Date(year, month, 1).getDay();
+                                                        const daysInMonth = new Date(year, month + 1, 0).getDate();
+                                                        const days = [];
+
+                                                        // Empty cells for days before month starts
+                                                        for (let i = 0; i < firstDay; i++) {
+                                                            days.push(<div key={`empty-${i}`} />);
+                                                        }
+
+                                                        // Days of the month
+                                                        for (let day = 1; day <= daysInMonth; day++) {
+                                                            const isSelected = day === selectedDate.getDate();
+                                                            const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
+                                                            days.push(
+                                                                <button
+                                                                    key={day}
+                                                                    onClick={() => {
+                                                                        const newDate = new Date(year, month, day);
+                                                                        setSelectedDate(newDate);
+                                                                        localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
+                                                                        setShowDatePicker(false);
+                                                                    }}
+                                                                    className={`
+                                                                        text-sm py-1.5 rounded transition-colors
+                                                                        ${isSelected ? 'bg-primary text-white font-bold' :
+                                                                          isToday ? 'bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold' :
+                                                                          'hover:bg-slate-100 dark:hover:bg-slate-700'}
+                                                                    `}
+                                                                >
+                                                                    {day}
+                                                                </button>
+                                                            );
+                                                        }
+
+                                                        return days;
+                                                    })()}
+                                                </div>
+                                                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+                                                    <button
+                                                        onClick={() => setShowDatePicker(false)}
+                                                        className="px-3 py-1 text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded transition-colors"
+                                                    >
+                                                        Close
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        onClick={handleNextDay}
+                                        className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                        title="Next day (→)"
+                                        aria-label="Next day"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+
+                                    <button
+                                        onClick={handleResetToToday}
+                                        className="px-3 py-2 text-xs bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors font-medium"
+                                        title="Jump to today (T)"
+                                    >
+                                        Today
+                                    </button>
+                                </div>
+
+                                {/* Week navigation */}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Quick jump:</span>
+                                    <button
+                                        onClick={handlePreviousWeek}
+                                        className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded transition-colors"
+                                        title="Previous week"
+                                    >
+                                        ← Week
+                                    </button>
+                                    <button
+                                        onClick={handleNextWeek}
+                                        className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded transition-colors"
+                                        title="Next week"
+                                    >
+                                        Week →
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         
-                        {scheduleData ? (
-                            todaysClasses.length > 0 ? (
-                                <div className="relative">
-                                    <div className="absolute left-3 top-2 h-[calc(100%-8px)] w-0.5 bg-gradient-to-b from-primary/20 to-transparent" aria-hidden="true"></div>
-                                    <ul className="space-y-4">
-                                        {todaysClasses.map((c, index) => {
-                                            const isPast = upcomingClassIndex !== -1 && index < upcomingClassIndex;
-                                            const isCurrentOrNext = index === upcomingClassIndex;
-                                            const isCurrent = isCurrentOrNext && c.startTime <= currentTime;
-                                            const isNext = isCurrentOrNext && !isCurrent;
-                                            
-                                            return (
-                                                <li key={c.slotId} className={`relative pl-10 transition-all duration-300 ${isPast ? 'opacity-50' : ''}`}>
-                                                    <div className={`absolute left-0 top-2 h-6 w-6 rounded-full flex items-center justify-center ring-4 ${
-                                                        isCurrent ? 'bg-primary ring-primary/20' : 
-                                                        isNext ? 'bg-amber-500 ring-amber-500/20' : 
-                                                        isPast ? 'bg-slate-300 ring-slate-200' : 
-                                                        'bg-primary/60 ring-primary/10'
+                        {scheduleInfo.isHoliday ? (
+                            <>
+                                {scheduleInfo.infoMessage && (
+                                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg flex items-start gap-3">
+                                        <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p className="text-sm text-blue-700 dark:text-blue-300 whitespace-pre-line">{scheduleInfo.infoMessage}</p>
+                                    </div>
+                                )}
+                                <div className="text-center py-12">
+                                    {scheduleInfo.isExam ? (
+                                        <>
+                                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 mb-4">
+                                                <span className="text-4xl">📝</span>
+                                            </div>
+                                            <h3 className="text-lg font-medium text-slate-900 dark:text-white">{scheduleInfo.holidayDescription}</h3>
+                                            <p className="mt-1 text-slate-600 dark:text-slate-400 font-medium">Classes are suspended - Focus on exam preparation! 📚</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
+                                                <span className="text-4xl">🎉</span>
+                                            </div>
+                                            <h3 className="text-lg font-medium text-slate-900 dark:text-white">{scheduleInfo.holidayDescription}</h3>
+                                            <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your day off!</p>
+                                        </>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {scheduleInfo.infoMessage && (
+                                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg flex items-start gap-3">
+                                        <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <p className="text-sm text-blue-700 dark:text-blue-300 whitespace-pre-line">{scheduleInfo.infoMessage}</p>
+                                    </div>
+                                )}
+                                {scheduleInfo.classes.length > 0 ? (
+                                    <div className="relative">
+                                        <ul className="space-y-3">
+                                            {scheduleInfo.classes.map((c, index) => {
+                                                const isPast = upcomingClassIndex !== -1 && index < upcomingClassIndex;
+                                                const isCurrentOrNext = index === upcomingClassIndex;
+                                                const isCurrent = isCurrentOrNext && c.startTime <= currentTime;
+                                                const isNext = isCurrentOrNext && !isCurrent;
+
+                                                return (
+                                                    <li key={c.slotId} className={`relative pl-8 transition-all duration-700 ease-out ${
+                                                        allClassesCompleted ? 'opacity-50' : isPast ? 'opacity-35' : ''
                                                     }`}>
-                                                        <div className="h-2 w-2 rounded-full bg-white"></div>
-                                                    </div>
-                                                    
-                                                    <div className={`rounded-lg transition-all ${
-                                                        isCurrent ? 'bg-primary/5 border-l-4 border-primary p-4 -ml-1 shadow-sm' : 
-                                                        isNext ? 'bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 -ml-1' :
-                                                        'p-3 hover:bg-slate-50 dark:hover:bg-slate-800'
-                                                    }`}>
-                                                        <div className="flex justify-between items-start">
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center gap-3 mb-1">
-                                                                    <p className={`font-semibold ${isCurrent ? 'text-primary' : 'text-slate-600 dark:text-slate-400'}`}>
-                                                                        {c.startTime} - {c.endTime}
-                                                                    </p>
-                                                                    {isCurrent && (
-                                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-primary text-white animate-pulse">
-                                                                            ONGOING
+                                                        {/* Timeline segment for this class */}
+                                                        {index < scheduleInfo.classes.length - 1 && (
+                                                            <div
+                                                                className={`absolute left-2.5 w-0.5 transition-all duration-700 ease-out ${
+                                                                    allClassesCompleted || isPast
+                                                                        ? 'bg-emerald-500/80 dark:bg-emerald-400/80'
+                                                                        : 'bg-slate-300 dark:bg-slate-600'
+                                                                }`}
+                                                                style={{
+                                                                    top: '20px',
+                                                                    height: 'calc(100% + 12px)' // Extends to next item (space-y-3 = 12px)
+                                                                }}
+                                                            />
+                                                        )}
+
+                                                        <div className={`absolute left-0 top-2.5 h-5 w-5 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
+                                                            isCurrent ? 'bg-primary ring-4 ring-primary/20 scale-110 shadow-md' :
+                                                            isNext ? 'bg-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-md' :
+                                                            isPast || allClassesCompleted ? 'bg-emerald-500/90 ring-4 ring-emerald-500/15 dark:bg-emerald-400/90 dark:ring-emerald-400/15' :
+                                                            'bg-slate-300 dark:bg-slate-600 ring-4 ring-slate-200 dark:ring-slate-700'
+                                                        }`}>
+                                                            {isPast || allClassesCompleted ? (
+                                                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                            ) : (
+                                                                <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className={`transition-all duration-500 ease-out ${
+                                                            isCurrent ? 'bg-primary/5 border-l-2 border-primary pl-4 pr-3 py-3 rounded-r-lg' :
+                                                            isNext ? 'bg-amber-50 dark:bg-amber-900/10 border-l-2 border-amber-500 pl-4 pr-3 py-3 rounded-r-lg' :
+                                                            'py-2'
+                                                        }`}>
+                                                            <div className="flex items-start justify-between gap-3">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <span className={`text-xs font-semibold transition-colors duration-500 ${
+                                                                            isCurrent ? 'text-primary' :
+                                                                            isPast || allClassesCompleted ? 'text-emerald-600/80 dark:text-emerald-400/80' :
+                                                                            'text-slate-500 dark:text-slate-400'
+                                                                        }`}>
+                                                                            {c.startTime} - {c.endTime}
                                                                         </span>
-                                                                    )}
-                                                                    {isNext && (
-                                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white">
-                                                                            UP NEXT
+                                                                        {isCurrent && (
+                                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs font-bold bg-primary text-white animate-pulse">
+                                                                                NOW
+                                                                            </span>
+                                                                        )}
+                                                                        {isNext && (
+                                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs font-bold bg-amber-500 text-white">
+                                                                                NEXT
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className={`font-semibold text-sm mb-2 transition-all duration-500 ${
+                                                                        isPast || allClassesCompleted ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white'
+                                                                    }`}>{c.courseName}</p>
+                                                                    <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs transition-colors duration-500 ${
+                                                                        isPast || allClassesCompleted ? 'text-slate-400 dark:text-slate-600' : 'text-slate-500 dark:text-slate-400'
+                                                                    }`}>
+                                                                        <span className="flex items-center gap-1">
+                                                                            <InstructorIcon className="w-3.5 h-3.5" />
+                                                                            {c.instructor}
                                                                         </span>
-                                                                    )}
-                                                                </div>
-                                                                <p className="font-bold text-slate-800 dark:text-white">{c.courseName}</p>
-                                                                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mt-2">
-                                                                    <span className="flex items-center gap-1.5">
-                                                                        <InstructorIcon className="w-4 h-4" />
-                                                                        {c.instructor}
-                                                                    </span>
-                                                                    <span className="flex items-center gap-1.5">
-                                                                        <LocationIcon className="w-4 h-4" />
-                                                                        {c.location}
-                                                                    </span>
-                                                                    <span className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
-                                                                        {c.courseCode}
-                                                                    </span>
+                                                                        <span className="flex items-center gap-1">
+                                                                            <LocationIcon className="w-3.5 h-3.5" />
+                                                                            {c.location}
+                                                                        </span>
+                                                                        <span className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-500 ${
+                                                                            isPast || allClassesCompleted
+                                                                                ? 'opacity-60'
+                                                                                : ''
+                                                                        } ${getClassColor(c.courseCode, c.isCustomTask)}`}>
+                                                                            {c.isCustomTask ? '✓ ' : ''}{c.courseCode}
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </div>
-                            ) : (
-                                <div className="text-center py-12">
-                                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
-                                        <CalendarCheckIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
                                     </div>
-                                    <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Classes Today!</h3>
-                                    <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your free day or catch up on assignments.</p>
-                                </div>
-                            )
-                        ) : (
-                            <div className="text-center py-8 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                                <CalendarCheckIcon className="mx-auto h-12 w-12 text-slate-400 mb-3" />
-                                <p className="text-slate-600 dark:text-slate-400 mb-4">Upload your schedule to see today's classes</p>
-                                <Link to="/schedule" className="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors">
-                                    Setup Schedule →
-                                </Link>
-                            </div>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
+                                            <CalendarCheckIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
+                                        </div>
+                                        <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Classes Scheduled!</h3>
+                                        <p className="mt-1 text-slate-500 dark:text-slate-400">Enjoy your free day or catch up on assignments.</p>
+                                    </div>
+                                )}
+                             </>
                         )}
-                    </div>
-
-                    {/* What's New - Merged */}
-                    <div className="bg-white dark:bg-dark-card rounded-xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
-                         <div className="p-4 flex justify-between items-center border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-                            <h2 className="text-xl font-semibold">What's New</h2>
-                            <button 
-                                onClick={handleRefresh}
-                                disabled={isRefreshing}
-                                className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                aria-label="Refresh updates"
-                            >
-                                <RefreshIcon className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                            </button>
-                        </div>
-                        
-                        <div className="p-4">
-                            {error ? (
-                                <div className="text-center py-6">
-                                    <p className="text-red-500">{error}</p>
-                                    <button onClick={handleRefresh} className="mt-2 text-sm text-primary hover:underline">Retry</button>
-                                </div>
-                            ) : (
-                                <ul className="space-y-2">
-                                    {latestItems.map((item, idx) => {
-                                        const isEvent = item.type === 'event';
-                                        const content = (
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold text-slate-800 dark:text-white truncate group-hover:text-primary transition-colors">
-                                                        <span className="mr-2">{isEvent ? '📅' : '📢'}</span>
-                                                        {item.title}
-                                                    </p>
-                                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                                        {item.date} • {isEvent ? (item as CampusEvent).location : (item as Announcement).author}
-                                                    </p>
-                                                </div>
-                                                {idx === 0 && (
-                                                    <span className="ml-2 px-2 py-1 text-xs font-semibold bg-red-100 text-red-600 rounded-full">
-                                                        NEW
-                                                    </span>
-                                                )}
-                                            </div>
-                                        );
-
-                                        return (
-                                            <li key={`${item.type}-${item.id}`} className="group">
-                                                {item.sourceUrl ? (
-                                                    <a 
-                                                        href={item.sourceUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group-hover:shadow-sm"
-                                                    >
-                                                        {content}
-                                                    </a>
-                                                ) : (
-                                                    <Link 
-                                                        to={'/news-and-events'} 
-                                                        className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group-hover:shadow-sm"
-                                                    >
-                                                        {content}
-                                                    </Link>
-                                                )}
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            )}
-                            
-                            <div className="mt-4 text-center">
-                                <Link 
-                                    to={'/news-and-events'} 
-                                    className="text-sm text-primary hover:text-primary-dark font-medium transition-colors"
-                                >
-                                    View All Updates →
-                                </Link>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Upcoming Deadlines Widget - From Calendar Reminders */}
                     <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">Upcoming Reminders</h2>
+                            <div>
+                                <h2 className="text-xl font-semibold">Upcoming Reminders</h2>
+                                {calendarData && calendarData.events && (() => {
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const count = calendarData.events.filter(event => {
+                                        const eventKey = getEventKey(event);
+                                        const isUserCreatedWithReminder = event.remindMe === true && !!event.userId;
+                                        const isPreloadedWithReminder = !event.userId && reminderPreferences.includes(eventKey);
+                                        if (!isUserCreatedWithReminder && !isPreloadedWithReminder) return false;
+                                        const eventDate = new Date(event.date);
+                                        eventDate.setHours(0, 0, 0, 0);
+                                        return eventDate >= today;
+                                    }).length;
+                                    return count > 0 ? (
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                            {count} {count === 1 ? 'reminder' : 'reminders'} active
+                                        </p>
+                                    ) : null;
+                                })()}
+                            </div>
                             <Link to="/academic-calendar" className="text-sm text-primary hover:text-primary-dark">View Calendar →</Link>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-3 max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
                             {(() => {
                                 if (!calendarData || !calendarData.events) {
                                     return (
@@ -468,23 +1501,18 @@ const Dashboard: React.FC = () => {
                                 const today = new Date();
                                 today.setHours(0, 0, 0, 0);
 
+
                                 const reminderEvents = calendarData.events
-                                    .filter(event => {
+                                    .filter((event: CalendarEvent) => {
                                         const eventKey = getEventKey(event);
 
                                         // Show if: user-created event with remindMe OR preloaded event in user's preferences
-                                        const isUserCreatedWithReminder = event.remindMe && event.userId;
+                                        const isUserCreatedWithReminder = event.remindMe === true && !!event.userId;
                                         const isPreloadedWithReminder = !event.userId && reminderPreferences.includes(eventKey);
 
-                                        if (!isUserCreatedWithReminder && !isPreloadedWithReminder) return false;
-
-                                        const eventDate = new Date(event.date);
-                                        eventDate.setHours(0, 0, 0, 0);
-                                        const isUpcoming = eventDate >= today;
-                                        return isUpcoming;
+                                        return isUserCreatedWithReminder || isPreloadedWithReminder;
                                     })
-                                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                                    .slice(0, 5);
+                                    .sort((a: CalendarEvent, b: CalendarEvent) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
                                 if (reminderEvents.length === 0) {
                                     return (
@@ -499,47 +1527,85 @@ const Dashboard: React.FC = () => {
                                 }
 
                                 return reminderEvents.map((event, index) => {
-                                    const eventDate = new Date(event.date);
-                                    eventDate.setHours(0, 0, 0, 0);
+                                    const eventStartDate = new Date(event.date);
+                                    const eventEndDate = new Date(event.endDate || event.date);
                                     const todayDate = new Date();
+                                    eventStartDate.setHours(0, 0, 0, 0);
+                                    eventEndDate.setHours(0, 0, 0, 0);
                                     todayDate.setHours(0, 0, 0, 0);
-                                    const daysUntil = Math.ceil((eventDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
-                                    const isUrgent = daysUntil <= 2;
-                                    const isWarning = daysUntil > 2 && daysUntil <= 7;
+
+                                    const daysUntil = Math.ceil((eventStartDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+                                    const isOngoing = eventStartDate < todayDate && eventEndDate >= todayDate;
+                                    const isUrgent = !isOngoing && daysUntil <= 2;
+                                    const isWarning = !isOngoing && daysUntil > 2 && daysUntil <= 7;
+                                    const isUserEvent = !!event.userId;
 
                                     return (
                                         <div
                                             key={event.id || index}
                                             className={`group flex items-center justify-between p-3 rounded-lg border-l-4 ${
+                                                isOngoing ? 'bg-green-50 dark:bg-green-900/20 border-green-500' :
                                                 isUrgent ? 'bg-red-50 dark:bg-red-900/20 border-red-500' :
                                                 isWarning ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-500' :
                                                 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
                                             }`}
                                         >
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-medium truncate">{event.description}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-medium truncate">{event.description}</p>
+                                                    {isUserEvent && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" title="User-created event">
+                                                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                            </svg>
+                                                            Personal
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <p className="text-sm text-slate-600 dark:text-slate-400">{event.type}</p>
                                             </div>
                                             <div className="flex items-center flex-shrink-0 ml-4">
                                                 <div className="text-right">
                                                     <p className={`text-sm font-semibold ${
+                                                        isOngoing ? 'text-green-600' :
                                                         isUrgent ? 'text-red-600' :
                                                         isWarning ? 'text-amber-600' :
                                                         'text-blue-600'
                                                     }`}>
-                                                        {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`}
+                                                        {isOngoing ? 'Ongoing' : daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`}
                                                     </p>
                                                     <p className="text-xs text-slate-500">
                                                         {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                                     </p>
                                                 </div>
                                                 <button
-                                                    onClick={() => toggleReminderPreference(getEventKey(event))}
+                                                    onClick={async () => {
+                                                        try {
+                                                            // For user-defined events, turn off remindMe flag and toggle preference
+                                                            if (event.userId && event.id) {
+                                                                await updateUserEvent(event.id, {
+                                                                    ...event,
+                                                                    remindMe: false
+                                                                });
+                                                                // Also toggle the reminder preference for consistency
+                                                                const eventKey = getEventKey(event);
+                                                                if (reminderPreferences.includes(eventKey)) {
+                                                                    await toggleReminderPreference(eventKey);
+                                                                }
+                                                            } else {
+                                                                // For preloaded events, just toggle the reminder preference
+                                                                await toggleReminderPreference(getEventKey(event));
+                                                            }
+                                                        } catch (error) {
+                                                            console.error('Error removing reminder:', error);
+                                                            alert('Failed to remove reminder');
+                                                        }
+                                                    }}
                                                     className="ml-2 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 opacity-0 group-hover:opacity-100 transition-opacity"
                                                     title="Remove reminder"
                                                     aria-label="Remove reminder"
                                                 >
-                                                    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                                                 </button>
                                             </div>
                                         </div>
@@ -552,62 +1618,565 @@ const Dashboard: React.FC = () => {
 
                 {/* Right Column - 1/3 width */}
                 <div className="space-y-6">
-                    {/* Quick Links - Enhanced Grid */}
-                    <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                        <h3 className="text-lg font-semibold mb-4">Quick Access</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            {quickLinks.map(link => (
-                                <a
-                                    key={link.name}
-                                    href={link.href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex flex-col items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all hover:shadow-md group"
-                                >
-                                    <div className={`text-2xl mb-2 ${link.color} group-hover:scale-110 transition-transform`}>
-                                        {link.icon}
-                                    </div>
-                                    <span className="text-xs text-center text-slate-600 dark:text-slate-300 group-hover:text-primary dark:group-hover:text-secondary">
-                                        {link.name}
-                                    </span>
-                                </a>
-                            ))}
+                    {/* Quick Links - Compact & Flexible */}
+                    <div className="bg-gradient-to-br from-white to-slate-50 dark:from-dark-card dark:to-slate-900/50 p-4 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 backdrop-blur-sm">
+                        <div className="flex justify-between items-center mb-3">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg">
+                                    <svg className="w-4 h-4 text-primary dark:text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-base font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                                    Quick Access
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() => setIsManagingLinks(!isManagingLinks)}
+                                className="flex items-center gap-1 px-2.5 py-1 text-xs text-white bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary rounded-lg font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
+                            >
+                                {isManagingLinks ? (
+                                    <>
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Done
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                        </svg>
+                                        Manage
+                                    </>
+                                )}
+                            </button>
                         </div>
+
+                        {/* Search Bar */}
+                        {quickLinks.length > 6 && (
+                            <div className="mb-3 relative">
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search links..."
+                                    className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-primary dark:focus:border-secondary transition-all duration-200 placeholder-slate-400 dark:placeholder-slate-500"
+                                />
+                                <svg className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {isManagingLinks && (
+                            <div className="mb-3 grid grid-cols-2 gap-2 animate-fadeIn">
+                                <button
+                                    onClick={() => setShowAddModal(true)}
+                                    className="py-1.5 px-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg transition-all duration-300 text-xs font-medium shadow-md hover:shadow-lg hover:scale-105 flex items-center justify-center gap-1.5"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Add Link
+                                </button>
+                                <button
+                                    onClick={handleResetToDefault}
+                                    className="py-1.5 px-3 bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white rounded-lg transition-all duration-300 text-xs font-medium shadow-md hover:shadow-lg hover:scale-105 flex items-center justify-center gap-1.5"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    Reset
+                                </button>
+                            </div>
+                        )}
+
+                        {isManagingLinks && (
+                            <div className="mb-2 px-2.5 py-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-2 text-xs text-blue-700 dark:text-blue-300">
+                                <svg className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Drag to reorder • Click to edit/delete</span>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 auto-rows-fr">
+                            {filteredLinks.length > 0 ? (
+                                filteredLinks.map(link => (
+                                    <div
+                                        key={link.id}
+                                        className={`relative group ${isManagingLinks ? 'cursor-move' : ''} ${draggedLinkId === link.id ? 'opacity-50 scale-95' : ''} transition-all duration-200 h-full`}
+                                        draggable={isManagingLinks && editingLink?.id !== link.id}
+                                        onDragStart={(e) => handleDragStart(e, link.id)}
+                                        onDragOver={handleDragOver}
+                                        onDrop={(e) => handleDrop(e, link.id)}
+                                        onDragEnd={handleDragEnd}
+                                    >
+                                        {editingLink?.id === link.id ? (
+                                            <div className="h-full min-h-[110px] p-2.5 rounded-lg border-2 border-primary bg-gradient-to-br from-primary/5 to-secondary/5 space-y-1.5 shadow-lg animate-fadeIn flex flex-col">
+                                                <input
+                                                    type="text"
+                                                    value={editingLink.name}
+                                                    onChange={(e) => setEditingLink({ ...editingLink, name: e.target.value })}
+                                                    className="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 focus:border-primary dark:focus:border-secondary focus:outline-none transition-colors"
+                                                    placeholder="Name"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={editingLink.href}
+                                                    onChange={(e) => setEditingLink({ ...editingLink, href: e.target.value })}
+                                                    className="w-full px-2.5 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 focus:border-primary dark:focus:border-secondary focus:outline-none transition-colors"
+                                                    placeholder="URL"
+                                                />
+                                                <button
+                                                    onClick={() => handleEditLink(link)}
+                                                    className="w-full py-1.5 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white rounded-md text-xs font-medium transition-all duration-300 shadow-md hover:shadow-lg mt-auto"
+                                                >
+                                                    Save
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <a
+                                                href={link.href}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => isManagingLinks && e.preventDefault()}
+                                                className="h-full min-h-[110px] flex flex-col items-center justify-center p-3 rounded-lg bg-white dark:bg-slate-800/50 hover:bg-gradient-to-br hover:from-primary/5 hover:to-secondary/5 transition-all duration-300 hover:shadow-lg hover:scale-105 border border-transparent hover:border-primary/20 dark:hover:border-secondary/20 backdrop-blur-sm"
+                                            >
+                                                <div className={`text-2xl mb-2 ${link.color} group-hover:scale-110 transition-all duration-300 transform group-hover:rotate-6 flex-shrink-0`}>
+                                                    {getIconForLink(link.id)}
+                                                </div>
+                                                <div className="flex-1 flex flex-col items-center justify-center w-full">
+                                                    <span className="text-[11px] text-center font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary dark:group-hover:text-secondary transition-colors line-clamp-2 w-full px-1 break-words leading-tight" title={link.name}>
+                                                        {link.name}
+                                                    </span>
+                                                    {link.isCustom && (
+                                                        <span className="mt-1.5 px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full text-[9px] font-medium flex-shrink-0">
+                                                            Custom
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </a>
+                                        )}
+
+                                        {isManagingLinks && editingLink?.id !== link.id && (
+                                            <div className="absolute -top-1.5 -right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
+                                                <button
+                                                    onClick={() => handleEditLink(link)}
+                                                    className="p-1 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200"
+                                                    title="Edit"
+                                                >
+                                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRemoveLink(link.id)}
+                                                    className="p-1 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200"
+                                                    title="Delete"
+                                                >
+                                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="col-span-full py-6 text-center">
+                                    <svg className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">No links found</p>
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Try a different search term</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Link count indicator */}
+                        {quickLinks.length > 0 && (
+                            <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                                <span className="flex items-center gap-1">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    {filteredLinks.length} of {quickLinks.length} links
+                                </span>
+                                {searchQuery && (
+                                    <span className="text-primary dark:text-secondary font-medium">Filtered</span>
+                                )}
+                            </div>
+                        )}
                     </div>
 
-                    {/* New: Weather Widget */}
-                    <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                        <h3 className="text-lg font-semibold mb-3">Campus Weather</h3>
+                    {/* Weather Widget - Enhanced & Interactive */}
+                    <div
+                        onClick={() => weather && setShowWeatherModal(true)}
+                        className="group bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/20 p-4 sm:p-6 rounded-2xl shadow-md border border-sky-200 dark:border-sky-700/50 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer"
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex-1">
+                                <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+                                    <span className="text-sky-500 text-xl sm:text-2xl animate-pulse">🌤️</span>
+                                    <span className="bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">Campus Weather</span>
+                                </h3>
+                                <p className="text-xs text-sky-600/60 dark:text-sky-400/60 mt-1 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                                    Click for detailed weather info
+                                </p>
+                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    fetchWeather();
+                                }}
+                                disabled={weatherLoading}
+                                className="p-2 rounded-lg hover:bg-sky-100 dark:hover:bg-sky-800/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group-hover:rotate-180"
+                                title="Refresh weather"
+                            >
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+                        </div>
                         {weatherLoading ? (
-                            <div className="flex items-center justify-center h-20">
-                                <div className="w-8 h-8 border-2 border-t-transparent border-primary rounded-full animate-spin"></div>
+                            <div className="flex flex-col items-center justify-center h-32 space-y-3">
+                                <div className="w-12 h-12 border-4 border-t-transparent border-sky-500 rounded-full animate-spin"></div>
+                                <p className="text-xs text-sky-600 dark:text-sky-400 animate-pulse">Fetching weather...</p>
                             </div>
                         ) : weatherError ? (
-                            <div className="text-center text-red-500">{weatherError}</div>
-                        ) : weather ? (
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-3xl font-bold">{weather.temp}°C</p>
-                                    <p className="text-sm text-slate-500">{weather.desc}</p>
-                                </div>
-                                <div className="text-5xl">{weather.icon}</div>
+                            <div className="text-center py-6">
+                                <p className="text-red-500 text-sm mb-3">⚠️ {weatherError}</p>
+                                <button
+                                    onClick={fetchWeather}
+                                    className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-sm transition-colors"
+                                >
+                                    Retry
+                                </button>
                             </div>
+                        ) : weather ? (
+                            <>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex-1">
+                                        <div className="flex items-baseline gap-2">
+                                            <p className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-br from-sky-600 to-blue-600 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300">
+                                                {weather.temp}°
+                                            </p>
+                                            <span className="text-2xl sm:text-3xl font-semibold text-sky-500/60">C</span>
+                                        </div>
+                                        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-2 font-medium">{weather.desc}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 flex items-center gap-1">
+                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                            </svg>
+                                            Dhanbad, Jharkhand
+                                        </p>
+                                    </div>
+                                    <div className="text-6xl sm:text-7xl md:text-8xl drop-shadow-2xl group-hover:scale-110 transition-transform duration-300">
+                                        {weather.icon}
+                                    </div>
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-sky-300/50 dark:border-sky-700/50">
+                                    {recommendationLoading ? (
+                                        <div className="animate-pulse flex space-x-3">
+                                            <div className="text-base font-medium text-sky-700 dark:text-sky-300">✨</div>
+                                            <div className="flex-1 space-y-3 py-1">
+                                                <div className="h-3 bg-sky-200/50 dark:bg-sky-700/50 rounded"></div>
+                                                <div className="h-3 bg-sky-200/50 dark:bg-sky-700/50 rounded w-5/6"></div>
+                                                <div className="h-3 bg-sky-200/50 dark:bg-sky-700/50 rounded w-4/6"></div>
+                                            </div>
+                                        </div>
+                                    ) : recommendationError ? (
+                                        <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-2">
+                                            <span>⚠️</span> {recommendationError}
+                                        </p>
+                                    ) : recommendation && (
+                                        <div className="bg-sky-100/50 dark:bg-sky-900/30 rounded-xl p-3 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors">
+                                            <h4 className="text-xs sm:text-sm font-semibold text-sky-800 dark:text-sky-200 mb-2 flex items-center gap-2">
+                                                <span className="text-base">✨</span>
+                                                <span>Weather Advice</span>
+                                            </h4>
+                                            <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300 whitespace-pre-line leading-relaxed">
+                                                {recommendation}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
                         ) : null}
-                    </div>
- 
-                    {/* New: Study Streak */}
-                    <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-                        <h3 className="text-lg font-semibold mb-3">Study Streak</h3>
-                        <div className="text-center">
-                            <p className="text-4xl mb-2">🔥</p>
-                            <p className="text-3xl font-bold text-orange-500">7 Days</p>
-                            <p className="text-sm text-slate-500 mt-1">Keep it going!</p>
-                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Weather Details Modal */}
+            {showWeatherModal && detailedWeather && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowWeatherModal(false)}>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                        {/* Modal Header */}
+                        <div className="sticky top-0 bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/40 dark:to-blue-900/40 backdrop-blur-sm border-b border-sky-200 dark:border-sky-700 p-6 rounded-t-2xl">
+                            <div className="flex justify-between items-start">
+                                <div className="flex items-center gap-4">
+                                    <div className="text-6xl drop-shadow-lg">{detailedWeather.icon}</div>
+                                    <div>
+                                        <h2 className="text-3xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
+                                            {detailedWeather.temp}°C
+                                        </h2>
+                                        <p className="text-slate-600 dark:text-slate-400 font-medium">{detailedWeather.desc}</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-500 flex items-center gap-1 mt-1">
+                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                            </svg>
+                                            Dhanbad, Jharkhand
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowWeatherModal(false)}
+                                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-6 space-y-6">
+                            {/* Feels Like Temperature */}
+                            <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 p-4 rounded-xl border border-orange-200 dark:border-orange-700/50">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-3xl">🌡️</div>
+                                        <div>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Feels Like</p>
+                                            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{detailedWeather.feelsLike.toFixed(1)}°C</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Weather Details Grid */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Humidity */}
+                                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-3xl">💧</div>
+                                        <div>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Humidity</p>
+                                            <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{detailedWeather.humidity}%</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Wind Speed */}
+                                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-3xl">💨</div>
+                                        <div>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Wind Speed</p>
+                                            <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{detailedWeather.windSpeed.toFixed(1)} km/h</p>
+                                            <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">{getWindDirection(detailedWeather.windDirection)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Pressure */}
+                                <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-3xl">🎚️</div>
+                                        <div>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Pressure</p>
+                                            <p className="text-xl font-bold text-purple-600 dark:text-purple-400">{detailedWeather.pressure.toFixed(0)} hPa</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* UV Index */}
+                                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-4 rounded-xl border border-yellow-200 dark:border-yellow-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-3xl">☀️</div>
+                                        <div>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">UV Index</p>
+                                            <p className="text-xl font-bold text-yellow-600 dark:text-yellow-400">{detailedWeather.uvIndex.toFixed(1)}</p>
+                                            <p className="text-xs text-yellow-600/70 dark:text-yellow-400/70">
+                                                {detailedWeather.uvIndex < 3 ? 'Low' : detailedWeather.uvIndex < 6 ? 'Moderate' : detailedWeather.uvIndex < 8 ? 'High' : 'Very High'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Precipitation */}
+                                <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 p-4 rounded-xl border border-indigo-200 dark:border-indigo-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-3xl">🌧️</div>
+                                        <div>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Precipitation</p>
+                                            <p className="text-xl font-bold text-indigo-600 dark:text-indigo-400">{detailedWeather.precipitation.toFixed(1)} mm</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Visibility */}
+                                <div className="bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900/20 dark:to-gray-900/20 p-4 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-3xl">👁️</div>
+                                        <div>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Visibility</p>
+                                            <p className="text-xl font-bold text-slate-600 dark:text-slate-400">{detailedWeather.visibility} km</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* AI Recommendation in Modal */}
+                            {recommendation && (
+                                <div className="bg-sky-100/50 dark:bg-sky-900/30 rounded-xl p-4 border border-sky-200 dark:border-sky-700/50">
+                                    <h4 className="text-sm font-semibold text-sky-800 dark:text-sky-200 mb-3 flex items-center gap-2">
+                                        <span className="text-xl">✨</span>
+                                        <span>Weather Advice</span>
+                                    </h4>
+                                    <p className="text-sm text-sky-700 dark:text-sky-300 whitespace-pre-line leading-relaxed">
+                                        {recommendation}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-4 rounded-b-2xl flex justify-end gap-3">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    fetchWeather();
+                                }}
+                                disabled={weatherLoading}
+                                className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                <svg className={`w-4 h-4 ${weatherLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Refresh
+                            </button>
+                            <button
+                                onClick={() => setShowWeatherModal(false)}
+                                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Link Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-semibold">Add Quick Link</h3>
+                            <button
+                                onClick={() => {
+                                    setShowAddModal(false);
+                                    setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+                                }}
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Link Name</label>
+                                <input
+                                    type="text"
+                                    value={newLink.name}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewLink({ ...newLink, name: e.target.value })}
+                                    placeholder="e.g., Google Drive"
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 focus:ring-2 focus:ring-primary"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">URL</label>
+                                <input
+                                    type="text"
+                                    value={newLink.href}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewLink({ ...newLink, href: e.target.value })}
+                                    placeholder="e.g., drive.google.com"
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 focus:ring-2 focus:ring-primary"
+                                />
+                                <p className="text-xs text-slate-500 mt-1">https:// will be added automatically if not provided</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Color</label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {[
+                                        { name: 'Blue', value: 'text-blue-600 dark:text-blue-400' },
+                                        { name: 'Red', value: 'text-red-600 dark:text-red-400' },
+                                        { name: 'Green', value: 'text-green-600 dark:text-green-400' },
+                                        { name: 'Purple', value: 'text-purple-600 dark:text-purple-400' },
+                                        { name: 'Orange', value: 'text-orange-600 dark:text-orange-400' },
+                                        { name: 'Teal', value: 'text-teal-600 dark:text-teal-400' },
+                                        { name: 'Pink', value: 'text-pink-600 dark:text-pink-400' },
+                                        { name: 'Indigo', value: 'text-indigo-600 dark:text-indigo-400' },
+                                    ].map(color => (
+                                        <button
+                                            key={color.value}
+                                            onClick={() => setNewLink({ ...newLink, color: color.value })}
+                                            className={`p-2 rounded-lg border-2 transition-all ${
+                                                newLink.color === color.value
+                                                    ? 'border-primary bg-primary/10'
+                                                    : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
+                                            }`}
+                                        >
+                                            <div className={`${color.value} text-2xl`}>
+                                                <WebsiteIcon />
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div> 
+                            </div>
+
+                            <div className="flex gap-2 pt-2">
+                                <button
+                                    onClick={() => {
+                                        setShowAddModal(false);
+                                        setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+                                    }}
+                                    className="flex-1 py-2 px-4 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAddLink}
+                                    disabled={!newLink.name || !newLink.href}
+                                    className="flex-1 py-2 px-4 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Add Link
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
-export default Dashboard;
+export default React.memo(Dashboard);

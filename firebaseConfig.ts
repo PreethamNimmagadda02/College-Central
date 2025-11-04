@@ -1,7 +1,9 @@
-// FIX: Update Firebase imports to v8 compat syntax.
+// FIX: Updated Firebase imports for v9 compatibility.
+// Only import core services - performance and analytics loaded on demand
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
+import 'firebase/compat/storage';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -21,5 +23,42 @@ if (!firebase.apps.length) {
 // Initialize Firebase services
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
 
-export { auth, db };
+// Lazy load Performance Monitoring and Analytics only when needed
+let perf: any = null;
+let analytics: any = null;
+
+// Helper to lazy load performance monitoring
+export async function getPerformance() {
+  if (perf) return perf;
+  if (typeof window !== 'undefined' && import.meta.env.PROD) {
+    try {
+      await import('firebase/compat/performance');
+      perf = firebase.performance();
+      return perf;
+    } catch (error) {
+      console.warn('Failed to load Firebase Performance:', error);
+      return null;
+    }
+  }
+  return null;
+}
+
+// Helper to lazy load analytics
+export async function getAnalytics() {
+  if (analytics) return analytics;
+  if (typeof window !== 'undefined' && import.meta.env.PROD) {
+    try {
+      await import('firebase/compat/analytics');
+      analytics = firebase.analytics();
+      return analytics;
+    } catch (error) {
+      console.warn('Failed to load Firebase Analytics:', error);
+      return null;
+    }
+  }
+  return null;
+}
+
+export { auth, db, storage, perf, analytics };

@@ -1,0 +1,17 @@
+{
+  "name": "College Central",
+  "short_name": "College Central",
+  "description": "A comprehensive student hub for IIT(ISM) Dhanbad, providing access to grades, schedules, events, announcements, and more in a modern, user-friendly interface.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

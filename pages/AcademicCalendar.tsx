@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useCalendar } from '../contexts/CalendarContext';
-import { AcademicCalendarData, CalendarEvent, CalendarEventType } from '../types';
+import { CalendarEvent, CalendarEventType } from '../types';
+import { formatDateRange, formatDateWithMonthName } from '../utils/dateUtils';
 
 const getEventTypeIcon = (type: CalendarEventType) => {
     switch (type) {
@@ -25,7 +26,6 @@ const getEventTypeColor = (type: CalendarEventType) => {
 const AcademicCalendar: React.FC = () => {
     const {
         calendarData,
-        setCalendarData,
         loading: calendarLoading,
         addUserEvent,
         updateUserEvent,
@@ -86,7 +86,11 @@ const AcademicCalendar: React.FC = () => {
         if (!calendarData) return [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-    
+
+        // Calculate one week from today
+        const oneWeekFromToday = new Date(today);
+        oneWeekFromToday.setDate(oneWeekFromToday.getDate() + 7);
+
         const relevantKeywords = [
             'b. tech', 'm. tech', 'ug', 'pg', 'dual degree', 'all students', 'int. m. tech'
         ];
@@ -95,38 +99,64 @@ const AcademicCalendar: React.FC = () => {
             ...relevantKeywords,
             'ph. d', 'executive m. tech', 'executive mba', 'part-time', 'm. sc', 'ma students', 'scholars'
         ];
-    
-        const futureAndOngoingEvents = calendarData.events
-          .filter(event => new Date(event.endDate || event.date) >= today);
-    
-        const relevantEvents = futureAndOngoingEvents.filter(event => {
+
+        // Filter events that are ongoing (started in the past but not yet ended) OR will start within the next week
+        const upcomingAndOngoingEvents = calendarData.events.filter(event => {
+            const eventStartDate = new Date(event.date);
+            const eventEndDate = new Date(event.endDate || event.date);
+            eventStartDate.setHours(0, 0, 0, 0);
+            eventEndDate.setHours(0, 0, 0, 0);
+
+            // Event is ongoing if it has already started but hasn't ended yet
+            const isOngoing = eventStartDate < today && eventEndDate >= today;
+
+            // Event is upcoming if it starts within the next week
+            const isUpcomingThisWeek = eventStartDate >= today && eventStartDate <= oneWeekFromToday;
+
+            return isOngoing || isUpcomingThisWeek;
+        });
+
+        const relevantEvents = upcomingAndOngoingEvents.filter(event => {
             const desc = event.description.toLowerCase();
-            
+
+            const eventStartDate = new Date(event.date);
+            const eventEndDate = new Date(event.endDate || event.date);
+            eventStartDate.setHours(0, 0, 0, 0);
+            eventEndDate.setHours(0, 0, 0, 0);
+            const isOngoing = eventStartDate < today && eventEndDate >= today;
+
+            // Include ALL ongoing events regardless of target group
+            if (isOngoing) {
+                return true;
+            }
+
+            // For upcoming events, apply the existing filtering logic
             // Is it explicitly relevant?
             const isForRelevantGroup = relevantKeywords.some(kw => desc.includes(kw));
             if (isForRelevantGroup) {
                 return true;
             }
-    
+
             // Is it a general holiday?
             if (event.type === 'Holiday') {
                 return true;
             }
-    
+
             // Is it a general event (doesn't mention any specific group)?
             const isSpecificToAnyGroup = specificGroupKeywords.some(kw => desc.includes(kw));
             if (!isSpecificToAnyGroup) {
                 return true; // It's a general event like CONVOCATION
             }
-    
+
             // Otherwise, it's for a specific, non-relevant group
             return false;
         });
-        
+
         // Sort events by their start date to get the soonest ones first
         relevantEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
-        return relevantEvents.slice(0, 3);
+
+        // Return all events in the next week, not just the first 3
+        return relevantEvents;
     }, [calendarData]);
 
     const getDaysUntil = (date: string) => {
@@ -196,13 +226,13 @@ const AcademicCalendar: React.FC = () => {
             <body>
                 <h1>Academic Calendar</h1>
                 <div class="semester-info">
-                    <p><strong>Semester Period:</strong> ${new Date(calendarData.semesterStartDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - ${new Date(calendarData.semesterEndDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                    <p><strong>Semester Period:</strong> ${formatDateRange(calendarData.semesterStartDate, calendarData.semesterEndDate)}</p>
                     <p><strong>Total Events:</strong> ${calendarData.events.length}</p>
                 </div>
                 <h2>Important Events</h2>
                 ${calendarData.events.map(event => `
                     <div class="event">
-                        <span class="event-date">${new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} ${ event.endDate ? ' - ' + new Date(event.endDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : ''}, ${new Date(event.date).getFullYear()}</span>
+                        <span class="event-date">${formatDateWithMonthName(event.date)}${event.endDate ? ' - ' + formatDateWithMonthName(event.endDate) : ''}</span>
                         <span class="event-type">${event.type}</span>
                         <p style="margin: 8px 0 0 0;">${event.description}</p>
                     </div>
@@ -219,92 +249,9 @@ const AcademicCalendar: React.FC = () => {
         printWindow.document.close();
     };
 
-    const handleSyncGoogleCalendar = () => {
-        if (!calendarData) return;
+    // Removed unused handleSyncGoogleCalendar
 
-        // Generate .ics file content
-        const icsEvents = calendarData.events.map(event => {
-            const startDateStr = event.date.replace(/-/g, '');
-            // For all-day events, DTEND must be the day AFTER the last day of the event
-            const endDateStr = event.endDate ? new Date(new Date(event.endDate).getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '') : new Date(new Date(event.date).getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '');
-
-            return [
-                'BEGIN:VEVENT',
-                `DTSTART;VALUE=DATE:${startDateStr}`,
-                `DTEND;VALUE=DATE:${endDateStr}`,
-                `SUMMARY:${event.description}`,
-                `DESCRIPTION:${event.type}`,
-                `UID:${new Date(event.date).getTime()}@academichub`,
-                'END:VEVENT'
-            ].filter(Boolean).join('\r\n');
-        }).join('\r\n');
-
-        const icsContent = [
-            'BEGIN:VCALENDAR',
-            'VERSION:2.0',
-            'PRODID:-//Academic Hub//Academic Calendar//EN',
-            'CALSCALE:GREGORIAN',
-            'METHOD:PUBLISH',
-            icsEvents,
-            'END:VCALENDAR'
-        ].join('\r\n');
-
-        // Create and download .ics file
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'academic-calendar.ics';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-
-        // Show success message
-        alert('Calendar file downloaded! You can now import it to Google Calendar:\n1. Open Google Calendar\n2. Click Settings (gear icon)\n3. Select "Import & export"\n4. Choose the downloaded .ics file');
-    };
-
-    const handleSetReminders = () => {
-        if (!calendarData) return;
-
-        // Check if browser supports notifications
-        if (!('Notification' in window)) {
-            alert('Your browser does not support notifications.');
-            return;
-        }
-
-        // Request permission
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                // Find next upcoming event
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const upcomingEvent = calendarData.events.find((event: CalendarEvent) => new Date(event.endDate || event.date) >= today);
-
-                if (upcomingEvent) {
-                    const daysUntil = getDaysUntil(upcomingEvent.date);
-
-                    // Show confirmation
-                    const message = `Reminders enabled! You'll be notified about upcoming events.\n\nNext event: ${upcomingEvent.description} in ${daysUntil} days.`;
-                    alert(message);
-
-                    // Store reminder preference in localStorage
-                    localStorage.setItem('calendar-reminders-enabled', 'true');
-                    localStorage.setItem('calendar-data', JSON.stringify(calendarData));
-
-                    // Show a test notification
-                    new Notification('Academic Calendar Reminder', {
-                        body: `Next event: ${upcomingEvent.description} on ${new Date(upcomingEvent.date).toLocaleDateString()}`,
-                        icon: '📅'
-                    });
-                } else {
-                    alert('No upcoming events to set reminders for.');
-                }
-            } else {
-                alert('Notification permission denied. Please enable notifications in your browser settings.');
-            }
-        });
-    };
+    // (Deprecated) handleSetReminders was removed as it was unused
 
     const handleAddEvent = async () => {
         if (!newEvent.date || !newEvent.description) {
@@ -314,6 +261,13 @@ const AcademicCalendar: React.FC = () => {
 
         try {
             await addUserEvent(newEvent as CalendarEvent);
+
+            // If reminder was checked, add to reminder preferences
+            if (newEvent.remindMe) {
+                const eventKey = getEventKey(newEvent as CalendarEvent);
+                await toggleReminderPreference(eventKey);
+            }
+
             setNewEvent({ date: '', endDate: '', description: '', type: 'Other', remindMe: false });
             setShowAddEventModal(false);
         } catch (error) {
@@ -355,9 +309,19 @@ const AcademicCalendar: React.FC = () => {
     const handleSetEventReminder = async (event: CalendarEvent) => {
         const eventKey = getEventKey(event);
         const isCurrentlyReminded = reminderPreferences.includes(eventKey);
+        const isUserEvent = !!event.userId && !!event.id;
 
         try {
-            await toggleReminderPreference(eventKey);
+            if (isUserEvent) {
+                // For user-created events, update both remindMe flag and reminderPreferences
+                await updateUserEvent(event.id!, {
+                    ...event,
+                    remindMe: !isCurrentlyReminded
+                });
+            } else {
+                // For preloaded events, only toggle reminderPreferences
+                await toggleReminderPreference(eventKey);
+            }
             alert(isCurrentlyReminded ? 'Reminder removed!' : 'Reminder set! This event will appear in your Dashboard.');
         } catch (error) {
             console.error('Error toggling reminder:', error);
@@ -365,48 +329,16 @@ const AcademicCalendar: React.FC = () => {
         }
     };
 
-    const handleSetEventReminderOld = (event: CalendarEvent) => {
-        if (!('Notification' in window)) {
-            alert('Your browser does not support notifications.');
-            return;
-        }
-
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                const daysUntil = getDaysUntil(event.date);
-
-                if (daysUntil < 0) {
-                    alert('This event has already passed.');
-                    return;
-                }
-
-                // Save reminder to localStorage
-                const reminders = JSON.parse(localStorage.getItem('event-reminders') || '[]');
-                const newReminder = {
-                    eventDate: event.date,
-                    eventDescription: event.description,
-                    reminderDate: new Date().toISOString()
-                };
-                reminders.push(newReminder);
-                localStorage.setItem('event-reminders', JSON.stringify(reminders));
-
-                new Notification('Reminder Set', {
-                    body: `You'll be reminded about: ${event.description}`,
-                    icon: '⏰'
-                });
-
-                alert(`Reminder set for: ${event.description}\nDate: ${new Date(event.date).toLocaleDateString()}`);
-            } else {
-                alert('Please enable notifications to set reminders.');
-            }
-        });
-    };
+    // (Deprecated) handleSetEventReminderOld was removed as it was unused
 
     const handleAddToPersonalCalendar = (event: CalendarEvent) => {
         const startDateStr = event.date.replace(/-/g, '');
-        // For all-day events, DTEND must be the day AFTER the last day of the event
-        const endDateStr = event.endDate ? new Date(new Date(event.endDate).getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '') : new Date(new Date(event.date).getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, '');
-    
+        // DTEND must be exclusive: one day after the end (or start if single-day)
+        const end = new Date(event.endDate ?? event.date);
+        end.setDate(end.getDate() + 1);
+        const [isoDatePart] = end.toISOString().split('T');
+        const endDateStr = (isoDatePart ?? '').replace(/-/g, '');
+
         const icsContent = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
@@ -419,7 +351,7 @@ const AcademicCalendar: React.FC = () => {
             `UID:${new Date(event.date).getTime()}@academichub`,
             'END:VEVENT',
             'END:VCALENDAR'
-        ].filter(Boolean).join('\r\n');
+        ].join('\r\n');
 
         const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
         const url = window.URL.createObjectURL(blob);
@@ -463,98 +395,140 @@ const AcademicCalendar: React.FC = () => {
                         Academic Calendar
                     </h1>
                     <p className="text-slate-600 dark:text-slate-400 mt-1">
-                        {new Date(calendarData.semesterStartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - {new Date(calendarData.semesterEndDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {formatDateRange(calendarData.semesterStartDate, calendarData.semesterEndDate)}
                     </p>
                 </div>
-                <div className="flex space-x-3">
+                <div className="flex flex-wrap gap-2 md:gap-3">
+                    <button
+                        onClick={handleExportPDF}
+                        className="group px-3 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-medium rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 hover:scale-105 active:scale-95"
+                    >
+                        <div className="flex items-center space-x-1.5 md:space-x-2">
+                            <svg className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span className="hidden sm:inline">Export PDF</span>
+                            <span className="sm:hidden">Export</span>
+                        </div>
+                    </button>
                     <button
                         onClick={() => setShowAddEventModal(true)}
-                        className="px-5 py-2.5 text-sm font-medium rounded-lg bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white transition-all duration-200 shadow-md hover:shadow-lg"
+                        className="group px-3 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-medium rounded-lg bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-0.5 hover:scale-105 active:scale-95"
                     >
-                        <div className="flex items-center space-x-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center space-x-1.5 md:space-x-2">
+                            <svg className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
-                            <span>Add Event</span>
+                            <span className="hidden sm:inline">Add Event</span>
+                            <span className="sm:hidden">Add</span>
                         </div>
                     </button>
                 </div>
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-xl">
-                    <div className="flex items-center justify-between">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-blue-100 text-sm">Total Events</p>
-                            <p className="text-2xl font-bold">{calendarData.events.length}</p>
+                            <p className="text-blue-100 text-xs md:text-sm font-semibold">Total Events</p>
+                            <p className="text-2xl md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">{calendarData.events.length}</p>
                         </div>
-                        <div className="text-3xl opacity-80">📅</div>
+                        <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">📅</div>
                     </div>
                 </div>
-                
-                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-xl">
-                    <div className="flex items-center justify-between">
+
+                <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-green-100 text-sm">Days Remaining</p>
-                            <p className="text-2xl font-bold">{getDaysUntil(calendarData.semesterEndDate)}</p>
+                            <p className="text-green-100 text-xs md:text-sm font-semibold">Days Remaining</p>
+                            <p className="text-2xl md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">{getDaysUntil(calendarData.semesterEndDate)}</p>
                         </div>
-                        <div className="text-3xl opacity-80">⏳</div>
+                        <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">⏳</div>
                     </div>
                 </div>
-                
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-xl">
-                    <div className="flex items-center justify-between">
+
+                <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-purple-100 text-sm">Upcoming</p>
-                            <p className="text-2xl font-bold">{upcomingEvents.length}</p>
+                            <p className="text-purple-100 text-xs md:text-sm font-semibold">Upcoming</p>
+                            <p className="text-2xl md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">{upcomingEvents.length}</p>
                         </div>
-                        <div className="text-3xl opacity-80">🎯</div>
+                        <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">🎯</div>
                     </div>
                 </div>
-                
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-xl">
-                    <div className="flex items-center justify-between">
+
+                <div
+                    onClick={() => setFilterType(filterType === 'Holiday' ? 'all' : 'Holiday')}
+                    className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 md:p-5 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-orange-100 text-sm">Holidays</p>
-                            <p className="text-2xl font-bold">
+                            <p className="text-orange-100 text-xs md:text-sm font-semibold">Holidays</p>
+                            <p className="text-2xl md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">
                                 {calendarData.events.filter(e => e.type === 'Holiday').length}
                             </p>
                         </div>
-                        <div className="text-3xl opacity-80">🎉</div>
+                        <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">🎉</div>
                     </div>
+                    {filterType === 'Holiday' && (
+                        <div className="absolute top-2 right-2 bg-white/30 backdrop-blur-sm rounded-full p-1">
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Upcoming Events Widget */}
             {upcomingEvents.length > 0 && (
-                <div className="bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 p-6 rounded-xl border border-primary/20">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center">
-                        <span className="mr-2">⚡</span> Upcoming Events
+                <div className="bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 p-4 md:p-6 rounded-xl border border-primary/20 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <h3 className="text-base md:text-lg font-semibold mb-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                            <span className="mr-2 text-xl md:text-2xl">⚡</span>
+                            <span>Upcoming Events</span>
+                        </div>
+                        <span className="text-sm font-bold bg-primary/20 dark:bg-primary/30 px-3 py-1 rounded-full">{upcomingEvents.length}</span>
                     </h3>
                     <div className="space-y-3">
                         {upcomingEvents.map((event, index) => {
                             const daysUntil = getDaysUntil(event.date);
+                            // Find the global index for this event in filteredEvents
+                            const globalIndex = filteredEvents.findIndex(e =>
+                                e.date === event.date &&
+                                e.description === event.description &&
+                                e.type === event.type
+                            );
                             return (
-                                <div key={index} className="flex items-center justify-between bg-white dark:bg-dark-card p-3 rounded-lg">
-                                    <div className="flex items-center space-x-3">
-                                        <span className="text-2xl">{getEventTypeIcon(event.type)}</span>
-                                        <div>
-                                            <p className="font-medium">{event.description}</p>
-                                            <p className="text-sm text-slate-500">
-                                                {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                                                {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`}
+                                <div
+                                    key={index}
+                                    onClick={() => handleShowEventDetails(event, globalIndex)}
+                                    className="group relative overflow-hidden flex items-center justify-between bg-white dark:bg-dark-card p-3 md:p-4 rounded-lg hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10 flex items-center space-x-3 flex-1 min-w-0">
+                                        <span className="text-2xl md:text-3xl group-hover:scale-110 transition-transform duration-300 flex-shrink-0">{getEventTypeIcon(event.type)}</span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm md:text-base group-hover:text-primary transition-colors truncate">{event.description}</p>
+                                            <p className="text-xs md:text-sm text-slate-500 truncate">
+                                                {formatDateWithMonthName(event.date)}
+                                                {event.endDate && ` - ${formatDateWithMonthName(event.endDate)}`}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="relative z-10 text-right flex-shrink-0 ml-3">
                                         {daysUntil < 0 ? (
-                                            <p className="text-lg font-bold text-green-600 dark:text-green-400">Ongoing</p>
+                                            <p className="text-sm md:text-lg font-bold text-green-600 dark:text-green-400">Ongoing</p>
                                         ) : daysUntil === 0 ? (
-                                            <p className="text-lg font-bold text-orange-500 dark:text-orange-400">Today</p>
+                                            <p className="text-sm md:text-lg font-bold text-orange-500 dark:text-orange-400">Today</p>
                                         ) : (
                                             <>
-                                                <p className="text-2xl font-bold text-primary">{daysUntil}</p>
+                                                <p className="text-xl md:text-2xl font-bold text-primary group-hover:scale-110 transition-transform">{daysUntil}</p>
                                                 <p className="text-xs text-slate-500">days left</p>
                                             </>
                                         )}
@@ -567,20 +541,20 @@ const AcademicCalendar: React.FC = () => {
             )}
 
             {/* Controls */}
-            <div className="bg-white dark:bg-dark-card p-4 rounded-xl shadow-md">
-                <div className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
+            <div className="bg-white dark:bg-dark-card p-4 md:p-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+                <div className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0 lg:space-x-4">
                     {/* View Mode Selector */}
-                    <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400">View:</span>
-                        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+                    <div className="flex items-center space-x-2 w-full lg:w-auto">
+                        <span className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">View:</span>
+                        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 flex-1 lg:flex-initial">
                             {(['timeline', 'grid', 'list'] as const).map((mode) => (
                                 <button
                                     key={mode}
                                     onClick={() => setViewMode(mode)}
-                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
-                                        viewMode === mode 
-                                            ? 'bg-white dark:bg-slate-600 text-primary shadow-sm' 
-                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    className={`flex-1 lg:flex-initial px-3 py-1.5 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${
+                                        viewMode === mode
+                                            ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
+                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-105'
                                     }`}
                                 >
                                     {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -590,15 +564,15 @@ const AcademicCalendar: React.FC = () => {
                     </div>
 
                     {/* Filters */}
-                    <div className="flex items-center space-x-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
                         {/* Search */}
-                        <div className="relative">
+                        <div className="relative w-full sm:w-auto">
                             <input
                                 type="text"
                                 placeholder="Search events..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9 pr-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700"
+                                className="w-full sm:w-auto pl-9 pr-3 py-2 text-xs md:text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 transition-all hover:border-primary/50"
                             />
                             <svg className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -609,7 +583,7 @@ const AcademicCalendar: React.FC = () => {
                         <select
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value as CalendarEventType | 'all')}
-                            className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700"
+                            className="w-full sm:w-auto px-3 py-2 text-xs md:text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 transition-all hover:border-primary/50 cursor-pointer"
                         >
                             <option value="all">All Types</option>
                             <option value="Start of Semester">Start of Semester</option>
@@ -638,63 +612,140 @@ const AcademicCalendar: React.FC = () => {
                                     {month}
                                 </h3>
                                 <div className="space-y-4">
-                                    {(events as CalendarEvent[]).map((event, index) => (
-                                        <div key={index} className="flex group hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors duration-200 p-2">
-                                            <div className="flex-shrink-0 w-24 text-center flex flex-col justify-center">
-                                                {event.endDate ? (
-                                                    <div className="flex items-center justify-center">
-                                                        <div className="text-center">
-                                                            <div className="text-xl font-bold text-slate-800 dark:text-white">{new Date(event.date).getDate()}</div>
-                                                            <div className="text-xs text-slate-500">{new Date(event.date).toLocaleString('en-US', { month: 'short' })}</div>
+                                    {(events as CalendarEvent[]).map((event, monthIndex) => {
+                                        const daysUntil = getDaysUntil(event.date);
+                                        const eventEndDate = new Date(event.endDate || event.date);
+                                        eventEndDate.setHours(0, 0, 0, 0);
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        const eventStartDate = new Date(event.date);
+                                        eventStartDate.setHours(0, 0, 0, 0);
+                                        const isOngoing = eventStartDate < today && eventEndDate >= today;
+                                        const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !isOngoing;
+                                        const isUpcoming = daysUntil > 3 && daysUntil <= 7;
+                                        const hasReminder = reminderPreferences.includes(getEventKey(event));
+                                        // Find the global index for this event
+                                        const globalIndex = filteredEvents.findIndex(e =>
+                                            e.date === event.date &&
+                                            e.description === event.description &&
+                                            e.type === event.type
+                                        );
+
+                                        return (
+                                            <div
+                                                key={`${month}-${monthIndex}`}
+                                                onClick={() => handleShowEventDetails(event, globalIndex)}
+                                                className={`
+                                                    relative flex group cursor-pointer
+                                                    bg-gradient-to-br from-white to-slate-50/50
+                                                    dark:from-slate-800/50 dark:to-slate-800/30
+                                                    hover:from-blue-50 hover:to-purple-50
+                                                    dark:hover:from-slate-800/90 dark:hover:to-slate-700/90
+                                                    rounded-xl transition-all duration-200 ease-out
+                                                    hover:shadow-xl
+                                                    hover:-translate-y-0.5
+                                                    active:scale-[0.99]
+                                                    p-4 mb-3 border-2
+                                                    ${isOngoing ? 'border-green-500 dark:border-green-500' :
+                                                      isUrgent ? 'border-red-300 dark:border-red-600/50' :
+                                                      isUpcoming ? 'border-amber-300 dark:border-amber-600/50' :
+                                                      'border-slate-200 dark:border-slate-700'}
+                                                    hover:border-primary/50 dark:hover:border-primary/50
+                                                `}
+                                            >
+                                                <div className="flex-shrink-0 w-36 text-center flex flex-col justify-center relative z-10">
+                                                    {event.endDate ? (
+                                                        <div className="flex items-center justify-center gap-1.5">
+                                                            <div className="text-center bg-gradient-to-br from-primary/15 to-secondary/15 dark:from-primary/25 dark:to-secondary/25 group-hover:from-primary/30 group-hover:to-secondary/30 rounded-lg p-2.5 shadow transition-all duration-200">
+                                                                <div className="text-2xl font-extrabold text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                                                    {new Date(event.date).getDate()}
+                                                                </div>
+                                                                <div className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">{new Date(event.date).toLocaleString('en-US', { month: 'short' })}</div>
+                                                            </div>
+                                                            <div className="text-primary dark:text-secondary text-lg font-bold px-0.5">→</div>
+                                                            <div className="text-center bg-gradient-to-br from-primary/15 to-secondary/15 dark:from-primary/25 dark:to-secondary/25 group-hover:from-primary/30 group-hover:to-secondary/30 rounded-lg p-2.5 shadow transition-all duration-200">
+                                                                <div className="text-2xl font-extrabold text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                                                    {new Date(event.endDate).getDate()}
+                                                                </div>
+                                                                <div className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">{new Date(event.endDate).toLocaleString('en-US', { month: 'short' })}</div>
+                                                            </div>
                                                         </div>
-                                                        <div className="px-1 text-slate-400 text-lg">-</div>
-                                                        <div className="text-center">
-                                                            <div className="text-xl font-bold text-slate-800 dark:text-white">{new Date(event.endDate).getDate()}</div>
-                                                            <div className="text-xs text-slate-500">{new Date(event.endDate).toLocaleString('en-US', { month: 'short' })}</div>
+                                                    ) : (
+                                                        <div className="bg-gradient-to-br from-primary/15 to-secondary/15 dark:from-primary/25 dark:to-secondary/25 group-hover:from-primary/30 group-hover:to-secondary/30 rounded-xl p-3.5 shadow-md group-hover:shadow-lg transition-all duration-200">
+                                                            <div className="text-4xl font-black text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                                                {new Date(event.date).getDate()}
+                                                            </div>
+                                                            <div className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5 uppercase tracking-wide">
+                                                                {new Date(event.date).toLocaleString('default', { weekday: 'short' })}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex-1 pl-6 border-l-4 border-slate-300 dark:border-slate-600 group-hover:border-primary dark:group-hover:border-primary transition-all duration-200 relative z-10">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-start gap-3 mb-2">
+                                                                <div className="flex-shrink-0">
+                                                                    <span className="text-3xl group-hover:scale-110 transition-transform duration-200 inline-block">
+                                                                        {getEventTypeIcon(event.type)}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="font-bold text-slate-900 dark:text-white text-lg group-hover:text-primary dark:group-hover:text-secondary transition-colors duration-200 leading-snug mb-2">
+                                                                        {event.description}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <span className={`inline-flex items-center text-xs font-bold py-1.5 px-3 rounded-full shadow-sm ${getEventTypeColor(event.type)}`}>
+                                                                            {event.type}
+                                                                        </span>
+                                                                        {isOngoing ? (
+                                                                            <span className="inline-flex items-center text-xs font-bold bg-green-500 text-white px-3 py-1.5 rounded-full shadow-md">
+                                                                                ✓ ONGOING
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-lg ${
+                                                                                isUrgent ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                                                                                isUpcoming ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
+                                                                                'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                                                                            }`}>
+                                                                                {daysUntil >= 0
+                                                                                    ? daysUntil === 0 ? '📍 Today' : `📅 ${daysUntil}d`
+                                                                                    : `✓ ${Math.abs(daysUntil)}d ago`
+                                                                                }
+                                                                            </span>
+                                                                        )}
+                                                                        {hasReminder && (
+                                                                            <div className="inline-flex items-center gap-1 bg-purple-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-md animate-pulse">
+                                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                                    <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                                                </svg>
+                                                                                <span className="text-xs">Reminder</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {isUrgent && daysUntil >= 0 && (
+                                                                            <span className="inline-flex items-center text-xs font-bold bg-red-500 text-white px-2.5 py-1 rounded-full shadow-md">
+                                                                                ⚠️ URGENT
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex-shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-4 group-hover:translate-x-0">
+                                                            <div className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                                                                <span className="text-xs font-bold whitespace-nowrap">Details</span>
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                                                                </svg>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                ) : (
-                                                    <>
-                                                        <div className="text-3xl font-bold text-slate-800 dark:text-white">
-                                                            {new Date(event.date).getDate()}
-                                                        </div>
-                                                        <div className="text-sm text-slate-500">
-                                                            {new Date(event.date).toLocaleString('default', { weekday: 'short' })}
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 pl-6 border-l-3 border-slate-200 dark:border-slate-700 group-hover:border-primary dark:group-hover:border-primary transition-colors duration-200">
-                                                <div className="flex items-start justify-between">
-                                                    <div>
-                                                        <p className="font-semibold text-slate-900 dark:text-white text-lg">
-                                                            <span className="mr-2">{getEventTypeIcon(event.type)}</span>
-                                                            {event.description}
-                                                        </p>
-                                                        <div className="mt-2 flex items-center space-x-3">
-                                                            <span className={`text-xs font-semibold py-1 px-3 rounded-full ${getEventTypeColor(event.type)}`}>
-                                                                {event.type}
-                                                            </span>
-                                                            <span className="text-xs text-slate-500">
-                                                                {getDaysUntil(event.date) >= 0 
-                                                                    ? `Starts in ${getDaysUntil(event.date)} days` 
-                                                                    : `Started ${Math.abs(getDaysUntil(event.date))} days ago`
-                                                                }
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => handleShowEventDetails(event, index)}
-                                                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
-                                                    >
-                                                        <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                                        </svg>
-                                                    </button>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         ))}
@@ -710,39 +761,119 @@ const AcademicCalendar: React.FC = () => {
                             Grid View
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {filteredEvents.map((event: CalendarEvent, index: number) => (
-                                <div key={index} className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 hover:shadow-lg transition-all duration-200 hover:-translate-y-1 group cursor-pointer" onClick={() => handleShowEventDetails(event, index)}>
-                                    <div className="flex items-start justify-between mb-3">
-                                        <span className="text-3xl">{getEventTypeIcon(event.type)}</span>
-                                        <span className={`text-xs font-semibold py-1 px-2 rounded-full ${getEventTypeColor(event.type)}`}>
-                                            {event.type}
-                                        </span>
-                                    </div>
-                                    <h4 className="font-semibold text-slate-900 dark:text-white mb-2">
-                                        {event.description}
-                                    </h4>
-                                    <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
-                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                        {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                                    </div>
-                                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                                        <p className="text-xs text-slate-500">
-                                            {getDaysUntil(event.date) >= 0
-                                                ? `${getDaysUntil(event.date)} days remaining`
-                                                : `Completed ${Math.abs(getDaysUntil(event.date))} days ago`
-                                            }
-                                        </p>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity text-primary">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
+                            {filteredEvents.map((event: CalendarEvent, index: number) => {
+                                const daysUntil = getDaysUntil(event.date);
+                                const eventEndDate = new Date(event.endDate || event.date);
+                                eventEndDate.setHours(0, 0, 0, 0);
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const eventStartDate = new Date(event.date);
+                                eventStartDate.setHours(0, 0, 0, 0);
+                                const isOngoing = eventStartDate < today && eventEndDate >= today;
+                                const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !isOngoing;
+                                const isUpcoming = daysUntil > 3 && daysUntil <= 7;
+                                const hasReminder = reminderPreferences.includes(getEventKey(event));
+
+                                return (
+                                    <div
+                                        key={index}
+                                        onClick={() => handleShowEventDetails(event, index)}
+                                        className={`
+                                            relative overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-800/30
+                                            rounded-xl p-5 shadow-md hover:shadow-2xl
+                                            transition-all duration-300 ease-out
+                                            hover:-translate-y-2 hover:scale-[1.02]
+                                            active:scale-[0.98]
+                                            cursor-pointer group
+                                            border-2 hover:border-primary/30
+                                            ${isOngoing ? 'border-green-500 dark:border-green-500' : 'border-transparent'}
+                                            ${isUrgent ? 'ring-2 ring-red-400/50 dark:ring-red-500/50' : ''}
+                                            ${isUpcoming ? 'ring-2 ring-amber-400/50 dark:ring-amber-500/50' : ''}
+                                        `}
+                                    >
+                                        {/* Animated background gradient on hover */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                                        {/* Reminder indicator */}
+                                        {hasReminder && (
+                                            <div className="absolute top-2 right-2 bg-purple-500 text-white rounded-full p-1.5 shadow-lg animate-pulse">
+                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                </svg>
+                                            </div>
+                                        )}
+
+                                        {/* Ongoing/Urgency indicator */}
+                                        {isOngoing ? (
+                                            <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                                                ONGOING
+                                            </div>
+                                        ) : isUrgent && daysUntil >= 0 && (
+                                            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                                                URGENT
+                                            </div>
+                                        )}
+
+                                        <div className="relative z-10">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="text-4xl group-hover:scale-110 transition-transform duration-300">
+                                                    {getEventTypeIcon(event.type)}
+                                                </div>
+                                                <span className={`text-xs font-semibold py-1 px-3 rounded-full shadow-sm ${getEventTypeColor(event.type)}`}>
+                                                    {event.type}
+                                                </span>
+                                            </div>
+
+                                            <h4 className="font-bold text-slate-900 dark:text-white mb-3 text-lg group-hover:text-primary dark:group-hover:text-secondary transition-colors duration-200 line-clamp-2">
+                                                {event.description}
+                                            </h4>
+
+                                            <div className="flex items-center text-sm text-slate-600 dark:text-slate-400 mb-3">
+                                                <svg className="w-4 h-4 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span className="font-medium">
+                                                    {formatDateRange(event.date, event.endDate)}
+                                                </span>
+                                            </div>
+
+                                            <div className="pt-3 border-t-2 border-slate-200 dark:border-slate-700 group-hover:border-primary/30 transition-colors duration-200">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center space-x-2">
+                                                        {daysUntil >= 0 ? (
+                                                            <>
+                                                                <div className={`
+                                                                    text-2xl font-extrabold
+                                                                    ${isUrgent ? 'text-red-600 dark:text-red-400' :
+                                                                      isUpcoming ? 'text-amber-600 dark:text-amber-400' :
+                                                                      'text-primary dark:text-secondary'}
+                                                                `}>
+                                                                    {daysUntil}
+                                                                </div>
+                                                                <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                                    <div className="font-semibold">days</div>
+                                                                    <div>remaining</div>
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                                                                Completed
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-2 group-hover:translate-x-0">
+                                                        <span className="text-xs font-semibold text-primary dark:text-secondary">View</span>
+                                                        <svg className="w-5 h-5 text-primary dark:text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}
@@ -755,68 +886,140 @@ const AcademicCalendar: React.FC = () => {
                             </svg>
                             List View
                         </h2>
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
                             <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-slate-200 dark:border-slate-700">
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Date</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Event</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Type</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Status</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Actions</th>
+                                <thead className="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/50">
+                                    <tr className="border-b-2 border-slate-300 dark:border-slate-600">
+                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Date</th>
+                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Event</th>
+                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Type</th>
+                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Status</th>
+                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                                     {filteredEvents.map((event: CalendarEvent, index: number) => {
                                         const daysUntil = getDaysUntil(event.date);
                                         const isPast = getDaysUntil(event.endDate || event.date) < 0;
+                                        const eventEndDate = new Date(event.endDate || event.date);
+                                        eventEndDate.setHours(0, 0, 0, 0);
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        const eventStartDate = new Date(event.date);
+                                        eventStartDate.setHours(0, 0, 0, 0);
+                                        const isOngoing = eventStartDate < today && eventEndDate >= today;
+                                        const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !isOngoing;
+                                        const isUpcoming = daysUntil > 3 && daysUntil <= 7;
+                                        const hasReminder = reminderPreferences.includes(getEventKey(event));
+
                                         return (
-                                            <tr key={index} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => handleShowEventDetails(event, index)}>
-                                                <td className="py-3 px-4">
-                                                    <div>
-                                                        <p className="font-medium">
-                                                            {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                                            {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                                                            , {new Date(event.date).getFullYear()}
-                                                        </p>
-                                                        <p className="text-xs text-slate-500">
-                                                            {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long' })}
-                                                            {event.endDate && ` to ${new Date(event.endDate).toLocaleDateString('en-US', { weekday: 'long' })}`}
-                                                        </p>
+                                            <tr
+                                                key={index}
+                                                onClick={() => handleShowEventDetails(event, index)}
+                                                className={`
+                                                    group cursor-pointer
+                                                    bg-white dark:bg-slate-900/30
+                                                    hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50
+                                                    dark:hover:from-slate-800/80 dark:hover:to-slate-800/60
+                                                    transition-all duration-300 ease-out
+                                                    hover:shadow-lg hover:shadow-primary/5
+                                                    hover:scale-[1.01] hover:-translate-y-0.5
+                                                    active:scale-[0.99] active:translate-y-0
+                                                    ${isOngoing ? 'border-l-4 border-l-green-500 bg-green-50/30 dark:bg-green-900/10' :
+                                                      isUrgent ? 'border-l-4 border-l-red-500 bg-red-50/30 dark:bg-red-900/10' :
+                                                      isUpcoming ? 'border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-900/10' :
+                                                      'border-l-4 border-l-transparent hover:border-l-primary'}
+                                                `}
+                                            >
+                                                <td className="py-5 px-6">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:from-primary/20 group-hover:to-secondary/20 rounded-lg p-2 transition-colors">
+                                                            <div className="text-center">
+                                                                <p className="text-2xl font-black text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                                                    {new Date(event.date).getDate()}
+                                                                </p>
+                                                                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">
+                                                                    {new Date(event.date).toLocaleDateString('en-US', { month: 'short' })}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-slate-700 dark:text-slate-300">
+                                                                {formatDateRange(event.date, event.endDate)}
+                                                            </p>
+                                                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                                                                {formatDateWithMonthName(event.date)}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-3 px-4">
-                                                    <div className="flex items-center">
-                                                        <span className="mr-2 text-xl">{getEventTypeIcon(event.type)}</span>
-                                                        <span className="font-medium">{event.description}</span>
+                                                <td className="py-5 px-6">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-3xl group-hover:scale-125 transition-transform duration-300">
+                                                            {getEventTypeIcon(event.type)}
+                                                        </span>
+                                                        <div className="flex-1">
+                                                            <p className="font-bold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors line-clamp-1">
+                                                                {event.description}
+                                                            </p>
+                                                            {hasReminder && (
+                                                                <div className="inline-flex items-center gap-1 mt-1 bg-purple-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                                                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                        <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                                    </svg>
+                                                                    <span>Reminder</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-3 px-4">
-                                                    <span className={`text-xs font-semibold py-1 px-2 rounded-full ${getEventTypeColor(event.type)}`}>
+                                                <td className="py-5 px-6">
+                                                    <span className={`inline-flex text-xs font-bold py-2 px-3 rounded-full shadow-sm group-hover:shadow-md transition-all ${getEventTypeColor(event.type)}`}>
                                                         {event.type}
                                                     </span>
                                                 </td>
-                                                <td className="py-3 px-4">
-                                                    {isPast ? (
-                                                        <span className="text-xs font-medium text-slate-500">Completed</span>
-                                                    ) : daysUntil <= 0 ? (
-                                                        <span className="text-xs font-medium text-green-600">Ongoing</span>
+                                                <td className="py-5 px-6">
+                                                    {isOngoing ? (
+                                                        <span className="inline-flex items-center text-sm font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-3 py-1.5 rounded-full">
+                                                            <span className="animate-pulse mr-1.5">●</span>
+                                                            Ongoing
+                                                        </span>
+                                                    ) : isPast ? (
+                                                        <span className="inline-flex items-center text-sm font-semibold text-slate-500 dark:text-slate-400">
+                                                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                            Completed
+                                                        </span>
+                                                    ) : isUrgent ? (
+                                                        <span className="inline-flex items-center text-sm font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-3 py-1.5 rounded-full">
+                                                            ⚠️ {daysUntil} day{daysUntil === 1 ? '' : 's'}
+                                                        </span>
+                                                    ) : isUpcoming ? (
+                                                        <span className="inline-flex items-center text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-3 py-1.5 rounded-full">
+                                                            📅 {daysUntil} days
+                                                        </span>
                                                     ) : (
-                                                        <span className="text-xs font-medium text-blue-600">In {daysUntil} days</span>
+                                                        <span className="inline-flex items-center text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
+                                                            In {daysUntil} days
+                                                        </span>
                                                     )}
                                                 </td>
-                                                <td className="py-3 px-4">
-                                                    <button
-                                                        onClick={(e: React.MouseEvent) => {
-                                                            e.stopPropagation();
-                                                            handleShowEventDetails(event, index);
-                                                        }}
-                                                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
-                                                    >
-                                                        <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                                        </svg>
-                                                    </button>
+                                                <td className="py-5 px-6">
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                                                        <button
+                                                            onClick={(e: React.MouseEvent) => {
+                                                                e.stopPropagation();
+                                                                handleShowEventDetails(event, index);
+                                                            }}
+                                                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-md hover:shadow-lg transition-all group/btn"
+                                                        >
+                                                            <span className="text-sm font-bold">Details</span>
+                                                            <svg className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -826,42 +1029,6 @@ const AcademicCalendar: React.FC = () => {
                         </div>
                     </div>
                 )}
-            </div>
-
-            {/* Additional Features Section */}
-            <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                    <span className="mr-2">💡</span> Quick Actions
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <button
-                        onClick={handleSyncGoogleCalendar}
-                        className="flex items-center justify-center space-x-2 p-3 bg-white dark:bg-dark-card rounded-lg hover:shadow-md transition-all duration-200 hover:scale-105"
-                    >
-                        <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                        </svg>
-                        <span className="text-sm font-medium">Sync with Google Calendar</span>
-                    </button>
-                    <button
-                        onClick={handleExportPDF}
-                        className="flex items-center justify-center space-x-2 p-3 bg-white dark:bg-dark-card rounded-lg hover:shadow-md transition-all duration-200 hover:scale-105"
-                    >
-                        <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span className="text-sm font-medium">Export as PDF</span>
-                    </button>
-                    <button
-                        onClick={handleSetReminders}
-                        className="flex items-center justify-center space-x-2 p-3 bg-white dark:bg-dark-card rounded-lg hover:shadow-md transition-all duration-200 hover:scale-105"
-                    >
-                        <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                        <span className="text-sm font-medium">Set Reminders</span>
-                    </button>
-                </div>
             </div>
 
             {/* Add Event Modal */}
@@ -1085,18 +1252,8 @@ const AcademicCalendar: React.FC = () => {
                                 <div>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">Date</p>
                                     <p className="font-medium text-slate-900 dark:text-white">
-                                        {new Date(selectedEvent.date).toLocaleDateString('en-US', {
-                                            weekday: 'long',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            year: 'numeric'
-                                        })}
-                                        {selectedEvent.endDate && ` to ${new Date(selectedEvent.endDate).toLocaleDateString('en-US', {
-                                            weekday: 'long',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            year: 'numeric'
-                                        })}`}
+                                        {formatDateWithMonthName(selectedEvent.date)}
+                                        {selectedEvent.endDate && ` to ${formatDateWithMonthName(selectedEvent.endDate)}`}
                                     </p>
                                 </div>
                             </div>
@@ -1122,19 +1279,31 @@ const AcademicCalendar: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                            <button
-                                onClick={() => handleSetEventReminder(selectedEvent)}
-                                className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
-                                    reminderPreferences.includes(getEventKey(selectedEvent))
-                                        ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                                        : 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300'
-                                }`}
-                            >
-                                <svg className="w-4 h-4" fill={reminderPreferences.includes(getEventKey(selectedEvent)) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                </svg>
-                                <span className="text-sm">{reminderPreferences.includes(getEventKey(selectedEvent)) ? 'Reminder Set ✓' : 'Set Reminder'}</span>
-                            </button>
+                            {(() => {
+                                const eventEndDate = selectedEvent.endDate || selectedEvent.date;
+                                const isPast = getDaysUntil(eventEndDate) < 0;
+                                const hasReminder = reminderPreferences.includes(getEventKey(selectedEvent));
+
+                                return (
+                                    <button
+                                        onClick={() => !isPast && handleSetEventReminder(selectedEvent)}
+                                        disabled={isPast}
+                                        className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
+                                            isPast
+                                                ? 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
+                                                : hasReminder
+                                                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                                    : 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300'
+                                        }`}
+                                        title={isPast ? 'Cannot set reminder for past events' : (hasReminder ? 'Remove reminder' : 'Set reminder')}
+                                    >
+                                        <svg className="w-4 h-4" fill={hasReminder ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                        <span className="text-sm">{hasReminder ? 'Reminder Set ✓' : 'Set Reminder'}</span>
+                                    </button>
+                                );
+                            })()}
 
                             <button
                                 onClick={() => handleAddToPersonalCalendar(selectedEvent)}
@@ -1148,7 +1317,13 @@ const AcademicCalendar: React.FC = () => {
 
                             <button
                                 onClick={() => openEditModal(selectedEvent, selectedEventIndex)}
-                                className="flex items-center justify-center space-x-2 py-2.5 px-4 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 font-medium rounded-lg transition-all"
+                                disabled={!selectedEvent.userId}
+                                className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
+                                    selectedEvent.userId
+                                        ? 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 cursor-pointer'
+                                        : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
+                                }`}
+                                title={!selectedEvent.userId ? 'Cannot edit preloaded events' : 'Edit this event'}
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1161,7 +1336,13 @@ const AcademicCalendar: React.FC = () => {
                                     handleDeleteEvent(selectedEvent);
                                     setShowEventDetailsModal(false);
                                 }}
-                                className="flex items-center justify-center space-x-2 py-2.5 px-4 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 font-medium rounded-lg transition-all"
+                                disabled={!selectedEvent.userId}
+                                className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
+                                    selectedEvent.userId
+                                        ? 'bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 cursor-pointer'
+                                        : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
+                                }`}
+                                title={!selectedEvent.userId ? 'Cannot delete preloaded events' : 'Delete this event'} 
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1176,4 +1357,4 @@ const AcademicCalendar: React.FC = () => {
     );
 };
 
-export default AcademicCalendar;
+export default React.memo(AcademicCalendar);

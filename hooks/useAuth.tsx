@@ -1,22 +1,22 @@
 // src/contexts/AuthContext.tsx
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-// CORRECT: Import modular functions from the Firebase v9 SDK
-import {
-    User,
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut
-} from 'firebase/auth';
-import { auth } from '../firebaseConfig'; // This should export the v9 `auth` object
+// FIX: Use Firebase v9 compat API to match rest of codebase
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import { auth } from '../firebaseConfig';
 import { logActivity } from '../services/activityService';
+import { ALLOWED_EMAIL_DOMAIN, HOSTED_DOMAIN } from '../utils/constants';
+
+type User = firebase.User;
 
 interface AuthContextType {
   currentUser: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     // onAuthStateChanged is the recommended way to listen for auth changes.
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       setCurrentUser(user);
       setLoading(false);
     });
@@ -39,8 +39,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string) => {
     try {
-      // Use the v9 modular function
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Use compat API
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      if (!userCredential.user) {
+        throw new Error('Authentication failed: No user returned');
+      }
       await logActivity(userCredential.user.uid, {
         type: 'login',
         title: 'Signed In',
@@ -48,7 +51,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         icon: '🔑',
       });
     } catch (error) {
-      console.error("Login failed:", error);
       // Re-throw the error so the UI can catch it and display a message
       throw error;
     }
@@ -56,7 +58,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const register = async (email: string, password: string) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      if (!userCredential.user) {
+        throw new Error('Registration failed: No user returned');
+      }
       await logActivity(userCredential.user.uid, {
         type: 'login',
         title: 'Account Created',
@@ -65,6 +70,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
     } catch (error) {
       console.error("Registration failed:", error);
+      throw error;
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      // Restrict to iitism.ac.in domain
+      provider.setCustomParameters({
+        prompt: 'select_account',
+        hd: HOSTED_DOMAIN // Hosted domain parameter for Google Workspace
+      });
+      const userCredential = await auth.signInWithPopup(provider);
+
+      // Verify the email domain after authentication
+      const email = userCredential.user?.email;
+      if (!email || !email.endsWith(ALLOWED_EMAIL_DOMAIN)) {
+        // Sign out the user immediately
+        await auth.signOut();
+        throw new Error(`INVALID_DOMAIN: Only ${ALLOWED_EMAIL_DOMAIN} email addresses are allowed.`);
+      }
+
+      if (!userCredential.user) {
+        throw new Error('Google sign-in failed: No user returned');
+      }
+
+      await logActivity(userCredential.user.uid, {
+        type: 'login',
+        title: 'Signed In with Google',
+        description: 'Successfully signed into your account using Google.',
+        icon: '🔑',
+      });
+    } catch (error) {
+      console.error("Google login failed:", error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      await auth.sendPasswordResetEmail(email);
+    } catch (error) {
+      console.error("Password reset failed:", error);
       throw error;
     }
   };
@@ -82,21 +130,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       }
       // ✅ 3. Now, perform the sign-out.
-      await signOut(auth);
+      await auth.signOut();
     } catch (error) {
         console.error("Logout process failed:", error);
         // Fallback: If any part of the process fails (like the database write),
         // ensure the user is still signed out as a final action.
         if (auth.currentUser) {
-            await signOut(auth);
+            await auth.signOut();
         }
         // Re-throw the error so the UI can be notified if needed.
         throw error;
     }
   };
-  
+
   return (
-    <AuthContext.Provider value={{ currentUser, isAuthenticated: !!currentUser, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ currentUser, isAuthenticated: !!currentUser, login, register, loginWithGoogle, resetPassword, logout, loading }}>
       {/* Always render children to let the UI handle the loading state */}
       {children}
     </AuthContext.Provider>

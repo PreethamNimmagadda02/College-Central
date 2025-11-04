@@ -1,10 +1,9 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { Semester } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
-import 'firebase/firestore';
-import { GoogleGenAI, Type } from "@google/genai";
 import { logActivity } from '../services/activityService';
+import { getGoogleGenAI } from '../utils/lazyImports';
 
 export interface GradesData {
   semesters: Semester[];
@@ -16,7 +15,19 @@ export interface GradesData {
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string).split(',')[1]);
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        const commaIndex = result.indexOf(',');
+        if (commaIndex !== -1) {
+          resolve(result.substring(commaIndex + 1));
+        } else {
+          reject(new Error('Invalid data URL format while reading file.'));
+        }
+      } else {
+        reject(new Error('Unexpected FileReader result type.'));
+      }
+    };
     reader.onerror = error => reject(error);
     reader.readAsDataURL(file);
   });
@@ -53,19 +64,27 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (currentUser) {
       setLoading(true);
       const userDocRef = db.collection('users').doc(currentUser.uid);
-      unsubscribe = userDocRef.onSnapshot((docSnap) => {
-        if (docSnap.exists) {
-          const data = docSnap.data();
-          if (data && data.gradesData) {
-            setGradesDataState(data.gradesData as GradesData);
+      unsubscribe = userDocRef.onSnapshot(
+        (docSnap) => {
+          if (docSnap.exists) {
+            const data = docSnap.data();
+            if (data && data.gradesData) {
+              setGradesDataState(data.gradesData as GradesData);
+            } else {
+              setGradesDataState(null);
+            }
           } else {
             setGradesDataState(null);
           }
-        } else {
+          setLoading(false);
+        },
+        (error) => {
+          console.error('Error loading grades data:', error);
+          setError('Failed to load grades data. Please try again.');
           setGradesDataState(null);
+          setLoading(false);
         }
-        setLoading(false);
-      });
+      );
     } else {
       setGradesDataState(null);
       setLoading(false);
@@ -75,8 +94,14 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const setGradesData = async (data: GradesData | null) => {
     if (currentUser) {
-      const userDocRef = db.collection('users').doc(currentUser.uid);
-      await userDocRef.update({ gradesData: data });
+      try {
+        const userDocRef = db.collection('users').doc(currentUser.uid);
+        await userDocRef.update({ gradesData: data });
+      } catch (error) {
+        console.error('Error updating grades data:', error);
+        setError('Failed to save grades data. Please try again.');
+        throw error;
+      }
     }
   };
 
@@ -110,8 +135,11 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     try {
         const base64Data = await fileToBase64(selectedFile);
+
+        // Lazy load Google GenAI
+        const { GoogleGenAI, Type } = await getGoogleGenAI();
         const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-        
+
         const schema = {
           type: Type.OBJECT,
           properties: {
@@ -162,7 +190,12 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             }
         });
 
-        const result = JSON.parse(response.text.trim());
+        const rawText = (response as any)?.text;
+        const text = typeof rawText === 'string' ? rawText : (typeof rawText === 'function' ? rawText() : '');
+        if (!text) {
+            throw new Error('AI response was empty or invalid.');
+        }
+        const result = JSON.parse(text.trim());
         await setGradesData(result);
         await logActivity(currentUser.uid, {
             type: 'grades',
@@ -196,8 +229,24 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setError(null);
   };
 
+  const contextValue = useMemo(
+    () => ({
+      gradesData,
+      setGradesData,
+      loading,
+      isProcessing,
+      error,
+      selectedFile,
+      imagePreview,
+      selectFile,
+      processGrades,
+      resetGradesState
+    }),
+    [gradesData, loading, isProcessing, error, selectedFile, imagePreview, setGradesData, selectFile, processGrades, resetGradesState]
+  );
+
   return (
-    <GradesContext.Provider value={{ gradesData, setGradesData, loading, isProcessing, error, selectedFile, imagePreview, selectFile, processGrades, resetGradesState }}>
+    <GradesContext.Provider value={contextValue}>
       {children}
     </GradesContext.Provider>
   );

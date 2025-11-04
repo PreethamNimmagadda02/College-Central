@@ -8,7 +8,7 @@ const calculateCredits = (ltp: string): number => {
     if (parts.some(isNaN)) {
         return 0;
     }
-    const [l, t, p] = parts;
+    const [l = 0, t = 0, p = 0] = parts;
     return (3 * l) + (2 * t) + (1 * p);
 };
 
@@ -19,7 +19,6 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "ltp": "3-1-0",
         "credits": calculateCredits("3-1-0"),
         "slots": [
-            { "day": "Monday", "startTime": "08:00", "endTime": "08:50", "venue": "LC-II-C16" },
             { "day": "Monday", "startTime": "10:00", "endTime": "10:50", "venue": "LC-II-C16" },
             { "day": "Tuesday", "startTime": "10:00", "endTime": "10:50", "venue": "LC-II-C16" },
             { "day": "Wednesday", "startTime": "11:00", "endTime": "11:50", "venue": "LC-II-C16" },
@@ -32,7 +31,6 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "ltp": "3-1-0",
         "credits": calculateCredits("3-1-0"),
         "slots": [
-            { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "LC-II-C16" },
             { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "LC-II-C16" },
             { "day": "Tuesday", "startTime": "11:00", "endTime": "11:50", "venue": "LC-II-C16" },
             { "day": "Wednesday", "startTime": "10:00", "endTime": "10:50", "venue": "LC-II-C16" },
@@ -121,8 +119,6 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "credits": calculateCredits("3-1-0"),
         "slots": [
             { "day": "Monday", "startTime": "18:00", "endTime": "18:50", "venue": "CECR1" },
-            { "day": "Monday", "startTime": "18:00", "endTime": "18:50", "venue": "CECR1" },
-            { "day": "Monday", "startTime": "18:00", "endTime": "18:50", "venue": "CECR1" },
             { "day": "Tuesday", "startTime": "18:00", "endTime": "18:50", "venue": "CECR1" },
             { "day": "Wednesday", "startTime": "18:00", "endTime": "18:50", "venue": "CECR1" },
             { "day": "Thursday", "startTime": "18:00", "endTime": "18:50", "venue": "CECR1" }
@@ -157,7 +153,6 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "slots": [
             { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "LC-II-G11" },
             { "day": "Tuesday", "startTime": "11:00", "endTime": "11:50", "venue": "LC-II-G11" },
-            { "day": "Wednesday", "startTime": "10:00", "endTime": "10:50", "venue": "LC-II-G11" },
             { "day": "Wednesday", "startTime": "10:00", "endTime": "10:50", "venue": "LC-II-G11" },
             { "day": "Thursday", "startTime": "09:00", "endTime": "09:50", "venue": "LC-II-G11" }
         ]
@@ -470,7 +465,6 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
             { "day": "Tuesday", "startTime": "09:00", "endTime": "09:50", "venue": "LC-II-C4" },
             { "day": "Wednesday", "startTime": "11:00", "endTime": "11:50", "venue": "LC-II-C4" },
             { "day": "Thursday", "startTime": "10:00", "endTime": "10:50", "venue": "LC-II-C4" },
-            { "day": "Thursday", "startTime": "18:00", "endTime": "18:50", "venue": "LC-II-C4" },
             { "day": "Friday", "startTime": "09:00", "endTime": "09:50", "venue": "LC-II-C7" }
         ]
     },
@@ -480,7 +474,6 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "ltp": "3-1-0",
         "credits": calculateCredits("3-1-0"),
         "slots": [
-            { "day": "Monday", "startTime": "08:00", "endTime": "08:50", "venue": "LC-II-C4" },
             { "day": "Monday", "startTime": "08:00", "endTime": "08:50", "venue": "LC-II-C4" },
             { "day": "Tuesday", "startTime": "08:00", "endTime": "08:50", "venue": "LC-II-C4" },
             { "day": "Thursday", "startTime": "12:00", "endTime": "12:50", "venue": "LC-II-C4" },
@@ -997,10 +990,7 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "slots": [
             { "day": "Monday", "startTime": "17:00", "endTime": "17:50", "venue": "CHE 431" },
             { "day": "Monday", "startTime": "18:00", "endTime": "18:50", "venue": "CHE 431" },
-            { "day": "Monday", "startTime": "16:00", "endTime": "16:50", "venue": "CHE 431" },
-            { "day": "Friday", "startTime": "18:00", "endTime": "18:50", "venue": "" },
-            { "day": "Friday", "startTime": "17:00", "endTime": "17:50", "venue": "" },
-            { "day": "Friday", "startTime": "16:00", "endTime": "16:50", "venue": "" }
+            { "day": "Monday", "startTime": "16:00", "endTime": "16:50", "venue": "CHE 431" }
         ]
     },
     {
@@ -1011,10 +1001,7 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "slots": [
             { "day": "Monday", "startTime": "17:00", "endTime": "17:50", "venue": "CHE 426" },
             { "day": "Monday", "startTime": "16:00", "endTime": "16:50", "venue": "CHE 426" },
-            { "day": "Monday", "startTime": "18:00", "endTime": "18:50", "venue": "CHE 426" },
-            { "day": "Friday", "startTime": "18:00", "endTime": "18:50", "venue": "" },
-            { "day": "Friday", "startTime": "17:00", "endTime": "17:50", "venue": "" },
-            { "day": "Friday", "startTime": "16:00", "endTime": "16:50", "venue": "" }
+            { "day": "Monday", "startTime": "18:00", "endTime": "18:50", "venue": "CHE 426" }
         ]
     },
     {
@@ -1294,9 +1281,7 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "credits": calculateCredits("0-0-2"),
         "slots": [
             { "day": "Monday", "startTime": "10:00", "endTime": "10:50", "venue": "" },
-            { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "" },
-            { "day": "Thursday", "startTime": "10:00", "endTime": "10:50", "venue": "" },
-            { "day": "Thursday", "startTime": "09:00", "endTime": "09:50", "venue": "" }
+            { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "" }
         ]
     },
     {
@@ -1306,9 +1291,7 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "credits": calculateCredits("0-0-2"),
         "slots": [
             { "day": "Monday", "startTime": "10:00", "endTime": "10:50", "venue": "" },
-            { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "" },
-            { "day": "Thursday", "startTime": "10:00", "endTime": "10:50", "venue": "" },
-            { "day": "Thursday", "startTime": "09:00", "endTime": "09:50", "venue": "" }
+            { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "" }
         ]
     },
     {
@@ -1514,10 +1497,7 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "slots": [
             { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "Texmin Dassault lab" },
             { "day": "Monday", "startTime": "08:00", "endTime": "08:50", "venue": "Texmin Dassault lab" },
-            { "day": "Monday", "startTime": "10:00", "endTime": "10:50", "venue": "Texmin Dassault lab" },
-            { "day": "Thursday", "startTime": "10:00", "endTime": "10:50", "venue": "" },
-            { "day": "Thursday", "startTime": "09:00", "endTime": "09:50", "venue": "" },
-            { "day": "Thursday", "startTime": "08:00", "endTime": "08:50", "venue": "" }
+            { "day": "Monday", "startTime": "10:00", "endTime": "10:50", "venue": "Texmin Dassault lab" }
         ]
     },
     {
@@ -1527,13 +1507,7 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "credits": calculateCredits("0-0-2"),
         "slots": [
             { "day": "Monday", "startTime": "10:00", "endTime": "10:50", "venue": "Mine Ventilation Lab" },
-            { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "Mine Ventilation Lab" },
-            { "day": "Wednesday", "startTime": "10:00", "endTime": "10:50", "venue": "" },
-            { "day": "Wednesday", "startTime": "09:00", "endTime": "09:50", "venue": "" },
-            { "day": "Thursday", "startTime": "10:00", "endTime": "10:50", "venue": "" },
-            { "day": "Thursday", "startTime": "09:00", "endTime": "09:50", "venue": "" },
-            { "day": "Thursday", "startTime": "10:00", "endTime": "10:50", "venue": "Mine Ventilation Lab" },
-            { "day": "Thursday", "startTime": "09:00", "endTime": "09:50", "venue": "Mine Ventilation Lab" }
+            { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "Mine Ventilation Lab" }
         ]
     },
     {
@@ -1609,9 +1583,7 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "credits": calculateCredits("0-0-2"),
         "slots": [
             { "day": "Monday", "startTime": "12:00", "endTime": "12:50", "venue": "" },
-            { "day": "Monday", "startTime": "11:00", "endTime": "11:50", "venue": "" },
-            { "day": "Tuesday", "startTime": "12:00", "endTime": "12:50", "venue": "" },
-            { "day": "Tuesday", "startTime": "11:00", "endTime": "11:50", "venue": "" }
+            { "day": "Monday", "startTime": "11:00", "endTime": "11:50", "venue": "" }
         ]
     },
     {
@@ -1751,9 +1723,7 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "credits": calculateCredits("0-0-2"),
         "slots": [
             { "day": "Monday", "startTime": "10:00", "endTime": "10:50", "venue": "Petroleum Production Engineering Laboratory" },
-            { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "Petroleum Production Engineering Laboratory" },
-            { "day": "Thursday", "startTime": "10:00", "endTime": "10:50", "venue": "" },
-            { "day": "Thursday", "startTime": "09:00", "endTime": "09:50", "venue": "" }
+            { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "Petroleum Production Engineering Laboratory" }
         ]
     },
     {
@@ -1763,11 +1733,7 @@ export const TIMETABLE_DATA: TimeTableCourse[] = [
         "credits": calculateCredits("0-0-2"),
         "slots": [
             { "day": "Monday", "startTime": "10:00", "endTime": "10:50", "venue": "Process Engineering Laboratory" },
-            { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "Process Engineering Laboratory" },
-            { "day": "Thursday", "startTime": "10:00", "endTime": "10:50", "venue": "" },
-            { "day": "Thursday", "startTime": "09:00", "endTime": "09:50", "venue": "" },
-            { "day": "Thursday", "startTime": "10:00", "endTime": "10:50", "venue": "" },
-            { "day": "Thursday", "startTime": "09:00", "endTime": "09:50", "venue": "" }
+            { "day": "Monday", "startTime": "09:00", "endTime": "09:50", "venue": "Process Engineering Laboratory" }
         ]
     },
     {

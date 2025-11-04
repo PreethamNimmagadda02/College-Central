@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForms } from '../contexts/FormsContext';
-import { Form, UserFormsData } from '../types';
+import { Form } from '../types';
 import { allForms, generalForms, ugForms, pgForms, phdForms } from '../data/formsData';
-import { logActivity } from '../services/activityService';
 
 const DownloadIcon: React.FC = () => (
     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -46,30 +45,44 @@ const FormCard: React.FC<{
     onToggleFavorite: (formNumber: string) => void;
     onDownload: (form: Form) => void;
 }> = ({ form, isFavorite, onToggleFavorite, onDownload }) => (
-    <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-lg shadow-md flex flex-col h-full transition-all duration-300 hover:shadow-xl border-2 border-transparent hover:border-primary/20">
-        <div className="flex justify-between items-start mb-2">
-            <h3 className="text-base md:text-lg font-bold text-slate-800 dark:text-white flex-grow pr-2">{form.title}</h3>
-            <div className="flex items-center gap-2">
-                {form.formNumber && <span className="text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-1 px-2 rounded-full whitespace-nowrap">{form.formNumber}</span>}
-                <button
-                    onClick={() => onToggleFavorite(form.formNumber)}
-                    className={`p-2 rounded-lg transition-all ${isFavorite ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20' : 'text-slate-400 hover:text-yellow-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                    title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                >
-                    <BookmarkIcon filled={isFavorite} />
-                </button>
+    <div className="group relative overflow-hidden bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-md flex flex-col h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:scale-105 border-2 border-transparent hover:border-primary/30 dark:hover:border-secondary/30">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="relative z-10">
+            <div className="flex justify-between items-start mb-2">
+                <h3 className="text-base md:text-lg font-bold text-slate-800 dark:text-white flex-grow pr-2 group-hover:text-primary dark:group-hover:text-secondary transition-colors">{form.title}</h3>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    {form.formNumber && (
+                        <span className="text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-1 px-2 rounded-full whitespace-nowrap group-hover:bg-primary/10 dark:group-hover:bg-secondary/10 group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                            {form.formNumber}
+                        </span>
+                    )}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleFavorite(form.formNumber);
+                        }}
+                        className={`p-2 rounded-lg transition-all duration-300 hover:scale-110 active:scale-95 ${
+                            isFavorite
+                                ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
+                                : 'text-slate-400 hover:text-yellow-500 hover:bg-slate-100 dark:hover:bg-slate-700'
+                        }`}
+                        title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                        <BookmarkIcon filled={isFavorite} />
+                    </button>
+                </div>
             </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 flex-grow">
+                <strong className="text-slate-700 dark:text-slate-300">Submit to:</strong> {form.submitTo}
+            </p>
+            <button
+                onClick={() => onDownload(form)}
+                className="mt-4 inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary dark:from-secondary dark:to-secondary/80 dark:hover:from-secondary/80 dark:hover:to-secondary text-white font-medium rounded-lg transition-all duration-300 text-sm hover:shadow-lg hover:scale-105 active:scale-95"
+            >
+                <DownloadIcon />
+                Download PDF
+            </button>
         </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 flex-grow">
-           <strong>Submit to:</strong> {form.submitTo}
-        </p>
-        <button
-            onClick={() => onDownload(form)}
-            className="mt-4 inline-flex items-center justify-center px-4 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors duration-200 text-sm"
-        >
-            <DownloadIcon />
-            Download PDF
-        </button>
     </div>
 );
 
@@ -77,8 +90,7 @@ const CollegeForms: React.FC = () => {
     const { userFormsData, loading, toggleFavorite, addRecentDownload } = useForms();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
-    const [showTips, setShowTips] = useState(true);
-    
+
     const safeUserFormsData = userFormsData || { favorites: [], recentDownloads: [] };
 
     const filters = ['All', 'Favorites', 'General', 'UG', 'PG', 'PhD'];
@@ -148,100 +160,74 @@ const CollegeForms: React.FC = () => {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-md">
-                    <div className="flex items-center justify-between">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between text-white">
                         <div>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm">Total Forms</p>
-                            <p className="text-3xl font-bold text-primary mt-1">{allForms.length}</p>
+                            <p className="text-blue-100 text-sm font-medium mb-1">Total Forms</p>
+                            <p className="text-4xl font-black group-hover:scale-110 transition-transform origin-left">{allForms.length}</p>
                         </div>
-                        <div className="bg-primary/10 p-3 rounded-lg">
-                            <DownloadIcon />
+                        <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-md">
-                    <div className="flex items-center justify-between">
+                <div
+                    onClick={() => setActiveFilter('Favorites')}
+                    className="group relative overflow-hidden bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 cursor-pointer active:scale-95"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between text-white">
                         <div>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm">Your Favorites</p>
-                            <p className="text-3xl font-bold text-yellow-500 mt-1">{safeUserFormsData.favorites.length}</p>
+                            <p className="text-yellow-100 text-sm font-medium mb-1">Your Favorites</p>
+                            <p className="text-4xl font-black group-hover:scale-110 transition-transform origin-left">{safeUserFormsData.favorites.length}</p>
                         </div>
-                        <div className="bg-yellow-500/10 p-3 rounded-lg text-yellow-500">
+                        <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
                             <StarIcon />
                         </div>
                     </div>
+                    {activeFilter === 'Favorites' && (
+                        <div className="absolute top-2 right-2 bg-white/30 backdrop-blur-sm rounded-full p-1">
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    )}
                 </div>
 
-                <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-md">
-                    <div className="flex items-center justify-between">
+                <div
+                    onClick={() => {
+                        setActiveFilter('All');
+                        // Scroll to recent downloads section
+                        setTimeout(() => {
+                            const element = document.getElementById('recent-downloads-section');
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }, 100);
+                    }}
+                    className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 sm:col-span-2 lg:col-span-1 cursor-pointer active:scale-95"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative z-10 flex items-center justify-between text-white">
                         <div>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm">Recent Downloads</p>
-                            <p className="text-3xl font-bold text-secondary mt-1">{safeUserFormsData.recentDownloads.length}</p>
+                            <p className="text-purple-100 text-sm font-medium mb-1">Recent Downloads</p>
+                            <p className="text-4xl font-black group-hover:scale-110 transition-transform origin-left">{safeUserFormsData.recentDownloads.length}</p>
                         </div>
-                        <div className="bg-secondary/10 p-3 rounded-lg text-secondary">
+                        <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
                             <ClockIcon />
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Recent Downloads Section */}
-            {safeUserFormsData.recentDownloads.length > 0 && (
-                <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-md">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <ClockIcon />
-                        Recent Downloads
-                    </h3>
-                    <div className="space-y-2">
-                        {safeUserFormsData.recentDownloads.slice(0, 5).map((download, index) => (
-                            <div key={index} className="flex items-center justify-between py-2 px-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                                <div>
-                                    <p className="font-medium text-sm">{download.title}</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        {new Date(download.timestamp).toLocaleDateString()} at {new Date(download.timestamp).toLocaleTimeString()}
-                                    </p>
-                                </div>
-                                <span className="text-xs font-semibold bg-primary/10 text-primary py-1 px-2 rounded-full">
-                                    {download.formNumber}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Helpful Tips */}
-            {showTips && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-6 rounded-lg">
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3">
-                            <div className="text-blue-500 mt-1">
-                                <InfoIcon />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Helpful Tips</h3>
-                                <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
-                                    <li>Use the search bar to quickly find forms by name, number, or submission office</li>
-                                    <li>Click the bookmark icon to save frequently used forms to favorites</li>
-                                    <li>All forms are official IIT ISM documents - ensure you submit to the correct office</li>
-                                    <li>Check "Submit to" field carefully before downloading</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => setShowTips(false)}
-                            className="text-blue-500 hover:text-blue-700 text-xl font-bold"
-                        >
-                            ×
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            <div className="space-y-4 bg-white dark:bg-dark-card p-4 rounded-lg shadow-md">
-                 <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="space-y-4 bg-white dark:bg-dark-card p-4 md:p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+                 <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary dark:group-focus-within:text-secondary transition-colors">
                         <SearchIcon />
                     </div>
                     <input
@@ -249,15 +235,29 @@ const CollegeForms: React.FC = () => {
                         placeholder="Search by form name, number, or submission office..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary focus:border-primary dark:focus:border-secondary transition-all text-slate-900 dark:text-white placeholder:text-slate-400"
                     />
+                    {searchTerm && (
+                        <button
+                            onClick={() => setSearchTerm('')}
+                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
                  <div className="flex flex-wrap gap-2">
                     {filters.map(filter => (
-                        <button 
+                        <button
                             key={filter}
                             onClick={() => setActiveFilter(filter)}
-                            className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${activeFilter === filter ? 'bg-primary text-white' : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'}`}
+                            className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 ${
+                                activeFilter === filter
+                                    ? 'bg-gradient-to-r from-primary to-primary-dark dark:from-secondary dark:to-secondary/80 text-white shadow-lg shadow-primary/30 dark:shadow-secondary/30'
+                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                            }`}
                         >
                             {getFilterLabel(filter)}
                         </button>
@@ -390,8 +390,66 @@ const CollegeForms: React.FC = () => {
                     )}
                 </div>
             )}
+
+            {/* Recent Downloads Section */}
+            {safeUserFormsData.recentDownloads.length > 0 && activeFilter === 'All' && (
+                <div id="recent-downloads-section" className="space-y-4 scroll-mt-6">
+                    <h2 className="text-2xl font-semibold border-b border-slate-200 dark:border-slate-700 pb-2 flex items-center gap-2">
+                        <ClockIcon />
+                        Recent Downloads
+                    </h2>
+                    <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+                        <div className="space-y-3">
+                            {safeUserFormsData.recentDownloads.slice(0, 10).map((download, index) => {
+                                const form = allForms.find(f => f.formNumber === download.formNumber);
+                                if (!form) return null;
+                                return (
+                                    <div
+                                        key={index}
+                                        className="group relative overflow-hidden flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 border border-transparent hover:border-primary/30 dark:hover:border-secondary/30"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <div className="relative z-10 flex-1 min-w-0">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-shrink-0 w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors truncate">
+                                                        {download.title}
+                                                    </p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-xs font-mono bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded">
+                                                            {download.formNumber}
+                                                        </span>
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                                            {new Date(download.timestamp).toLocaleDateString()} at {new Date(download.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDownload(form)}
+                                            className="relative z-10 ml-4 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary dark:from-secondary dark:to-secondary/80 dark:hover:from-secondary/80 dark:hover:to-secondary text-white rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105 active:scale-95 text-sm font-medium"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                            <span className="hidden sm:inline">Download Again</span>
+                                            <span className="sm:hidden">Download</span>
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
-export default CollegeForms;
+export default React.memo(CollegeForms);
