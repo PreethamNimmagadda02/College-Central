@@ -2,13 +2,27 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useMe
 import { Semester } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/storage';
 import { logActivity } from '../services/activityService';
 import { getGoogleGenAI } from '../utils/lazyImports';
+
+/**
+ * GradesContext handles academic grade data with intelligent retake logic:
+ *
+ * - Stores ALL grade instances including retakes in their respective semesters
+ * - Displays the CGPA exactly as shown on the grade sheet (no recalculation)
+ * - Recalculates totalCredits using only the latest grade for each course
+ * - Only counts credits from passed courses (grade != 'F') in totalCredits
+ * - Analytics and displays use only the most recent grade for each course
+ */
 
 export interface GradesData {
   semesters: Semester[];
   cgpa: number;
   totalCredits: number;
+  gradeSheetUrl?: string; // Firebase Storage URL for the uploaded grade sheet
+  gradeSheetFileName?: string; // Original filename
 }
 
 // Helper function to convert a File object to a base64 string
@@ -134,6 +148,16 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setError(null);
 
     try {
+        // Upload file to Firebase Storage first
+        const storage = firebase.storage();
+        const timestamp = Date.now();
+        const fileExtension = selectedFile.name.split('.').pop();
+        const storagePath = `gradeSheets/${currentUser.uid}/${timestamp}.${fileExtension}`;
+        const storageRef = storage.ref(storagePath);
+
+        await storageRef.put(selectedFile);
+        const gradeSheetUrl = await storageRef.getDownloadURL();
+
         const base64Data = await fileToBase64(selectedFile);
 
         // Lazy load Google GenAI
@@ -143,8 +167,8 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const schema = {
           type: Type.OBJECT,
           properties: {
-            cgpa: { type: Type.NUMBER, description: 'The overall CGPA.' },
-            totalCredits: { type: Type.NUMBER, description: 'The total number of credits earned across all semesters.' },
+            cgpa: { type: Type.NUMBER, description: 'The overall CGPA as shown on the grade sheet.' },
+            totalCredits: { type: Type.NUMBER, description: 'The total number of credits (will be recalculated based on latest passed courses).' },
             semesters: {
               type: Type.ARRAY,
               description: 'An array of semesters, from latest to oldest.',
@@ -180,7 +204,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             model: 'gemini-2.5-flash',
             contents: {
                 parts: [
-                    { text: "Please analyze this document (image or PDF) of a student's grade sheet. Extract the academic performance data and format it according to the provided JSON schema. The data should include the overall CGPA, the total credits earned across all semesters, and a list of all semesters, starting from the most recent one. For each semester, provide the semester number, the academic session year (e.g., '2023-2024'), the session type (Monsoon, Winter, or Summer), the SGPA, and a list of all subjects with their code, name, credits, and the grade obtained. Ensure all fields in the schema are populated accurately." },
+                    { text: "Please analyze this document (image or PDF) of a student's grade sheet. Extract the academic performance data and format it according to the provided JSON schema. The data should include the overall CGPA as shown on the grade sheet, and a list of all semesters, starting from the most recent one. For each semester, provide the semester number, the academic session year (e.g., '2023-2024'), the session type (Monsoon, Winter, or Summer), the SGPA, and a list of all subjects with their code, name, credits, and the grade obtained. IMPORTANT: Include ALL course instances, including retakes - if a student took the same course multiple times, include each instance in its respective semester. Ensure all fields in the schema are populated accurately." },
                     { inlineData: { mimeType: selectedFile.type, data: base64Data } }
                 ]
             },
@@ -196,6 +220,41 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             throw new Error('AI response was empty or invalid.');
         }
         const result = JSON.parse(text.trim());
+
+        // Get latest grades for each course (handles retakes)
+        const courseMap: { [subjectCode: string]: { grade: any, semester: number } } = {};
+        result.semesters.forEach((sem: any) => {
+            sem.grades.forEach((grade: any) => {
+                const existing = courseMap[grade.subjectCode];
+                // If course doesn't exist or current semester is later, update it
+                if (!existing || sem.semester > existing.semester) {
+                    courseMap[grade.subjectCode] = {
+                        grade: grade,
+                        semester: sem.semester
+                    };
+                }
+            });
+        });
+
+        // Recalculate totalCredits using only latest grades
+        // Credits for F grades should only be counted when the student clears them
+        let totalPassedCredits = 0;
+
+        Object.values(courseMap).forEach((courseData: any) => {
+            const grade = courseData.grade;
+            // Only add credits if grade is not 'F'
+            if (grade.grade !== 'F') {
+                totalPassedCredits += grade.credits || 0;
+            }
+        });
+
+        result.totalCredits = totalPassedCredits;
+        // Keep the CGPA as extracted from the grade sheet (don't recalculate)
+
+        // Add grade sheet URL and filename to result
+        result.gradeSheetUrl = gradeSheetUrl;
+        result.gradeSheetFileName = selectedFile.name;
+
         await setGradesData(result);
         await logActivity(currentUser.uid, {
             type: 'grades',

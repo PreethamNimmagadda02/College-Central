@@ -309,9 +309,38 @@ const CGPAForecaster: React.FC = () => {
     );
 };
 
+/**
+ * PerformanceAnalytics displays grade analytics using only the latest grade for each course.
+ * When a student retakes a course, only the most recent attempt is counted in analytics.
+ */
 const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
+
+    // Helper function to get latest grade for each course (handles retakes)
+    const getLatestGrades = useMemo(() => {
+        const courseMap: { [subjectCode: string]: { grade: Grade, semester: number } } = {};
+
+        // Iterate through semesters to track the latest occurrence of each course
+        gradesData.semesters.forEach((sem: Semester) => {
+            sem.grades.forEach((grade: Grade) => {
+                const existing = courseMap[grade.subjectCode];
+                // If course doesn't exist or current semester is later, update it
+                if (!existing || sem.semester > existing.semester) {
+                    courseMap[grade.subjectCode] = {
+                        grade: { ...grade },
+                        semester: sem.semester
+                    };
+                }
+            });
+        });
+
+        // Return array of latest grades with semester info
+        return Object.values(courseMap).map(item => ({
+            ...item.grade,
+            semester: item.semester
+        }));
+    }, [gradesData]);
 
     // Calculate performance trends
     const performanceTrend = useMemo(() => {
@@ -322,47 +351,41 @@ const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => 
         }));
     }, [gradesData]);
 
-    // Calculate grade distribution with courses
+    // Calculate grade distribution with courses (using latest grades only)
     const gradeDistribution = useMemo(() => {
         const distribution: { [key: string]: { count: number, courses: any[] } } = {};
-        gradesData.semesters.forEach((sem: Semester) => {
-            sem.grades.forEach((grade: Grade) => {
-                if (!distribution[grade.grade]) {
-                    distribution[grade.grade] = { count: 0, courses: [] };
-                }
-                const gradeEntry = distribution[grade.grade];
-                if (gradeEntry) {
-                    gradeEntry.count += 1;
-                    gradeEntry.courses.push({
-                        ...grade,
-                        semester: sem.semester
-                    });
-                }
-            });
+
+        getLatestGrades.forEach((gradeWithSem: any) => {
+            const gradeValue = gradeWithSem.grade;
+            if (!distribution[gradeValue]) {
+                distribution[gradeValue] = { count: 0, courses: [] };
+            }
+            const gradeEntry = distribution[gradeValue];
+            if (gradeEntry) {
+                gradeEntry.count += 1;
+                gradeEntry.courses.push(gradeWithSem);
+            }
         });
+
         return distribution;
-    }, [gradesData]);
+    }, [getLatestGrades]);
 
     const getGradeCourses = (grade: string) => {
         return gradeDistribution[grade]?.courses || [];
     };
 
-    // Calculate subject performance with courses
+    // Calculate subject performance with courses (using latest grades only)
     const subjectPerformance = useMemo(() => {
         const subjects: { [key: string]: { total: number, count: number, courses: any[] } } = {};
-        gradesData.semesters.forEach((sem: Semester) => {
-            sem.grades.forEach((grade: Grade) => {
-                const category = grade.subjectCode.substring(0, 2);
-                if (!subjects[category]) {
-                    subjects[category] = { total: 0, count: 0, courses: [] };
-                }
-                subjects[category].total += gradePoints[grade.grade] || 0;
-                subjects[category].count += 1;
-                subjects[category].courses.push({
-                    ...grade,
-                    semester: sem.semester
-                });
-            });
+
+        getLatestGrades.forEach((gradeWithSem: any) => {
+            const category = gradeWithSem.subjectCode.substring(0, 2);
+            if (!subjects[category]) {
+                subjects[category] = { total: 0, count: 0, courses: [] };
+            }
+            subjects[category].total += gradePoints[gradeWithSem.grade] || 0;
+            subjects[category].count += 1;
+            subjects[category].courses.push(gradeWithSem);
         });
 
         return Object.entries(subjects).map(([category, data]) => ({
@@ -370,7 +393,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => 
             average: (data.total / data.count).toFixed(2),
             courses: data.courses
         }));
-    }, [gradesData]);
+    }, [getLatestGrades]);
 
     const getCategoryCourses = (category: string) => {
         const categoryData = subjectPerformance.find(s => s.category === category);
@@ -727,15 +750,31 @@ const Grades: React.FC = () => {
                         </span>
                     </div>
                 </div>
-                <button
-                    onClick={resetGradesState}
-                    className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors flex items-center gap-2"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
-                    Upload New Grade Sheet
-                </button>
+                <div className="flex gap-3">
+                    {sortedGradesData.gradeSheetUrl && (
+                        <a
+                            href={sortedGradesData.gradeSheetUrl}
+                            download={sortedGradesData.gradeSheetFileName || 'grade-sheet'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download Grade Sheet
+                        </a>
+                    )}
+                    <button
+                        onClick={resetGradesState}
+                        className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Upload New Grade Sheet
+                    </button>
+                </div>
             </div>
 
             {/* Overview Cards */}
