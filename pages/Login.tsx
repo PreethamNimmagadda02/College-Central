@@ -36,6 +36,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
   const { login, register, loginWithGoogle, isAuthenticated, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
@@ -77,31 +78,39 @@ const Login: React.FC = () => {
     const email = `${admissionNumber.trim().toLowerCase()}@iitism.ac.in`;
 
     try {
-      await login(email, password);
-      // On success, useEffect will navigate
-    } catch (err: any) {
-      // In newer Firebase versions, 'auth/invalid-credential' can mean user not found OR wrong password.
-      // So, we try to register, but if that fails with 'email-already-in-use', it was a wrong password.
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        try {
-          await register(email, password);
-          // On successful registration, useEffect will handle navigation
-        } catch (registerErr: any) {
-          if (registerErr.code === 'auth/weak-password') {
-            setError('Password is too weak. It should be at least 6 characters.');
-          } else if (registerErr.code === 'auth/email-already-in-use') {
-            setError('Invalid credentials. Please check your admission number and password.');
-          } else {
-            setError('Registration failed. Please try again.');
-          }
-          console.error("Registration Error:", registerErr);
-        }
-      } else if (err.code === 'auth/invalid-email') {
-         setError('The admission number format is invalid. Please check for spaces or typos.');
-      } else if (err.code === 'auth/wrong-password') {
-         setError('Invalid credentials. Please check your admission number and password.');
+      if (isSignUp) {
+        // Sign Up mode
+        await register(email, password);
+        // On successful registration, useEffect will handle navigation
       } else {
-        setError('An unexpected error occurred. Please try again.');
+        // Sign In mode
+        await login(email, password);
+        // On success, useEffect will navigate
+      }
+    } catch (err: any) {
+      if (isSignUp) {
+        // Sign Up errors
+        if (err.code === 'auth/weak-password') {
+          setError('Password is too weak. It should be at least 6 characters.');
+        } else if (err.code === 'auth/email-already-in-use') {
+          setError('This admission number is already registered. Please sign in instead.');
+        } else if (err.code === 'auth/invalid-email') {
+          setError('The admission number format is invalid. Please check for spaces or typos.');
+        } else {
+          setError('Registration failed. Please try again.');
+        }
+        console.error("Registration Error:", err);
+      } else {
+        // Sign In errors
+        if (err.code === 'auth/user-not-found') {
+          setError('No account found with this admission number. Please sign up first.');
+        } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+          setError('Invalid credentials. Please check your admission number and password.');
+        } else if (err.code === 'auth/invalid-email') {
+          setError('The admission number format is invalid. Please check for spaces or typos.');
+        } else {
+          setError('An unexpected error occurred. Please try again.');
+        }
         console.error("Login Error:", err);
       }
     } finally {
@@ -199,11 +208,47 @@ const Login: React.FC = () => {
                 </div>
 
                 <div className="relative z-10">
+                    {/* Tab Selector */}
                     <div className="mb-6">
-                        <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Welcome Back</h2>
+                        <div className="flex gap-2 p-1 bg-white/10 rounded-xl border border-white/20">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsSignUp(false);
+                                    setError('');
+                                }}
+                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                                    !isSignUp
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                                        : 'text-white/70 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                Sign In
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsSignUp(true);
+                                    setError('');
+                                }}
+                                className={`flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                                    isSignUp
+                                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                                        : 'text-white/70 hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                                Sign Up
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="mb-6">
+                        <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">
+                            {isSignUp ? 'Create Account' : 'Welcome Back'}
+                        </h2>
                         <p className="text-white/70 text-sm flex items-center gap-2">
                             <span className="inline-block w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-                            Sign in to access your campus hub
+                            {isSignUp ? 'Join your campus community today' : 'Sign in to access your campus hub'}
                         </p>
                     </div>
             
@@ -259,12 +304,12 @@ const Login: React.FC = () => {
                             id="password"
                             name="password"
                             type={showPassword ? 'text' : 'password'}
-                            autoComplete="current-password"
+                            autoComplete={isSignUp ? 'new-password' : 'current-password'}
                             required
                             ref={passwordInputRef}
                             value={password}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                            placeholder="Enter your password"
+                            placeholder={isSignUp ? 'Create a password (min 6 characters)' : 'Enter your password'}
                             className="relative w-full pl-10 pr-12 py-3 text-white bg-white/10 border border-white/20 rounded-xl shadow-sm focus:outline-none focus:bg-white/15 focus:border-purple-400/50 transition-all duration-300 placeholder:text-white/40 hover:bg-white/12"
                         />
                         <button
@@ -323,11 +368,11 @@ const Login: React.FC = () => {
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
-                                    <span className="drop-shadow-lg">Signing In...</span>
+                                    <span className="drop-shadow-lg">{isSignUp ? 'Creating Account...' : 'Signing In...'}</span>
                                 </>
                             ) : (
                                 <>
-                                    <span className="drop-shadow-lg">Sign In</span>
+                                    <span className="drop-shadow-lg">{isSignUp ? 'Create Account' : 'Sign In'}</span>
                                     <svg className="w-5 h-5 group-hover/btn:translate-x-1.5 transition-transform duration-300 drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                     </svg>
