@@ -4,7 +4,7 @@ import 'firebase/compat/firestore';
 import { db } from '../firebaseConfig';
 import { ActivityType, ActivityItem } from '../types';
 import { retryOnlyIfRetryable } from '../utils/retryLogic';
-import { ACTIVITY_LOG_MAX_RETRIES, ACTIVITY_LOG_RETRY_DELAY_MS, ACTIVITY_LOG_PAGE_SIZE } from '../utils/constants';
+import { ACTIVITY_LOG_MAX_RETRIES, ACTIVITY_LOG_RETRY_DELAY_MS, ACTIVITY_LOG_PAGE_SIZE, MAX_ACTIVITIES_STORED } from '../utils/constants';
 
 export interface ActivityLog {
   type: ActivityType;
@@ -28,13 +28,30 @@ export const logActivity = async (userId: string, activity: ActivityLog) => {
   try {
     // Use retry logic for network resilience
     await retryOnlyIfRetryable(async () => {
-      // FIX: Use v8 compat syntax for collection reference and addDoc.
       const activityCollectionRef = db.collection('users').doc(userId).collection('activity');
+
+      // Add new activity
       await activityCollectionRef.add({
         ...activity,
-        // FIX: Use v8 compat syntax for serverTimestamp.
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       });
+
+      // Clean up old activities - keep only latest MAX_ACTIVITIES_STORED
+      const allActivities = await activityCollectionRef
+        .orderBy('timestamp', 'desc')
+        .get();
+
+      // If we have more than MAX_ACTIVITIES_STORED, delete the oldest ones
+      if (allActivities.size > MAX_ACTIVITIES_STORED) {
+        const batch = db.batch();
+        const activitiesToDelete = allActivities.docs.slice(MAX_ACTIVITIES_STORED);
+
+        activitiesToDelete.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+      }
     }, ACTIVITY_LOG_MAX_RETRIES, ACTIVITY_LOG_RETRY_DELAY_MS);
   } catch (error: any) {
     console.error("Error logging activity: ", error);
@@ -98,5 +115,41 @@ export const fetchActivityLogs = async (
   } catch (error) {
     console.error('Error fetching activity logs:', error);
     throw error;
+  }
+};
+
+/**
+ * Clean up old activities for a user - keep only latest 30
+ * This can be called manually or on app initialization
+ * @param userId - User ID to clean up activities for
+ */
+export const cleanupOldActivities = async (userId: string): Promise<void> => {
+  if (!userId) {
+    console.warn("Attempted to cleanup activities without a userId.");
+    return;
+  }
+
+  try {
+    const activityCollectionRef = db.collection('users').doc(userId).collection('activity');
+
+    const allActivities = await activityCollectionRef
+      .orderBy('timestamp', 'desc')
+      .get();
+
+    // If we have more than MAX_ACTIVITIES_STORED, delete the oldest ones
+    if (allActivities.size > MAX_ACTIVITIES_STORED) {
+      const batch = db.batch();
+      const activitiesToDelete = allActivities.docs.slice(MAX_ACTIVITIES_STORED);
+
+      activitiesToDelete.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      console.log(`Cleaned up ${activitiesToDelete.length} old activities for user ${userId}`);
+    }
+  } catch (error) {
+    console.error('Error cleaning up old activities:', error);
+    // Don't throw - cleanup is non-critical
   }
 };

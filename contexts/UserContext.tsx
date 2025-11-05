@@ -5,7 +5,7 @@ import 'firebase/compat/auth';
 import { auth, db, storage } from '../firebaseConfig';
 import { User } from '../types';
 import { STUDENT_DIRECTORY } from '../data/studentDirectoryData';
-import { logActivity } from '../services/activityService';
+import { logActivity, cleanupOldActivities } from '../services/activityService';
 import { MAX_FILE_SIZE_BYTES, ALLOWED_IMAGE_TYPES, PROFILE_PICTURES_PATH } from '../utils/constants';
 import { getImageCompression } from '../utils/lazyImports';
 import { getCourseOptionFromAdmissionNumber } from '../utils/courseUtils';
@@ -44,6 +44,11 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               if (snapshot.exists) {
                 // Correctly set user object, including the ID from the snapshot
                 setUser({ id: snapshot.id, ...snapshot.data() } as User);
+
+                // Clean up old activities on login (keep only latest 30)
+                cleanupOldActivities(authUser.uid).catch(err => {
+                  console.error('Failed to cleanup old activities:', err);
+                });
               } else {
                 const admissionNumber = authUser.email?.split('@')[0]?.toUpperCase() ?? 'Unknown';
                 const directoryEntry = STUDENT_DIRECTORY.find(student => student.admNo === admissionNumber);

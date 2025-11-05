@@ -20,6 +20,7 @@ export const CHUNK_SIZE_WARNING_LIMIT_KB = 1000;
 // Firestore Query Limits
 export const ACTIVITY_LOG_PAGE_SIZE = 20;
 export const MAX_RECENT_DOWNLOADS = 10;
+export const MAX_ACTIVITIES_STORED = 30; // Maximum number of activities to keep in database
 
 // UI Constants
 export const DEBOUNCE_DELAY_MS = 300;
