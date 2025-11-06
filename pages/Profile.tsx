@@ -115,7 +115,7 @@ const Profile: React.FC = () => {
             return;
         }
 
-        const activityQuery = db.collection('users').doc(currentUser.uid).collection('activity').orderBy('timestamp', 'desc').limit(20);
+        const activityQuery = db.collection('users').doc(currentUser.uid).collection('activity').orderBy('timestamp', 'desc').limit(30);
 
         const unsubscribe = activityQuery.onSnapshot((snapshot) => {
             const activities = snapshot.docs.map(doc => ({
