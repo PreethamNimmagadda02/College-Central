@@ -135,6 +135,78 @@ const CGPAForecaster: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            {/* Target CGPA Calculator - Separate Section */}
+            <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg overflow-hidden">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <h3 className="text-lg font-semibold flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        CGPA Target Calculator
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Calculate the SGPA needed this semester to achieve your target CGPA</p>
+                </div>
+                <div className="p-6">
+                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Target CGPA
+                                </label>
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={targetCGPA}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        // Allow empty, numbers, and decimal points
+                                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                            // Limit to 10.0
+                                            const numValue = parseFloat(value);
+                                            if (value === '' || isNaN(numValue) || numValue <= 10) {
+                                                setTargetCGPA(value);
+                                            }
+                                        }
+                                    }}
+                                    onBlur={(e) => {
+                                        // Clean up on blur
+                                        const numValue = parseFloat(e.target.value);
+                                        if (isNaN(numValue) || numValue < 0) {
+                                            setTargetCGPA('0.0');
+                                        } else if (numValue > 10) {
+                                            setTargetCGPA('10.0');
+                                        } else {
+                                            setTargetCGPA(numValue.toFixed(1));
+                                        }
+                                    }}
+                                    placeholder="e.g., 8.5"
+                                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 dark:text-white text-lg font-semibold"
+                                />
+                            </div>
+                            <div className="flex items-end">
+                                <div className={`w-full p-4 rounded-lg text-center transition-all ${
+                                    calculations.isTargetAchievable
+                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                        : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                                }`}>
+                                    {calculations.isTargetAchievable ? (
+                                        <div>
+                                            <p className="text-xs font-medium mb-1 uppercase tracking-wide">Required SGPA (This Semester)</p>
+                                            <p className="text-3xl font-bold">{calculations.requiredSGPA.toFixed(2)}</p>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <p className="font-semibold mb-1">Target Not Achievable</p>
+                                            <p className="text-xs">This semester alone cannot reach your target CGPA</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Performance Projections */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
@@ -174,84 +246,22 @@ const CGPAForecaster: React.FC = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                             </svg>
                         </div>
-                        <p className="text-3xl font-bold group-hover:scale-110 transition-transform origin-left">{calculations.projectedCgpa}</p>
+                        <p className="text-3xl font-bold group-hover:scale-110 transition-transform origin-left">{calculations.projectedCgpa.toFixed(2)}</p>
                         <div className="flex items-center gap-1 mt-1">
                             {calculations.projectedCgpa > (gradesData?.cgpa || 0) ? (
                                 <>
                                     <svg className="w-3 h-3 text-green-300 group-hover:scale-125 transition-transform" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
                                     </svg>
-                                    <span className="text-purple-100 text-xs">+{(calculations.projectedCgpa - (gradesData?.cgpa || 0))}</span>
+                                    <span className="text-purple-100 text-xs">+{(calculations.projectedCgpa - (gradesData?.cgpa || 0)).toFixed(2)}</span>
                                 </>
                             ) : (
                                 <>
                                     <svg className="w-3 h-3 text-red-300 group-hover:scale-125 transition-transform" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                     </svg>
-                                    <span className="text-purple-100 text-xs">{(calculations.projectedCgpa - (gradesData?.cgpa || 0))}</span>
+                                    <span className="text-purple-100 text-xs">{(calculations.projectedCgpa - (gradesData?.cgpa || 0)).toFixed(2)}</span>
                                 </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Target CGPA Calculator */}
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-6">
-                <h4 className="font-semibold mb-4 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    CGPA Target Calculator
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                            Target CGPA
-                        </label>
-                        <input
-                            type="text"
-                            inputMode="decimal"
-                            value={targetCGPA}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                // Allow empty, numbers, and decimal points
-                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                    // Limit to 10.0
-                                    const numValue = parseFloat(value);
-                                    if (value === '' || isNaN(numValue) || numValue <= 10) {
-                                        setTargetCGPA(value);
-                                    }
-                                }
-                            }}
-                            onBlur={(e) => {
-                                // Clean up on blur
-                                const numValue = parseFloat(e.target.value);
-                                if (isNaN(numValue) || numValue < 0) {
-                                    setTargetCGPA('0.0');
-                                } else if (numValue > 10) {
-                                    setTargetCGPA('10.0');
-                                } else {
-                                    setTargetCGPA(numValue.toFixed(1));
-                                }
-                            }}
-                            placeholder="e.g., 8.5"
-                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 dark:text-white"
-                        />
-                    </div>
-                    <div className="flex items-end">
-                        <div className={`w-full p-3 rounded-lg text-center ${
-                            calculations.isTargetAchievable
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                        }`}>
-                            {calculations.isTargetAchievable ? (
-                                <div>
-                                    <p className="text-xs font-medium mb-1">Required SGPA (This Semester)</p>
-                                    <p className="text-xl font-bold">{calculations.requiredSGPA.toFixed(2)}</p>
-                                </div>
-                            ) : (
-                                <p className="font-medium">Target not achievable this semester</p>
                             )}
                         </div>
                     </div>
