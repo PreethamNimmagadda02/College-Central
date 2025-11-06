@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useUser } from '../contexts/UserContext';
-import { ClassSchedule, TimeTableCourse } from '../types';
+import { ClassSchedule } from '../types';
 import { TIMETABLE_DATA } from '../data/courseData';
+import { NEP_TIMETABLE_DATA } from '../data/nepCourseData';
 import { useAuth } from '../hooks/useAuth';
 import { logActivity } from '../services/activityService';
 import { calculateCreditsFromLTP } from '../utils/creditCalculator';
@@ -15,7 +16,9 @@ const ChevronDownIcon: React.FC = () => (
 
 // Format time from 24-hour to 12-hour with AM/PM
 const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
+    const parts = time.split(':').map(Number);
+    const hours = parts[0] ?? 0;
+    const minutes = parts[1] ?? 0;
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
@@ -64,6 +67,7 @@ const Schedule: React.FC = () => {
     const { currentUser } = useAuth();
     const { user } = useUser();
     const courseOption = user?.courseOption || 'CBCS';
+    const timetableData = courseOption === 'NEP' ? NEP_TIMETABLE_DATA : TIMETABLE_DATA;
 
     const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -79,7 +83,7 @@ const Schedule: React.FC = () => {
     const [conflictingClasses, setConflictingClasses] = useState<ClassSchedule[]>([]);
     const [applyInstructorToAll, setApplyInstructorToAll] = useState(true);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const [history, setHistory] = useState<ClassSchedule[][]>([]);
+    const [_history, setHistory] = useState<ClassSchedule[][]>([]);
     const isInitialized = useRef(false);
     const [viewMode, setViewMode] = useState<'grid' | 'list' | 'compact'>('grid');
     const [filterCourse, setFilterCourse] = useState<string>('all');
@@ -213,18 +217,34 @@ const Schedule: React.FC = () => {
     }, [scheduleData]);
 
     // Display the actual count from schedule, not just selected codes
-    const displayCoursesCount = uniqueCoursesFromSchedule.length || selectedCourseCodes.length;
+    // Only count courses that exist in the current timetable structure
+    const displayCoursesCount = useMemo(() => {
+        const validCourses = uniqueCoursesFromSchedule.filter(code =>
+            timetableData.some(course => course.courseCode === code)
+        );
+        return validCourses.length;
+    }, [uniqueCoursesFromSchedule, timetableData]);
 
     const totalCredits = useMemo(() => {
-        // Use courses from actual schedule data
-        const coursesToCount = uniqueCoursesFromSchedule.length > 0 ? uniqueCoursesFromSchedule : selectedCourseCodes;
-        return coursesToCount.reduce((acc, code) => {
-            const course = TIMETABLE_DATA.find(c => c.courseCode === code);
+        // Always use courses from actual schedule data for accurate credit count
+        // Search in both CBCS and NEP timetables to handle mixed schedules
+        return uniqueCoursesFromSchedule.reduce((acc, code) => {
+            // First try current timetable, then try the opposite one
+            let course = timetableData.find(c => c.courseCode === code);
+            let foundCourseOption = courseOption;
+
+            if (!course) {
+                // Try the opposite timetable
+                const oppositeTimetable = courseOption === 'NEP' ? TIMETABLE_DATA : NEP_TIMETABLE_DATA;
+                course = oppositeTimetable.find(c => c.courseCode === code);
+                foundCourseOption = courseOption === 'NEP' ? 'CBCS' : 'NEP';
+            }
+
             if (!course) return acc;
-            const credits = calculateCreditsFromLTP(course.ltp, courseOption);
+            const credits = calculateCreditsFromLTP(course.ltp, foundCourseOption);
             return acc + credits;
         }, 0);
-    }, [uniqueCoursesFromSchedule, selectedCourseCodes, courseOption]);
+    }, [uniqueCoursesFromSchedule, courseOption, timetableData]);
 
     const todaysClasses = useMemo(() => {
         if (!scheduleData || !today) return [];
@@ -244,23 +264,41 @@ const Schedule: React.FC = () => {
         if (!scheduleData) return [];
         const uniqueCodes = [...new Set(scheduleData.filter(item => !item.isCustomTask).map(item => item.courseCode))];
         return uniqueCodes.map(code => {
-            const course = TIMETABLE_DATA.find(c => c.courseCode === code);
+            const course = timetableData.find(c => c.courseCode === code);
             return {
                 code: code,
                 name: course ? `${code} - ${course.courseName}` : code,
             };
         }).sort((a, b) => (a.code as string).localeCompare(b.code as string));
-    }, [scheduleData]);
+    }, [scheduleData, timetableData]);
 
     const handleCourseSelection = (courseCode: string) => {
+        // Check if this course belongs to the current timetable
+        const isCourseInCurrentTimetable = timetableData.some(course => course.courseCode === courseCode);
 
-        const newSelectedCodes = selectedCourseCodes.includes(courseCode)
-            ? selectedCourseCodes.filter(code => code !== courseCode)
-            : [...selectedCourseCodes, courseCode];
+        // If selecting a course and we have existing courses, check if they're from a different structure
+        let shouldClearExisting = false;
+        if (!selectedCourseCodes.includes(courseCode) && selectedCourseCodes.length > 0 && scheduleData) {
+            // Check if ALL existing courses are NOT in the current timetable
+            // This means they're ALL from a different course structure
+            const allCoursesFromDifferentStructure = selectedCourseCodes.every(code =>
+                !timetableData.some(course => course.courseCode === code)
+            );
+
+            if (allCoursesFromDifferentStructure && isCourseInCurrentTimetable) {
+                shouldClearExisting = true;
+            }
+        }
+
+        const newSelectedCodes = shouldClearExisting
+            ? [courseCode]  // Start fresh with just this course
+            : selectedCourseCodes.includes(courseCode)
+                ? selectedCourseCodes.filter(code => code !== courseCode)
+                : [...selectedCourseCodes, courseCode];
 
         setSelectedCourseCodes(newSelectedCodes);
 
-        const selectedCourses = TIMETABLE_DATA.filter(course => newSelectedCodes.includes(course.courseCode));
+        const selectedCourses = timetableData.filter(course => newSelectedCodes.includes(course.courseCode));
 
         const newCourses: ClassSchedule[] = selectedCourses.flatMap(course =>
             course.slots.map((slot, index) => ({
@@ -281,8 +319,10 @@ const Schedule: React.FC = () => {
         if (currentUser) {
             logActivity(currentUser.uid, {
                 type: 'schedule',
-                title: 'Courses Updated',
-                description: `Updated schedule to ${newSelectedCodes.length} courses.`,
+                title: shouldClearExisting ? 'Schedule Cleared and Course Added' : 'Courses Updated',
+                description: shouldClearExisting
+                    ? `Cleared courses from other structure and added ${courseCode}`
+                    : `Updated schedule to ${newSelectedCodes.length} courses.`,
                 icon: '📚',
                 link: '/schedule'
             });
@@ -291,7 +331,7 @@ const Schedule: React.FC = () => {
     };
     
     const handleResetSchedule = () => {
-        const selectedCourses = TIMETABLE_DATA.filter(course => selectedCourseCodes.includes(course.courseCode));
+        const selectedCourses = timetableData.filter(course => selectedCourseCodes.includes(course.courseCode));
 
         const courseScheduleData: ClassSchedule[] = selectedCourses.flatMap(course =>
             course.slots.map((slot, index) => ({
@@ -323,12 +363,13 @@ const Schedule: React.FC = () => {
         setHistory([]);
     };
 
-    const handleUndo = () => {
-        if (history.length === 0) return;
-        const previousState = history[history.length - 1];
-        setScheduleData(previousState);
-        setHistory(prev => prev.slice(0, -1));
-    };
+    // Undo functionality (currently unused but kept for potential future use)
+    // const handleUndo = () => {
+    //     if (history.length === 0) return;
+    //     const previousState = history[history.length - 1];
+    //     setScheduleData(previousState);
+    //     setHistory(prev => prev.slice(0, -1));
+    // };
 
     const handleResetTasks = () => {
         if (!scheduleData || !currentUser) return;
@@ -414,16 +455,16 @@ const Schedule: React.FC = () => {
             if (!scheduleGrid[item.day]) {
                 scheduleGrid[item.day] = {};
             }
-            if (!scheduleGrid[item.day][item.startTime]) {
-                scheduleGrid[item.day][item.startTime] = [];
+            if (!scheduleGrid[item.day]![item.startTime]) {
+                scheduleGrid[item.day]![item.startTime] = [];
             }
-            scheduleGrid[item.day][item.startTime].push(item);
+            scheduleGrid[item.day]![item.startTime]!.push(item);
         });
 
         let currentY = startY + headerHeight;
 
         // Draw rows for each time slot
-        sortedTimes.forEach((time, timeIndex) => {
+        sortedTimes.forEach((time) => {
             // Check if we need a new page
             if (currentY + cellHeight > pageHeight - 15) {
                 doc.addPage('l');
@@ -459,7 +500,7 @@ const Schedule: React.FC = () => {
             // Draw cells for each day
             daysWithContent.forEach((day, dayIndex) => {
                 const x = startX + (dayIndex * dayColumnWidth);
-                const items = scheduleGrid[day][time] || [];
+                const items = scheduleGrid[day]?.[time] || [];
 
                 // Draw cell border
                 doc.setDrawColor(189, 195, 199);
@@ -836,10 +877,10 @@ const Schedule: React.FC = () => {
     };
 
     const filteredCourses = useMemo(() => {
-        return TIMETABLE_DATA.filter(course =>
+        return timetableData.filter(course =>
             `${course.courseCode} ${course.courseName}`.toLowerCase().includes(searchTerm.toLowerCase())
         );
-    }, [searchTerm]);
+    }, [searchTerm, timetableData]);
 
     const filteredSchedule = useMemo(() => {
         if (!scheduleData) return [];
@@ -850,13 +891,13 @@ const Schedule: React.FC = () => {
     }, [scheduleData, filterCourse]);
 
     const getGridPosition = (item: ClassSchedule) => {
-        const startHour = parseInt(item.startTime.split(':')[0]);
-        const endHour = parseInt(item.endTime.split(':')[0]);
-        const startMinute = parseInt(item.startTime.split(':')[1]);
+        const startHour = parseInt(item.startTime.split(':')[0] || '0');
+        const endHour = parseInt(item.endTime.split(':')[0] || '0');
+        const startMinute = parseInt(item.startTime.split(':')[1] || '0');
 
         // Calculate row start based on 6 AM start time (instead of 8 AM)
         const rowStart = (startHour - 6) * 2 + (startMinute >= 30 ? 1 : 0) + 2;
-        const durationMinutes = (endHour * 60 + parseInt(item.endTime.split(':')[1])) - (startHour * 60 + startMinute);
+        const durationMinutes = (endHour * 60 + parseInt(item.endTime.split(':')[1] || '0')) - (startHour * 60 + startMinute);
         const rowSpan = Math.ceil(durationMinutes / 30);
 
         const colStart = days.indexOf(item.day) + 2;
@@ -1313,7 +1354,8 @@ const Schedule: React.FC = () => {
                                                 <div className="flex items-center justify-between gap-1">
                                                     <div className="font-extrabold text-xs leading-tight truncate flex items-center gap-1">
                                                         {item.isCustomTask && (
-                                                            <svg className="w-3 h-3 flex-shrink-0 text-teal-600 dark:text-teal-400" fill="currentColor" viewBox="0 0 20 20" title="Custom Task">
+                                                            <svg className="w-3 h-3 flex-shrink-0 text-teal-600 dark:text-teal-400" fill="currentColor" viewBox="0 0 20 20" aria-label="Custom Task">
+                                                                <title>Custom Task</title>
                                                                 <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" />
                                                             </svg>
                                                         )}
@@ -1380,7 +1422,8 @@ const Schedule: React.FC = () => {
                                                                         </div>
                                                                         <div className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm group-hover:shadow-md transition-all flex items-center gap-1.5 ${colorClass} ${item.isCustomTask ? 'ring-2 ring-teal-400/50' : ''}`}>
                                                                             {item.isCustomTask && (
-                                                                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20" title="Custom Task">
+                                                                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20" aria-label="Custom Task">
+                                                                                    <title>Custom Task</title>
                                                                                     <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" />
                                                                                 </svg>
                                                                             )}
@@ -1460,7 +1503,8 @@ const Schedule: React.FC = () => {
                                             <div className="flex justify-between items-start mb-3">
                                                 <div className="flex items-center gap-1.5">
                                                     {item.isCustomTask && (
-                                                        <svg className="w-4 h-4 flex-shrink-0 text-teal-600 dark:text-teal-400" fill="currentColor" viewBox="0 0 20 20" title="Custom Task">
+                                                        <svg className="w-4 h-4 flex-shrink-0 text-teal-600 dark:text-teal-400" fill="currentColor" viewBox="0 0 20 20" aria-label="Custom Task">
+                                                            <title>Custom Task</title>
                                                             <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" />
                                                         </svg>
                                                     )}

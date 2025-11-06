@@ -3,6 +3,7 @@ import { useGrades } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useUser } from '../contexts/UserContext';
 import { TIMETABLE_DATA } from '../data/courseData';
+import { NEP_TIMETABLE_DATA } from '../data/nepCourseData';
 import { Grade, Semester } from '../types';
 import { calculateCreditsFromLTP } from '../utils/creditCalculator';
 
@@ -36,19 +37,20 @@ const CGPAForecaster: React.FC = () => {
     const { scheduleData } = useSchedule();
     const { user } = useUser();
     const courseOption = user?.courseOption || 'CBCS';
+    const timetableData = courseOption === 'NEP' ? NEP_TIMETABLE_DATA : TIMETABLE_DATA;
     const [targetCGPA, setTargetCGPA] = useState('7.0');
 
     const currentCourses = useMemo(() => {
         if (!scheduleData) return [];
         const uniqueCourseCodes = [...new Set(scheduleData.map(slot => slot.courseCode))];
-        return TIMETABLE_DATA
+        return timetableData
             .filter(course => uniqueCourseCodes.includes(course.courseCode))
             .map(course => ({
                 ...course,
                 credits: calculateCreditsFromLTP(course.ltp, courseOption)
             }))
             .sort((a, b) => a.courseCode.localeCompare(b.courseCode));
-    }, [scheduleData, courseOption]);
+    }, [scheduleData, courseOption, timetableData]);
 
     const [projectedGrades, setProjectedGrades] = useState<{ [courseCode: string]: string }>({});
 
