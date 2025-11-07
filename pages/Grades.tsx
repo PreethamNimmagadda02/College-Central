@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useGrades } from '../contexts/GradesContext';
+import { useGrades, GradesData } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useUser } from '../contexts/UserContext';
 import { TIMETABLE_DATA } from '../data/courseData';
@@ -325,7 +325,7 @@ const CGPAForecaster: React.FC = () => {
  * PerformanceAnalytics displays grade analytics using only the latest grade for each course.
  * When a student retakes a course, only the most recent attempt is counted in analytics.
  */
-const PerformanceAnalytics: React.FC<{ gradesData: any }> = ({ gradesData }) => {
+const PerformanceAnalytics: React.FC<{ gradesData: GradesData }> = ({ gradesData }) => {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
 

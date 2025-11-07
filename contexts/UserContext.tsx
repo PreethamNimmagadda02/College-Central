@@ -200,9 +200,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         try {
                             const oldImageRef = storage.ref(oldPhotoPath);
                             await oldImageRef.delete();
-                        } catch (deleteError: any) {
+                        } catch (deleteError: unknown) {
                             // Non-blocking error: It's okay if the old file doesn't exist.
-                            if (deleteError.code !== 'storage/object-not-found') {
+                            const isFirebaseError = (err: unknown): err is { code: string } => {
+                                return typeof err === 'object' && err !== null && 'code' in err;
+                            };
+                            if (isFirebaseError(deleteError) && deleteError.code !== 'storage/object-not-found') {
                                 console.warn("Failed to delete old profile picture:", deleteError);
                             }
                         }

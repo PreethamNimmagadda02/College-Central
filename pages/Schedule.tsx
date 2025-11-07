@@ -180,7 +180,7 @@ const Schedule: React.FC = () => {
     // Initialize and sync selectedCourseCodes with scheduleData
     useEffect(() => {
         if (scheduleData && scheduleData.length > 0) {
-            const currentCodesInSchedule = [...new Set(scheduleData.map((item: any) => item.courseCode))];
+            const currentCodesInSchedule = [...new Set(scheduleData.map((item) => item.courseCode))];
 
             // On first load, just set the codes
             if (!isInitialized.current) {

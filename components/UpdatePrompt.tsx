@@ -32,12 +32,14 @@ const UpdatePrompt: React.FC = () => {
         });
 
         // Listen for messages from service worker
-        navigator.serviceWorker.addEventListener('message', event => {
+        const messageHandler = (event: MessageEvent) => {
             if (event.data && event.data.type === 'SW_UPDATED') {
                 console.log('Service worker updated to version:', event.data.version);
                 setShowPrompt(true);
             }
-        });
+        };
+
+        navigator.serviceWorker.addEventListener('message', messageHandler);
 
         // Check for updates periodically (every 5 minutes)
         const checkForUpdates = setInterval(() => {
@@ -46,7 +48,10 @@ const UpdatePrompt: React.FC = () => {
             });
         }, 5 * 60 * 1000);
 
-        return () => clearInterval(checkForUpdates);
+        return () => {
+            navigator.serviceWorker.removeEventListener('message', messageHandler);
+            clearInterval(checkForUpdates);
+        };
     }, []);
 
     const handleUpdate = () => {

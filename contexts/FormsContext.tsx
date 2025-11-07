@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
 import { logActivity } from '../services/activityService';
@@ -51,7 +51,7 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return () => unsubscribe();
     }, [currentUser]);
 
-    const toggleFavorite = async (formNumber: string) => {
+    const toggleFavorite = useCallback(async (formNumber: string) => {
         if (!currentUser || !userFormsData) return;
 
         const isFavoriting = !userFormsData.favorites.includes(formNumber);
@@ -72,9 +72,9 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         
         const userDocRef = db.collection('userForms').doc(currentUser.uid);
         await userDocRef.update({ favorites: newFavorites });
-    };
+    }, [currentUser, userFormsData]);
 
-    const addRecentDownload = async (form: Form) => {
+    const addRecentDownload = useCallback(async (form: Form) => {
         if (!currentUser || !userFormsData) return;
 
         await logActivity(currentUser.uid, {
@@ -95,7 +95,7 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
         const userDocRef = db.collection('userForms').doc(currentUser.uid);
         await userDocRef.update({ recentDownloads: updatedDownloads });
-    };
+    }, [currentUser, userFormsData]);
 
     const contextValue = useMemo(
         () => ({ userFormsData, loading, error, toggleFavorite, addRecentDownload }),

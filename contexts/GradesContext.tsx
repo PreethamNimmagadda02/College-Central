@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { Semester } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
@@ -74,7 +74,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    let unsubscribe = () => {};
+    let unsubscribe: (() => void) | null = null;
     if (currentUser) {
       setLoading(true);
       const userDocRef = db.collection('users').doc(currentUser.uid);
@@ -103,10 +103,12 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setGradesDataState(null);
       setLoading(false);
     }
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [currentUser]);
 
-  const setGradesData = async (data: GradesData | null) => {
+  const setGradesData = useCallback(async (data: GradesData | null) => {
     if (currentUser) {
       try {
         const userDocRef = db.collection('users').doc(currentUser.uid);
@@ -117,9 +119,9 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         throw error;
       }
     }
-  };
+  }, [currentUser]);
 
-  const selectFile = (file: File | null) => {
+  const selectFile = useCallback((file: File | null) => {
     if (file) {
       setSelectedFileState(file);
       setError(null);
@@ -136,9 +138,9 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setSelectedFileState(null);
       setImagePreview(null);
     }
-  };
+  }, []);
 
-  const processGrades = async () => {
+  const processGrades = useCallback(async () => {
     if (!selectedFile || !currentUser) {
       setError("Please select a file first.");
       return;
@@ -214,17 +216,24 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             }
         });
 
-        const rawText = (response as any)?.text;
+        interface AIResponse {
+            text?: string | (() => string);
+        }
+        const rawText = (response as AIResponse)?.text;
         const text = typeof rawText === 'string' ? rawText : (typeof rawText === 'function' ? rawText() : '');
         if (!text) {
             throw new Error('AI response was empty or invalid.');
         }
-        const result = JSON.parse(text.trim());
+        const result = JSON.parse(text.trim()) as { semesters: Array<{ semester: number; grades: Array<{ subjectCode: string; credits: number; grade: string }> }>; totalCredits: number; cgpa: number };
 
         // Get latest grades for each course (handles retakes)
-        const courseMap: { [subjectCode: string]: { grade: any, semester: number } } = {};
-        result.semesters.forEach((sem: any) => {
-            sem.grades.forEach((grade: any) => {
+        interface CourseData {
+            grade: { subjectCode: string; credits: number; grade: string };
+            semester: number;
+        }
+        const courseMap: { [subjectCode: string]: CourseData } = {};
+        result.semesters.forEach((sem) => {
+            sem.grades.forEach((grade) => {
                 const existing = courseMap[grade.subjectCode];
                 // If course doesn't exist or current semester is later, update it
                 if (!existing || sem.semester > existing.semester) {
@@ -240,7 +249,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         // Credits for F grades should only be counted when the student clears them
         let totalPassedCredits = 0;
 
-        Object.values(courseMap).forEach((courseData: any) => {
+        Object.values(courseMap).forEach((courseData) => {
             const grade = courseData.grade;
             // Only add credits if grade is not 'F'
             if (grade.grade !== 'F') {
@@ -271,9 +280,9 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     } finally {
         setIsProcessing(false);
     }
-  };
+  }, [selectedFile, currentUser, setGradesData]);
 
-  const resetGradesState = async () => {
+  const resetGradesState = useCallback(async () => {
     if (currentUser) {
         await logActivity(currentUser.uid, {
             type: 'grades',
@@ -286,7 +295,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     await setGradesData(null);
     selectFile(null);
     setError(null);
-  };
+  }, [currentUser, setGradesData, selectFile]);
 
   const contextValue = useMemo(
     () => ({

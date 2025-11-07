@@ -29,25 +29,22 @@ const Layout: React.FC = () => {
   }, [sidebarCollapsed]);
 
   useEffect(() => {
-    const registerBackButton = async () => {
-      const listener = await CapacitorApp.addListener('backButton', () => {
+    let listener: { remove: () => void } | null = null;
+
+    const setup = async () => {
+      listener = await CapacitorApp.addListener('backButton', () => {
         if (location.pathname === '/') {
           CapacitorApp.exitApp();
         } else {
           navigate(-1);
         }
       });
-      return listener;
     };
 
-    const listenerPromise = registerBackButton();
+    setup();
 
     return () => {
-      const removeListener = async () => {
-        const listener = await listenerPromise;
-        listener.remove();
-      };
-      removeListener();
+      listener?.remove();
     };
   }, [location.pathname, navigate]);
 

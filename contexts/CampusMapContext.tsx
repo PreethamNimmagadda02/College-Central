@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { CampusLocation, QuickRoute } from '../types';
@@ -651,8 +651,10 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       return;
     }
 
+    let unsubscribe: (() => void) | null = null;
+
     // Load user's saved places
-    const unsubscribe = db.collection('users').doc(currentUser.uid).onSnapshot(
+    unsubscribe = db.collection('users').doc(currentUser.uid).onSnapshot(
       (docSnap) => {
         if (docSnap.exists) {
           const data = docSnap.data();
@@ -673,11 +675,13 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [currentUser]);
 
   // Toggle saved place (sync with Firebase)
-  const toggleSavePlace = async (locationId: string) => {
+  const toggleSavePlace = useCallback(async (locationId: string) => {
     if (!currentUser) {
       console.error('User must be logged in to save places');
       return;
@@ -712,10 +716,10 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       // Revert on error
       setSavedPlaces(savedPlaces);
     }
-  };
+  }, [currentUser, savedPlaces, locations]);
 
   // Get directions URL for Google Maps
-  const getDirections = (from: string, to: string): string => {
+  const getDirections = useCallback((from: string, to: string): string => {
     const fromLoc = locations.find((loc: CampusLocation) => loc.name === from);
     const toLoc = locations.find((loc: CampusLocation) => loc.name === to);
 
@@ -726,10 +730,10 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
 
     return `https://www.google.com/maps/search/?api=1&query=IIT+ISM+Dhanbad`;
-  };
+  }, [locations]);
 
   // Share location
-  const shareLocation = async (locationId: string) => {
+  const shareLocation = useCallback(async (locationId: string) => {
     const location = locations.find((loc: CampusLocation) => loc.id === locationId);
     if (!location) return;
 
@@ -752,21 +756,24 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
     } catch (err) {
       console.error('Error sharing:', err);
     }
-  };
+  }, [locations]);
+
+  const contextValue = useMemo(
+    () => ({
+      locations,
+      quickRoutes,
+      loading,
+      error,
+      savedPlaces,
+      toggleSavePlace,
+      getDirections,
+      shareLocation,
+    }),
+    [locations, quickRoutes, loading, error, savedPlaces, toggleSavePlace, getDirections, shareLocation]
+  );
 
   return ( 
-    <CampusMapContext.Provider
-      value={{
-        locations,
-        quickRoutes,
-        loading,
-        error,
-        savedPlaces,
-        toggleSavePlace,
-        getDirections,
-        shareLocation,
-      }}
-    >
+    <CampusMapContext.Provider value={contextValue}>
       {children}
     </CampusMapContext.Provider>
   );

@@ -36,26 +36,15 @@ export const logActivity = async (userId: string, activity: ActivityLog) => {
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       });
 
-      // Clean up old activities - keep only latest MAX_ACTIVITIES_STORED
-      const allActivities = await activityCollectionRef
-        .orderBy('timestamp', 'desc')
-        .get();
-
-      // If we have more than MAX_ACTIVITIES_STORED, delete the oldest ones
-      if (allActivities.size > MAX_ACTIVITIES_STORED) {
-        const batch = db.batch();
-        const activitiesToDelete = allActivities.docs.slice(MAX_ACTIVITIES_STORED);
-
-        activitiesToDelete.forEach((doc) => {
-          batch.delete(doc.ref);
-        });
-
-        await batch.commit();
-      }
+      // Note: Cleanup is now handled separately via cleanupOldActivities()
+      // which is called on login/logout to avoid expensive reads on every activity log
     }, ACTIVITY_LOG_MAX_RETRIES, ACTIVITY_LOG_RETRY_DELAY_MS);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error logging activity: ", error);
-    if (error.code === 'permission-denied') {
+    const isFirebaseError = (err: unknown): err is { code: string } => {
+      return typeof err === 'object' && err !== null && 'code' in err;
+    };
+    if (isFirebaseError(error) && error.code === 'permission-denied') {
         console.error(
             "Firestore Security Rules Error: The current user does not have permission to write to their own activity log. " +
             "Please ensure your Firestore rules allow writes on the 'users/{userId}/activity/{activityId}' path for authenticated users."

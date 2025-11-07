@@ -26,11 +26,13 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 
 // Lazy load Performance Monitoring and Analytics only when needed
-let perf: any = null;
-let analytics: any = null;
+type FirebasePerformance = ReturnType<typeof firebase.performance>;
+type FirebaseAnalytics = ReturnType<typeof firebase.analytics>;
+let perf: FirebasePerformance | null = null;
+let analytics: FirebaseAnalytics | null = null;
 
 // Helper to lazy load performance monitoring
-export async function getPerformance() {
+export async function getPerformance(): Promise<FirebasePerformance | null> {
   if (perf) return perf;
   if (typeof window !== 'undefined' && import.meta.env.PROD) {
     try {
@@ -46,7 +48,7 @@ export async function getPerformance() {
 }
 
 // Helper to lazy load analytics
-export async function getAnalytics() {
+export async function getAnalytics(): Promise<FirebaseAnalytics | null> {
   if (analytics) return analytics;
   if (typeof window !== 'undefined' && import.meta.env.PROD) {
     try {

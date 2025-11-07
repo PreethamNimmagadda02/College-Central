@@ -254,7 +254,7 @@ const Profile: React.FC = () => {
             await uploadProfilePicture(compressedFile);
             showNotification('Profile picture updated! ✨', 'success');
             setPreviewImage(null);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
             showNotification(error instanceof Error ? error.message : 'Upload failed. Please try again.', 'error');
             setPreviewImage(null);

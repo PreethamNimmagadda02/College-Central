@@ -31,14 +31,15 @@ const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService'));
 
 // Loading fallback component
-const PageLoader = () => (
+const PageLoader = React.memo(() => (
   <div className="flex items-center justify-center h-screen">
     <div className="text-center">
       <div className="w-16 h-16 border-4 border-t-transparent border-primary rounded-full animate-spin mx-auto"></div>
       <p className="mt-4 text-slate-500 dark:text-slate-400">Loading...</p>
     </div>
   </div>
-);
+));
+PageLoader.displayName = 'PageLoader';
 
 const router = createHashRouter([
   {

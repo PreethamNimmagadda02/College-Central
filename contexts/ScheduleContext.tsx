@@ -19,7 +19,7 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    let unsubscribe = () => {};
+    let unsubscribe: (() => void) | null = null;
     if (currentUser) {
       setLoading(true);
       setError(null);
@@ -51,7 +51,9 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
       setError(null);
       setLoading(false);
     }
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [currentUser]);
 
   const setScheduleData = useCallback(async (data: ClassSchedule[] | null) => {

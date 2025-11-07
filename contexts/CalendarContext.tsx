@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { AcademicCalendarData, CalendarEvent } from '../types';
 import { PRELOADED_CALENDAR_DATA } from '../data/academicCalendarData';
 import { useAuth } from '../hooks/useAuth';
@@ -86,9 +86,9 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [reminderPreferences, setReminderPreferences] = useState<string[]>([]);
 
   // Generate unique key for an event
-  const getEventKey = (event: CalendarEvent): string => {
+  const getEventKey = useCallback((event: CalendarEvent): string => {
     return `${event.date}-${event.description}`;
-  };
+  }, []);
  
   // Load user's custom events from Firebase
   useEffect(() => {
@@ -142,7 +142,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [currentUser]);
 
   // Toggle reminder preference for an event
-  const toggleReminderPreference = async (eventKey: string) => {
+  const toggleReminderPreference = useCallback(async (eventKey: string) => {
     if (!currentUser) throw new Error('User must be logged in');
 
     // Store previous state before updating
@@ -175,7 +175,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       // Revert to previous state on error
       setReminderPreferences(previousPreferences);
     }
-  };
+  }, [currentUser, reminderPreferences]);
 
   // Merge preloaded data with user events and adjust dates
   useEffect(() => {
@@ -199,7 +199,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [userEvents]);
 
   // Add user event to Firebase
-  const addUserEvent = async (event: CalendarEvent) => {
+  const addUserEvent = useCallback(async (event: CalendarEvent) => {
     if (!currentUser) throw new Error('User must be logged in');
 
     const eventData = {
@@ -217,10 +217,10 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         icon: '📅',
         link: '/academic-calendar'
     });
-  };
+  }, [currentUser]);
 
   // Update user event in Firebase
-  const updateUserEvent = async (eventId: string, event: CalendarEvent) => {
+  const updateUserEvent = useCallback(async (eventId: string, event: CalendarEvent) => {
     if (!currentUser) throw new Error('User must be logged in');
 
     const eventRef = db.collection('userEvents').doc(eventId);
@@ -271,10 +271,10 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         link: '/academic-calendar'
       });
     }
-  }; 
+  }, [currentUser, reminderPreferences, getEventKey, toggleReminderPreference]); 
 
   // Delete user event from Firebase
-  const deleteUserEvent = async (eventId: string) => {
+  const deleteUserEvent = useCallback(async (eventId: string) => {
     if (!currentUser) throw new Error('User must be logged in');
 
     const eventRef = db.collection('userEvents').doc(eventId);
@@ -314,10 +314,10 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         // Fallback if the event doesn't exist for some reason
         await eventRef.delete();
     }
-  };
+  }, [currentUser, reminderPreferences, getEventKey]);
 
-  return (
-    <CalendarContext.Provider value={{
+  const contextValue = useMemo(
+    () => ({
       calendarData,
       setCalendarData,
       loading,
@@ -327,7 +327,12 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       reminderPreferences,
       toggleReminderPreference,
       getEventKey
-    }}>
+    }),
+    [calendarData, setCalendarData, loading, addUserEvent, updateUserEvent, deleteUserEvent, reminderPreferences, toggleReminderPreference, getEventKey]
+  );
+
+  return (
+    <CalendarContext.Provider value={contextValue}>
       {children}
     </CalendarContext.Provider>
   );
