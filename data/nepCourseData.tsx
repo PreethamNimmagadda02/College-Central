@@ -3232,5 +3232,2301 @@ export const NEP_TIMETABLE_DATA: TimeTableCourse[] = [
             { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "MS 011" },
             { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "MS 011" }
         ]
+    },
+    {
+        "courseCode": "NMSD503",
+        "courseName": "Sales & Distribution Management",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "MS 011" },
+            { "day": "Tuesday", ...time("12:00 PM-12:50 PM"), "venue": "MS 011" },
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "MS 011" }
+        ]
+    },
+    {
+        "courseCode": "NMSD517",
+        "courseName": "Strategic Management",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("12:00 PM-12:50 PM"), "venue": "MS 111" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "MS 111" },
+            { "day": "Thursday", ...time("12:00 PM-12:50 PM"), "venue": "MS 111" }
+        ]
+    },
+    {
+        "courseCode": "NMSD504",
+        "courseName": "Materials Management",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("10:00 AM-10:50 AM"), "venue": "MS 010" },
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "MS 010" },
+            { "day": "Friday", ...time("12:00 PM-12:50 PM"), "venue": "MS 010" }
+        ]
+    },
+    {
+        "courseCode": "NMSD523",
+        "courseName": "Marketing Research",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("10:00 AM-10:50 AM"), "venue": "MS 011" },
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "MS 011" },
+            { "day": "Friday", ...time("12:00 PM-12:50 PM"), "venue": "MS 011" }
+        ]
+    },
+    {
+        "courseCode": "NMSD532",
+        "courseName": "Internet of Things and Blockchain for Business",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("12:00 PM-12:50 PM"), "venue": "MS 010" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "MS 010" },
+            { "day": "Thursday", ...time("12:00 PM-12:50 PM"), "venue": "MS 010" }
+        ]
+    },
+    {
+        "courseCode": "NGLC101",
+        "courseName": "Earth System and Processes",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "AGL-2" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "AGL-2" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "AGL-2" }
+        ]
+    },
+    {
+        "courseCode": "NGLC102",
+        "courseName": "Earth System and Processes Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("8:00 AM-8:50 AM"), "venue": "Ore Geology Lab" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "Ore Geology Lab" }
+        ]
+    },
+    {
+        "courseCode": "NGLC501",
+        "courseName": "Mineralogy",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-1" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "AGL-1" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "AGL-1" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NGLC502",
+        "courseName": "Applied Geochemistry",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "AGL-1" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "AGL-1" },
+            { "day": "Thursday", ...time("3:00 PM-3:50 PM"), "venue": "AGL-1" },
+            { "day": "Friday", ...time("5:00 PM-5:50 PM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NGPC514",
+        "courseName": "Solid Earth Geophysics",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("4:00 PM-4:50 PM"), "venue": "AGP 516" },
+            { "day": "Wednesday", ...time("5:00 PM-5:50 PM"), "venue": "AGP 516" },
+            { "day": "Thursday", ...time("2:00 PM-2:50 PM"), "venue": "AGP 516" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "AGP 516" }
+        ]
+    },
+    {
+        "courseCode": "NGLC503",
+        "courseName": "Methods of Structural Geology",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "AGL-1" },
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "AGL-1" },
+            { "day": "Friday", ...time("2:00 PM-2:50 PM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NGLC504",
+        "courseName": "Applied Sedimentology",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-1" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "AGL-1" },
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NGLC505",
+        "courseName": "Mineralogy and Geochemistry Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "AGL-3" },
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "AGL-3" }
+        ]
+    },
+    {
+        "courseCode": "NGLC506",
+        "courseName": "Methods of Structural Geology Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "AGL-1" },
+            { "day": "Friday", ...time("12:00 PM-12:50 PM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NGLC507",
+        "courseName": "Sedimentology Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "AGL-1" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NGLC509",
+        "courseName": "Engineering Geology",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("10:00 AM-10:50 AM"), "venue": "AGL-1" },
+            { "day": "Wednesday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-1" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "AGL-3" }
+        ]
+    },
+    {
+        "courseCode": "NGLC510",
+        "courseName": "Hydrogeology",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-3" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "AGL-3" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-3" },
+            { "day": "Thursday", ...time("3:00 PM-3:50 PM"), "venue": "AGL-3" }
+        ]
+    },
+    {
+        "courseCode": "NGPC513",
+        "courseName": "Geophysical Methods",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "AGP 516" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "AGP 516" },
+            { "day": "Thursday", ...time("12:00 PM-12:50 PM"), "venue": "AGP 516" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "AGP 516" }
+        ]
+    },
+    {
+        "courseCode": "NGLC511",
+        "courseName": "Atmosphere, Ocean and Climate Dynamics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "AGL-3" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "AGL-3" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "AGL-3" }
+        ]
+    },
+    {
+        "courseCode": "NGLC514",
+        "courseName": "Micropaleontology and Vertebrate Palaeontology",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("4:00 PM-4:50 PM"), "venue": "AGL-1" },
+            { "day": "Wednesday", ...time("5:00 PM-5:50 PM"), "venue": "AGL-1" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NGLC530",
+        "courseName": "Engineering Geology Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "AGL-1" },
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NGLC531",
+        "courseName": "Hydrogeology Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "AGL-3" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "AGL-3" }
+        ]
+    },
+    {
+        "courseCode": "NGLC532",
+        "courseName": "Micropaleontology and Vertebrate Palaeontology Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "Paleontology Lab" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "Paleontology Lab" }
+        ]
+    },
+    {
+        "courseCode": "NGLE101",
+        "courseName": "Introduction to Earth Science",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "LC-II-G2" },
+            { "day": "Thursday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-G2" },
+            { "day": "Friday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-G2" }
+        ]
+    },
+    {
+        "courseCode": "NGLE201",
+        "courseName": "Geology for Engineering and Sciences",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G2" },
+            { "day": "Tuesday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G2" },
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G2" }
+        ]
+    },
+    {
+        "courseCode": "NCYC596",
+        "courseName": "Research Methodology",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C12" },
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C12" },
+            { "day": "Wednesday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C12" }
+        ]
+    },
+    {
+        "courseCode": "NPHD508",
+        "courseName": "Advanced Condensed Matter Physics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G1" },
+            { "day": "Thursday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G1" },
+            { "day": "Friday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G1" }
+        ]
+    },
+    {
+        "courseCode": "NPHD521",
+        "courseName": "Optoelectronics Materials and Devices",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C15" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C15" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C15" }
+        ]
+    },
+    {
+        "courseCode": "NCEC503",
+        "courseName": "Numerical Methods in Civil Engg",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "PET 2" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "PET 2" },
+            { "day": "Thursday", ...time("3:00 PM-3:50 PM"), "venue": "PET 2" }
+        ]
+    },
+    {
+        "courseCode": "NGPC101",
+        "courseName": "Geoelectromagnetism",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure Ground Floor" }
+        ]
+    },
+    {
+        "courseCode": "NGPC102",
+        "courseName": "Geoelectromagnetism Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("8:00 AM-8:50 AM"), "venue": "Remote Sensing Gravity Magnetic Lab" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "Remote Sensing Gravity Magnetic Lab" }
+        ]
+    },
+    {
+        "courseCode": "NPEE101",
+        "courseName": "Introduction to Petroleum Engineering",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "" },
+            { "day": "Thursday", ...time("3:00 PM-3:50 PM"), "venue": "" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NCEC513",
+        "courseName": "Theory of Elasticity and Plasticity",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "CECR1" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "CECR1" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "CECR1" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "CECR1" }
+        ]
+    },
+    {
+        "courseCode": "NCEC514",
+        "courseName": "Structural Dynamics",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "CECR1" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "CECR1" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "CECR1" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "CECR1" }
+        ]
+    },
+    {
+        "courseCode": "NGPA201",
+        "courseName": "Mining Geophysics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("9:00 AM-9:50 AM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Thursday", ...time("8:00 AM-8:50 AM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Friday", ...time("8:00 AM-8:50 AM"), "venue": "AGP Annexure 1st Floor" }
+        ]
+    },
+    {
+        "courseCode": "NCED514",
+        "courseName": "Design of Tall Buildings",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "CECR1" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "CECR1" },
+            { "day": "Wednesday", ...time("5:00 PM-5:50 PM"), "venue": "CECR1" }
+        ]
+    },
+    {
+        "courseCode": "NCED502",
+        "courseName": "Theory of Plates and Shells",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "CECR1" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "CECR1" },
+            { "day": "Friday", ...time("5:00 PM-5:50 PM"), "venue": "CECR1" }
+        ]
+    },
+    {
+        "courseCode": "NCEC515",
+        "courseName": "Structural Engineering Laboratory",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "CEPG1" },
+            { "day": "Tuesday", ...time("10:00 AM-10:50 AM"), "venue": "CEPG1" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "CEPG1" }
+        ]
+    },
+    {
+        "courseCode": "NGPC201",
+        "courseName": "Introduction to Rock Physics",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Tuesday", ...time("10:00 AM-10:50 AM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "Annexe 102" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "Annexe 102" }
+        ]
+    },
+    {
+        "courseCode": "NGPC202",
+        "courseName": "Introduction to Seismology",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "Annexe 102" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "Annexe 102" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "Annexe 102" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "Annexe 102" }
+        ]
+    },
+    {
+        "courseCode": "NGPC203",
+        "courseName": "Introduction to Petroleum Geophysics",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "Annexe 102" },
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "Annexe 102" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "Annexe 102" },
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "Annexe 102" }
+        ]
+    },
+    {
+        "courseCode": "NGPC204",
+        "courseName": "Lab on Rock Physics",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "Annexe 102" },
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "Annexe 102" }
+        ]
+    },
+    {
+        "courseCode": "NGPC205",
+        "courseName": "Lab on Introduction to Seismology",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "Annexe 102" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "Annexe 102" }
+        ]
+    },
+    {
+        "courseCode": "NGPC501",
+        "courseName": "Seismology",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Thursday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Tuesday", ...time("4:00 PM-4:50 PM"), "venue": "AGP Annexure 1st Floor" }
+        ]
+    },
+    {
+        "courseCode": "NGPC502",
+        "courseName": "Geotechnical Modelling",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "AGP 516" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "AGP 516" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "AGP 516" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "AGP 516" }
+        ]
+    },
+    {
+        "courseCode": "NCEC502",
+        "courseName": "Mechanics of Geomaterials",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "CECR2" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "CECR2" },
+            { "day": "Friday", ...time("5:00 PM-5:50 PM"), "venue": "CECR2" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "CECR2" }
+        ]
+    },
+    {
+        "courseCode": "NGPC503",
+        "courseName": "Computational Seismology",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "AGP Annexure Ground Floor" }
+        ]
+    },
+    {
+        "courseCode": "NCEC538",
+        "courseName": "Advanced Foundation Engineering",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "CECR2" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "CECR2" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "CECR2" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "CECR2" }
+        ]
+    },
+    {
+        "courseCode": "NCED506",
+        "courseName": "Slope and Retaining Structures",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "CECR2" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "CECR2" },
+            { "day": "Wednesday", ...time("5:00 PM-5:50 PM"), "venue": "CECR2" }
+        ]
+    },
+    {
+        "courseCode": "NGPD506",
+        "courseName": "Hydrology",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "AGP 516" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "AGP 516" },
+            { "day": "Wednesday", ...time("5:00 PM-5:50 PM"), "venue": "AGP 516" }
+        ]
+    },
+    {
+        "courseCode": "NCED521",
+        "courseName": "Unsaturated Soil Mechanics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "CECR2" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "CECR2" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "CECR2" }
+        ]
+    },
+    {
+        "courseCode": "NGPD503",
+        "courseName": "Image Processing and Geographic Information System",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Thursday", ...time("12:00 PM-12:50 PM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Friday", ...time("12:00 PM-12:50 PM"), "venue": "AGP Annexure 1st Floor" }
+        ]
+    },
+    {
+        "courseCode": "NGPC504",
+        "courseName": "Geotechnical Modelling Practical",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "Geophysical Inversion lab" },
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "Geophysical Inversion lab" },
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "Geophysical Inversion lab" }
+        ]
+    },
+    {
+        "courseCode": "NCEC524",
+        "courseName": "Experimental Geotechnics I: Laboratory Testing",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "CEPG1" },
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "CEPG1" },
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "CEPG1" }
+        ]
+    },
+    {
+        "courseCode": "NGPC505",
+        "courseName": "Seismology Practical",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "Geophysical Inversion lab" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "Geophysical Inversion lab" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "Geophysical Inversion lab" }
+        ]
+    },
+    {
+        "courseCode": "NCEC541",
+        "courseName": "Numerical Geotechnics-I",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "CEPG2" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "CEPG2" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "CEPG2" }
+        ]
+    },
+    {
+        "courseCode": "NGPC506",
+        "courseName": "Computational Seismology Practical",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "Geophysical Inversion lab" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "Geophysical Inversion lab" },
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "Geophysical Inversion lab" }
+        ]
+    },
+    {
+        "courseCode": "NCEC547",
+        "courseName": "Term Project-I",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "CECR3" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "CECR3" },
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "CECR3" }
+        ]
+    },
+    {
+        "courseCode": "NCEC543",
+        "courseName": "Computational Laboratory in Structural Engineering - I",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "CEPG2" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "CEPG2" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "CEPG2" }
+        ]
+    },
+    {
+        "courseCode": "NCEC101",
+        "courseName": "Building Materials and Building Construction",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G2" },
+            { "day": "Tuesday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G2" },
+            { "day": "Wednesday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G2" }
+        ]
+    },
+    {
+        "courseCode": "NCEC102",
+        "courseName": "Material Testing Laboratory",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "CEUG1" },
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "CEUG1" }
+        ]
+    },
+    {
+        "courseCode": "NCES101",
+        "courseName": "Engineering Graphics",
+        "ltp": "1-0-3",
+        "credits": calculateCreditsFromLTP("1-0-3", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-G1" },
+            { "day": "Friday", ...time("2:00 PM-2:50 PM"), "venue": "NLHC Computer Lab - II" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "NLHC Computer Lab - II" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "NLHC Computer Lab - II" }
+        ]
+    },
+    {
+        "courseCode": "NCEC201",
+        "courseName": "Geotechnical Engineering",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C14" },
+            { "day": "Tuesday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C14" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C14" }
+        ]
+    },
+    {
+        "courseCode": "NCEC202",
+        "courseName": "Transportation Engineering",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C14" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C14" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C14" }
+        ]
+    },
+    {
+        "courseCode": "NCEC203",
+        "courseName": "Environmental Engineering",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C14" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C14" },
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C14" }
+        ]
+    },
+    {
+        "courseCode": "NCEC204",
+        "courseName": "Geotechnical Engineering Laboratory",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "CEUG2" },
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "CEUG2" }
+        ]
+    },
+    {
+        "courseCode": "NCEC205",
+        "courseName": "Transportation Engineering Laboratory",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "CEUG4" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "CEUG4" }
+        ]
+    },
+    {
+        "courseCode": "NCEE201",
+        "courseName": "Mechanics of Solids",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-C14" },
+            { "day": "Tuesday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-C14" },
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-C14" }
+        ]
+    },
+    {
+        "courseCode": "NCEA201",
+        "courseName": "Computational Methods in Civil Engineering",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C14" },
+            { "day": "Thursday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-C14" },
+            { "day": "Friday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-C14" }
+        ]
+    },
+    {
+        "courseCode": "NGPC516",
+        "courseName": "Mathematical Functional Analysis",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Thursday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure Ground Floor" }
+        ]
+    },
+    {
+        "courseCode": "NGPC515",
+        "courseName": "Remote Sensing Principles",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Friday", ...time("2:00 PM-2:50 PM"), "venue": "AGP Annexure Ground Floor" }
+        ]
+    },
+    {
+        "courseCode": "NGPC517",
+        "courseName": "Remote Sensing Principles Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "Remote Sensing Gravity Magnetic Lab" },
+            { "day": "Monday", ...time("12:00 PM-12:50 PM"), "venue": "Remote Sensing Gravity Magnetic Lab" }
+        ]
+    },
+    {
+        "courseCode": "NGPC518",
+        "courseName": "Mathematical Functional Analysis Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "Geophysical Inversion lab" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "Geophysical Inversion lab" }
+        ]
+    },
+    {
+        "courseCode": "NCEC520",
+        "courseName": "River Engineering",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "CECR3" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "CECR3" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "CECR3" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "CECR3" }
+        ]
+    },
+    {
+        "courseCode": "NGPC519",
+        "courseName": "Geophysical Methods Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "Seismic data processing Lab" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "Seismic data processing Lab" }
+        ]
+    },
+    {
+        "courseCode": "NCEC508",
+        "courseName": "Engineering Hydrology and Hydraulics",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "CECR3" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "CECR3" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "CECR3" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "CECR3" }
+        ]
+    },
+    {
+        "courseCode": "NGPC531",
+        "courseName": "Magnetic Method",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Thursday", ...time("12:00 PM-12:50 PM"), "venue": "AGP Annexure Ground Floor" }
+        ]
+    },
+    {
+        "courseCode": "NCED515",
+        "courseName": "Hydrological Measurements and Stochastic Analysis",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "CECR3" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "CECR3" },
+            { "day": "Wednesday", ...time("5:00 PM-5:50 PM"), "venue": "CECR3" }
+        ]
+    },
+    {
+        "courseCode": "NGPC532",
+        "courseName": "Geothermics and Geodynamics",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("12:00 PM-12:50 PM"), "venue": "AGP 516" },
+            { "day": "Tuesday", ...time("12:00 PM-12:50 PM"), "venue": "AGP 516" },
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "AGP 516" },
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "AGP 516" }
+        ]
+    },
+    {
+        "courseCode": "NCED504",
+        "courseName": "Computational Fluid Dynamics in Civil Engineering",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "CECR3" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "CECR3" },
+            { "day": "Friday", ...time("5:00 PM-5:50 PM"), "venue": "CECR3" }
+        ]
+    },
+    {
+        "courseCode": "NGPC528",
+        "courseName": "Geophysical Inversion",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "AGP 516" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "AGP 516" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "AGP 516" }
+        ]
+    },
+    {
+        "courseCode": "NGPC529",
+        "courseName": "Seismic Data Processing and Interpretation",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Wednesday", ...time("9:00 AM-9:50 AM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "AGP Annexure Ground Floor" }
+        ]
+    },
+    {
+        "courseCode": "NGPC530",
+        "courseName": "Well logging",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "AGP Annexure 1st Floor" }
+        ]
+    },
+    {
+        "courseCode": "NGPC533",
+        "courseName": "Geophysical Inversion Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "Geophysical Inversion lab" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "Geophysical Inversion lab" }
+        ]
+    },
+    {
+        "courseCode": "NCEC521",
+        "courseName": "Water Resource Engineering Laboratory-I",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "CEPG4" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "CEPG4" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "CEPG4" }
+        ]
+    },
+    {
+        "courseCode": "NGPC534",
+        "courseName": "Seismic Data Processing and Interpretation Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "Seismic data processing Lab" },
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "Seismic data processing Lab" }
+        ]
+    },
+    {
+        "courseCode": "NGPC535",
+        "courseName": "Well logging Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("4:00 PM-4:50 PM"), "venue": "AGP Annexure 1st Floor" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "AGP Annexure 1st Floor" }
+        ]
+    },
+    {
+        "courseCode": "NCEC516",
+        "courseName": "Transportation Statistics and Microsimulation",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "CHE-434" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "CHE-434" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "CHE-434" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "CHE-434" }
+        ]
+    },
+    {
+        "courseCode": "NCEC545",
+        "courseName": "Computational Laboratory In Hydraulics",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "CEPG1" },
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "CEPG1" },
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "CEPG1" }
+        ]
+    },
+    {
+        "courseCode": "NCEC517",
+        "courseName": "Traffic Engineering and Design",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "CHE-434" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "CHE-434" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "CHE-434" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "CHE-434" }
+        ]
+    },
+    {
+        "courseCode": "NCED519",
+        "courseName": "Urban Transportation Planning and Policy",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "CHE-434" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "CHE-434" },
+            { "day": "Friday", ...time("5:00 PM-5:50 PM"), "venue": "CHE-434" }
+        ]
+    },
+    {
+        "courseCode": "NCEC518",
+        "courseName": "Advanced Pavement Material Laboratory",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("12:00 PM-12:50 PM"), "venue": "CEPG2" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "CEPG2" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "CEPG2" }
+        ]
+    },
+    {
+        "courseCode": "NCEC519",
+        "courseName": "Transportation Planning Laboratory",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("9:00 AM-9:50 AM"), "venue": "CEPG3" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "CEPG3" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "CEPG3" }
+        ]
+    },
+    {
+        "courseCode": "NGLC202.",
+        "courseName": "Physical and Structural Geology",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "AGP Annexure Ground Floor" }
+        ]
+    },
+    {
+        "courseCode": "NECC101",
+        "courseName": "Introduction to Electronics Engineering",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-G4" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-G4" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-G4" }
+        ]
+    },
+    {
+        "courseCode": "NECC102",
+        "courseName": "Introduction to Electronics Engineering Lab",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "Electronics Main Lab I (231)" },
+            { "day": "Thursday", ...time("8:00 AM-8:50 AM"), "venue": "Electronics Main Lab I (231)" }
+        ]
+    },
+    {
+        "courseCode": "NECC201",
+        "courseName": "Electronic Devices",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-G11" },
+            { "day": "Tuesday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-G11" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-G11" }
+        ]
+    },
+    {
+        "courseCode": "NECC202",
+        "courseName": "Signals and Networks",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G11" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-G11" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G11" }
+        ]
+    },
+    {
+        "courseCode": "NECC203",
+        "courseName": "Microprocessors and Microcontrollers",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G11" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-G11" },
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G11" }
+        ]
+    },
+    {
+        "courseCode": "NECC204",
+        "courseName": "Signals and Networks Laboratory",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "Electronics Main Lab I (231)" },
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "Electronics Main Lab I (231)" }
+        ]
+    },
+    {
+        "courseCode": "NECC205",
+        "courseName": "Microprocessor and Microcontroller Laboratory",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "Digital Electronics Lab (635)" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "Digital Electronics Lab (635)" }
+        ]
+    },
+    {
+        "courseCode": "NECE201",
+        "courseName": "Measurement and Instrumentation",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G11" },
+            { "day": "Tuesday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G11" },
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G11" }
+        ]
+    },
+    {
+        "courseCode": "NECC501",
+        "courseName": "Emerging Communication Systems",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Thursday", ...time("3:00 PM-3:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Tuesday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-C4" }
+        ]
+    },
+    {
+        "courseCode": "NECC502",
+        "courseName": "Mathematics for Communication Theory",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-C4" }
+        ]
+    },
+    {
+        "courseCode": "NECC503",
+        "courseName": "Wireless Networks",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-C4" }
+        ]
+    },
+    {
+        "courseCode": "NECD509",
+        "courseName": "Machine Learning",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Wednesday", ...time("5:00 PM-5:50 PM"), "venue": "LC-II-C4" }
+        ]
+    },
+    {
+        "courseCode": "NECD554",
+        "courseName": "Internet of Things",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "LC-II-C4" },
+            { "day": "Friday", ...time("5:00 PM-5:50 PM"), "venue": "LC-II-C4" }
+        ]
+    },
+    {
+        "courseCode": "NECC515",
+        "courseName": "5G Communication Systems Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "Digital Signal Processing Lab (216)" },
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "Digital Signal Processing Lab (216)" },
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "Digital Signal Processing Lab (216)" }
+        ]
+    },
+    {
+        "courseCode": "NECC516",
+        "courseName": "Communication Networks Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "Computer Simulation Lab (637)" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "Computer Simulation Lab (637)" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "Computer Simulation Lab (637)" }
+        ]
+    },
+    {
+        "courseCode": "NECC517",
+        "courseName": "Modeling and Simulation Lab-I",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "Communication Lab (215)" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "Communication Lab (215)" },
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "Communication Lab (215)" }
+        ]
+    },
+    {
+        "courseCode": "NECC505",
+        "courseName": "Optical Fiber Communications",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "LC-II-C5" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-C5" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "LC-II-C5" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-C5" }
+        ]
+    },
+    {
+        "courseCode": "NECD510",
+        "courseName": "Integrated Circuits for Optical Communication",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-C5" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "LC-II-C5" },
+            { "day": "Friday", ...time("5:00 PM-5:50 PM"), "venue": "LC-II-C5" }
+        ]
+    },
+    {
+        "courseCode": "NECC521",
+        "courseName": "Optical Communication Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "Optical Instrumentation Lab (627)" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "Optical Instrumentation Lab (627)" },
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "Optical Instrumentation Lab (627)" }
+        ]
+    },
+    {
+        "courseCode": "NECC508",
+        "courseName": "Advanced Engineering Electromagnetics",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "LC-II-C7" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-C7" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "LC-II-C7" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-C7" }
+        ]
+    },
+    {
+        "courseCode": "NECC509",
+        "courseName": "Microwave Measurements",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-C7" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "LC-II-C7" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-C7" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-C7" }
+        ]
+    },
+    {
+        "courseCode": "NECD521",
+        "courseName": "Electromagnetic Interference and Compatibility",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-C5" },
+            { "day": "Thursday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-C5" },
+            { "day": "Friday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-C5" }
+        ]
+    },
+    {
+        "courseCode": "NECC525",
+        "courseName": "RF and CAD Laboratory",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "Computer Simulation Lab (637)" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "Computer Simulation Lab (637)" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "Computer Simulation Lab (637)" }
+        ]
+    },
+    {
+        "courseCode": "NECC526",
+        "courseName": "Microwave Measurements Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "Microwave & Antenna Lab (232)" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "Microwave & Antenna Lab (232)" },
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "Microwave & Antenna Lab (232)" }
+        ]
+    },
+    {
+        "courseCode": "NECC511",
+        "courseName": "Analog IC Design",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "MS 111" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "MS 111" },
+            { "day": "Thursday", ...time("3:00 PM-3:50 PM"), "venue": "MS 111" },
+            { "day": "Tuesday", ...time("4:00 PM-4:50 PM"), "venue": "MS 111" }
+        ]
+    },
+    {
+        "courseCode": "NECC512",
+        "courseName": "Digital IC Design",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "MS 111" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "MS 111" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "MS 111" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "MS 111" }
+        ]
+    },
+    {
+        "courseCode": "NECC513",
+        "courseName": "CAD for VLSI",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "MS 111" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "MS 111" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "MS 111" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "MS 111" }
+        ]
+    },
+    {
+        "courseCode": "NECD508",
+        "courseName": "Test and Verification of VLSI Circuits",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "MS 111" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "MS 111" },
+            { "day": "Friday", ...time("5:00 PM-5:50 PM"), "venue": "MS 111" }
+        ]
+    },
+    {
+        "courseCode": "NECC531",
+        "courseName": "Circuit Simulation Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "VLSI Lab (202)" },
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "VLSI Lab (202)" },
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "VLSI Lab (202)" }
+        ]
+    },
+    {
+        "courseCode": "NECC527",
+        "courseName": "HDL-based System Design Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "VLSI Lab (202)" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "VLSI Lab (202)" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "VLSI Lab (202)" }
+        ]
+    },
+    {
+        "courseCode": "NECC528",
+        "courseName": "VLSI Design and Project Lab-I",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "VLSI Lab (202)" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "VLSI Lab (202)" },
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "VLSI Lab (202)" }
+        ]
+    },
+    {
+        "courseCode": "NGPE201",
+        "courseName": "Introduction to Near Surface Geophysics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("12:00 PM-12:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Tuesday", ...time("12:00 PM-12:50 PM"), "venue": "AGP Annexure Ground Floor" },
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "AGP Annexure Ground Floor" }
+        ]
+    },
+    {
+        "courseCode": "NMES101",
+        "courseName": "Manufacturing Process",
+        "ltp": "2-0-3",
+        "credits": calculateCreditsFromLTP("2-0-3", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("8:00 AM-8:50 AM"), "venue": "Workshop Gal" },
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "Workshop Gal" },
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "Workshop Gal" },
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-G4" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "LC-II-G4" }
+        ]
+    },
+    {
+        "courseCode": "NMEE101",
+        "courseName": "Mechanics for Engineers",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G2" },
+            { "day": "Thursday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G2" },
+            { "day": "Friday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G2" }
+        ]
+    },
+    {
+        "courseCode": "NMEC101",
+        "courseName": "Engineering Mechanics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G3" },
+            { "day": "Tuesday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G3" },
+            { "day": "Wednesday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G3" }
+        ]
+    },
+    {
+        "courseCode": "NMEC102",
+        "courseName": "Engineering Mechanic Lab",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "" },
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMEA201",
+        "courseName": "Introduction to MATLAB and SIMULINK",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G14" },
+            { "day": "Thursday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G14" },
+            { "day": "Friday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G14" }
+        ]
+    },
+    {
+        "courseCode": "NMEC201",
+        "courseName": "Solid Mechanics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-G14" },
+            { "day": "Tuesday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-G14" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-G14" }
+        ]
+    },
+    {
+        "courseCode": "NMEC202",
+        "courseName": "Fluid Mechanics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G14" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-G14" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G14" }
+        ]
+    },
+    {
+        "courseCode": "NMEC203",
+        "courseName": "Kinematics of Machines",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G14" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-G14" },
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G14" }
+        ]
+    },
+    {
+        "courseCode": "NMEC204",
+        "courseName": "Fluid Mechanics and Fluid Machines Laboratory",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "ThE lab" },
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "ThE lab" }
+        ]
+    },
+    {
+        "courseCode": "NMEC205",
+        "courseName": "Applied Mechanics Laboratory",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "SOM lab" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "SOM lab" }
+        ]
+    },
+    {
+        "courseCode": "NMEE201",
+        "courseName": "Engineering Materials",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G14" },
+            { "day": "Tuesday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G14" },
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G14" }
+        ]
+    },
+    {
+        "courseCode": "NMMC201",
+        "courseName": "Strength of Materials",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C4" },
+            { "day": "Tuesday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C4" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C4" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-C4" }
+        ]
+    },
+    {
+        "courseCode": "NMMC202",
+        "courseName": "Mechanics of Fluids",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C4" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C4" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C4" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-C4" }
+        ]
+    },
+    {
+        "courseCode": "NMMC203",
+        "courseName": "Theory of Machines",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C4" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "LC-II-C4" },
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-C4" },
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-C4" }
+        ]
+    },
+    {
+        "courseCode": "NMMC204",
+        "courseName": "Strength of Materials and Theory of Machines Laboratory",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "" },
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMMC205",
+        "courseName": "Fluid Mechanics and Machines Laboratory",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMEC501",
+        "courseName": "Machining Science",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "Workshop Gal" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "Workshop Gal" },
+            { "day": "Thursday", ...time("3:00 PM-3:50 PM"), "venue": "Workshop Gal" },
+            { "day": "Tuesday", ...time("4:00 PM-4:50 PM"), "venue": "Workshop Gal" }
+        ]
+    },
+    {
+        "courseCode": "NMEC502",
+        "courseName": "Thermo Production Process",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "Workshop Gal" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "Workshop Gal" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "Workshop Gal" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "Workshop Gal" }
+        ]
+    },
+    {
+        "courseCode": "NMEC503",
+        "courseName": "Theory of Metal Forming",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "Workshop Gal" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "Workshop Gal" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "Workshop Gal" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "Workshop Gal" }
+        ]
+    },
+    {
+        "courseCode": "NMED518",
+        "courseName": "Surface Engineering",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "Workshop Gal" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "Workshop Gal" },
+            { "day": "Wednesday", ...time("5:00 PM-5:50 PM"), "venue": "Workshop Gal" }
+        ]
+    },
+    {
+        "courseCode": "NMED531",
+        "courseName": "Introduction to Machine Learning",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "MECH-G2" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "MECH-G2" },
+            { "day": "Friday", ...time("5:00 PM-5:50 PM"), "venue": "MECH-G2" }
+        ]
+    },
+    {
+        "courseCode": "NMEC504",
+        "courseName": "Thermo-Production Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "" },
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "" },
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMEC505",
+        "courseName": "Modelling and Simulation Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMEC506",
+        "courseName": "Machining Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "" },
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "" },
+            { "day": "Friday", ...time("12:00 PM-12:50 PM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMEC507",
+        "courseName": "Theory of Elasticity",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "MECH-G2" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "MECH-G2" },
+            { "day": "Thursday", ...time("3:00 PM-3:50 PM"), "venue": "MECH-G2" },
+            { "day": "Tuesday", ...time("4:00 PM-4:50 PM"), "venue": "MECH-G2" }
+        ]
+    },
+    {
+        "courseCode": "NMEC508",
+        "courseName": "Mechanical Vibration",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "MECH-G2" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "MECH-G2" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "MECH-G2" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "MECH-G2" }
+        ]
+    },
+    {
+        "courseCode": "NMEC509",
+        "courseName": "Finite Element Methods",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "MECH-G2" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "MECH-G2" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "MECH-G2" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "MECH-G2" }
+        ]
+    },
+    {
+        "courseCode": "NMED525",
+        "courseName": "Bearing Design and Lubrication",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "MME-C2" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "MME-C2" },
+            { "day": "Wednesday", ...time("5:00 PM-5:50 PM"), "venue": "MME-C2" }
+        ]
+    },
+    {
+        "courseCode": "NMED521",
+        "courseName": "Design of Fluid Power Systems",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "MME-C2" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "MME-C2" },
+            { "day": "Friday", ...time("5:00 PM-5:50 PM"), "venue": "MME-C2" }
+        ]
+    },
+    {
+        "courseCode": "NMEC510",
+        "courseName": "Computation Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "" },
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "" },
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMEC511",
+        "courseName": "Mechanical Vibration Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMEC512",
+        "courseName": "Structural Modelling and Simulation lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "" },
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMEC513",
+        "courseName": "Numerical Methods",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "MECH-G1" },
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "MECH-G1" },
+            { "day": "Thursday", ...time("3:00 PM-3:50 PM"), "venue": "MECH-G1" },
+            { "day": "Tuesday", ...time("4:00 PM-4:50 PM"), "venue": "MECH-G1" }
+        ]
+    },
+    {
+        "courseCode": "NMEC514",
+        "courseName": "Advanced Fluid Dynamics",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "MECH-G1" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "MECH-G1" },
+            { "day": "Friday", ...time("3:00 PM-3:50 PM"), "venue": "MECH-G1" },
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "MECH-G1" }
+        ]
+    },
+    {
+        "courseCode": "NMEC515",
+        "courseName": "Advanced Thermodynamics",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "MECH-G1" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "MECH-G1" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "MECH-G1" },
+            { "day": "Friday", ...time("4:00 PM-4:50 PM"), "venue": "MECH-G1" }
+        ]
+    },
+    {
+        "courseCode": "NMED512",
+        "courseName": "Microfluidics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "MECH-G2" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "MECH-G2" },
+            { "day": "Wednesday", ...time("5:00 PM-5:50 PM"), "venue": "MECH-G2" }
+        ]
+    },
+    {
+        "courseCode": "NMED532",
+        "courseName": "Green Energy",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "MME-C1" },
+            { "day": "Tuesday", ...time("5:00 PM-5:50 PM"), "venue": "MME-C1" },
+            { "day": "Wednesday", ...time("5:00 PM-5:50 PM"), "venue": "MME-C1" }
+        ]
+    },
+    {
+        "courseCode": "NMED514",
+        "courseName": "Solar Energy",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("4:00 PM-4:50 PM"), "venue": "MECH-G1" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "MECH-G1" },
+            { "day": "Friday", ...time("5:00 PM-5:50 PM"), "venue": "MECH-G1" }
+        ]
+    },
+    {
+        "courseCode": "NMEC516",
+        "courseName": "Thermo-Fluids Lab-I",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "" },
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "" },
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMEC517",
+        "courseName": "Thermo-Fluids Lab-II",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMEC518",
+        "courseName": "Computing Lab",
+        "ltp": "0-0-3",
+        "credits": calculateCreditsFromLTP("0-0-3", courseOption),
+        "slots": [
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "" },
+            { "day": "Friday", ...time("11:00 AM-11:50 AM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NECA201",
+        "courseName": "Digital System Design using HDL",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("8:00 AM-8:50 AM"), "venue": "NAC Hall" },
+            { "day": "Thursday", ...time("8:00 AM-8:50 AM"), "venue": "NAC Hall" },
+            { "day": "Friday", ...time("8:00 AM-8:50 AM"), "venue": "NAC Hall" }
+        ]
+    },
+    {
+        "courseCode": "NESA201",
+        "courseName": "Environmental Policy and Legislation",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-2" },
+            { "day": "Thursday", ...time("8:00 AM-8:50 AM"), "venue": "AGL-2" },
+            { "day": "Friday", ...time("8:00 AM-8:50 AM"), "venue": "AGL-2" }
+        ]
+    },
+    {
+        "courseCode": "NHSI500",
+        "courseName": "Research and Technical Communication",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G12" },
+            { "day": "Wednesday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G12" },
+            { "day": "Tuesday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G12" }
+        ]
+    },
+    {
+        "courseCode": "NGLC201",
+        "courseName": "Crystallography and Optical Mineralogy",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "AGL-2" },
+            { "day": "Tuesday", ...time("10:00 AM-10:50 AM"), "venue": "AGL-2" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "AGL-2" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "AGL-2" }
+        ]
+    },
+    {
+        "courseCode": "NGLC202",
+        "courseName": "Fundamentals of Mineralogy",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-1" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "AGL-1" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "AGL-1" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NGLC203",
+        "courseName": "Sedimentology",
+        "ltp": "3-1-0",
+        "credits": calculateCreditsFromLTP("3-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "AGL-1" },
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-1" },
+            { "day": "Thursday", ...time("10:00 AM-10:50 AM"), "venue": "AGL-1" },
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NGLC204",
+        "courseName": "Crystallography and Mineralogy Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("4:00 PM-4:50 PM"), "venue": "Ore Geology Lab" },
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "Ore Geology Lab" }
+        ]
+    },
+    {
+        "courseCode": "NGLC205",
+        "courseName": "Sedimentology Practical",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("4:00 PM-4:50 PM"), "venue": "" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NECE101",
+        "courseName": "Basics of Electronics Engineering",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("9:00 AM-9:50 AM"), "venue": "" },
+            { "day": "Thursday", ...time("8:00 AM-8:50 AM"), "venue": "" },
+            { "day": "Friday", ...time("8:00 AM-8:50 AM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NGLC596",
+        "courseName": "Research Methodology",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("5:00 PM-5:50 PM"), "venue": "AGL Library" },
+            { "day": "Thursday", ...time("5:00 PM-5:50 PM"), "venue": "AGL Library" },
+            { "day": "Wednesday", ...time("6:00 PM-6:50 PM"), "venue": "AGL Library" }
+        ]
+    },
+    {
+        "courseCode": "NHSD502",
+        "courseName": "Analytical Philosophy",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("10:00 AM-10:50 AM"), "venue": "" },
+            { "day": "Wednesday", ...time("10:00 AM-10:50 AM"), "venue": "" },
+            { "day": "Friday", ...time("10:00 AM-10:50 AM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NGLD501",
+        "courseName": "Coalbed Methane, Shale Gas and Gas Hydrate Exploration",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("12:00 PM-12:50 PM"), "venue": "AGL-1" },
+            { "day": "Tuesday", ...time("12:00 PM-12:50 PM"), "venue": "AGL-1" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NGLD505",
+        "courseName": "Environmental Geology",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("3:00 PM-3:50 PM"), "venue": "AGL-1" },
+            { "day": "Thursday", ...time("2:00 PM-2:50 PM"), "venue": "AGL-1" },
+            { "day": "Friday", ...time("2:00 PM-2:50 PM"), "venue": "AGL-1" }
+        ]
+    },
+    {
+        "courseCode": "NESD401",
+        "courseName": "Biodiversity Conservation",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G16" },
+            { "day": "Thursday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G16" },
+            { "day": "Friday", ...time("12:00 PM-12:50 PM"), "venue": "LC-II-G16" }
+        ]
+    },
+    {
+        "courseCode": "NPHC101",
+        "courseName": "Wave and Acoustics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-G3" },
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-G3" },
+            { "day": "Wednesday", ...time("2:00 PM-2:50 PM"), "venue": "LC-II-G3" }
+        ]
+    },
+    {
+        "courseCode": "NPHC102",
+        "courseName": "Wave and Acoustics Lab",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Thursday", ...time("8:00 AM-8:50 AM"), "venue": "UG Lab-1" },
+            { "day": "Thursday", ...time("9:00 AM-9:50 AM"), "venue": "UG Lab-1" }
+        ]
+    },
+    {
+        "courseCode": "NCSE101",
+        "courseName": "Fundamental of Data Structures",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("12:00 PM-12:50 PM"), "venue": "" },
+            { "day": "Tuesday", ...time("12:00 PM-12:50 PM"), "venue": "" },
+            { "day": "Wednesday", ...time("12:00 PM-12:50 PM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NPHI101",
+        "courseName": "Engineering Physics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G4" },
+            { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G4" },
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G4" }
+        ]
+    },
+    {
+        "courseCode": "NPHI102",
+        "courseName": "Engineering Physics Lab",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("2:00 PM-2:50 PM"), "venue": "" },
+            { "day": "Tuesday", ...time("3:00 PM-3:50 PM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NMNC101",
+        "courseName": "Mine Economics",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G4" },
+            { "day": "Tuesday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G4" },
+            { "day": "Wednesday", ...time("8:00 AM-8:50 AM"), "venue": "LC-II-G4" }
+        ]
+    },
+    {
+        "courseCode": "NMNC102",
+        "courseName": "Mining Technology Lab",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "CAMPAD Lab" },
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "CAMPAD Lab" }
+        ]
+    },
+    {
+        "courseCode": "NCYC101",
+        "courseName": "General Chemistry - I",
+        "ltp": "3-0-0",
+        "credits": calculateCreditsFromLTP("3-0-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("8:00 AM-8:50 AM"), "venue": "" },
+            { "day": "Tuesday", ...time("8:00 AM-8:50 AM"), "venue": "" },
+            { "day": "Wednesday", ...time("8:00 AM-8:50 AM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NCYC102",
+        "courseName": "General Chemistry Lab - I",
+        "ltp": "0-0-2",
+        "credits": calculateCreditsFromLTP("0-0-2", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("2:00 PM-2:50 PM"), "venue": "" },
+            { "day": "Monday", ...time("3:00 PM-3:50 PM"), "venue": "" }
+        ]
+    },
+    {
+        "courseCode": "NCSC201-T",
+        "courseName": "Discrete Mathematicss",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G10" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G4" }
+        ]
+    },
+    {
+        "courseCode": "NCSC202-T",
+        "courseName": "Computer Organization and Architecturee",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G10" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G4" }
+        ]
+    },
+    {
+        "courseCode": "NCSC203-T",
+        "courseName": "Algorithm Design and Analysis",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G10" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G4" }
+        ]
+    },
+    {
+        "courseCode": "NECC201-T",
+        "courseName": "Electronic Devices",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G11" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G2" }
+        ]
+    },
+    {
+        "courseCode": "NECC202-T",
+        "courseName": "Signals and Networks",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G11" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G2" }
+        ]
+    },
+    {
+        "courseCode": "NECC203-T",
+        "courseName": "Microprocessors and Microcontrollers",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G11" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G2" }
+        ]
+    },
+    {
+        "courseCode": "NEEC201-T",
+        "courseName": "Signals, Systems and Networks",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G3" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G9" }
+        ]
+    },
+    {
+        "courseCode": "NEEC202-T",
+        "courseName": "Analog and Digital Electronics",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G9" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G3" }
+        ]
+    },
+    {
+        "courseCode": "NEEC203-T",
+        "courseName": "Electromagnetic Theory and Applications",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G9" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G3" }
+        ]
+    },
+    {
+        "courseCode": "NPEC201-T",
+        "courseName": "Drilling Technology - I",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "PET 1" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "PET 3" }
+        ]
+    },
+    {
+        "courseCode": "NPEC202-T",
+        "courseName": "Geoscience for Petroleum Engineers",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "PET 1" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "PET 3" }
+        ]
+    },
+    {
+        "courseCode": "NPEC203-T",
+        "courseName": "Petroleum Formation Evaluation",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "PET 1" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "PET 3" }
+        ]
+    },
+    {
+        "courseCode": "NMNC201-T",
+        "courseName": "Mine Surveying",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G12" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-C9" }
+        ]
+    },
+    {
+        "courseCode": "NMNC202-T",
+        "courseName": "Rock Mechanics",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G12" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-C9" }
+        ]
+    },
+    {
+        "courseCode": "NMNC203-T",
+        "courseName": "Surface Mining",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G12" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-C9" }
+        ]
+    },
+    {
+        "courseCode": "NMEC201-T",
+        "courseName": "Solid Mechanics",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G14" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-C5" }
+        ]
+    },
+    {
+        "courseCode": "NMEC202-T",
+        "courseName": "Fluid Mechanics",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Monday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G14" },
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-C5" }
+        ]
+    },
+    {
+        "courseCode": "NMEC203-T",
+        "courseName": "Kinematics of Machines",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G14" },
+            { "day": "Wednesday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-C5" }
+        ]
+    },
+    {
+        "courseCode": "NCEC503-T",
+        "courseName": "Numerical Methods in Civil Engg",
+        "ltp": "0-1-0",
+        "credits": calculateCreditsFromLTP("0-1-0", courseOption),
+        "slots": [
+            { "day": "Tuesday", ...time("6:00 PM-6:50 PM"), "venue": "" },
+            { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "" }
+        ]
     }
 ];
