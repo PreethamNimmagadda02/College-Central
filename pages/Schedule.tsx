@@ -880,7 +880,7 @@ const Schedule: React.FC = () => {
         return timetableData.filter(course =>
             `${course.courseCode} ${course.courseName}`.toLowerCase().includes(searchTerm.toLowerCase())
         );
-    }, [searchTerm, timetableData]);
+    }, [searchTerm, timetableData, courseOption]);
 
     const filteredSchedule = useMemo(() => {
         if (!scheduleData) return [];
