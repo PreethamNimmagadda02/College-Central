@@ -15,6 +15,8 @@ export interface User {
   semester?: number;
   courseOption?: 'CBCS' | 'NEP';
   quickLinks?: QuickLink[];
+  bio?: string;
+  socialLinks?: SocialLinks;
 }
 
 export interface Grade {
@@ -225,4 +227,13 @@ export interface ActivityItem {
     timestamp: { seconds: number; nanoseconds: number }; // Firestore Timestamp shape
     icon: string;
     link?: string;
+}
+
+// Social Links
+export interface SocialLinks {
+    github?: string;
+    linkedin?: string;
+    instagram?: string;
+    twitter?: string;
+    website?: string;
 }
