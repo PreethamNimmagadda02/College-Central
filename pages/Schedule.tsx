@@ -877,9 +877,41 @@ const Schedule: React.FC = () => {
     };
 
     const filteredCourses = useMemo(() => {
-        return timetableData.filter(course =>
-            `${course.courseCode} ${course.courseName}`.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        if (!searchTerm.trim()) {
+            return timetableData;
+        }
+
+        const searchLower = searchTerm.toLowerCase().trim();
+        const searchNoSpaces = searchLower.replace(/\s+/g, '');
+
+        return timetableData.filter(course => {
+            if (!course.courseCode || !course.courseName) return false;
+
+            const courseCode = course.courseCode.toLowerCase();
+            const courseName = course.courseName.toLowerCase();
+
+            // Prioritize exact course code match (with or without spaces)
+            if (courseCode === searchLower || courseCode === searchNoSpaces) {
+                return true;
+            }
+
+            // Check if course code starts with search term
+            if (courseCode.startsWith(searchLower) || courseCode.startsWith(searchNoSpaces)) {
+                return true;
+            }
+
+            // Check if course code contains search term
+            if (courseCode.includes(searchNoSpaces)) {
+                return true;
+            }
+
+            // Finally check course name
+            if (courseName.includes(searchLower)) {
+                return true;
+            }
+
+            return false;
+        });
     }, [searchTerm, timetableData, courseOption]);
 
     const filteredSchedule = useMemo(() => {
@@ -1073,23 +1105,33 @@ const Schedule: React.FC = () => {
                                         </div>
                                     </div>
                                     <ul className="max-h-64 overflow-y-auto">
-                                        {filteredCourses.map(course => (
-                                            <li key={course.courseCode}>
-                                                <label className="flex items-center px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-                                                        checked={selectedCourseCodes.includes(course.courseCode)}
-                                                        onChange={() => handleCourseSelection(course.courseCode)}
-                                                    />
-                                                    <div className="ml-3 flex-1">
-                                                        <p className="font-medium text-slate-900 dark:text-white">{course.courseCode}</p>
-                                                        <p className="text-sm text-slate-500 dark:text-slate-400">{course.courseName}</p>
-                                                        <p className="text-xs text-slate-400 dark:text-slate-500">{calculateCreditsFromLTP(course.ltp, courseOption)} credits • {course.ltp}</p>
-                                                    </div>
-                                                </label>
+                                        {filteredCourses.length === 0 ? (
+                                            <li className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+                                                <svg className="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                </svg>
+                                                <p className="font-medium">No courses found</p>
+                                                <p className="text-sm mt-1">Try a different search term</p>
                                             </li>
-                                        ))}
+                                        ) : (
+                                            filteredCourses.map(course => (
+                                                <li key={course.courseCode}>
+                                                    <label className="flex items-center px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                                                            checked={selectedCourseCodes.includes(course.courseCode)}
+                                                            onChange={() => handleCourseSelection(course.courseCode)}
+                                                        />
+                                                        <div className="ml-3 flex-1">
+                                                            <p className="font-medium text-slate-900 dark:text-white">{course.courseCode}</p>
+                                                            <p className="text-sm text-slate-500 dark:text-slate-400">{course.courseName}</p>
+                                                            <p className="text-xs text-slate-400 dark:text-slate-500">{calculateCreditsFromLTP(course.ltp, courseOption)} credits • {course.ltp}</p>
+                                                        </div>
+                                                    </label>
+                                                </li>
+                                            ))
+                                        )}
                                     </ul>
                                 </div>
                             )}
