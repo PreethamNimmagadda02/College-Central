@@ -877,14 +877,26 @@ const Schedule: React.FC = () => {
     };
 
     const filteredCourses = useMemo(() => {
+        let courses = timetableData;
+
+        // Remove duplicates based on courseCode (keep first occurrence)
+        const seenCodes = new Set<string>();
+        courses = courses.filter(course => {
+            if (seenCodes.has(course.courseCode)) {
+                return false;
+            }
+            seenCodes.add(course.courseCode);
+            return true;
+        });
+
         if (!searchTerm.trim()) {
-            return timetableData;
+            return courses;
         }
 
         const searchLower = searchTerm.toLowerCase().trim();
         const searchNoSpaces = searchLower.replace(/\s+/g, '');
 
-        return timetableData.filter(course => {
+        return courses.filter(course => {
             if (!course.courseCode || !course.courseName) return false;
 
             const courseCode = course.courseCode.toLowerCase();
