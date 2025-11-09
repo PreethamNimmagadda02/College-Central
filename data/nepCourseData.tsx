@@ -5284,7 +5284,7 @@ export const NEP_TIMETABLE_DATA: TimeTableCourse[] = [
         "slots": [
             { "day": "Tuesday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G4" },
             { "day": "Friday", ...time("9:00 AM-9:50 AM"), "venue": "LC-II-G4" },
-            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G4" }
+            { "day": "Thursday", ...time("11:00 AM-11:50 AM"), "venue": "LC-II-G4" } 
         ]
     },
     {
