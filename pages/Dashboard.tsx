@@ -25,6 +25,49 @@ import {
     WebsiteIcon, CdcIcon, ScholarshipIcon, DirectoryIcon
 } from '../components/icons/SidebarIcons';
 
+// Helper function to get emoji for calendar event type
+const getEventEmoji = (event: CalendarEvent): string => {
+    const desc = event.description.toLowerCase();
+    const type = event.type;
+
+    // Check event type first
+    if (type === 'Mid-Semester Exams' || type === 'End-Semester Exams') {
+        return '📝';
+    }
+    if (type === 'Start of Semester') {
+        return '🎓';
+    }
+    if (type === 'Holiday') {
+        // Check for specific holidays
+        if (desc.includes('diwali') || desc.includes('deepavali')) return '🪔';
+        if (desc.includes('holi')) return '🎨';
+        if (desc.includes('christmas')) return '🎄';
+        if (desc.includes('new year')) return '🎊';
+        if (desc.includes('independence') || desc.includes('republic')) return '🇮🇳';
+        if (desc.includes('dussehra') || desc.includes('durga')) return '🙏';
+        if (desc.includes('eid')) return '🌙';
+        if (desc.includes('gandhi')) return '🕊️';
+        return '🎉';
+    }
+
+    // Check description for specific keywords
+    if (desc.includes('exam') || desc.includes('test')) return '📝';
+    if (desc.includes('registration') || desc.includes('enroll')) return '📋';
+    if (desc.includes('vacation') || desc.includes('break')) return '🏖️';
+    if (desc.includes('convocation') || desc.includes('graduation')) return '🎓';
+    if (desc.includes('orientation')) return '🧭';
+    if (desc.includes('sports') || desc.includes('athletics')) return '🏆';
+    if (desc.includes('cultural') || desc.includes('fest')) return '🎭';
+    if (desc.includes('technical') || desc.includes('hackathon')) return '💻';
+    if (desc.includes('workshop') || desc.includes('seminar')) return '📚';
+    if (desc.includes('deadline') || desc.includes('submission')) return '⏰';
+    if (desc.includes('meeting')) return '👥';
+    if (desc.includes('timetable') || desc.includes('schedule')) return '📅';
+
+    // Default based on type
+    return '📌';
+};
+
 // Color function for schedule items (matching Schedule.tsx)
 const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
     // Custom tasks get a distinctive teal/cyan color scheme
@@ -1563,13 +1606,20 @@ const Dashboard: React.FC = () => {
                                     return (
                                         <div
                                             key={event.id || index}
-                                            className={`group flex items-center justify-between p-3 rounded-lg border-l-4 ${
+                                            className={`group flex items-center gap-3 p-3 rounded-lg border-l-4 ${
                                                 isOngoing ? 'bg-green-50 dark:bg-green-900/20 border-green-500' :
                                                 isUrgent ? 'bg-red-50 dark:bg-red-900/20 border-red-500' :
                                                 isWarning ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-500' :
                                                 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
                                             }`}
                                         >
+                                            {/* Dynamic Event Icon */}
+                                            <div className="flex-shrink-0">
+                                                <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 shadow-sm">
+                                                    <span className="text-2xl">{getEventEmoji(event)}</span>
+                                                </div>
+                                            </div>
+
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
                                                     <p className="font-medium truncate">{event.description}</p>
