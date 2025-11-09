@@ -939,14 +939,25 @@ const Dashboard: React.FC = () => {
                     {/* Greeting Section */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                         <div className="flex items-center gap-4">
-                            <div className="relative">
-                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-30"></div>
-                                <div className="relative text-5xl md:text-6xl bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-2xl shadow-lg">
-                                    {greeting.emoji}
+                            <div className="relative group">
+                                {/* Animated outer glow */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl blur-md opacity-40 group-hover:opacity-60 animate-pulse transition-opacity duration-500"></div>
+
+                                {/* Rotating gradient ring */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-2xl blur-sm opacity-20 group-hover:opacity-30 animate-spin-slow"></div>
+
+                                {/* Main emoji container */}
+                                <div
+                                    className="relative text-5xl md:text-6xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-4 rounded-2xl shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 animate-gradient-shift"
+                                    style={{ backgroundSize: '200% 200%' }}
+                                >
+                                    <span className="drop-shadow-lg filter brightness-110 group-hover:brightness-125 transition-all duration-300">
+                                        {greeting.emoji}
+                                    </span>
                                 </div>
                             </div>
                             <div>
-                                <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-1">
+                                <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-1 animate-gradient-shift">
                                     {greeting.text},
                                 </h1>
                                 <p className="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-white">
@@ -969,14 +980,23 @@ const Dashboard: React.FC = () => {
                     </div>
 
                     {/* Motivational Quote */}
-                    <div className="group bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800/50 dark:to-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-5 mb-6 hover:shadow-md transition-all duration-200">
-                        <div className="flex items-start gap-3">
-                            <div className="text-2xl bg-gradient-to-br from-amber-400 to-orange-500 p-2 rounded-lg shadow-sm">💡</div>
+                    <div className="group relative bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-800/50 dark:via-slate-700/50 dark:to-purple-900/30 border border-slate-200 dark:border-slate-600 rounded-xl p-5 mb-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden">
+                        {/* Animated background shimmer */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+
+                        <div className="relative flex items-start gap-3">
+                            <div className="relative">
+                                {/* Glow effect for icon */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg blur opacity-40 group-hover:opacity-60 transition-opacity duration-300"></div>
+                                <div className="relative text-2xl bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 p-2 rounded-lg shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300" style={{ backgroundSize: '200% 200%' }}>
+                                    <span className="drop-shadow-sm group-hover:drop-shadow-md transition-all duration-300">💡</span>
+                                </div>
+                            </div>
                             <div className="flex-1">
-                                <p className="text-slate-700 dark:text-slate-200 text-base font-medium italic leading-relaxed">
+                                <p className="text-slate-700 dark:text-slate-200 text-base font-medium italic leading-relaxed group-hover:text-slate-900 dark:group-hover:text-white transition-colors duration-300">
                                     "{quote.text}"
                                 </p>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium">
+                                <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors duration-300">
                                     — {quote.author}
                                 </p>
                             </div>
