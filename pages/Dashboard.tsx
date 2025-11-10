@@ -8,6 +8,7 @@ import { useSchedule } from '../contexts/ScheduleContext';
 import { useCalendar } from '../contexts/CalendarContext';
 import { usePageLoadTrace } from '../hooks/usePerformanceTrace';
 import { getWeatherAdvice } from '@/data/weatherAdvice';
+import { cities, City } from '@/data/cities';
 import {
   toInputDateString,
   formatTime,
@@ -125,6 +126,9 @@ interface DetailedWeatherData extends WeatherData {
     uvIndex: number;
     visibility: number;
     precipitation: number;
+    cloudCover: number;
+    dewPoint: number;
+    isDay: number;
 }
 
 // Helper function to interpret WMO weather codes from Open-Meteo
@@ -236,6 +240,20 @@ const Dashboard: React.FC = () => {
     const [weatherError, setWeatherError] = useState<string | null>(null);
     const [detailedWeather, setDetailedWeather] = useState<DetailedWeatherData | null>(null);
     const [showWeatherModal, setShowWeatherModal] = useState(false);
+    const [selectedCity, setSelectedCity] = useState<City>(() => {
+        const savedCity = localStorage.getItem('selectedCity');
+        if (savedCity) {
+            try {
+                return JSON.parse(savedCity);
+            } catch {
+                return cities[0]; // Default to Dhanbad
+            }
+        }
+        return cities[0]; // Default to Dhanbad
+    });
+    const [citySearchOpen, setCitySearchOpen] = useState(false);
+    const [citySearchQuery, setCitySearchQuery] = useState('');
+    const cityDropdownRef = React.useRef<HTMLDivElement>(null);
     const { user, loading: userLoading, updateUser } = useUser();
     const { gradesData, loading: gradesLoading } = useGrades();
     const { scheduleData, loading: scheduleLoading } = useSchedule();
@@ -846,7 +864,7 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    const fetchWeather = async () => {
+    const fetchWeather = async (city: City = selectedCity) => {
         setWeatherError(null);
         setWeatherLoading(true);
         setRecommendation(null);
@@ -854,9 +872,9 @@ const Dashboard: React.FC = () => {
         setRecommendationError(null);
 
         try {
-            const lat = 23.79;
-            const lon = 86.43;
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,apparent_temperature,precipitation,uv_index&timezone=Asia/Kolkata`;
+            const lat = city.lat;
+            const lon = city.lon;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,apparent_temperature,precipitation,uv_index,cloud_cover,dew_point_2m&timezone=Asia/Kolkata`;
 
             const response = await fetch(url);
             if (!response.ok) {
@@ -878,7 +896,9 @@ const Dashboard: React.FC = () => {
                 surface_pressure,
                 apparent_temperature,
                 precipitation,
-                uv_index
+                uv_index,
+                cloud_cover,
+                dew_point_2m
             } = data.current;
             const { desc, icon } = getWeatherInfoFromCode(weather_code, is_day);
 
@@ -899,7 +919,10 @@ const Dashboard: React.FC = () => {
                 feelsLike: apparent_temperature || parseFloat(weatherData.temp),
                 uvIndex: uv_index || 0,
                 visibility: 10, // Open-Meteo doesn't provide visibility in free tier
-                precipitation: precipitation || 0
+                precipitation: precipitation || 0,
+                cloudCover: cloud_cover || 0,
+                dewPoint: dew_point_2m || 0,
+                isDay: is_day || 0
             };
             setDetailedWeather(detailedData);
 
@@ -915,7 +938,38 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    // Weather data fetch on mount
+    // Handle city selection change
+    const handleCityChange = (city: City) => {
+        setSelectedCity(city);
+        localStorage.setItem('selectedCity', JSON.stringify(city));
+        fetchWeather(city);
+        setCitySearchOpen(false);
+        setCitySearchQuery('');
+    };
+
+    // Filter cities based on search query
+    const filteredCities = useMemo(() => {
+        if (!citySearchQuery.trim()) return cities;
+        const query = citySearchQuery.toLowerCase();
+        return cities.filter(city =>
+            city.name.toLowerCase().includes(query) ||
+            city.state.toLowerCase().includes(query)
+        );
+    }, [citySearchQuery]);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
+                setCitySearchOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Weather data fetch on mount and when city changes
     useEffect(() => {
         fetchWeather();
 
@@ -927,7 +981,7 @@ const Dashboard: React.FC = () => {
         return () => {
             clearInterval(weatherRefreshInterval);
         };
-    }, []);
+    }, [selectedCity]);
 
     // Start with a random quote, then change every 30 seconds
     const [motivationalQuote, setMotivationalQuote] = useState(() => getRandomItem(MOTIVATIONAL_QUOTES));
@@ -1927,7 +1981,7 @@ const Dashboard: React.FC = () => {
                             <div className="flex-1">
                                 <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
                                     <span className="text-sky-500 text-xl sm:text-2xl animate-pulse">🌤️</span>
-                                    <span className="bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">Campus Weather</span>
+                                    <span className="bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">Weather</span>
                                 </h3>
                                 <p className="text-xs text-sky-600/60 dark:text-sky-400/60 mt-1 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                                     Click for detailed weather info
@@ -1947,6 +2001,67 @@ const Dashboard: React.FC = () => {
                                 </svg>
                             </button>
                         </div>
+
+                        {/* City Selector Dropdown with Search */}
+                        <div className="mb-3 relative" ref={cityDropdownRef} onClick={(e) => e.stopPropagation()}>
+                            <div className="relative group/dropdown">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 transition-transform group-hover/dropdown:scale-110 duration-200">
+                                    <svg className="w-4 h-4 text-sky-600 dark:text-sky-400 group-hover/dropdown:text-sky-700 dark:group-hover/dropdown:text-sky-300 transition-colors drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+
+                                {/* Search Input */}
+                                <input
+                                    type="text"
+                                    value={citySearchOpen ? citySearchQuery : selectedCity.name}
+                                    onChange={(e) => {
+                                        setCitySearchQuery(e.target.value);
+                                        setCitySearchOpen(true);
+                                    }}
+                                    onFocus={() => setCitySearchOpen(true)}
+                                    placeholder="Search city..."
+                                    className={`w-full pl-9 pr-9 py-2.5 text-xs font-bold backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md ${
+                                        citySearchOpen
+                                            ? 'bg-white dark:bg-slate-800 border-sky-300/40 dark:border-sky-600/40 text-sky-800 dark:text-sky-100 hover:border-sky-400/60 dark:hover:border-sky-500/60'
+                                            : 'bg-transparent border-sky-300/30 dark:border-sky-600/30 text-sky-700 dark:text-sky-200 hover:border-sky-400/50 dark:hover:border-sky-500/50'
+                                    }`}
+                                />
+
+                                {/* Dropdown Arrow */}
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <svg className={`w-4 h-4 text-sky-600 dark:text-sky-400 transition-transform duration-200 ${citySearchOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 20 20">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 8l4 4 4-4" />
+                                    </svg>
+                                </div>
+
+                                {/* Dropdown List */}
+                                {citySearchOpen && (
+                                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-sky-200 dark:border-sky-700 rounded-lg shadow-xl max-h-60 overflow-y-auto z-50">
+                                        {filteredCities.length > 0 ? (
+                                            filteredCities.map((city) => (
+                                                <button
+                                                    key={`${city.name}-${city.state}`}
+                                                    onClick={() => handleCityChange(city)}
+                                                    className={`w-full text-left px-4 py-2.5 text-xs hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-colors ${
+                                                        selectedCity.name === city.name && selectedCity.state === city.state
+                                                            ? 'bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200 font-bold'
+                                                            : 'text-slate-700 dark:text-slate-300 font-medium'
+                                                    }`}
+                                                >
+                                                    <span className="block">{city.name}</span>
+                                                    <span className="text-[10px] text-slate-500 dark:text-slate-400">{city.state}</span>
+                                                </button>
+                                            ))
+                                        ) : (
+                                            <div className="px-4 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                                                No cities found
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                         {weatherLoading ? (
                             <div className="flex flex-col items-center justify-center h-32 space-y-3">
                                 <div className="w-12 h-12 border-4 border-t-transparent border-sky-500 rounded-full animate-spin"></div>
@@ -1956,7 +2071,7 @@ const Dashboard: React.FC = () => {
                             <div className="text-center py-6">
                                 <p className="text-red-500 text-sm mb-3">⚠️ {weatherError}</p>
                                 <button
-                                    onClick={fetchWeather}
+                                    onClick={() => fetchWeather()}
                                     className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-sm transition-colors"
                                 >
                                     Retry
@@ -1977,13 +2092,32 @@ const Dashboard: React.FC = () => {
                                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                                             </svg>
-                                            Dhanbad, Jharkhand
+                                            {selectedCity.name}, {selectedCity.state}
                                         </p>
                                     </div>
                                     <div className="text-6xl sm:text-7xl md:text-8xl drop-shadow-2xl group-hover:scale-110 transition-transform duration-300">
                                         {weather.icon}
                                     </div>
                                 </div>
+
+                                {/* Quick Student-Relevant Weather Info */}
+                                {detailedWeather && (
+                                    <div className="mt-3 grid grid-cols-3 gap-2">
+                                        <div className="bg-sky-100/50 dark:bg-sky-900/20 rounded-lg p-2 text-center">
+                                            <p className="text-[10px] text-sky-600 dark:text-sky-400 font-medium">Feels Like</p>
+                                            <p className="text-sm font-bold text-sky-800 dark:text-sky-200">{detailedWeather.feelsLike.toFixed(0)}°C</p>
+                                        </div>
+                                        <div className="bg-blue-100/50 dark:bg-blue-900/20 rounded-lg p-2 text-center">
+                                            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">Humidity</p>
+                                            <p className="text-sm font-bold text-blue-800 dark:text-blue-200">{detailedWeather.humidity}%</p>
+                                        </div>
+                                        <div className="bg-indigo-100/50 dark:bg-indigo-900/20 rounded-lg p-2 text-center">
+                                            <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">UV Index</p>
+                                            <p className="text-sm font-bold text-indigo-800 dark:text-indigo-200">{detailedWeather.uvIndex.toFixed(0)}</p>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="mt-4 pt-4 border-t border-sky-300/50 dark:border-sky-700/50">
                                     {recommendationLoading ? (
                                         <div className="animate-pulse flex space-x-3">
@@ -2034,7 +2168,7 @@ const Dashboard: React.FC = () => {
                                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                                             </svg>
-                                            Dhanbad, Jharkhand
+                                            {selectedCity.name}, {selectedCity.state}
                                         </p>
                                     </div>
                                 </div>
