@@ -22,7 +22,10 @@ import { MOTIVATIONAL_QUOTES, TIME_INTERVALS, SEMESTER_DEFAULTS } from '../const
 import {
     InstructorIcon, LocationIcon, LibraryIcon,
     PortalIcon, CalendarCheckIcon, HealthIcon, FeeIcon,
-    WebsiteIcon, CdcIcon, ScholarshipIcon, DirectoryIcon
+    WebsiteIcon, CdcIcon, ScholarshipIcon, DirectoryIcon,
+    MisIcon, AbhikalpIcon, ArkIcon, CloudIcon, VideoIcon,
+    CodeIcon, ChatIcon, DocumentIcon, MusicIcon, ShoppingIcon,
+    PhotoIcon, CalculatorIcon, GameIcon, BookmarkIcon, NewspaperIcon
 } from '../components/icons/SidebarIcons';
 
 // Helper function to get emoji for calendar event type
@@ -106,9 +109,6 @@ const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
     return colors[hash % colors.length];
 };
 
-interface QuickLinkWithIcon extends QuickLink {
-    icon: React.ReactNode;
-}
 
 interface WeatherData {
     temp: string;
@@ -184,12 +184,38 @@ const defaultQuickLinksData: QuickLink[] = [
     { id: '10', name: 'College Directory', href: 'https://share.google/YnDiJNPeoRC7UMl5t', isExternal: true, color: 'text-yellow-600 dark:text-yellow-400', isCustom: false },
 ];
 
-// Get icon for a link based on its id
-const getIconForLink = (id: string): React.ReactNode => {
+// Get icon component by name (for custom links)
+const getIconByName = (iconName: string): React.ReactNode => {
+    const iconComponents: Record<string, React.ReactNode> = {
+        'website': <WebsiteIcon />,
+        'cloud': <CloudIcon />,
+        'video': <VideoIcon />,
+        'code': <CodeIcon />,
+        'chat': <ChatIcon />,
+        'document': <DocumentIcon />,
+        'music': <MusicIcon />,
+        'shopping': <ShoppingIcon />,
+        'photo': <PhotoIcon />,
+        'calculator': <CalculatorIcon />,
+        'game': <GameIcon />,
+        'bookmark': <BookmarkIcon />,
+        'newspaper': <NewspaperIcon />,
+    };
+    return iconComponents[iconName] || <WebsiteIcon />;
+};
+
+// Get icon for a link based on its id or icon property
+const getIconForLink = (link: QuickLink): React.ReactNode => {
+    // For custom links, use the icon property
+    if (link.isCustom && link.icon) {
+        return getIconByName(link.icon);
+    }
+
+    // For default links, use the id
     const iconMap: Record<string, React.ReactNode> = {
-        '1': <PortalIcon />,
-        '2': <PortalIcon />,
-        '3': <PortalIcon />,
+        '1': <MisIcon />,
+        '2': <AbhikalpIcon />,
+        '3': <ArkIcon />,
         '4': <CdcIcon />,
         '5': <LibraryIcon />,
         '6': <FeeIcon />,
@@ -198,7 +224,7 @@ const getIconForLink = (id: string): React.ReactNode => {
         '9': <WebsiteIcon />,
         '10': <DirectoryIcon />,
     };
-    return iconMap[id] || <WebsiteIcon />;
+    return iconMap[link.id] || <WebsiteIcon />;
 };
 
 const Dashboard: React.FC = () => {
@@ -235,7 +261,7 @@ const Dashboard: React.FC = () => {
     const [isManagingLinks, setIsManagingLinks] = useState(false);
     const [editingLink, setEditingLink] = useState<QuickLink | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [newLink, setNewLink] = useState({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+    const [newLink, setNewLink] = useState({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400', icon: 'website' });
     const [searchQuery, setSearchQuery] = useState('');
     const [draggedLinkId, setDraggedLinkId] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState(() => new Date());
@@ -293,11 +319,12 @@ const Dashboard: React.FC = () => {
                 href: newLink.href.startsWith('http') ? newLink.href : `https://${newLink.href}`,
                 isExternal: true,
                 color: newLink.color,
-                isCustom: true
+                isCustom: true,
+                icon: newLink.icon
             };
             const updatedLinks = [...quickLinks, link];
             saveQuickLinks(updatedLinks);
-            setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+            setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400', icon: 'website' });
             setShowAddModal(false);
         }
     };
@@ -1825,7 +1852,7 @@ const Dashboard: React.FC = () => {
                                                 className="h-full min-h-[110px] flex flex-col items-center justify-center p-3 rounded-lg bg-white dark:bg-slate-800/50 hover:bg-gradient-to-br hover:from-primary/5 hover:to-secondary/5 transition-all duration-300 hover:shadow-lg hover:scale-105 border border-transparent hover:border-primary/20 dark:hover:border-secondary/20 backdrop-blur-sm"
                                             >
                                                 <div className={`text-2xl mb-2 ${link.color} group-hover:scale-110 transition-all duration-300 transform group-hover:rotate-6 flex-shrink-0`}>
-                                                    {getIconForLink(link.id)}
+                                                    {getIconForLink(link)}
                                                 </div>
                                                 <div className="flex-1 flex flex-col items-center justify-center w-full">
                                                     <span className="text-[11px] text-center font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary dark:group-hover:text-secondary transition-colors line-clamp-2 w-full px-1 break-words leading-tight" title={link.name}>
@@ -2159,7 +2186,7 @@ const Dashboard: React.FC = () => {
                             <button
                                 onClick={() => {
                                     setShowAddModal(false);
-                                    setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+                                    setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400', icon: 'website' });
                                 }}
                                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                             >
@@ -2194,6 +2221,42 @@ const Dashboard: React.FC = () => {
                             </div>
 
                             <div>
+                                <label className="block text-sm font-medium mb-2">Icon</label>
+                                <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-2">
+                                    {[
+                                        { name: 'Website', icon: 'website', component: <WebsiteIcon /> },
+                                        { name: 'Cloud', icon: 'cloud', component: <CloudIcon /> },
+                                        { name: 'Video', icon: 'video', component: <VideoIcon /> },
+                                        { name: 'Code', icon: 'code', component: <CodeIcon /> },
+                                        { name: 'Chat', icon: 'chat', component: <ChatIcon /> },
+                                        { name: 'Document', icon: 'document', component: <DocumentIcon /> },
+                                        { name: 'Music', icon: 'music', component: <MusicIcon /> },
+                                        { name: 'Shopping', icon: 'shopping', component: <ShoppingIcon /> },
+                                        { name: 'Photo', icon: 'photo', component: <PhotoIcon /> },
+                                        { name: 'Calculator', icon: 'calculator', component: <CalculatorIcon /> },
+                                        { name: 'Game', icon: 'game', component: <GameIcon /> },
+                                        { name: 'Bookmark', icon: 'bookmark', component: <BookmarkIcon /> },
+                                        { name: 'Newspaper', icon: 'newspaper', component: <NewspaperIcon /> },
+                                    ].map(iconOption => (
+                                        <button
+                                            key={iconOption.icon}
+                                            onClick={() => setNewLink({ ...newLink, icon: iconOption.icon })}
+                                            className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${
+                                                newLink.icon === iconOption.icon
+                                                    ? 'border-primary bg-primary/10 shadow-md'
+                                                    : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
+                                            }`}
+                                            title={iconOption.name}
+                                        >
+                                            <div className={`${newLink.color} text-2xl`}>
+                                                {iconOption.component}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
                                 <label className="block text-sm font-medium mb-2">Color</label>
                                 <div className="grid grid-cols-4 gap-2">
                                     {[
@@ -2215,19 +2278,19 @@ const Dashboard: React.FC = () => {
                                                     : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
                                             }`}
                                         >
-                                            <div className={`${color.value} text-2xl`}>
-                                                <WebsiteIcon />
+                                            <div className={`${color.value} text-xl`}>
+                                                {getIconByName(newLink.icon)}
                                             </div>
                                         </button>
                                     ))}
-                                </div> 
+                                </div>
                             </div>
 
                             <div className="flex gap-2 pt-2">
                                 <button
                                     onClick={() => {
                                         setShowAddModal(false);
-                                        setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400' });
+                                        setNewLink({ name: '', href: '', color: 'text-blue-600 dark:text-blue-400', icon: 'website' });
                                     }}
                                     className="flex-1 py-2 px-4 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg transition-colors font-medium"
                                 >

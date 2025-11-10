@@ -205,6 +205,7 @@ export interface QuickLink {
     isExternal?: boolean;
     color?: string;
     isCustom?: boolean;
+    icon?: string;
 }
 
 // Activity Log type
