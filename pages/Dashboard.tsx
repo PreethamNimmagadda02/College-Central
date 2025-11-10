@@ -22,7 +22,7 @@ import { getGreeting, getRandomItem } from '../utils/helpers';
 import { MOTIVATIONAL_QUOTES, TIME_INTERVALS, SEMESTER_DEFAULTS } from '../constants/app';
 import {
     InstructorIcon, LocationIcon, LibraryIcon,
-    PortalIcon, CalendarCheckIcon, HealthIcon, FeeIcon,
+    CalendarCheckIcon, HealthIcon, FeeIcon,
     WebsiteIcon, CdcIcon, ScholarshipIcon, DirectoryIcon,
     MisIcon, AbhikalpIcon, ArkIcon, CloudIcon, VideoIcon,
     CodeIcon, ChatIcon, DocumentIcon, MusicIcon, ShoppingIcon,
