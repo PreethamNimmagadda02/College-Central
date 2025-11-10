@@ -12,11 +12,11 @@ const gradePoints: { [key: string]: number } = { 'A+': 10, 'A': 9, 'B+': 8, 'B':
 
 const getGradeColor = (grade: string) => {
     switch(grade) {
-        case 'A+':
-        case 'A': return 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400';
-        case 'B+':
-        case 'B': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400';
-        case 'C+':
+        case 'A+': return 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400';
+        case 'A': return 'text-emerald-800 bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-200';
+        case 'B+': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400';
+        case 'B': return 'text-sky-700 bg-sky-200 dark:bg-sky-900/40 dark:text-sky-300';
+        case 'C+': return 'text-amber-700 bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300';
         case 'C': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400';
         case 'D': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400';
         case 'F': return 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400';
