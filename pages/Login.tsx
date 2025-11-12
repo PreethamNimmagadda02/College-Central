@@ -129,7 +129,7 @@ const Login: React.FC = () => {
           <div
             className="absolute inset-0 bg-cover bg-center will-change-transform"
             style={{
-              backgroundImage: "url('/iitism_banner_new.gif')",
+              backgroundImage: "url('/IIT-Dhanbad.jpg.avif')",
               transform: `translate3d(0, ${scrollY * 0.3}px, 0)`,
               backfaceVisibility: 'hidden'
             }}
@@ -378,7 +378,7 @@ const Login: React.FC = () => {
           <div
             className="absolute inset-0 bg-cover bg-center will-change-transform"
             style={{
-              backgroundImage: "url('/iitism_banner_new.gif')",
+              backgroundImage: "url('/IIT-Dhanbad.jpg.avif')",
               transform: `translate3d(0, ${(scrollY - window.innerHeight * 4) * 0.5}px, 0)`,
               backfaceVisibility: 'hidden'
             }}
