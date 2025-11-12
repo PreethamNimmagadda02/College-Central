@@ -8,7 +8,6 @@ import { App as CapacitorApp } from '@capacitor/app';
 const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
   const [scrollY, setScrollY] = useState(0);
   const { loginWithGoogle, isAuthenticated, loading: authLoading } = useAuth();
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
@@ -37,20 +36,6 @@ const Login: React.FC = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Auto-hide splash after 2 seconds or on scroll
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleExploreCampus = () => {
-    setShowSplash(false);
-    window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
-  };
 
   // Capacitor back button handler
   useEffect(() => {
@@ -109,72 +94,6 @@ const Login: React.FC = () => {
 
   return (
     <>
-      {/* Splash Screen */}
-      <div
-        className={`fixed inset-0 z-50 transition-all duration-1000 ${
-          showSplash ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
-        }`}
-      >
-        {/* Background Image with Parallax */}
-        <div
-          className="absolute inset-0 bg-cover bg-center will-change-transform"
-          style={{
-            backgroundImage: "url('/iitism_banner_new.gif')",
-            transform: `translate3d(0, ${scrollY * 0.5}px, 0) scale(${1 + scrollY * 0.0001})`,
-            backfaceVisibility: 'hidden'
-          }}
-        />
-
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-purple-900/40" />
-
-        {/* Content */}
-        <div className="relative h-full flex flex-col items-center justify-center text-center">
-          {/* Logo Animation */}
-          <div className="mb-8 animate-fade-in-up">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-2xl opacity-60 animate-pulse"></div>
-              <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-6 rounded-3xl shadow-2xl">
-                <LogoIcon className="w-24 h-24 text-white" />
-              </div>
-            </div>
-          </div>
-
-          {/* Brand Name */}
-          <h1 className="text-6xl md:text-7xl font-black text-white mb-4 tracking-tight animate-fade-in-up animation-delay-200">
-            College Central
-          </h1>
-
-          <p className="text-2xl text-white/90 font-light mb-8 animate-fade-in-up animation-delay-400">
-            IIT (ISM) Dhanbad
-          </p>
-
-          {/* Scroll Indicator */}
-          <button
-            onClick={handleExploreCampus}
-            className="mt-12 animate-bounce cursor-pointer group"
-            aria-label="Explore Campus"
-          >
-            <div className="flex flex-col items-center gap-2 text-white/80 hover:text-white transition-colors">
-              <span className="text-sm font-medium tracking-wide">Explore Campus</span>
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                />
-              </svg>
-            </div>
-          </button>
-        </div>
-      </div>
-
       {/* Fixed Logo and Name - Top Left (appears when scrolling past first section) */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
