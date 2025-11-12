@@ -145,25 +145,25 @@ const Login: React.FC = () => {
           </div>
 
           {/* Centered Content */}
-          <div className="relative z-10 w-full px-4 flex flex-col items-center justify-center min-h-screen -mt-16">
-            <div className="max-w-3xl mx-auto text-center space-y-6">
+          <div className="relative z-10 w-full px-4 flex flex-col items-center justify-center min-h-screen -mt-32">
+            <div className="max-w-3xl mx-auto text-center space-y-5">
               {/* Logo */}
-              <div className="flex justify-center mb-4">
+              <div className="flex justify-center mb-3">
                 <div className="relative group">
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-2xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                  <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-5 rounded-3xl shadow-2xl">
-                    <LogoIcon className="w-20 h-20 text-white" />
+                  <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-4 rounded-3xl shadow-2xl">
+                    <LogoIcon className="w-16 h-16 text-white" />
                   </div>
                 </div>
               </div>
 
               {/* App Name */}
-              <h1 className="text-3xl md:text-4xl font-black text-white/90 tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-black text-white/90 tracking-tight">
                 College Central
               </h1>
 
               {/* Main Headline */}
-              <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-tight pb-2">
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight pb-2">
                 Your Campus Life,
                 <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mt-2 pb-1">
                   Reimagined
@@ -171,9 +171,10 @@ const Login: React.FC = () => {
               </h2>
 
               {/* Subheadline */}
-              <p className="text-lg md:text-xl text-white/70 font-light max-w-2xl mx-auto">
+              <p className="text-base md:text-lg lg:text-xl text-white/70 font-light max-w-2xl mx-auto">
                 Everything you need for IIT (ISM) — in one place
               </p>
+
             </div>
 
             {/* Scroll Indicator - Positioned below content */}
