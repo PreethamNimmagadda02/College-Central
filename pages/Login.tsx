@@ -8,6 +8,8 @@ import { App as CapacitorApp } from '@capacitor/app';
 const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const [scrollY, setScrollY] = useState(0);
   const { loginWithGoogle, isAuthenticated, loading: authLoading } = useAuth();
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -17,6 +19,38 @@ const Login: React.FC = () => {
         navigate('/', { replace: true });
     }
   }, [authLoading, isAuthenticated, navigate]);
+
+  // Smooth parallax scroll effect with requestAnimationFrame
+  useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrollY(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Auto-hide splash after 2 seconds or on scroll
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleExploreCampus = () => {
+    setShowSplash(false);
+    window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
+  };
 
   // Capacitor back button handler
   useEffect(() => {
@@ -74,41 +108,367 @@ const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen w-full lg:grid lg:grid-cols-2">
-       <div className="flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden min-h-screen">
-        {/* Background Image */}
+    <>
+      {/* Splash Screen */}
+      <div
+        className={`fixed inset-0 z-50 transition-all duration-1000 ${
+          showSplash ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
+        }`}
+      >
+        {/* Background Image with Parallax */}
         <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('/Login_Page.jpeg')" }}
-        ></div>
+          className="absolute inset-0 bg-cover bg-center will-change-transform"
+          style={{
+            backgroundImage: "url('/iitism_banner_new.gif')",
+            transform: `translate3d(0, ${scrollY * 0.5}px, 0) scale(${1 + scrollY * 0.0001})`,
+            backfaceVisibility: 'hidden'
+          }}
+        />
 
-        {/* Overlay for better contrast */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/30 via-blue-900/25 to-purple-900/30 dark:from-slate-900/50 dark:via-blue-900/40 dark:to-purple-900/50"></div>
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-purple-900/40" />
 
-        {/* Decorative Background Elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400/5 dark:bg-blue-400/5 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-400/5 dark:bg-purple-400/5 rounded-full blur-3xl"></div>
-        </div>
-
-        <div className="w-full max-w-md relative z-10">
-            {/* Logo and Header */}
-            <div className="text-center mb-8">
-                <div className="flex justify-center mb-4">
-                    <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                        <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-4 rounded-3xl shadow-2xl transform group-hover:scale-105 transition-transform duration-300">
-                            <LogoIcon className="w-16 h-16 text-white" />
-                        </div>
-                    </div>
-                </div>
-                <h1 className="text-4xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2 tracking-tight leading-tight pb-1">
-                    College Central
-                </h1>
-                <p className="text-slate-100 dark:text-slate-200 text-lg font-bold">
-                    IIT (ISM) Dhanbad
-                </p>
+        {/* Content */}
+        <div className="relative h-full flex flex-col items-center justify-center text-center">
+          {/* Logo Animation */}
+          <div className="mb-8 animate-fade-in-up">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-2xl opacity-60 animate-pulse"></div>
+              <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-6 rounded-3xl shadow-2xl">
+                <LogoIcon className="w-24 h-24 text-white" />
+              </div>
             </div>
+          </div>
+
+          {/* Brand Name */}
+          <h1 className="text-6xl md:text-7xl font-black text-white mb-4 tracking-tight animate-fade-in-up animation-delay-200">
+            College Central
+          </h1>
+
+          <p className="text-2xl text-white/90 font-light mb-8 animate-fade-in-up animation-delay-400">
+            IIT (ISM) Dhanbad
+          </p>
+
+          {/* Scroll Indicator */}
+          <button
+            onClick={handleExploreCampus}
+            className="mt-12 animate-bounce cursor-pointer group"
+            aria-label="Explore Campus"
+          >
+            <div className="flex flex-col items-center gap-2 text-white/80 hover:text-white transition-colors">
+              <span className="text-sm font-medium tracking-wide">Explore Campus</span>
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                />
+              </svg>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Fixed Logo and Name - Top Left (appears when scrolling past first section) */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className={`fixed top-6 left-6 z-50 transition-all duration-700 ease-out cursor-pointer group/logo ${
+          scrollY > window.innerHeight * 0.8
+            ? 'opacity-100 translate-x-0'
+            : 'opacity-0 -translate-x-8 pointer-events-none'
+        }`}
+        aria-label="Scroll to top"
+      >
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-2 rounded-xl shadow-lg group-hover/logo:shadow-xl group-hover/logo:scale-110 transition-all duration-300">
+              <LogoIcon className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <div className="text-left">
+            <h1 className="text-lg md:text-xl font-black text-white tracking-tight leading-tight drop-shadow-lg group-hover/logo:text-blue-200 transition-colors duration-300">
+              College Central
+            </h1>
+            <p className="text-[10px] md:text-xs text-white/80 font-light drop-shadow-md">
+              IIT (ISM) Dhanbad
+            </p>
+          </div>
+        </div>
+      </button>
+
+      {/* Main Scrolling Content - Full Width */}
+      <div className="w-full">
+        {/* Section 1: Hero with Background Image */}
+        <section className="relative min-h-screen flex items-center justify-center">
+          {/* Background Image with Parallax */}
+          <div
+            className="absolute inset-0 bg-cover bg-center will-change-transform"
+            style={{
+              backgroundImage: "url('/iitism_banner_new.gif')",
+              transform: `translate3d(0, ${scrollY * 0.3}px, 0)`,
+              backfaceVisibility: 'hidden'
+            }}
+          ></div>
+
+          {/* Overlay for better contrast */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-purple-900/40"></div>
+
+          {/* Decorative Background Elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400/5 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-400/5 rounded-full blur-3xl"></div>
+          </div>
+
+          {/* Centered Content */}
+          <div className="relative z-10 w-full px-4 flex flex-col items-center justify-center min-h-screen -mt-16">
+            <div className="max-w-3xl mx-auto text-center space-y-6">
+              {/* Logo */}
+              <div className="flex justify-center mb-4">
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-2xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
+                  <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-5 rounded-3xl shadow-2xl">
+                    <LogoIcon className="w-20 h-20 text-white" />
+                  </div>
+                </div>
+              </div>
+
+              {/* App Name */}
+              <h1 className="text-3xl md:text-4xl font-black text-white/90 tracking-tight">
+                College Central
+              </h1>
+
+              {/* Main Headline */}
+              <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-tight pb-2">
+                Your Campus Life,
+                <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mt-2 pb-1">
+                  Reimagined
+                </span>
+              </h2>
+
+              {/* Subheadline */}
+              <p className="text-lg md:text-xl text-white/70 font-light max-w-2xl mx-auto">
+                Everything you need for IIT (ISM) — in one place
+              </p>
+            </div>
+
+            {/* Scroll Indicator - Positioned below content */}
+            <div className="w-full absolute bottom-12 flex justify-center">
+              <button
+                onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+                className="flex flex-col items-center gap-2 text-white/50 hover:text-white/80 transition-colors cursor-pointer animate-bounce"
+                aria-label="Scroll to next section"
+              >
+                <span className="text-xs font-medium uppercase tracking-wider">Scroll to explore</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2: Mission Statement */}
+        <section className="relative min-h-screen flex flex-col justify-center items-center p-8 md:p-12 overflow-hidden">
+          {/* Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-blue-900"></div>
+
+          {/* Decorative Elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl"></div>
+          </div>
+
+          <div className="max-w-4xl space-y-8 text-center relative z-10">
+            <div className="inline-flex items-center gap-2 px-6 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white/90 border border-white/20 mb-4">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+              <span>Built by students, for students</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+              Stop juggling apps.
+              <br />
+              Start excelling.
+            </h2>
+            <p className="text-lg md:text-xl text-white/80 leading-relaxed max-w-2xl mx-auto">
+              Track grades, manage schedules, navigate campus, and stay connected—all without switching between a dozen different apps.
+            </p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 pt-4 max-w-2xl mx-auto">
+              <div className="flex flex-col items-center justify-center px-2 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6 bg-white/5 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1">25min</div>
+                <div className="text-[9px] sm:text-[10px] md:text-xs text-white/60 text-center leading-tight">Daily Time<br className="sm:hidden" /> Saved</div>
+              </div>
+              <div className="flex flex-col items-center justify-center px-2 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6 bg-white/5 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1">98%</div>
+                <div className="text-[9px] sm:text-[10px] md:text-xs text-white/60 text-center">Uptime</div>
+              </div>
+              <div className="flex flex-col items-center justify-center px-2 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6 bg-white/5 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1">24/7</div>
+                <div className="text-[9px] sm:text-[10px] md:text-xs text-white/60 text-center">Access</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 3: Features Grid */}
+        <section className="relative min-h-screen flex flex-col justify-center items-center p-8 md:p-12 overflow-hidden">
+          {/* Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-950"></div>
+
+          {/* Animated background elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+          </div>
+
+          <div className="max-w-6xl w-full space-y-12 relative z-10">
+            <div className="text-center space-y-4">
+              <h2 className="text-4xl md:text-5xl font-black text-white">
+                Everything you need. Nothing you don't.
+              </h2>
+              <p className="text-lg text-white/70 max-w-2xl mx-auto">
+                Built specifically for IIT (ISM) students, with features that actually matter
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Feature 1 */}
+              <div className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-2">
+                <div className="flex flex-col space-y-3">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    📊
+                  </div>
+                  <h3 className="text-xl font-bold text-white">CGPA Tracker</h3>
+                  <p className="text-sm text-white/70 leading-relaxed">
+                    Instant grade calculations. Know where you stand, always.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-2">
+                <div className="flex flex-col space-y-3">
+                  <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    📅
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Smart Schedule</h3>
+                  <p className="text-sm text-white/70 leading-relaxed">
+                    Your timetable, synced and ready. Never miss what matters.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-2">
+                <div className="flex flex-col space-y-3">
+                  <div className="w-14 h-14 bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    🗺️
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Campus Nav</h3>
+                  <p className="text-sm text-white/70 leading-relaxed">
+                    Interactive maps. Find any building, room, or facility instantly.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 4 */}
+              <div className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-2">
+                <div className="flex flex-col space-y-3">
+                  <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    🤖
+                  </div>
+                  <h3 className="text-xl font-bold text-white">AI Assistant</h3>
+                  <p className="text-sm text-white/70 leading-relaxed">
+                    Get smart weather tips and personalized campus insights.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 4: Social Proof + Login Preview */}
+        <section className="min-h-screen flex flex-col justify-center items-center p-8 md:p-12 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 relative overflow-hidden">
+          {/* Decorative Elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-20 left-20 w-64 h-64 bg-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-20 right-20 w-96 h-96 bg-pink-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+          </div>
+
+          <div className="max-w-4xl w-full space-y-12 relative z-10">
+            <div className="text-center space-y-6">
+              <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+                Join your fellow students
+              </h2>
+              <p className="text-xl text-white/80 max-w-2xl mx-auto">
+                Hundreds of IIT (ISM) students are already simplifying their campus life
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+              <div className="flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl p-5 sm:p-6 md:p-7 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300">
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-yellow-300">500+</div>
+                <div className="text-white/80 text-xs sm:text-sm md:text-base">Active Users</div>
+              </div>
+              <div className="flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl p-5 sm:p-6 md:p-7 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300">
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-yellow-300">10K+</div>
+                <div className="text-white/80 text-xs sm:text-sm md:text-base whitespace-nowrap">Grades Tracked</div>
+              </div>
+              <div className="flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl p-5 sm:p-6 md:p-7 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300">
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-yellow-300">4.8★</div>
+                <div className="text-white/80 text-xs sm:text-sm md:text-base">Student Rating</div>
+              </div>
+              <div className="flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl p-5 sm:p-6 md:p-7 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300">
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-yellow-300">100%</div>
+                <div className="text-white/80 text-xs sm:text-sm md:text-base">Free Forever</div>
+              </div>
+            </div>
+
+            <div className="text-center pt-6 sm:pt-8 max-w-2xl mx-auto space-y-6 px-4">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300">
+                <p className="text-white/90 text-sm sm:text-base md:text-lg lg:text-xl italic leading-relaxed mb-4 md:mb-5">
+                  "Finally, everything I need in one place. No more switching between apps!"
+                </p>
+                <div className="flex items-center justify-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex-shrink-0"></div>
+                  <div className="text-left">
+                    <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">3rd Year Student</p>
+                    <p className="text-white/60 text-[10px] sm:text-xs md:text-sm">Computer Science</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-2 pt-4">
+                <span className="text-white/60 text-sm">Ready to get started?</span>
+                <svg className="w-5 h-5 text-white/60 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 5: Login Form */}
+        <section className="min-h-screen flex flex-col justify-center items-center p-8 md:p-12 pt-24 relative overflow-hidden">
+          {/* Background Image with Parallax */}
+          <div
+            className="absolute inset-0 bg-cover bg-center will-change-transform"
+            style={{
+              backgroundImage: "url('/iitism_banner_new.gif')",
+              transform: `translate3d(0, ${(scrollY - window.innerHeight * 4) * 0.5}px, 0)`,
+              backfaceVisibility: 'hidden'
+            }}
+          ></div>
+
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 via-blue-900/40 to-purple-900/50"></div>
+
+          <div className="w-full max-w-md relative z-10">
 
             {/* Login Card */}
             <div className="relative bg-white/[0.015] backdrop-blur-sm rounded-3xl shadow-2xl border border-white/15 p-8 overflow-hidden group hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_50px_rgba(139,92,246,0.3)]">
@@ -247,105 +607,10 @@ const Login: React.FC = () => {
             </div>
         </div>
             </div>
-        </div>
-       </div>
-       <div className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 min-h-screen flex-col justify-center items-center p-12 text-center">
-          {/* Animated Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-96 h-96 bg-blue-300 rounded-full blur-3xl animate-pulse"></div>
-              <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-300 rounded-full blur-3xl animate-pulse delay-1000"></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-300 rounded-full blur-3xl animate-pulse delay-500"></div>
           </div>
-
-          <div className="relative flex h-full w-full flex-col justify-center items-center p-12 text-center">
-              {/* Main Heading */}
-              <div className="max-w-md space-y-6">
-                  <div className="space-y-3">
-                      <div className="inline-block">
-                          <h1 className="text-5xl font-black text-white leading-tight mb-2">
-                              Your Campus,
-                          </h1>
-                          <h1 className="text-5xl font-black leading-tight">
-                              <span className="bg-gradient-to-r from-yellow-300 via-amber-200 to-orange-300 bg-clip-text text-transparent">
-                                  Simplified
-                              </span>
-                          </h1>
-                      </div>
-                      <p className="text-xl text-white/95 font-light leading-relaxed max-w-xl mx-auto">
-                          Everything you need for campus life in one place
-                      </p>
-                  </div>
-
-                  {/* Features Grid */}
-                  <div className="grid grid-cols-2 gap-4 mt-8">
-                      {/* Feature 1 */}
-                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-4 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
-                          <div className="flex flex-col items-center space-y-2">
-                              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center text-2xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
-                                  📊
-                              </div>
-                              <h3 className="text-md font-bold text-white">Smart Analytics</h3>
-                              <p className="text-xs text-white/80 leading-relaxed">
-                                  Track your academic performance with detailed insights
-                              </p>
-                          </div>
-                      </div>
-
-                      {/* Feature 2 */}
-                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-4 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
-                          <div className="flex flex-col items-center space-y-2">
-                              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center text-2xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
-                                  ⏰
-                              </div>
-                              <h3 className="text-md font-bold text-white">Live Schedules</h3>
-                              <p className="text-xs text-white/80 leading-relaxed">
-                                  Never miss a class with real-time timetables
-                              </p>
-                          </div>
-                      </div>
-
-                      {/* Feature 3 */}
-                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-4 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
-                          <div className="flex flex-col items-center space-y-2">
-                              <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-pink-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
-                                  🎓
-                              </div>
-                              <h3 className="text-md font-bold text-white">Grade Tracker</h3>
-                              <p className="text-xs text-white/80 leading-relaxed">
-                                  Monitor your CGPA and semester progress
-                              </p>
-                          </div>
-                      </div>
-
-                      {/* Feature 4 */}
-                      <div className="group bg-white/15 backdrop-blur-lg border border-white/30 rounded-2xl p-4 hover:bg-white/25 hover:scale-105 transition-all duration-300 shadow-xl">
-                          <div className="flex flex-col items-center space-y-2">
-                              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg group-hover:rotate-12 transition-transform duration-300">
-                                  🗺️
-                              </div>
-                              <h3 className="text-md font-bold text-white">Campus Guide</h3>
-                              <p className="text-xs text-white/80 leading-relaxed">
-                                  Navigate campus with our interactive map
-                              </p>
-                          </div>
-                      </div>
-                  </div>
-
-                  {/* Trust Badge */}
-                  <div className="mt-8 pt-6 border-t border-white/20">
-                      <p className="text-white/70 text-sm font-medium">
-                          Trusted by <span className="text-yellow-300 font-bold">500+</span> IIT (ISM) students
-                      </p>
-                  </div>
-              </div>
-
-              {/* Footer */}
-              <div className="absolute bottom-4 text-white/50 text-xs">
-                  <p>© 2025 College Central</p>
-              </div>
-          </div>
+        </section>
       </div>
-    </div>
+    </>
   );
 };
 
