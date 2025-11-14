@@ -298,9 +298,14 @@ const Login: React.FC = () => {
           {/* Mission Statement */}
           <div className="relative flex flex-col justify-center items-center px-6 py-12 md:py-16">
             <div className="max-w-4xl space-y-6 text-center relative z-10">
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-sm rounded-full text-base md:text-lg text-white/90 border border-white/20">
-                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                <span>Built by students, for students</span>
+              <div className="group/tag inline-flex items-center gap-2.5 px-6 py-3 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-md rounded-full text-base md:text-lg font-semibold text-white border border-purple-400/30 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-105 transition-all duration-300">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-gradient-to-br from-indigo-400 to-pink-500"></span>
+                </span>
+                <span className="bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 bg-clip-text text-transparent">
+                  Built by students, for students
+                </span>
               </div>
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight">
                 Your Complete Campus Companion
@@ -332,82 +337,67 @@ const Login: React.FC = () => {
             </div>
           </div>
 
-          {/* Features Grid */}
+          {/* Features Grid - Why Students Love College Central */}
           <div className="relative flex flex-col justify-center items-center px-6 py-10 md:py-14">
-            <div className="max-w-5xl w-full space-y-8 relative z-10">
+            <div className="max-w-7xl w-full space-y-8 relative z-10">
               <div className="text-center space-y-3">
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white">
-                  Powerful Features at Your Fingertips
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white">
+                  Why Students <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-400">Love</span> College Central
                 </h2>
-                <p className="text-base md:text-lg lg:text-xl text-white/70 max-w-2xl mx-auto">
-                  Designed specifically for IIT (ISM) students to streamline your academic journey
+                <p className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto">
+                  Everything you need to ace your college life, all in one smart platform
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
-                {/* Feature 1 */}
-                <div className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-5 sm:p-6 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-3xl sm:text-4xl shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
-                      📊
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1 sm:mb-2">CGPA Tracker</h3>
-                      <p className="text-sm sm:text-base md:text-lg text-white/70 leading-relaxed">
-                        Calculate your CGPA and SGPA instantly. Track your grades semester-wise with
-                        detailed analytics and performance insights. Know exactly where you stand academically.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Feature 2 */}
-                <div className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-5 sm:p-6 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center text-3xl sm:text-4xl shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
-                      📅
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1 sm:mb-2">Smart Schedule Manager</h3>
-                      <p className="text-sm sm:text-base md:text-lg text-white/70 leading-relaxed">
-                        Organize your class timetable, assignments, and important dates. Get reminders
-                        for upcoming classes and never miss what matters. Your schedule, perfectly synced.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Feature 3 */}
-                <div className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-5 sm:p-6 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-lg flex items-center justify-center text-3xl sm:text-4xl shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
-                      🗺️
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1 sm:mb-2">Campus Navigation</h3>
-                      <p className="text-sm sm:text-base md:text-lg text-white/70 leading-relaxed">
-                        Interactive campus maps help you find any building, classroom, or facility instantly.
-                        Perfect for new students and anyone exploring our vast campus.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Feature 4 */}
-                <div className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-5 sm:p-6 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center text-3xl sm:text-4xl shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
-                      📚
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1 sm:mb-2">Resource Hub</h3>
-                      <p className="text-sm sm:text-base md:text-lg text-white/70 leading-relaxed">
-                        Access college forms, academic calendars, and important documents all in one place.
-                        Never miss a deadline or struggle to find essential resources again.
-                      </p>
+              {/* Interactive feature cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                {[
+                  {
+                    icon: "📚",
+                    title: "Grade Tracking & CGPA",
+                    description: "Track your semester grades and automatically calculate your CGPA in real-time",
+                    color: "from-blue-500 to-cyan-500",
+                    features: ["Semester Grades", "Auto CGPA Calculator", "Grade Analytics"]
+                  },
+                  {
+                    icon: "📅",
+                    title: "Schedule & Calendar",
+                    description: "Manage your class timetable, assignments, and important academic dates",
+                    color: "from-purple-500 to-pink-500",
+                    features: ["Class Timetable", "Custom Tasks", "Event Reminders"]
+                  },
+                  {
+                    icon: "🗺️",
+                    title: "Campus Map",
+                    description: "Navigate the IIT (ISM) campus with an interactive map of all buildings and facilities",
+                    color: "from-indigo-500 to-purple-500",
+                    features: ["Building Locations", "Department Info", "Campus Navigation"]
+                  }
+                ].map((feature, index) => (
+                  <div
+                    key={index}
+                    className="group relative"
+                  >
+                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} rounded-2xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500`}></div>
+                    <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-500 group-hover:-translate-y-2 group-hover:border-white/20">
+                      <div className="text-5xl mb-4 transform group-hover:scale-110 transition-transform duration-500">{feature.icon}</div>
+                      <h3 className={`text-xl md:text-2xl font-bold text-white mb-3 bg-gradient-to-r ${feature.color} bg-clip-text text-transparent`}>
+                        {feature.title}
+                      </h3>
+                      <p className="text-white/60 text-sm md:text-base mb-4">{feature.description}</p>
+                      <div className="space-y-2">
+                        {feature.features.map((item, i) => (
+                          <div key={i} className="flex items-center gap-2 text-sm text-white/80">
+                            <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span>{item}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
 
               {/* Additional Features Highlight */}
@@ -454,7 +444,7 @@ const Login: React.FC = () => {
                   <div className="text-white/80 text-xs sm:text-sm md:text-base text-center">Active Students</div>
                 </div>
                 <div className="group flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                  <div className="text-3xl sm:text-4xl md:text-5xl font-black text-yellow-300 group-hover:scale-110 transition-transform duration-300">10K+</div>
+                  <div className="text-3xl sm:text-4xl md:text-5xl font-black text-yellow-300 group-hover:scale-110 transition-transform duration-300">5K+</div>
                   <div className="text-white/80 text-xs sm:text-sm md:text-base text-center">Grades Tracked</div>
                 </div>
                 <div className="group flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
@@ -543,17 +533,31 @@ const Login: React.FC = () => {
             <div className="w-full max-w-md relative z-10">
 
             {/* Login Card with enhanced glassmorphism */}
-            <div className="relative group">
+            <div className="relative group perspective-1000">
               {/* Animated border gradient */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000 animate-gradient"></div>
-              
-              <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 overflow-hidden">
-                {/* Animated orbs inside card */}
-                <div className="absolute -top-20 -left-20 w-64 h-64 bg-gradient-to-br from-blue-400/10 to-cyan-400/10 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-3xl animate-pulse animation-delay-300"></div>
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition-all duration-1000 animate-gradient"></div>
 
-                {/* Subtle shine effect */}
+              {/* Floating particles effect */}
+              <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+                <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-400/40 rounded-full animate-ping" style={{ animationDelay: '0s', animationDuration: '3s' }}></div>
+                <div className="absolute top-3/4 right-1/4 w-2 h-2 bg-purple-400/40 rounded-full animate-ping" style={{ animationDelay: '1s', animationDuration: '3s' }}></div>
+                <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-pink-400/40 rounded-full animate-ping" style={{ animationDelay: '2s', animationDuration: '3s' }}></div>
+              </div>
+
+              <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 overflow-hidden transform transition-all duration-500 group-hover:shadow-purple-500/30 group-hover:border-white/30 group-hover:bg-white/15">
+                {/* Animated orbs inside card - more dynamic */}
+                <div className="absolute -top-20 -left-20 w-64 h-64 bg-gradient-to-br from-blue-400/10 to-cyan-400/10 rounded-full blur-3xl animate-pulse transition-all duration-700 group-hover:scale-110"></div>
+                <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-3xl animate-pulse animation-delay-300 transition-all duration-700 group-hover:scale-110"></div>
+
+                {/* Animated diagonal lines */}
+                <div className="absolute inset-0 opacity-10 pointer-events-none">
+                  <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent transform -rotate-45 translate-y-20 group-hover:translate-y-0 transition-transform duration-1000"></div>
+                  <div className="absolute bottom-0 right-0 w-full h-0.5 bg-gradient-to-r from-transparent via-pink-400 to-transparent transform -rotate-45 -translate-y-20 group-hover:translate-y-0 transition-transform duration-1000 delay-300"></div>
+                </div>
+
+                {/* Multi-layer shine effect */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none"></div>
+                <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none transition-transform duration-1500 ease-in-out"></div>
 
                 <div className="relative z-10">
                     {/* Tab Selector with enhanced design */}
