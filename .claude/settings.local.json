@@ -17,7 +17,7 @@
       "Bash(npm install)",
       "Bash(gcloud scheduler jobs list:*)",
       "Bash(gcloud scheduler jobs describe:*)",
-      "Bash(gcloud scheduler jobs delete:*)",
+      "Bash(gcloud scheduler jobs delete:*)"
     ],
     "deny": [],
     "ask": []
