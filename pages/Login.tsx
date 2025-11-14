@@ -12,6 +12,10 @@ const Login: React.FC = () => {
   const { loginWithGoogle, isAuthenticated, loading: authLoading } = useAuth();
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const navigate = useNavigate();
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const [typedText, setTypedText] = useState('');
+  const [isTyping, setIsTyping] = useState(true);
+  const [showCursor, setShowCursor] = useState(true);
   
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -36,6 +40,58 @@ const Login: React.FC = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Typing animation for hero text
+  const heroTexts = [
+    "Your Campus Life, Simplified",
+    "One Platform. Endless Possibilities.",
+    "Track Progress. Build Success.",
+    "Smart Campus Living Starts Here"
+  ];
+
+  useEffect(() => {
+    const fullText = heroTexts[currentTextIndex] || "";
+    let currentIndex = 0;
+
+    if (isTyping) {
+      setShowCursor(true);
+      const typingInterval = setInterval(() => {
+        if (currentIndex <= fullText.length) {
+          setTypedText(fullText.slice(0, currentIndex));
+          currentIndex++;
+        } else {
+          clearInterval(typingInterval);
+          setShowCursor(false);
+          // Wait 2.5 seconds before starting to delete
+          setTimeout(() => {
+            setIsTyping(false);
+            // Start deleting after a brief pause
+            setTimeout(() => {
+              let deleteIndex = fullText.length;
+              setShowCursor(true);
+              const deleteInterval = setInterval(() => {
+                if (deleteIndex > 0) {
+                  setTypedText(fullText.slice(0, deleteIndex));
+                  deleteIndex--;
+                } else {
+                  clearInterval(deleteInterval);
+                  setShowCursor(false);
+                  // Move to next text after deletion complete
+                  setTimeout(() => {
+                    setCurrentTextIndex((prev) => (prev + 1) % heroTexts.length);
+                    setIsTyping(true);
+                    setTypedText('');
+                  }, 500);
+                }
+              }, 80);
+            }, 500);
+          }, 2500);
+        }
+      }, 80);
+      return () => clearInterval(typingInterval);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTextIndex, isTyping]);
 
   // Capacitor back button handler
   useEffect(() => {
@@ -94,6 +150,31 @@ const Login: React.FC = () => {
 
   return (
     <>
+      <style>{`
+        @keyframes spin-slow {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 8s linear infinite;
+        }
+        @keyframes gradient-shift {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+        .animate-gradient {
+          animation: gradient-shift 3s ease infinite;
+        }
+      `}</style>
+
       {/* Fixed Logo and Name - Top Left (appears when scrolling past first section) */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -136,44 +217,42 @@ const Login: React.FC = () => {
           ></div>
 
           {/* Overlay for better contrast */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-purple-900/40"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 via-indigo-900/40 to-purple-900/50"></div>
 
           {/* Decorative Background Elements */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400/5 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-400/5 rounded-full blur-3xl"></div>
+            <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-400/5 rounded-full blur-3xl"></div>
           </div>
 
           {/* Centered Content */}
           <div className="relative z-10 w-full px-4 flex flex-col items-center justify-center min-h-screen -mt-32">
             <div className="max-w-3xl mx-auto text-center space-y-5">
               {/* Logo */}
-              <div className="flex justify-center mb-3">
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-2xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                  <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-4 rounded-3xl shadow-2xl">
-                    <LogoIcon className="w-16 h-16 text-white" />
+              <div className="flex justify-center mb-4">
+                <div className="relative group cursor-pointer">
+                  {/* Logo container with hover effects */}
+                  <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-4 md:p-5 rounded-3xl shadow-2xl shadow-blue-500/20 group-hover:shadow-purple-500/40 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 ease-out">
+                    <LogoIcon className="w-18 h-18 md:w-20 md:h-20 text-white group-hover:scale-110 transition-transform duration-500" />
                   </div>
                 </div>
               </div>
 
               {/* App Name */}
-              <h1 className="text-2xl md:text-3xl font-black text-white/90 tracking-tight">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-3 drop-shadow-lg">
                 College Central
               </h1>
 
-              {/* Main Headline */}
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight pb-2">
-                Your Campus Life,
-                <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mt-2 pb-1">
-                  Reimagined
-                </span>
-              </h2>
-
-              {/* Subheadline */}
-              <p className="text-base md:text-lg lg:text-xl text-white/70 font-light max-w-2xl mx-auto">
-                Everything you need for IIT (ISM) — in one place
-              </p>
+              {/* Animated typing text - Main Headline */}
+              <div className="min-h-[120px] md:min-h-[140px] lg:min-h-[160px] flex items-center justify-center px-4">
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight text-center">
+                  <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto] transition-all duration-300 drop-shadow-2xl">
+                    {typedText}
+                  </span>
+                  {showCursor && <span className="text-blue-400 animate-pulse ml-1 inline-block">|</span>}
+                </h2>
+              </div>
 
             </div>
 
@@ -181,7 +260,7 @@ const Login: React.FC = () => {
             <div className="w-full absolute bottom-12 flex justify-center">
               <button
                 onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
-                className="flex flex-col items-center gap-2 text-white/50 hover:text-white/80 transition-colors cursor-pointer animate-bounce"
+                className="flex flex-col items-center gap-2 text-blue-300/60 hover:text-purple-300 transition-colors cursor-pointer animate-bounce"
                 aria-label="Scroll to next section"
               >
                 <span className="text-xs font-medium uppercase tracking-wider">Scroll to explore</span>
