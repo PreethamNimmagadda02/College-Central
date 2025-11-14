@@ -178,24 +178,24 @@ const Login: React.FC = () => {
       {/* Fixed Logo and Name - Top Left (appears when scrolling past first section) */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className={`fixed top-6 left-6 z-50 transition-all duration-700 ease-out cursor-pointer group/logo ${
+        className={`fixed top-3 left-3 sm:top-4 sm:left-4 md:top-6 md:left-6 z-50 transition-all duration-700 ease-out cursor-pointer group/logo ${
           scrollY > window.innerHeight * 0.8
             ? 'opacity-100 translate-x-0'
             : 'opacity-0 -translate-x-8 pointer-events-none'
         }`}
         aria-label="Scroll to top"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="relative">
-            <div className="bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-2 rounded-xl shadow-lg group-hover/logo:shadow-xl group-hover/logo:scale-110 transition-all duration-300">
-              <LogoIcon className="w-8 h-8 text-white" />
+            <div className="bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-1.5 sm:p-2 rounded-lg sm:rounded-xl shadow-lg group-hover/logo:shadow-xl group-hover/logo:scale-110 transition-all duration-300">
+              <LogoIcon className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
             </div>
           </div>
-          <div className="text-left">
-            <h1 className="text-lg md:text-xl font-black text-white tracking-tight leading-tight drop-shadow-lg group-hover/logo:text-blue-200 transition-colors duration-300">
+          <div className="text-left hidden sm:block">
+            <h1 className="text-base sm:text-lg md:text-xl font-black text-white tracking-tight leading-tight drop-shadow-lg group-hover/logo:text-blue-200 transition-colors duration-300">
               College Central
             </h1>
-            <p className="text-[10px] md:text-xs text-white/80 font-light drop-shadow-md">
+            <p className="text-[0.625rem] sm:text-xs text-white/80 font-light drop-shadow-md">
               IIT (ISM) Dhanbad
             </p>
           </div>
@@ -208,11 +208,16 @@ const Login: React.FC = () => {
         <section className="relative min-h-screen flex items-center justify-center">
           {/* Background Image with Parallax */}
           <div
-            className="absolute inset-0 bg-cover bg-center will-change-transform"
+            className="absolute inset-0 will-change-transform"
             style={{
               backgroundImage: "url('/iitism_banner_new.gif')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center center',
+              backgroundRepeat: 'no-repeat',
               transform: `translate3d(0, ${scrollY * 0.3}px, 0)`,
-              backfaceVisibility: 'hidden'
+              backfaceVisibility: 'hidden',
+              width: '100%',
+              height: '100%'
             }}
           ></div>
 
@@ -221,20 +226,20 @@ const Login: React.FC = () => {
 
           {/* Decorative Background Elements */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-400/5 rounded-full blur-3xl"></div>
+            <div className="absolute -top-[10vh] -left-[10vw] w-[24vw] h-[24vw] min-w-[15rem] min-h-[15rem] max-w-[24rem] max-h-[24rem] bg-blue-400/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-[10vh] -right-[10vw] w-[24vw] h-[24vw] min-w-[15rem] min-h-[15rem] max-w-[24rem] max-h-[24rem] bg-purple-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[30vw] h-[30vw] min-w-[20rem] min-h-[20rem] max-w-[31.25rem] max-h-[31.25rem] bg-indigo-400/5 rounded-full blur-3xl"></div>
           </div>
 
           {/* Centered Content */}
-          <div className="relative z-10 w-full px-4 flex flex-col items-center justify-center min-h-screen -mt-32">
+          <div className="relative z-10 w-full px-4 flex flex-col items-center justify-center min-h-screen -mt-[8vh] md:-mt-[10vh]">
             <div className="max-w-3xl mx-auto text-center space-y-5">
               {/* Logo */}
               <div className="flex justify-center mb-4">
                 <div className="relative group cursor-pointer">
                   {/* Logo container with hover effects */}
-                  <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-4 md:p-5 rounded-3xl shadow-2xl shadow-blue-500/20 group-hover:shadow-purple-500/40 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 ease-out">
-                    <LogoIcon className="w-18 h-18 md:w-20 md:h-20 text-white group-hover:scale-110 transition-transform duration-500" />
+                  <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-3 sm:p-4 md:p-5 rounded-2xl sm:rounded-3xl shadow-2xl shadow-blue-500/20 group-hover:shadow-purple-500/40 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 ease-out">
+                    <LogoIcon className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-white group-hover:scale-110 transition-transform duration-500" />
                   </div>
                 </div>
               </div>
@@ -245,7 +250,7 @@ const Login: React.FC = () => {
               </h1>
 
               {/* Animated typing text - Main Headline */}
-              <div className="min-h-[120px] md:min-h-[140px] lg:min-h-[160px] flex items-center justify-center px-4">
+              <div className="min-h-[15vh] md:min-h-[18vh] lg:min-h-[20vh] flex items-center justify-center px-4">
                 <h2 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight text-center">
                   <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto] transition-all duration-300 drop-shadow-2xl">
                     {typedText}
@@ -257,7 +262,7 @@ const Login: React.FC = () => {
             </div>
 
             {/* Scroll Indicator - Positioned below content */}
-            <div className="w-full absolute bottom-3 flex justify-center">
+            <div className="w-full absolute bottom-[2vh] flex justify-center">
               <button
                 onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
                 className="flex flex-col items-center gap-2 text-blue-300/60 hover:text-purple-300 transition-colors cursor-pointer animate-bounce"
@@ -280,19 +285,19 @@ const Login: React.FC = () => {
           {/* Decorative Elements - More playful and dynamic */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {/* Top left blob */}
-            <div className="absolute -top-20 -left-20 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -top-[8vh] -left-[8vw] w-[24vw] h-[24vw] min-w-[15rem] min-h-[15rem] max-w-[24rem] max-h-[24rem] bg-blue-400/20 rounded-full blur-3xl animate-pulse"></div>
             {/* Top right blob */}
-            <div className="absolute top-40 -right-20 w-80 h-80 bg-cyan-300/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-[15vh] -right-[8vw] w-[20vw] h-[20vw] min-w-[12rem] min-h-[12rem] max-w-[20rem] max-h-[20rem] bg-cyan-300/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
             {/* Middle left blob */}
-            <div className="absolute top-[600px] -left-32 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+            <div className="absolute top-[60vh] -left-[10vw] w-[24vw] h-[24vw] min-w-[15rem] min-h-[15rem] max-w-[24rem] max-h-[24rem] bg-purple-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
             {/* Middle right blob */}
-            <div className="absolute top-[800px] -right-24 w-[500px] h-[500px] bg-pink-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+            <div className="absolute top-[80vh] -right-[10vw] w-[30vw] h-[30vw] min-w-[20rem] min-h-[20rem] max-w-[31.25rem] max-h-[31.25rem] bg-pink-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
             {/* Bottom left blob */}
-            <div className="absolute top-[1200px] left-20 w-72 h-72 bg-indigo-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+            <div className="absolute top-[120vh] left-[8vw] w-[18vw] h-[18vw] min-w-[11rem] min-h-[11rem] max-w-[18rem] max-h-[18rem] bg-indigo-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
             {/* Bottom right blob */}
-            <div className="absolute top-[1600px] -right-32 w-96 h-96 bg-violet-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2.5s' }}></div>
+            <div className="absolute top-[160vh] -right-[10vw] w-[24vw] h-[24vw] min-w-[15rem] min-h-[15rem] max-w-[24rem] max-h-[24rem] bg-violet-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2.5s' }}></div>
             {/* Accent blob */}
-            <div className="absolute top-[400px] left-1/2 transform -translate-x-1/2 w-64 h-64 bg-yellow-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '3s' }}></div>
+            <div className="absolute top-[40vh] left-1/2 transform -translate-x-1/2 w-[16vw] h-[16vw] min-w-[10rem] min-h-[10rem] max-w-[16rem] max-h-[16rem] bg-yellow-300/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '3s' }}></div>
           </div>
 
           {/* Mission Statement */}
@@ -546,8 +551,8 @@ const Login: React.FC = () => {
 
               <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 overflow-hidden transform transition-all duration-500 group-hover:shadow-purple-500/30 group-hover:border-white/30 group-hover:bg-white/15">
                 {/* Animated orbs inside card - more dynamic */}
-                <div className="absolute -top-20 -left-20 w-64 h-64 bg-gradient-to-br from-blue-400/10 to-cyan-400/10 rounded-full blur-3xl animate-pulse transition-all duration-700 group-hover:scale-110"></div>
-                <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-3xl animate-pulse animation-delay-300 transition-all duration-700 group-hover:scale-110"></div>
+                <div className="absolute -top-[8vh] -left-[8vw] w-[16vw] h-[16vw] min-w-[10rem] min-h-[10rem] max-w-[16rem] max-h-[16rem] bg-gradient-to-br from-blue-400/10 to-cyan-400/10 rounded-full blur-3xl animate-pulse transition-all duration-700 group-hover:scale-110"></div>
+                <div className="absolute -bottom-[8vh] -right-[8vw] w-[16vw] h-[16vw] min-w-[10rem] min-h-[10rem] max-w-[16rem] max-h-[16rem] bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-3xl animate-pulse animation-delay-300 transition-all duration-700 group-hover:scale-110"></div>
 
                 {/* Animated diagonal lines */}
                 <div className="absolute inset-0 opacity-10 pointer-events-none">

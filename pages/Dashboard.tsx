@@ -1309,7 +1309,7 @@ const Dashboard: React.FC = () => {
                                     <div className="relative">
                                         <button
                                             onClick={() => setShowDatePicker(!showDatePicker)}
-                                            className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2 min-w-[150px]"
+                                            className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2 min-w-[9.375rem]"
                                             title="Click to pick a date"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1319,7 +1319,7 @@ const Dashboard: React.FC = () => {
                                         </button>
 
                                         {showDatePicker && (
-                                            <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-3 z-10 min-w-[250px]">
+                                            <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-3 z-10 min-w-[15.625rem]">
                                                 <div className="flex items-center gap-2 mb-3">
                                                     <select
                                                         value={selectedDate.getMonth()}
@@ -1516,8 +1516,8 @@ const Dashboard: React.FC = () => {
                                                                         : 'bg-slate-300 dark:bg-slate-600'
                                                                 }`}
                                                                 style={{
-                                                                    top: '20px',
-                                                                    height: 'calc(100% + 12px)' // Extends to next item (space-y-3 = 12px)
+                                                                    top: '1.25rem',
+                                                                    height: 'calc(100% + 0.75rem)' // Extends to next item (space-y-3 = 0.75rem)
                                                                 }}
                                                             />
                                                         )}
@@ -1632,7 +1632,7 @@ const Dashboard: React.FC = () => {
                             </div>
                             <Link to="/academic-calendar" className="text-sm text-primary hover:text-primary-dark">View Calendar →</Link>
                         </div>
-                        <div className="space-y-3 max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
+                        <div className="space-y-3 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
                             {(() => {
                                 if (!calendarData || !calendarData.events) {
                                     return (
@@ -1875,7 +1875,7 @@ const Dashboard: React.FC = () => {
                                         onDragEnd={handleDragEnd}
                                     >
                                         {editingLink?.id === link.id ? (
-                                            <div className="h-full min-h-[110px] p-2.5 rounded-lg border-2 border-primary bg-gradient-to-br from-primary/5 to-secondary/5 space-y-1.5 shadow-lg animate-fadeIn flex flex-col">
+                                            <div className="h-full min-h-[6.875rem] p-2.5 rounded-lg border-2 border-primary bg-gradient-to-br from-primary/5 to-secondary/5 space-y-1.5 shadow-lg animate-fadeIn flex flex-col">
                                                 <input
                                                     type="text"
                                                     value={editingLink.name}
@@ -1903,7 +1903,7 @@ const Dashboard: React.FC = () => {
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 onClick={(e) => isManagingLinks && e.preventDefault()}
-                                                className="h-full min-h-[110px] flex flex-col items-center justify-center p-3 rounded-lg bg-white dark:bg-slate-800/50 hover:bg-gradient-to-br hover:from-primary/5 hover:to-secondary/5 transition-all duration-300 hover:shadow-lg hover:scale-105 border border-transparent hover:border-primary/20 dark:hover:border-secondary/20 backdrop-blur-sm"
+                                                className="h-full min-h-[6.875rem] flex flex-col items-center justify-center p-3 rounded-lg bg-white dark:bg-slate-800/50 hover:bg-gradient-to-br hover:from-primary/5 hover:to-secondary/5 transition-all duration-300 hover:shadow-lg hover:scale-105 border border-transparent hover:border-primary/20 dark:hover:border-secondary/20 backdrop-blur-sm"
                                             >
                                                 <div className={`text-2xl mb-2 ${link.color} group-hover:scale-110 transition-all duration-300 transform group-hover:rotate-6 flex-shrink-0`}>
                                                     {getIconForLink(link)}

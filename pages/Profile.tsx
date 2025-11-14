@@ -422,7 +422,7 @@ const Profile: React.FC = () => {
                     <div className="absolute inset-0 opacity-10">
                         <div className="absolute inset-0" style={{
                             backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-                            backgroundSize: '20px 20px'
+                            backgroundSize: '1.25rem 1.25rem'
                         }}></div>
                     </div>
 

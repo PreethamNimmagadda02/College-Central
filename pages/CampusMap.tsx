@@ -303,7 +303,7 @@ const CampusMap: React.FC = () => {
                 Campus Locations
               </h3>
             </div>
-            <div className="max-h-[500px] overflow-y-auto overflow-x-hidden">
+            <div className="max-h-[50vh] overflow-y-auto overflow-x-hidden">
               {searchedLocations.length > 0 ? (
                 searchedLocations.map(location => (
                   <div
@@ -456,7 +456,7 @@ const CampusMap: React.FC = () => {
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 title="IIT(ISM) Dhanbad Campus Map"
-                className="h-[600px] w-full"
+                className="h-[60vh] w-full"
               ></iframe>
             </div>
           </div>
@@ -472,7 +472,7 @@ const CampusMap: React.FC = () => {
             Saved Places ({savedPlaces.length})
           </h3>
           {savedPlaces.length > 0 ? (
-            <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-slate-100 dark:scrollbar-track-slate-800 pr-2">
+            <div className="space-y-2 max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-slate-100 dark:scrollbar-track-slate-800 pr-2">
               {locations
                 .filter(loc => savedPlaces.includes(loc.id))
                 .map(location => (

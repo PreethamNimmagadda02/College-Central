@@ -1314,7 +1314,7 @@ const Schedule: React.FC = () => {
                 ) : viewMode === 'grid' ? (
                     <div className="p-6">
                         <div className="overflow-x-auto">
-                            <div className="relative grid gap-px min-w-[900px]" style={{ gridTemplateColumns: `auto repeat(${days.length}, minmax(180px, 1fr))`, gridTemplateRows: `auto repeat(${timeSlots.length * 2}, 2.5rem)` }}>
+                            <div className="relative grid gap-px min-w-[56.25rem]" style={{ gridTemplateColumns: `auto repeat(${days.length}, minmax(11.25rem, 1fr))`, gridTemplateRows: `auto repeat(${timeSlots.length * 2}, 2.5rem)` }}>
                                 {/* Corner cell */}
                                 <div className="sticky left-0 top-0 z-20 bg-slate-50 dark:bg-slate-800 rounded-tl-lg"></div>
                                 
@@ -1400,7 +1400,7 @@ const Schedule: React.FC = () => {
 
                                             {/* Subtle pattern for custom tasks */}
                                             {item.isCustomTask && (
-                                                <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px)' }}></div>
+                                                <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 0.625rem, currentColor 0.625rem, currentColor 0.6875rem)' }}></div>
                                             )}
 
                                             <div className="relative z-10 h-full flex flex-col justify-between gap-0.5">
@@ -1542,7 +1542,7 @@ const Schedule: React.FC = () => {
 
                                         {/* Subtle pattern for custom tasks */}
                                         {item.isCustomTask && (
-                                            <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px)' }}></div>
+                                            <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 0.625rem, currentColor 0.625rem, currentColor 0.6875rem)' }}></div>
                                         )}
 
                                         <div className="relative z-10">

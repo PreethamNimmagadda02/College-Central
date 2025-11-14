@@ -217,25 +217,25 @@ const AcademicCalendar: React.FC = () => {
                 <style>
                     body {
                         font-family: Arial, sans-serif;
-                        padding: 40px;
-                        max-width: 800px;
+                        padding: 2.5rem;
+                        max-width: 50rem;
                         margin: 0 auto;
                     }
                     h1 {
                         color: #2563eb;
-                        border-bottom: 3px solid #2563eb;
-                        padding-bottom: 10px;
+                        border-bottom: 0.1875rem solid #2563eb;
+                        padding-bottom: 0.625rem;
                     }
                     .semester-info {
                         background: #f1f5f9;
-                        padding: 15px;
-                        border-radius: 8px;
-                        margin: 20px 0;
+                        padding: 0.9375rem;
+                        border-radius: 0.5rem;
+                        margin: 1.25rem 0;
                     }
                     .event {
-                        padding: 15px;
-                        margin: 10px 0;
-                        border-left: 4px solid #2563eb;
+                        padding: 0.9375rem;
+                        margin: 0.625rem 0;
+                        border-left: 0.25rem solid #2563eb;
                         background: #f8fafc;
                     }
                     .event-date {
@@ -244,14 +244,14 @@ const AcademicCalendar: React.FC = () => {
                     }
                     .event-type {
                         display: inline-block;
-                        padding: 4px 12px;
+                        padding: 0.25rem 0.75rem;
                         background: #dbeafe;
-                        border-radius: 12px;
-                        font-size: 12px;
-                        margin-left: 10px;
+                        border-radius: 0.75rem;
+                        font-size: 0.75rem;
+                        margin-left: 0.625rem;
                     }
                     @media print {
-                        body { padding: 20px; }
+                        body { padding: 1.25rem; }
                         .no-print { display: none; }
                     }
                 </style>
@@ -267,12 +267,12 @@ const AcademicCalendar: React.FC = () => {
                     <div class="event">
                         <span class="event-date">${formatDateWithMonthName(event.date)}${event.endDate ? ' - ' + formatDateWithMonthName(event.endDate) : ''}</span>
                         <span class="event-type">${event.type}</span>
-                        <p style="margin: 8px 0 0 0;">${event.description}</p>
+                        <p style="margin: 0.5rem 0 0 0;">${event.description}</p>
                     </div>
                 `).join('')}
-                <div class="no-print" style="margin-top: 30px; text-align: center;">
-                    <button onclick="window.print()" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">Print/Save as PDF</button>
-                    <button onclick="window.close()" style="padding: 10px 20px; background: #64748b; color: white; border: none; border-radius: 6px; cursor: pointer; margin-left: 10px;">Close</button>
+                <div class="no-print" style="margin-top: 1.875rem; text-align: center;">
+                    <button onclick="window.print()" style="padding: 0.625rem 1.25rem; background: #2563eb; color: white; border: none; border-radius: 0.375rem; cursor: pointer;">Print/Save as PDF</button>
+                    <button onclick="window.close()" style="padding: 0.625rem 1.25rem; background: #64748b; color: white; border: none; border-radius: 0.375rem; cursor: pointer; margin-left: 0.625rem;">Close</button>
                 </div>
             </body>
             </html>
