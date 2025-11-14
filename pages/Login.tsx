@@ -257,7 +257,7 @@ const Login: React.FC = () => {
             </div>
 
             {/* Scroll Indicator - Positioned below content */}
-            <div className="w-full absolute bottom-12 flex justify-center">
+            <div className="w-full absolute bottom-3 flex justify-center">
               <button
                 onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
                 className="flex flex-col items-center gap-2 text-blue-300/60 hover:text-purple-300 transition-colors cursor-pointer animate-bounce"
