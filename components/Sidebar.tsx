@@ -336,6 +336,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                           : 'text-slate-600 hover:bg-gradient-to-r hover:from-slate-100 hover:to-blue-50 dark:text-slate-300 dark:hover:from-slate-800 dark:hover:to-slate-800/70 hover:scale-[1.01] duration-200'
                       }`
                     }
+                    onClick={() => sidebarOpen && setSidebarOpen(false)}
                   >
                     {({ isActive }) => (
                       <>

@@ -669,7 +669,7 @@ const AcademicCalendar: React.FC = () => {
                                                 key={`${month}-${monthIndex}`}
                                                 onClick={() => handleShowEventDetails(event, globalIndex)}
                                                 className={`
-                                                    relative flex group cursor-pointer
+                                                    relative flex flex-col sm:flex-row group cursor-pointer
                                                     bg-gradient-to-br from-white to-slate-50/50
                                                     dark:from-slate-800/50 dark:to-slate-800/30
                                                     hover:from-blue-50 hover:to-purple-50
@@ -678,7 +678,7 @@ const AcademicCalendar: React.FC = () => {
                                                     hover:shadow-xl
                                                     hover:-translate-y-0.5
                                                     active:scale-[0.99]
-                                                    p-4 mb-3 border-2
+                                                    p-3 sm:p-4 mb-3 border-2
                                                     ${isOngoing ? 'border-green-500 dark:border-green-500' :
                                                       isUrgent ? 'border-red-300 dark:border-red-600/50' :
                                                       isUpcoming ? 'border-amber-300 dark:border-amber-600/50' :
@@ -686,58 +686,67 @@ const AcademicCalendar: React.FC = () => {
                                                     hover:border-primary/50 dark:hover:border-primary/50
                                                 `}
                                             >
-                                                <div className="flex-shrink-0 w-36 text-center flex flex-col justify-center relative z-10">
+                                                <div className="flex-shrink-0 w-full sm:w-28 md:w-36 text-center flex flex-row sm:flex-col justify-start sm:justify-center items-center sm:items-stretch gap-3 sm:gap-0 relative z-10 mb-3 sm:mb-0">
                                                     {event.endDate ? (
-                                                        <div className="flex items-center justify-center gap-1.5">
-                                                            <div className="text-center bg-gradient-to-br from-primary/15 to-secondary/15 dark:from-primary/25 dark:to-secondary/25 group-hover:from-primary/30 group-hover:to-secondary/30 rounded-lg p-2.5 shadow transition-all duration-200">
-                                                                <div className="text-2xl font-extrabold text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                                        <div className="flex items-center justify-center gap-1 sm:gap-1.5">
+                                                            <div className="text-center bg-gradient-to-br from-primary/15 to-secondary/15 dark:from-primary/25 dark:to-secondary/25 group-hover:from-primary/30 group-hover:to-secondary/30 rounded-lg p-1.5 sm:p-2.5 shadow transition-all duration-200">
+                                                                <div className="text-lg sm:text-2xl font-extrabold text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
                                                                     {new Date(event.date).getDate()}
                                                                 </div>
-                                                                <div className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">{new Date(event.date).toLocaleString('en-US', { month: 'short' })}</div>
+                                                                <div className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">{new Date(event.date).toLocaleString('en-US', { month: 'short' })}</div>
                                                             </div>
-                                                            <div className="text-primary dark:text-secondary text-lg font-bold px-0.5">→</div>
-                                                            <div className="text-center bg-gradient-to-br from-primary/15 to-secondary/15 dark:from-primary/25 dark:to-secondary/25 group-hover:from-primary/30 group-hover:to-secondary/30 rounded-lg p-2.5 shadow transition-all duration-200">
-                                                                <div className="text-2xl font-extrabold text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                                            <div className="text-primary dark:text-secondary text-sm sm:text-lg font-bold px-0.5">→</div>
+                                                            <div className="text-center bg-gradient-to-br from-primary/15 to-secondary/15 dark:from-primary/25 dark:to-secondary/25 group-hover:from-primary/30 group-hover:to-secondary/30 rounded-lg p-1.5 sm:p-2.5 shadow transition-all duration-200">
+                                                                <div className="text-lg sm:text-2xl font-extrabold text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
                                                                     {new Date(event.endDate).getDate()}
                                                                 </div>
-                                                                <div className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">{new Date(event.endDate).toLocaleString('en-US', { month: 'short' })}</div>
+                                                                <div className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">{new Date(event.endDate).toLocaleString('en-US', { month: 'short' })}</div>
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="bg-gradient-to-br from-primary/15 to-secondary/15 dark:from-primary/25 dark:to-secondary/25 group-hover:from-primary/30 group-hover:to-secondary/30 rounded-xl p-3.5 shadow-md group-hover:shadow-lg transition-all duration-200">
-                                                            <div className="text-4xl font-black text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                                        <div className="bg-gradient-to-br from-primary/15 to-secondary/15 dark:from-primary/25 dark:to-secondary/25 group-hover:from-primary/30 group-hover:to-secondary/30 rounded-xl p-2.5 sm:p-3.5 shadow-md group-hover:shadow-lg transition-all duration-200">
+                                                            <div className="text-2xl sm:text-4xl font-black text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
                                                                 {new Date(event.date).getDate()}
                                                             </div>
-                                                            <div className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5 uppercase tracking-wide">
+                                                            <div className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5 uppercase tracking-wide">
                                                                 {new Date(event.date).toLocaleString('default', { weekday: 'short' })}
                                                             </div>
                                                         </div>
                                                     )}
+                                                    {/* Mobile: Show event description inline with date */}
+                                                    <div className="flex-1 sm:hidden text-left">
+                                                        <p className="font-bold text-slate-900 dark:text-white text-sm leading-tight mb-1">
+                                                            {event.description}
+                                                        </p>
+                                                        <span className={`inline-flex items-center text-[10px] font-bold py-1 px-2 rounded-full ${getEventTypeColor(event.type)}`}>
+                                                            {event.type}
+                                                        </span>
+                                                    </div>
                                                 </div>
 
-                                                <div className="flex-1 pl-6 border-l-4 border-slate-300 dark:border-slate-600 group-hover:border-primary dark:group-hover:border-primary transition-all duration-200 relative z-10">
-                                                    <div className="flex items-start justify-between gap-4">
+                                                <div className="flex-1 pl-0 sm:pl-4 md:pl-6 border-l-0 sm:border-l-4 border-slate-300 dark:border-slate-600 group-hover:border-primary dark:group-hover:border-primary transition-all duration-200 relative z-10">
+                                                    <div className="flex items-start justify-between gap-2 sm:gap-4">
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="flex items-start gap-3 mb-2">
-                                                                <div className="flex-shrink-0">
-                                                                    <span className="text-3xl group-hover:scale-110 transition-transform duration-200 inline-block">
+                                                            <div className="flex items-start gap-2 sm:gap-3 mb-2">
+                                                                <div className="flex-shrink-0 hidden sm:block">
+                                                                    <span className="text-2xl md:text-3xl group-hover:scale-110 transition-transform duration-200 inline-block">
                                                                         {getEventTypeIcon(event)}
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex-1 min-w-0">
-                                                                    <p className="font-bold text-slate-900 dark:text-white text-lg group-hover:text-primary dark:group-hover:text-secondary transition-colors duration-200 leading-snug mb-2">
+                                                                    <p className="hidden sm:block font-bold text-slate-900 dark:text-white text-base md:text-lg group-hover:text-primary dark:group-hover:text-secondary transition-colors duration-200 leading-snug mb-2">
                                                                         {event.description}
                                                                     </p>
-                                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                                        <span className={`inline-flex items-center text-xs font-bold py-1.5 px-3 rounded-full shadow-sm ${getEventTypeColor(event.type)}`}>
+                                                                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                                                        <span className={`hidden sm:inline-flex items-center text-xs font-bold py-1.5 px-3 rounded-full shadow-sm ${getEventTypeColor(event.type)}`}>
                                                                             {event.type}
                                                                         </span>
                                                                         {isOngoing ? (
-                                                                            <span className="inline-flex items-center text-xs font-bold bg-green-500 text-white px-3 py-1.5 rounded-full shadow-md">
+                                                                            <span className="inline-flex items-center text-[10px] sm:text-xs font-bold bg-green-500 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-md">
                                                                                 ✓ ONGOING
                                                                             </span>
                                                                         ) : (
-                                                                            <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-lg ${
+                                                                            <span className={`inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg ${
                                                                                 isUrgent ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
                                                                                 isUpcoming ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
                                                                                 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
@@ -749,16 +758,16 @@ const AcademicCalendar: React.FC = () => {
                                                                             </span>
                                                                         )}
                                                                         {hasReminder && (
-                                                                            <div className="inline-flex items-center gap-1 bg-purple-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-md animate-pulse">
-                                                                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                            <div className="inline-flex items-center gap-1 bg-purple-500 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-md animate-pulse">
+                                                                                <svg className="w-2.5 sm:w-3 h-2.5 sm:h-3" fill="currentColor" viewBox="0 0 24 24">
                                                                                     <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                                                                 </svg>
-                                                                                <span className="text-xs">Reminder</span>
+                                                                                <span className="text-[10px] sm:text-xs hidden xs:inline">Reminder</span>
                                                                             </div>
                                                                         )}
                                                                         {isUrgent && daysUntil >= 0 && (
-                                                                            <span className="inline-flex items-center text-xs font-bold bg-red-500 text-white px-2.5 py-1 rounded-full shadow-md">
-                                                                                ⚠️ URGENT
+                                                                            <span className="inline-flex items-center text-[10px] sm:text-xs font-bold bg-red-500 text-white px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-md">
+                                                                                ⚠️ <span className="hidden xs:inline ml-1">URGENT</span>
                                                                             </span>
                                                                         )}
                                                                     </div>
@@ -766,10 +775,10 @@ const AcademicCalendar: React.FC = () => {
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex-shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-4 group-hover:translate-x-0">
-                                                            <div className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                                                                <span className="text-xs font-bold whitespace-nowrap">Details</span>
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <div className="flex-shrink-0 flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 transform sm:translate-x-4 sm:group-hover:translate-x-0">
+                                                            <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                                                                <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">Details</span>
+                                                                <svg className="w-3 sm:w-4 h-3 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                                                                 </svg>
                                                             </div>
@@ -912,22 +921,113 @@ const AcademicCalendar: React.FC = () => {
                 )}
 
                 {viewMode === 'list' && (
-                    <div className="p-6">
-                        <h2 className="text-xl font-semibold mb-6 flex items-center">
-                            <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="p-3 sm:p-6">
+                        <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 flex items-center">
+                            <svg className="w-4 sm:w-5 h-4 sm:h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                             List View
                         </h2>
-                        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                        {/* Mobile Card View */}
+                        <div className="block md:hidden space-y-3">
+                            {filteredEvents.map((event: CalendarEvent, index: number) => {
+                                const daysUntil = getDaysUntil(event.date);
+                                const isPast = getDaysUntil(event.endDate || event.date) < 0;
+                                const eventEndDate = new Date(event.endDate || event.date);
+                                eventEndDate.setHours(0, 0, 0, 0);
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const eventStartDate = new Date(event.date);
+                                eventStartDate.setHours(0, 0, 0, 0);
+                                const isOngoing = eventStartDate < today && eventEndDate >= today;
+                                const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !isOngoing;
+                                const isUpcoming = daysUntil > 3 && daysUntil <= 7;
+                                const hasReminder = reminderPreferences.includes(getEventKey(event));
+
+                                return (
+                                    <div
+                                        key={index}
+                                        onClick={() => handleShowEventDetails(event, index)}
+                                        className={`
+                                            bg-white dark:bg-slate-900/30 rounded-xl p-4 border-2 cursor-pointer
+                                            hover:shadow-lg transition-all duration-200 active:scale-[0.98]
+                                            ${isOngoing ? 'border-green-500 bg-green-50/30 dark:bg-green-900/10' :
+                                              isUrgent ? 'border-red-300 bg-red-50/30 dark:bg-red-900/10' :
+                                              isUpcoming ? 'border-amber-300 bg-amber-50/30 dark:bg-amber-900/10' :
+                                              'border-slate-200 dark:border-slate-700'}
+                                        `}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex-shrink-0 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg p-2 text-center min-w-[3.5rem]">
+                                                <p className="text-xl font-black text-slate-800 dark:text-white">
+                                                    {new Date(event.date).getDate()}
+                                                </p>
+                                                <p className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">
+                                                    {new Date(event.date).toLocaleDateString('en-US', { month: 'short' })}
+                                                </p>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-xl">{getEventTypeIcon(event)}</span>
+                                                    <p className="font-bold text-slate-900 dark:text-white text-sm line-clamp-2">
+                                                        {event.description}
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                                    <span className={`inline-flex text-[10px] font-bold py-1 px-2 rounded-full ${getEventTypeColor(event.type)}`}>
+                                                        {event.type}
+                                                    </span>
+                                                    {isOngoing ? (
+                                                        <span className="inline-flex items-center text-[10px] font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                                            <span className="animate-pulse mr-1">●</span>
+                                                            Ongoing
+                                                        </span>
+                                                    ) : isPast ? (
+                                                        <span className="inline-flex items-center text-[10px] font-semibold text-slate-500">
+                                                            ✓ Completed
+                                                        </span>
+                                                    ) : isUrgent ? (
+                                                        <span className="inline-flex items-center text-[10px] font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                                                            ⚠️ {daysUntil}d
+                                                        </span>
+                                                    ) : isUpcoming ? (
+                                                        <span className="inline-flex items-center text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
+                                                            📅 {daysUntil}d
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center text-[10px] font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                                                            In {daysUntil}d
+                                                        </span>
+                                                    )}
+                                                    {hasReminder && (
+                                                        <div className="inline-flex items-center gap-1 bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-pulse">
+                                                            <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24">
+                                                                <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex-shrink-0">
+                                                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
                             <table className="w-full">
                                 <thead className="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/50">
                                     <tr className="border-b-2 border-slate-300 dark:border-slate-600">
-                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Date</th>
-                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Event</th>
-                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Type</th>
-                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Status</th>
-                                        <th className="text-left py-4 px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Action</th>
+                                        <th className="text-left py-4 px-4 lg:px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Date</th>
+                                        <th className="text-left py-4 px-4 lg:px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Event</th>
+                                        <th className="text-left py-4 px-4 lg:px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider hidden lg:table-cell">Type</th>
+                                        <th className="text-left py-4 px-4 lg:px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider">Status</th>
+                                        <th className="text-left py-4 px-4 lg:px-6 font-bold text-slate-800 dark:text-slate-200 uppercase text-xs tracking-wider hidden lg:table-cell">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
@@ -964,20 +1064,20 @@ const AcademicCalendar: React.FC = () => {
                                                       'border-l-4 border-l-transparent hover:border-l-primary'}
                                                 `}
                                             >
-                                                <td className="py-5 px-6">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:from-primary/20 group-hover:to-secondary/20 rounded-lg p-2 transition-colors">
+                                                <td className="py-4 lg:py-5 px-4 lg:px-6">
+                                                    <div className="flex items-center gap-2 lg:gap-3">
+                                                        <div className="bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:from-primary/20 group-hover:to-secondary/20 rounded-lg p-1.5 lg:p-2 transition-colors">
                                                             <div className="text-center">
-                                                                <p className="text-2xl font-black text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                                                <p className="text-lg lg:text-2xl font-black text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
                                                                     {new Date(event.date).getDate()}
                                                                 </p>
-                                                                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">
+                                                                <p className="text-[10px] lg:text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">
                                                                     {new Date(event.date).toLocaleDateString('en-US', { month: 'short' })}
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="font-bold text-slate-700 dark:text-slate-300">
+                                                        <div className="hidden lg:block">
+                                                            <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">
                                                                 {formatDateRange(event.date, event.endDate)}
                                                             </p>
                                                             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
@@ -986,59 +1086,66 @@ const AcademicCalendar: React.FC = () => {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-5 px-6">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-3xl group-hover:scale-125 transition-transform duration-300">
+                                                <td className="py-4 lg:py-5 px-4 lg:px-6">
+                                                    <div className="flex items-center gap-2 lg:gap-3">
+                                                        <span className="text-2xl lg:text-3xl group-hover:scale-125 transition-transform duration-300">
                                                             {getEventTypeIcon(event)}
                                                         </span>
-                                                        <div className="flex-1">
-                                                            <p className="font-bold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors line-clamp-1">
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-bold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors line-clamp-2 text-sm lg:text-base">
                                                                 {event.description}
                                                             </p>
+                                                            {/* Show type badge inline on medium screens */}
+                                                            <span className={`lg:hidden inline-flex text-[10px] font-bold py-1 px-2 rounded-full mt-1 ${getEventTypeColor(event.type)}`}>
+                                                                {event.type}
+                                                            </span>
                                                             {hasReminder && (
-                                                                <div className="inline-flex items-center gap-1 mt-1 bg-purple-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
-                                                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                                                <div className="inline-flex items-center gap-1 mt-1 ml-1 lg:ml-0 bg-purple-500 text-white text-[10px] lg:text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                                                                    <svg className="w-2.5 lg:w-3 h-2.5 lg:h-3" fill="currentColor" viewBox="0 0 24 24">
                                                                         <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                                                     </svg>
-                                                                    <span>Reminder</span>
+                                                                    <span className="hidden lg:inline">Reminder</span>
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-5 px-6">
+                                                <td className="py-4 lg:py-5 px-4 lg:px-6 hidden lg:table-cell">
                                                     <span className={`inline-flex text-xs font-bold py-2 px-3 rounded-full shadow-sm group-hover:shadow-md transition-all ${getEventTypeColor(event.type)}`}>
                                                         {event.type}
                                                     </span>
                                                 </td>
-                                                <td className="py-5 px-6">
+                                                <td className="py-4 lg:py-5 px-4 lg:px-6">
                                                     {isOngoing ? (
-                                                        <span className="inline-flex items-center text-sm font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-3 py-1.5 rounded-full">
-                                                            <span className="animate-pulse mr-1.5">●</span>
-                                                            Ongoing
+                                                        <span className="inline-flex items-center text-xs lg:text-sm font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 lg:px-3 py-1 lg:py-1.5 rounded-full">
+                                                            <span className="animate-pulse mr-1 lg:mr-1.5">●</span>
+                                                            <span className="hidden lg:inline">Ongoing</span>
+                                                            <span className="lg:hidden">On</span>
                                                         </span>
                                                     ) : isPast ? (
-                                                        <span className="inline-flex items-center text-sm font-semibold text-slate-500 dark:text-slate-400">
-                                                            <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <span className="inline-flex items-center text-xs lg:text-sm font-semibold text-slate-500 dark:text-slate-400">
+                                                            <svg className="w-3 lg:w-4 h-3 lg:h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                             </svg>
-                                                            Completed
+                                                            <span className="hidden lg:inline">Completed</span>
+                                                            <span className="lg:hidden">Done</span>
                                                         </span>
                                                     ) : isUrgent ? (
-                                                        <span className="inline-flex items-center text-sm font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-3 py-1.5 rounded-full">
-                                                            ⚠️ {daysUntil} day{daysUntil === 1 ? '' : 's'}
+                                                        <span className="inline-flex items-center text-xs lg:text-sm font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 lg:px-3 py-1 lg:py-1.5 rounded-full">
+                                                            ⚠️ {daysUntil}<span className="hidden lg:inline"> day{daysUntil === 1 ? '' : 's'}</span><span className="lg:hidden">d</span>
                                                         </span>
                                                     ) : isUpcoming ? (
-                                                        <span className="inline-flex items-center text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-3 py-1.5 rounded-full">
-                                                            📅 {daysUntil} days
+                                                        <span className="inline-flex items-center text-xs lg:text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2 lg:px-3 py-1 lg:py-1.5 rounded-full">
+                                                            📅 {daysUntil}<span className="hidden lg:inline"> days</span><span className="lg:hidden">d</span>
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
-                                                            In {daysUntil} days
+                                                        <span className="inline-flex items-center text-xs lg:text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 lg:px-3 py-1 lg:py-1.5 rounded-full">
+                                                            <span className="hidden lg:inline">In {daysUntil} days</span>
+                                                            <span className="lg:hidden">{daysUntil}d</span>
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="py-5 px-6">
+                                                <td className="py-4 lg:py-5 px-4 lg:px-6 hidden lg:table-cell">
                                                     <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
                                                         <button
                                                             onClick={(e: React.MouseEvent) => {
