@@ -5,7 +5,7 @@ import { db } from '../firebaseConfig';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/storage';
 import { logActivity } from '../services/activityService';
-import { getGoogleGenAI } from '../utils/lazyImports';
+import { getGoogleGenAI, getOpenAI } from '../utils/lazyImports';
 
 /**
  * GradesContext handles academic grade data with intelligent retake logic:
@@ -162,69 +162,147 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         const base64Data = await fileToBase64(selectedFile);
 
-        // Lazy load Google GenAI
-        const { GoogleGenAI, Type } = await getGoogleGenAI();
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+        let result: Omit<GradesData, 'gradeSheetUrl' | 'gradeSheetFileName'>;
+        let aiModel = 'Gemini';
 
-        const schema = {
-          type: Type.OBJECT,
-          properties: {
-            cgpa: { type: Type.NUMBER, description: 'The overall CGPA as shown on the grade sheet.' },
-            totalCredits: { type: Type.NUMBER, description: 'The total number of credits (will be recalculated based on latest passed courses).' },
-            semesters: {
-              type: Type.ARRAY,
-              description: 'An array of semesters, from latest to oldest.',
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  semester: { type: Type.NUMBER, description: 'The semester number (e.g., 4).' },
-                  sessionYear: { type: Type.STRING, description: 'The academic session year for the semester (e.g., "2023-2024").' },
-                  sessionType: { type: Type.STRING, description: 'The type of the semester session (e.g., "Monsoon", "Winter", "Summer").' },
-                  sgpa: { type: Type.NUMBER, description: 'The SGPA for this semester.' },
-                  grades: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        subjectCode: { type: Type.STRING, description: 'The course code (e.g., CSL201).' },
-                        subjectName: { type: Type.STRING, description: 'The full name of the course.' },
-                        credits: { type: Type.NUMBER, description: 'The number of credits for the course.' },
-                        grade: { type: Type.STRING, description: 'The letter grade received (e.g., A, B, EX).' },
+        // Try Gemini first
+        try {
+            // Lazy load Google GenAI
+            const { GoogleGenAI, Type } = await getGoogleGenAI();
+            const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+
+            const schema = {
+              type: Type.OBJECT,
+              properties: {
+                cgpa: { type: Type.NUMBER, description: 'The overall CGPA as shown on the grade sheet.' },
+                totalCredits: { type: Type.NUMBER, description: 'The total number of credits (will be recalculated based on latest passed courses).' },
+                semesters: {
+                  type: Type.ARRAY,
+                  description: 'An array of semesters, from latest to oldest.',
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      semester: { type: Type.NUMBER, description: 'The semester number (e.g., 4).' },
+                      sessionYear: { type: Type.STRING, description: 'The academic session year for the semester (e.g., "2023-2024").' },
+                      sessionType: { type: Type.STRING, description: 'The type of the semester session (e.g., "Monsoon", "Winter", "Summer").' },
+                      sgpa: { type: Type.NUMBER, description: 'The SGPA for this semester.' },
+                      grades: {
+                        type: Type.ARRAY,
+                        items: {
+                          type: Type.OBJECT,
+                          properties: {
+                            subjectCode: { type: Type.STRING, description: 'The course code (e.g., CSL201).' },
+                            subjectName: { type: Type.STRING, description: 'The full name of the course.' },
+                            credits: { type: Type.NUMBER, description: 'The number of credits for the course.' },
+                            grade: { type: Type.STRING, description: 'The letter grade received (e.g., A, B, EX).' },
+                          },
+                          required: ['subjectCode', 'subjectName', 'credits', 'grade'],
+                        },
                       },
-                      required: ['subjectCode', 'subjectName', 'credits', 'grade'],
                     },
+                    required: ['semester', 'sessionYear', 'sessionType', 'sgpa', 'grades'],
                   },
                 },
-                required: ['semester', 'sessionYear', 'sessionType', 'sgpa', 'grades'],
               },
-            },
-          },
-          required: ['cgpa', 'totalCredits', 'semesters'],
-        };
+              required: ['cgpa', 'totalCredits', 'semesters'],
+            };
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: {
-                parts: [
-                    { text: "Please analyze this document (image or PDF) of a student's grade sheet. Extract the academic performance data and format it according to the provided JSON schema. The data should include the overall CGPA as shown on the grade sheet, and a list of all semesters, starting from the most recent one. For each semester, provide the semester number, the academic session year (e.g., '2023-2024'), the session type (Monsoon, Winter, or Summer), the SGPA, and a list of all subjects with their code, name, credits, and the grade obtained. IMPORTANT: Include ALL course instances, including retakes - if a student took the same course multiple times, include each instance in its respective semester. Ensure all fields in the schema are populated accurately." },
-                    { inlineData: { mimeType: selectedFile.type, data: base64Data } }
-                ]
-            },
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: schema,
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: {
+                    parts: [
+                        { text: "Please analyze this document (image or PDF) of a student's grade sheet. Extract the academic performance data and format it according to the provided JSON schema. The data should include the overall CGPA as shown on the grade sheet, and a list of all semesters, starting from the most recent one. For each semester, provide the semester number, the academic session year (e.g., '2023-2024'), the session type (Monsoon, Winter, or Summer), the SGPA, and a list of all subjects with their code, name, credits, and the grade obtained. IMPORTANT: Include ALL course instances, including retakes - if a student took the same course multiple times, include each instance in its respective semester. Ensure all fields in the schema are populated accurately." },
+                        { inlineData: { mimeType: selectedFile.type, data: base64Data } }
+                    ]
+                },
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema,
+                }
+            });
+
+            interface AIResponse {
+                text?: string | (() => string);
             }
-        });
+            const rawText = (response as AIResponse)?.text;
+            const text = typeof rawText === 'string' ? rawText : (typeof rawText === 'function' ? rawText() : '');
+            if (!text) {
+                throw new Error('AI response was empty or invalid.');
+            }
+            result = JSON.parse(text.trim());
 
-        interface AIResponse {
-            text?: string | (() => string);
+        } catch (geminiError) {
+            console.warn('Gemini API failed, falling back to OpenAI:', geminiError);
+
+            // Fallback to OpenAI
+            if (!import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY === 'your_openai_api_key_here') {
+                throw new Error('OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY to your .env file.');
+            }
+
+            aiModel = 'ChatGPT';
+            const OpenAI = await getOpenAI();
+            const openai = new OpenAI({
+                apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+                dangerouslyAllowBrowser: true // Required for client-side usage
+            });
+
+            const systemPrompt = `You are an expert at analyzing academic grade sheets. Extract data from the provided image and return ONLY valid JSON matching this exact structure:
+{
+  "cgpa": number (overall CGPA as shown on grade sheet),
+  "totalCredits": number (total credits, will be recalculated),
+  "semesters": [
+    {
+      "semester": number (e.g., 4),
+      "sessionYear": string (e.g., "2023-2024"),
+      "sessionType": string ("Monsoon", "Winter", or "Summer"),
+      "sgpa": number,
+      "grades": [
+        {
+          "subjectCode": string (e.g., "CSL201"),
+          "subjectName": string,
+          "credits": number,
+          "grade": string (letter grade like "A", "B", "EX")
         }
-        const rawText = (response as AIResponse)?.text;
-        const text = typeof rawText === 'string' ? rawText : (typeof rawText === 'function' ? rawText() : '');
-        if (!text) {
-            throw new Error('AI response was empty or invalid.');
+      ]
+    }
+  ]
+}
+
+IMPORTANT: Include ALL course instances including retakes. If a student took the same course multiple times, include each instance in its respective semester. Return ONLY the JSON, no markdown or additional text.`;
+
+            const response = await openai.chat.completions.create({
+                model: 'gpt-4o', // gpt-4o has vision capabilities
+                messages: [
+                    {
+                        role: 'system',
+                        content: systemPrompt
+                    },
+                    {
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'text',
+                                text: 'Please analyze this grade sheet image and extract the data according to the JSON schema provided.'
+                            },
+                            {
+                                type: 'image_url',
+                                image_url: {
+                                    url: `data:${selectedFile.type};base64,${base64Data}`
+                                }
+                            }
+                        ]
+                    }
+                ],
+                response_format: { type: 'json_object' },
+                max_tokens: 4096
+            });
+
+            const responseText = response.choices[0]?.message?.content;
+            if (!responseText) {
+                throw new Error('OpenAI response was empty or invalid.');
+            }
+            result = JSON.parse(responseText.trim());
         }
-        const result = JSON.parse(text.trim()) as { semesters: Array<{ semester: number; grades: Array<{ subjectCode: string; credits: number; grade: string }> }>; totalCredits: number; cgpa: number };
 
         // Get latest grades for each course (handles retakes)
         interface CourseData {
@@ -261,14 +339,21 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         // Keep the CGPA as extracted from the grade sheet (don't recalculate)
 
         // Add grade sheet URL and filename to result
-        result.gradeSheetUrl = gradeSheetUrl;
-        result.gradeSheetFileName = selectedFile.name;
+        // Log which AI model was used
+        console.log(`Grade sheet processed successfully using ${aiModel}`);
 
-        await setGradesData(result);
+        // Add grade sheet URL and filename to result
+        const finalResult: GradesData = {
+            ...result,
+            gradeSheetUrl,
+            gradeSheetFileName: selectedFile.name
+        };
+
+        await setGradesData(finalResult);
         await logActivity(currentUser.uid, {
             type: 'grades',
             title: 'Grades Processed',
-            description: 'Successfully processed and updated your grade sheet.',
+            description: `Successfully processed and updated your grade sheet using ${aiModel}.`,
             icon: '📊',
             link: '/grades'
         });
