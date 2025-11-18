@@ -154,18 +154,12 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         // Delete old grade sheet from storage if it exists
         if (gradesData?.gradeSheetUrl) {
-            console.log('[DEBUG] Attempting to delete old grade sheet:', gradesData.gradeSheetUrl);
             try {
                 const oldFileRef = storage.refFromURL(gradesData.gradeSheetUrl);
-                console.log('[DEBUG] Got storage reference, calling delete...');
                 await oldFileRef.delete();
-                console.log('[DEBUG] Old grade sheet deleted successfully!');
             } catch (deleteError) {
-                console.error('[DEBUG] Failed to delete old grade sheet:', deleteError);
                 // Continue even if deletion fails (file might already be deleted)
             }
-        } else {
-            console.log('[DEBUG] No existing grade sheet URL found, skipping deletion');
         }
 
         // Upload new file to Firebase Storage
