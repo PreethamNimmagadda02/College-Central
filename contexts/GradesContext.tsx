@@ -158,7 +158,6 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 const oldFileRef = storage.refFromURL(gradesData.gradeSheetUrl);
                 await oldFileRef.delete();
             } catch (deleteError) {
-                console.warn('Could not delete old grade sheet:', deleteError);
                 // Continue even if deletion fails (file might already be deleted)
             }
         }
@@ -244,8 +243,6 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             result = JSON.parse(text.trim());
 
         } catch (geminiError) {
-            console.warn('Gemini API failed, falling back to OpenAI:', geminiError);
-
             // Check if OpenAI can handle this file type
             const isPDF = selectedFile.type === 'application/pdf';
             if (isPDF) {
@@ -379,7 +376,7 @@ IMPORTANT: Include ALL course instances including retakes. If a student took the
     } finally {
         setIsProcessing(false);
     }
-  }, [selectedFile, currentUser, setGradesData]);
+  }, [selectedFile, currentUser, gradesData, setGradesData, selectFile]);
 
   const resetGradesState = useCallback(async () => {
     if (currentUser) {
