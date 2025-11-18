@@ -94,7 +94,7 @@ export const fetchActivityLogs = async (
     })) as ActivityItem[];
 
     // Get the last doc for next page
-    const newLastDoc = hasMore ? docs[pageSize - 1] : null;
+    const newLastDoc = hasMore ? (docs[pageSize - 1] || null) : null;
 
     return {
       activities,
