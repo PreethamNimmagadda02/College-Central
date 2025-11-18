@@ -135,7 +135,6 @@ export const cleanupOldActivities = async (userId: string): Promise<void> => {
       });
 
       await batch.commit();
-      console.log(`Cleaned up ${activitiesToDelete.length} old activities for user ${userId}`);
     }
   } catch (error) {
     console.error('Error cleaning up old activities:', error);

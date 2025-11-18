@@ -150,8 +150,20 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setError(null);
 
     try {
-        // Upload file to Firebase Storage first
         const storage = firebase.storage();
+
+        // Delete old grade sheet from storage if it exists
+        if (gradesData?.gradeSheetUrl) {
+            try {
+                const oldFileRef = storage.refFromURL(gradesData.gradeSheetUrl);
+                await oldFileRef.delete();
+            } catch (deleteError) {
+                console.warn('Could not delete old grade sheet:', deleteError);
+                // Continue even if deletion fails (file might already be deleted)
+            }
+        }
+
+        // Upload new file to Firebase Storage
         const timestamp = Date.now();
         const fileExtension = selectedFile.name.split('.').pop();
         const storagePath = `gradeSheets/${currentUser.uid}/${timestamp}.${fileExtension}`;
@@ -234,9 +246,15 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         } catch (geminiError) {
             console.warn('Gemini API failed, falling back to OpenAI:', geminiError);
 
-            // Fallback to OpenAI
+            // Check if OpenAI can handle this file type
+            const isPDF = selectedFile.type === 'application/pdf';
+            if (isPDF) {
+                throw new Error('Gemini API is currently unavailable and OpenAI does not support PDF files. Please try again with an image file (PNG, JPG) or wait a few minutes for Gemini to become available.');
+            }
+
+            // Fallback to OpenAI (images only)
             if (!import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY === 'your_openai_api_key_here') {
-                throw new Error('OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY to your .env file.');
+                throw new Error('OpenAI remove aigured. Please add VITE_OPENAI_API_KEY to your .env file.');
             }
 
             aiModel = 'ChatGPT';
@@ -337,10 +355,6 @@ IMPORTANT: Include ALL course instances including retakes. If a student took the
 
         result.totalCredits = totalPassedCredits;
         // Keep the CGPA as extracted from the grade sheet (don't recalculate)
-
-        // Add grade sheet URL and filename to result
-        // Log which AI model was used
-        console.log(`Grade sheet processed successfully using ${aiModel}`);
 
         // Add grade sheet URL and filename to result
         const finalResult: GradesData = {

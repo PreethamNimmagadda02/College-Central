@@ -158,7 +158,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
 
         fileToUpload = await imageCompression(file, options);
-        console.log(`Image compressed from ${(file.size / 1024 / 1024).toFixed(2)}MB to ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`);
       }
     } catch (compressionError) {
       console.warn('Image compression failed, uploading original:', compressionError);

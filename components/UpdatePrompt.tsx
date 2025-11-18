@@ -34,7 +34,6 @@ const UpdatePrompt: React.FC = () => {
         // Listen for messages from service worker
         const messageHandler = (event: MessageEvent) => {
             if (event.data && event.data.type === 'SW_UPDATED') {
-                console.log('Service worker updated to version:', event.data.version);
                 setShowPrompt(true);
             }
         };

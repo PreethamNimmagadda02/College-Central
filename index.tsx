@@ -47,7 +47,6 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     // Listen for messages from service worker
     navigator.serviceWorker.addEventListener('message', (event) => {
       if (event.data && event.data.type === 'SW_UPDATED') {
-        console.log('New version available:', event.data.version);
         // Page will reload automatically via controllerchange event
       }
     });
