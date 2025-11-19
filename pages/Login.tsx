@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LogoIcon } from '../components/icons/SidebarIcons';
+import ScrollToTop from '../components/ScrollToTop';
 
 
 
@@ -134,6 +135,7 @@ const Login: React.FC = () => {
 
   return (
     <>
+      <ScrollToTop />
       <style>{`
         @keyframes spin-slow {
           from {
