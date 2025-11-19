@@ -44,7 +44,7 @@ const Layout: React.FC = () => {
       <div className="relative flex-1 flex flex-col pt-16">
         <div className={`flex-1 transition-all duration-300 ease-in-out ${sidebarCollapsed ? (sidebarHovering ? 'lg:pl-64' : 'lg:pl-0') : 'lg:pl-64'}`}>
           <main className="flex-1">
-            <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+            <div className="px-3 sm:px-6 lg:px-8 py-6 sm:py-8 w-full max-w-9xl mx-auto">
               <Outlet />
             </div>
           </main>

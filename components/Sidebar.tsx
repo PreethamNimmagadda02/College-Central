@@ -97,6 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
         setIsHoveringEdge(false);
         onHoverChange?.(false);
       }
+      return undefined;
     }
   }, [sidebarCollapsed, isHoveringEdge, onHoverChange]);
 
@@ -170,7 +171,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
 
       {/* Sidebar backdrop (mobile) */}
       <div
-        className={`fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 lg:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ${
           sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setSidebarOpen(false)}
@@ -193,7 +194,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
           // The global mousemove handler will handle hiding the sidebar
           // when the cursor moves beyond the sidebar boundary
         }}
-        className={`fixed left-0 top-16 bottom-0 z-40 flex flex-col w-64
+        className={`fixed left-0 top-16 bottom-0 z-50 flex flex-col w-64
           bg-gradient-to-b from-white/95 via-white/95 to-slate-50/95
           dark:from-slate-900/95 dark:via-slate-900/95 dark:to-slate-900/90
           backdrop-blur-xl
@@ -202,7 +203,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
           transition-all overflow-visible duration-150 ease-out
           ${
             // Mobile: Always controlled by sidebarOpen
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
           }
           ${
             // Desktop: Controlled by collapse state and hover
@@ -242,7 +243,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                   to={item.path}
                   end={item.path === '/'}
                   className={({ isActive }) =>
-                    `relative group flex items-center gap-3 rounded-xl py-2.5 font-medium transition-all overflow-hidden ${
+                    `relative group flex items-center gap-3 rounded-xl py-3 font-medium transition-all overflow-hidden ${
                       sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'
                     } ${
                       isActive
@@ -287,7 +288,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                 <NavLink
                   to={item.path}
                   className={({ isActive }) =>
-                    `relative group flex items-center gap-3 rounded-xl py-2.5 font-medium transition-all overflow-hidden ${
+                    `relative group flex items-center gap-3 rounded-xl py-3 font-medium transition-all overflow-hidden ${
                       sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'
                     } ${
                       isActive
@@ -328,7 +329,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                   <NavLink
                     to="/profile"
                     className={({ isActive }) =>
-                      `relative group flex items-center gap-3 rounded-xl py-2.5 font-medium transition-all overflow-hidden ${
+                      `relative group flex items-center gap-3 rounded-xl py-3 font-medium transition-all overflow-hidden ${
                         sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'
                       } ${
                         isActive
@@ -356,7 +357,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen, sidebarC
                 <li>
                   <button
                     onClick={handleLogout}
-                    className={`relative group flex items-center gap-3 w-full rounded-xl py-2.5 overflow-hidden
+                    className={`relative group flex items-center gap-3 w-full rounded-xl py-3 overflow-hidden
                       text-red-600 dark:text-red-400 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100/50 dark:hover:from-red-900/20 dark:hover:to-red-900/30
                       font-medium transition-all duration-200 hover:scale-[1.01] hover:shadow-md hover:shadow-red-500/20 ${
                         sidebarCollapsed && !isHoveringEdge ? 'px-3 justify-center' : 'px-3'

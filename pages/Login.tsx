@@ -90,6 +90,7 @@ const Login: React.FC = () => {
       }, 80);
       return () => clearInterval(typingInterval);
     }
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTextIndex, isTyping]);
 
@@ -295,9 +296,9 @@ const Login: React.FC = () => {
                   Built by students, for students
                 </span>
               </div>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white mb-6 leading-tight tracking-tight">
                 Your Complete Campus Companion
-              </h2>
+              </h1>
               <p className="text-lg md:text-xl lg:text-2xl text-white/80 leading-relaxed max-w-3xl mx-auto">
                 College Central is the all-in-one platform designed specifically for IIT (ISM) Dhanbad students.
                 From tracking your academic performance to navigating campus and staying organized, we bring
@@ -527,15 +528,14 @@ const Login: React.FC = () => {
 
               {/* Floating particles effect */}
               <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
-                <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-400/40 rounded-full animate-ping" style={{ animationDelay: '0s', animationDuration: '3s' }}></div>
-                <div className="absolute top-3/4 right-1/4 w-2 h-2 bg-purple-400/40 rounded-full animate-ping" style={{ animationDelay: '1s', animationDuration: '3s' }}></div>
-                <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-pink-400/40 rounded-full animate-ping" style={{ animationDelay: '2s', animationDuration: '3s' }}></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-400/30 dark:bg-purple-600/20 rounded-full blur-[80px] sm:blur-[120px] animate-blob mix-blend-multiply dark:mix-blend-screen filter"></div>
+            <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-400/30 dark:bg-blue-600/20 rounded-full blur-[80px] sm:blur-[120px] animate-blob animation-delay-2000 mix-blend-multiply dark:mix-blend-screen filter"></div>
+            <div className="absolute bottom-[-20%] left-[20%] w-[40%] h-[40%] bg-pink-400/30 dark:bg-pink-600/20 rounded-full blur-[80px] sm:blur-[120px] animate-blob animation-delay-4000 mix-blend-multiply dark:mix-blend-screen filter"></div>
               </div>
 
               <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 overflow-hidden transform transition-all duration-500 group-hover:shadow-purple-500/30 group-hover:border-white/30 group-hover:bg-white/15">
                 {/* Animated orbs inside card - more dynamic */}
                 <div className="absolute -top-[8vh] -left-[8vw] w-[16vw] h-[16vw] min-w-[10rem] min-h-[10rem] max-w-[16rem] max-h-[16rem] bg-gradient-to-br from-blue-400/10 to-cyan-400/10 rounded-full blur-3xl animate-pulse transition-all duration-700 group-hover:scale-110"></div>
-                <div className="absolute -bottom-[8vh] -right-[8vw] w-[16vw] h-[16vw] min-w-[10rem] min-h-[10rem] max-w-[16rem] max-h-[16rem] bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-3xl animate-pulse animation-delay-300 transition-all duration-700 group-hover:scale-110"></div>
 
                 {/* Animated diagonal lines */}
                 <div className="absolute inset-0 opacity-10 pointer-events-none">

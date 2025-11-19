@@ -76,7 +76,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-blue-500/5 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-blue-500/10 pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent pointer-events-none"></div>
 
-      <div className="px-4 sm:px-6 lg:px-8 relative">
+      <div className="px-3 sm:px-6 lg:px-8 relative">
         <div className="flex items-center justify-between h-16">
           {/* Header: Left side */}
           <div className="flex items-center gap-4">
