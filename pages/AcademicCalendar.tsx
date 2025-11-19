@@ -27,7 +27,7 @@ const getEventTypeIcon = (event: CalendarEvent): string => {
         if (desc.includes('gandhi')) return '🕊️';
         return '🎉';
     }
-
+ 
     // Check description for specific keywords
     if (desc.includes('exam') || desc.includes('test')) return '📝';
     if (desc.includes('registration') || desc.includes('enroll')) return '📋';
