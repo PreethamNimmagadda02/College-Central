@@ -11,8 +11,8 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
-  // Skip waiting to activate immediately
-  self.skipWaiting();
+  // Skip waiting to activate immediately - REMOVED to allow user control
+  // self.skipWaiting();
 
   event.waitUntil(
     caches.open(STATIC_CACHE)

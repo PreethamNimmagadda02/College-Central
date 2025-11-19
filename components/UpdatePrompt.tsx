@@ -53,14 +53,49 @@ const UpdatePrompt: React.FC = () => {
         };
     }, []);
 
+    // Handle controller change (when new SW takes over)
+    useEffect(() => {
+        if (!('serviceWorker' in navigator)) return;
+
+        const handleControllerChange = () => {
+            // New service worker has taken control, reload to use new version
+            window.location.reload();
+        };
+
+        navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+
+        return () => {
+            navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+        };
+    }, []);
+
     const handleUpdate = () => {
-        if (waitingWorker) {
-            // Tell the waiting service worker to skip waiting
-            waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+        // Try to use the state worker, or fetch fresh from registration
+        const workerToActivate = waitingWorker;
+
+        if (workerToActivate) {
+            console.log('Sending SKIP_WAITING to waiting worker');
+            workerToActivate.postMessage({ type: 'SKIP_WAITING' });
+        } else {
+            // Fallback: try to find waiting worker from registration
+            navigator.serviceWorker.ready.then(registration => {
+                if (registration.waiting) {
+                    console.log('Found waiting worker from registration, sending SKIP_WAITING');
+                    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                } else {
+                    // If no waiting worker, just reload
+                    console.log('No waiting worker found, reloading page');
+                    window.location.reload();
+                }
+            });
         }
 
-        // Reload the page to get the new version
-        window.location.reload();
+        // Fallback: Reload after a short delay if controllerchange doesn't fire
+        // This handles cases where the SW activates but the event is missed or delayed
+        setTimeout(() => {
+            console.log('Fallback reload triggered');
+            window.location.reload();
+        }, 1000);
     };
 
     const handleDismiss = () => {
