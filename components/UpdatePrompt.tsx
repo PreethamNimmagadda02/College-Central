@@ -74,17 +74,14 @@ const UpdatePrompt: React.FC = () => {
         const workerToActivate = waitingWorker;
 
         if (workerToActivate) {
-            console.log('Sending SKIP_WAITING to waiting worker');
             workerToActivate.postMessage({ type: 'SKIP_WAITING' });
         } else {
             // Fallback: try to find waiting worker from registration
             navigator.serviceWorker.ready.then(registration => {
                 if (registration.waiting) {
-                    console.log('Found waiting worker from registration, sending SKIP_WAITING');
                     registration.waiting.postMessage({ type: 'SKIP_WAITING' });
                 } else {
                     // If no waiting worker, just reload
-                    console.log('No waiting worker found, reloading page');
                     window.location.reload();
                 }
             });
@@ -93,7 +90,6 @@ const UpdatePrompt: React.FC = () => {
         // Fallback: Reload after a short delay if controllerchange doesn't fire
         // This handles cases where the SW activates but the event is missed or delayed
         setTimeout(() => {
-            console.log('Fallback reload triggered');
             window.location.reload();
         }, 1000);
     };
