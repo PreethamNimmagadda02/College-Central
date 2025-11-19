@@ -1,4 +1,4 @@
-import { motion, useInView, useSpring, useTransform, AnimatePresence } from 'framer-motion';
+import { motion, useInView, useSpring, useTransform } from 'framer-motion';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useGrades, GradesData } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
@@ -65,13 +65,7 @@ const AnimatedInteger: React.FC<{ value: number; duration?: number; className?: 
     return <span ref={ref} className={className}>{displayValue}</span>;
 };
 
-// Pulsing indicator for live/active data
-const PulseIndicator: React.FC<{ color?: string }> = ({ color = 'bg-green-500' }) => (
-    <span className="relative flex h-2 w-2">
-        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${color} opacity-75`}></span>
-        <span className={`relative inline-flex rounded-full h-2 w-2 ${color}`}></span>
-    </span>
-);
+
 
 // Progress ring component for circular metrics
 const ProgressRing: React.FC<{
@@ -590,78 +584,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
         };
     }, [gradesData, getLatestGrades]);
 
-    // Performance Insights and Recommendations
-    const insights = useMemo(() => {
-        const recommendations: { type: 'success' | 'warning' | 'info' | 'danger', title: string, message: string }[] = [];
 
-        // Consistency insights
-        if (advancedMetrics.consistencyScore >= 90) {
-            recommendations.push({
-                type: 'success',
-                title: 'Excellent Consistency',
-                message: 'Your performance is remarkably consistent across semesters. This reflects strong time management and study habits.'
-            });
-        } else if (advancedMetrics.consistencyScore < 60) {
-            recommendations.push({
-                type: 'warning',
-                title: 'Inconsistent Performance',
-                message: 'Your SGPA varies significantly between semesters. Consider establishing consistent study routines and time management strategies.'
-            });
-        }
-
-        // Trajectory insights
-        if (advancedMetrics.trajectoryStatus === 'Improving') {
-            recommendations.push({
-                type: 'success',
-                title: 'Upward Trajectory',
-                message: `Great progress! Your SGPA is improving by approximately ${(advancedMetrics.slope * 100).toFixed(1)}% per semester.`
-            });
-        } else if (advancedMetrics.trajectoryStatus === 'Declining') {
-            recommendations.push({
-                type: 'danger',
-                title: 'Performance Decline',
-                message: 'Your recent semesters show declining performance. Consider seeking academic support or adjusting your course load.'
-            });
-        }
-
-        // High-credit performance
-        if (advancedMetrics.highCreditAvg < gradesData.cgpa - 0.5) {
-            recommendations.push({
-                type: 'warning',
-                title: 'High-Credit Course Concern',
-                message: 'You perform lower in high-credit courses. These heavily impact your CGPA - consider focusing more attention on them.'
-            });
-        }
-
-        // At-risk courses
-        if (advancedMetrics.atRiskCourses.length > 0) {
-            recommendations.push({
-                type: 'danger',
-                title: `${advancedMetrics.atRiskCourses.length} At-Risk Course(s)`,
-                message: `You have ${advancedMetrics.failedCourses.length} failed and ${advancedMetrics.atRiskCourses.length - advancedMetrics.failedCourses.length} D-grade courses. Consider retaking these to improve your CGPA.`
-            });
-        }
-
-        // Excellence rate
-        if (advancedMetrics.excellenceRate >= 50) {
-            recommendations.push({
-                type: 'success',
-                title: 'High Excellence Rate',
-                message: `${advancedMetrics.excellenceRate.toFixed(0)}% of your courses have A or A+ grades. You're performing at an exceptional level!`
-            });
-        }
-
-        // Credit efficiency
-        if (advancedMetrics.creditEfficiency >= 8.5) {
-            recommendations.push({
-                type: 'success',
-                title: 'Excellent Credit Efficiency',
-                message: `Your credit efficiency of ${advancedMetrics.creditEfficiency.toFixed(2)} is outstanding, meaning you're maximizing quality points per credit earned.`
-            });
-        }
-
-        return recommendations;
-    }, [advancedMetrics, gradesData]);
 
     // Calculate grade distribution with courses (using latest grades only)
     const gradeDistribution = useMemo(() => {
