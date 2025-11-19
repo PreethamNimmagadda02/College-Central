@@ -709,7 +709,12 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 courses: data.courses,
                 totalCredits: data.totalCredits
             }))
-            .sort((a, b) => parseFloat(b.average) - parseFloat(a.average));
+            .sort((a, b) => {
+                const avgDiff = parseFloat(b.average) - parseFloat(a.average);
+                if (avgDiff !== 0) return avgDiff;
+                // If averages are equal, sort by totalCredits (higher credits = better rank)
+                return b.totalCredits - a.totalCredits;
+            });
     }, [getLatestGrades]);
 
     const getCategoryCourses = (category: string) => {
