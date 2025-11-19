@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LogoIcon } from '../components/icons/SidebarIcons';
-import { App as CapacitorApp } from '@capacitor/app';
+
 
 
 const Login: React.FC = () => {
@@ -94,24 +94,7 @@ const Login: React.FC = () => {
   }, [currentTextIndex, isTyping]);
 
   // Capacitor back button handler
-  useEffect(() => {
-    const registerBackButton = async () => {
-      const listener = await CapacitorApp.addListener('backButton', () => {
-        CapacitorApp.exitApp();
-      });
-      return listener;
-    };
 
-    const listenerPromise = registerBackButton();
-
-    return () => {
-      const removeListener = async () => {
-        const listener = await listenerPromise;
-        listener.remove();
-      };
-      removeListener();
-    };
-  }, []);
 
 
   const handleGoogleSignIn = async () => {

@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
- import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+ import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { App as CapacitorApp } from '@capacitor/app';
+
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [sidebarHovering, setSidebarHovering] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
+
 
   // Initialize sidebar state from localStorage on mount
   useEffect(() => {
@@ -28,25 +27,7 @@ const Layout: React.FC = () => {
     }
   }, [sidebarCollapsed]);
 
-  useEffect(() => {
-    let listener: { remove: () => void } | null = null;
 
-    const setup = async () => {
-      listener = await CapacitorApp.addListener('backButton', () => {
-        if (location.pathname === '/') {
-          CapacitorApp.exitApp();
-        } else {
-          navigate(-1);
-        }
-      });
-    };
-
-    setup();
-
-    return () => {
-      listener?.remove();
-    };
-  }, [location.pathname, navigate]);
 
   return (
     <div className="bg-light-bg dark:bg-dark-bg min-h-screen flex flex-col">

@@ -14,7 +14,7 @@
 11. [Error Handling & Resilience](#11-error-handling--resilience)
 12. [Deployment Architecture](#12-deployment-architecture)
 13. [Environment Configuration](#13-environment-configuration)
-14. [Mobile Support](#14-mobile-support-capacitor)
+14. [Mobile Support](#14-mobile-support-pwa)
 15. [Security Considerations](#15-security-considerations)
 16. [Scalability Considerations](#16-scalability-considerations)
 17. [Future Enhancements](#17-future-enhancements)
@@ -31,7 +31,7 @@
 ### Key Characteristics
 - **Type**: Single Page Application (SPA)
 - **Target Users**: IIT(ISM) Dhanbad students and faculty
-- **Platform**: Web (Desktop & Mobile), PWA, Native (via Capacitor)
+- **Platform**: Web (Desktop & Mobile), PWA
 - **Architecture**: Client-side rendering with serverless backend
 - **Deployment**: Firebase Hosting with CDN
 
@@ -47,7 +47,7 @@
 | Vite | 5.x | Build Tool & Dev Server |
 | React Router DOM | 7.x | Client-side Routing |
 | Tailwind CSS | 3.x | Styling Framework |
-| Capacitor | Latest | Mobile Native Features |
+
 
 ### 2.2 Backend & Infrastructure
 | Service | Purpose |
@@ -1234,34 +1234,16 @@ const firebaseConfig = {
 
 ---
 
-## 14. Mobile Support (Capacitor)
+## 14. Mobile Support (PWA)
 
-### 14.1 Capacitor Integration
+The application is designed as a Progressive Web App (PWA) to provide a native-like experience on mobile devices without the need for app store distribution.
 
-```typescript
-// Native mobile features
-import { App as CapacitorApp } from '@capacitor/app';
+### 14.1 PWA Features
+- **Installable**: Can be added to the home screen
+- **Responsive**: Adapts to all screen sizes
+- **Offline Capable**: Service worker caches assets
+- **App-like Feel**: Standalone display mode
 
-// Handle Android back button
-useEffect(() => {
-  const registerBackButton = async () => {
-    const listener = await CapacitorApp.addListener('backButton', () => {
-      // Custom back button handling
-      if (window.location.hash === '#/login') {
-        CapacitorApp.exitApp();
-      } else {
-        window.history.back();
-      }
-    });
-    return listener;
-  };
-
-  const listenerPromise = registerBackButton();
-  return () => {
-    listenerPromise.then(listener => listener.remove());
-  };
-}, []);
-```
 
 ### 14.2 PWA Configuration
 
@@ -1372,7 +1354,7 @@ useEffect(() => {
 🔮 **AI Study Assistant**: Gemini-powered study recommendations
 🔮 **Collaborative Features**: Study groups, resource sharing
 🔮 **Analytics Dashboard**: Detailed usage analytics
-🔮 **Mobile Apps**: Native iOS and Android apps via Capacitor
+
 🔮 **Chatbot**: AI-powered campus assistant
 🔮 **Integration**: ERP system integration
 
