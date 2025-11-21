@@ -2249,67 +2249,97 @@ const Grades: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                         {sortedGradesData.semesters.map((semester: Semester) => {
                             const semesterCredits = semester.grades.reduce((total: number, grade: Grade) => total + (grade.credits || 0), 0);
+                            const isSelected = selectedSemester === semester.semester;
                             return (
-                                <div
-                                    key={semester.semester}
-                                    className="group relative overflow-hidden p-4 sm:p-5 bg-slate-50 dark:bg-slate-800 rounded-xl hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-primary hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
-                                    onClick={() => setSelectedSemester(selectedSemester === semester.semester ? null : semester.semester)}
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    <div className="relative z-10">
-                                        <div className="flex items-center justify-between mb-2 sm:mb-3">
-                                            <h4 className="font-semibold text-base sm:text-lg group-hover:text-primary transition-colors">Semester {semester.semester}</h4>
-                                            <svg
-                                                className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-300 group-hover:scale-110 ${
-                                                    selectedSemester === semester.semester ? 'rotate-180' : ''
-                                                }`}
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </div>
-                                        <div className="space-y-1.5 sm:space-y-2">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">SGPA</span>
-                                                <span className="text-xl sm:text-2xl font-bold text-primary group-hover:scale-110 transition-transform origin-right">{semester.sgpa.toFixed(2)}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center text-xs sm:text-sm">
-                                                <span className="text-slate-600 dark:text-slate-400">Credits</span>
-                                                <span className="font-medium group-hover:text-primary transition-colors">{semesterCredits}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center text-xs sm:text-sm">
-                                                <span className="text-slate-600 dark:text-slate-400">Courses</span>
-                                                <span className="font-medium group-hover:text-primary transition-colors">{semester.grades.length}</span>
-                                            </div>
-                                            {/* Mini progress bar for SGPA */}
-                                            <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mt-2">
-                                                <div
-                                                    className={`h-full rounded-full transition-all duration-1000 ${
-                                                        semester.sgpa >= 8.5 ? 'bg-green-500' :
-                                                        semester.sgpa >= 7 ? 'bg-blue-500' :
-                                                        semester.sgpa >= 5 ? 'bg-amber-500' : 'bg-red-500'
+                                <React.Fragment key={semester.semester}>
+                                    <div
+                                        className="group relative overflow-hidden p-4 sm:p-5 bg-slate-50 dark:bg-slate-800 rounded-xl hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-primary hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]"
+                                        onClick={() => setSelectedSemester(isSelected ? null : semester.semester)}
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <div className="relative z-10">
+                                            <div className="flex items-center justify-between mb-2 sm:mb-3">
+                                                <h4 className="font-semibold text-base sm:text-lg group-hover:text-primary transition-colors">Semester {semester.semester}</h4>
+                                                <svg
+                                                    className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-300 group-hover:scale-110 ${
+                                                        isSelected ? 'rotate-180' : ''
                                                     }`}
-                                                    style={{ width: `${(semester.sgpa / 10) * 100}%` }}
-                                                />
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
+                                            <div className="space-y-1.5 sm:space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">SGPA</span>
+                                                    <span className="text-xl sm:text-2xl font-bold text-primary group-hover:scale-110 transition-transform origin-right">{semester.sgpa.toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-xs sm:text-sm">
+                                                    <span className="text-slate-600 dark:text-slate-400">Credits</span>
+                                                    <span className="font-medium group-hover:text-primary transition-colors">{semesterCredits}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-xs sm:text-sm">
+                                                    <span className="text-slate-600 dark:text-slate-400">Courses</span>
+                                                    <span className="font-medium group-hover:text-primary transition-colors">{semester.grades.length}</span>
+                                                </div>
+                                                {/* Mini progress bar for SGPA */}
+                                                <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mt-2">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-1000 ${
+                                                            semester.sgpa >= 8.5 ? 'bg-green-500' :
+                                                            semester.sgpa >= 7 ? 'bg-blue-500' :
+                                                            semester.sgpa >= 5 ? 'bg-amber-500' : 'bg-red-500'
+                                                        }`}
+                                                        style={{ width: `${(semester.sgpa / 10) * 100}%` }}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                    
+                                    {/* Show grades immediately below semester on small screens */}
+                                    {isSelected && (
+                                        <div className="lg:hidden col-span-1 sm:col-span-2 p-4 sm:p-5 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/20">
+                                            <h4 className="font-semibold text-sm sm:text-base mb-3 flex items-center">
+                                                <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center mr-2 text-xs">
+                                                    {semester.semester}
+                                                </span>
+                                                Semester {semester.semester} Grades
+                                            </h4>
+                                            <div className="space-y-2">
+                                                {semester.grades.map((grade: Grade, index: number) => (
+                                                    <div
+                                                        key={index}
+                                                        className="group relative overflow-hidden flex items-center justify-between p-3 bg-white dark:bg-dark-card rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                                        <div className="relative z-10 flex-grow min-w-0">
+                                                            <p className="font-semibold group-hover:text-primary transition-colors text-sm truncate">{grade.subjectCode}</p>
+                                                            <p className="text-xs text-slate-600 dark:text-slate-400 truncate">{grade.subjectName}</p>
+                                                            <p className="text-[10px] text-slate-500 mt-0.5">{grade.credits} Credits</p>
+                                                        </div>
+                                                        <div className={`relative z-10 px-3 py-1.5 rounded-lg font-bold text-sm transition-transform group-hover:scale-110 ${getGradeColor(grade.grade)}`}>
+                                                            {grade.grade}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </React.Fragment>
                             );
                         })}
                     </div>
 
-                    {/* Selected Semester Details */}
+                    {/* Selected Semester Details - Show on large screens below grid */}
                     {selectedSemesterData && (
-                        <div className="mt-4 sm:mt-6 p-4 sm:p-6 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/20">
+                        <div className="hidden lg:block mt-4 sm:mt-6 p-4 sm:p-6 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/20">
                             <h4 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4 flex items-center">
                                 <span className="w-6 h-6 sm:w-8 sm:h-8 bg-primary text-white rounded-full flex items-center justify-center mr-2 sm:mr-3 text-xs sm:text-sm">
                                     {selectedSemesterData.semester}
                                 </span>
-                                <span className="hidden sm:inline">Semester {selectedSemesterData.semester} - Detailed Grades</span>
-                                <span className="sm:hidden">Semester {selectedSemesterData.semester} Details</span>
+                                Semester {selectedSemesterData.semester} - Detailed Grades
                             </h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 {selectedSemesterData.grades.map((grade: Grade, index: number) => (
