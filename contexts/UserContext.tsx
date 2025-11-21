@@ -1,6 +1,7 @@
 // src/contexts/UserContext.tsx
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
+import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { auth, db, storage } from '../firebaseConfig';
 import { User } from '../types';
@@ -28,6 +29,51 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     let unsubscribeFromFirestore: (() => void) | null = null;
 
+    const initializeUser = async (authUser: firebase.User) => {
+      const userDocRef = db.collection('users').doc(authUser.uid);
+
+      try {
+        const created = await db.runTransaction(async (transaction) => {
+          const doc = await transaction.get(userDocRef);
+          if (!doc.exists) {
+            const admissionNumber = authUser.email?.split('@')[0]?.toUpperCase() ?? 'Unknown';
+            const directoryEntry = STUDENT_DIRECTORY.find(student => student.admNo === admissionNumber);
+
+            const newUserProfile: Partial<User> = {
+              id: authUser.uid,
+              name: directoryEntry?.name ?? authUser.displayName ?? 'New Student',
+              admissionNumber: directoryEntry?.admNo ?? admissionNumber,
+              branch: directoryEntry?.branch ?? '',
+              hostel: '',
+              email: authUser.email ?? '',
+              phone: authUser.phoneNumber ?? '',
+              ...(authUser.photoURL && { profilePicture: authUser.photoURL }),
+              // Automatically set NEP for 24JE onwards, CBCS for earlier batches (23JE and below)
+              courseOption: getCourseOptionFromAdmissionNumber(directoryEntry?.admNo ?? admissionNumber),
+              createdAt: firebase.firestore.FieldValue.serverTimestamp() as any,
+            };
+
+            // Use merge: true to prevent overwriting if document somehow exists on server but not in transaction cache
+            transaction.set(userDocRef, newUserProfile, { merge: true });
+            return true;
+          }
+          return false;
+        });
+
+        if (created) {
+          await logActivity(authUser.uid, {
+            type: 'login',
+            title: 'Account Created',
+            description: 'Welcome! Your account has been created.',
+            icon: '🎉',
+          });
+        }
+      } catch (e) {
+        console.error("Error initializing user:", e);
+        // Don't set error state here, as this might just be a network glitch and onSnapshot might still work from cache
+      }
+    };
+
     const unsubscribeFromAuth = auth.onAuthStateChanged(async (authUser) => {
       if (unsubscribeFromFirestore) {
         unsubscribeFromFirestore();
@@ -36,6 +82,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (authUser) {
         setLoading(true);
+
+        // Await initialization to prevent race condition where snapshot listener starts before user document is created
+        await initializeUser(authUser);
+
         const userDocRef = db.collection('users').doc(authUser.uid); // Use compat API
 
         unsubscribeFromFirestore = userDocRef.onSnapshot( // Use compat API
@@ -50,30 +100,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   console.error('Failed to cleanup old activities:', err);
                 });
               } else {
-                const admissionNumber = authUser.email?.split('@')[0]?.toUpperCase() ?? 'Unknown';
-                const directoryEntry = STUDENT_DIRECTORY.find(student => student.admNo === admissionNumber);
-
-                const newUserProfile: Partial<User> = {
-                  id: authUser.uid,
-                  name: directoryEntry?.name ?? authUser.displayName ?? 'New Student',
-                  admissionNumber: directoryEntry?.admNo ?? admissionNumber,
-                  branch: directoryEntry?.branch ?? '',
-                  hostel: '',
-                  email: authUser.email ?? '',
-                  phone: authUser.phoneNumber ?? '',
-                  ...(authUser.photoURL && { profilePicture: authUser.photoURL }),
-                  // Automatically set NEP for 24JE onwards, CBCS for earlier batches (23JE and below)
-                  courseOption: getCourseOptionFromAdmissionNumber(directoryEntry?.admNo ?? admissionNumber),
-                };
-
-                await userDocRef.set(newUserProfile); // Use compat API
-
-                await logActivity(authUser.uid, {
-                  type: 'login',
-                  title: 'Account Created',
-                  description: 'Welcome! Your account has been created.',
-                  icon: '🎉',
-                });
+                // Document doesn't exist (yet).
+                // It might be being created by initializeUser, or we are offline and it's not in cache.
+                // We set user to null, waiting for the creation or sync.
+                setUser(null);
               }
             } catch (e) {
               console.error("Error processing user profile:", e);
@@ -82,7 +112,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             } finally {
               setLoading(false);
             }
-          }, 
+          },
           (err) => { // This block catches listener-specific errors
             console.error("Error with user profile snapshot:", err);
             setError(err);

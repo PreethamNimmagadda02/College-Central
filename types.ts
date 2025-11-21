@@ -17,6 +17,7 @@ export interface User {
   quickLinks?: QuickLink[];
   bio?: string;
   socialLinks?: SocialLinks;
+  createdAt?: any; // Firestore Timestamp
 }
 
 export interface Grade {
