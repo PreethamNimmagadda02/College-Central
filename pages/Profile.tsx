@@ -30,7 +30,7 @@ const formatTimeAgo = (timestamp: { seconds: number; nanoseconds: number } | nul
 
 const Profile: React.FC = () => {
     const { user, updateUser, uploadProfilePicture, loading } = useUser();
-    const { currentUser, logout } = useAuth();
+    const { currentUser } = useAuth();
     const { userFormsData, addRecentDownload } = useForms();
     const { savedPlaces, locations } = useCampusMap();
     const { reminderPreferences, calendarData, getEventKey } = useCalendar();
@@ -338,12 +338,6 @@ const Profile: React.FC = () => {
         const file = e.dataTransfer.files?.[0];
         if (file) {
             await processAndUploadImage(file);
-        }
-    };
-
-    const handleLogout = async () => {
-        if (window.confirm('Are you sure you want to logout?')) {
-            await logout();
         }
     };
 
