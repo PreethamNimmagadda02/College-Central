@@ -258,6 +258,34 @@ const Dashboard: React.FC = () => {
     const { gradesData, loading: gradesLoading } = useGrades();
     const { scheduleData, loading: scheduleLoading } = useSchedule();
     const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey, toggleReminderPreference, updateUserEvent } = useCalendar();
+
+    const upcomingEventsCount = useMemo(() => {
+        if (!calendarData) return 0;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Calculate one week from today
+        const oneWeekFromToday = new Date(today);
+        oneWeekFromToday.setDate(oneWeekFromToday.getDate() + 7);
+
+        // Filter events that are ongoing (started in the past but not yet ended) OR will start within the next week
+        const upcomingEvents = calendarData.events.filter(event => {
+            const eventStartDate = new Date(event.date);
+            const eventEndDate = new Date(event.endDate || event.date);
+            eventStartDate.setHours(0, 0, 0, 0);
+            eventEndDate.setHours(0, 0, 0, 0);
+
+            // Event is ongoing if it has already started but hasn't ended yet
+            const isOngoing = eventStartDate < today && eventEndDate >= today;
+
+            // Event is upcoming if it starts within the next week
+            const isUpcomingThisWeek = eventStartDate >= today && eventStartDate <= oneWeekFromToday;
+
+            return isOngoing || isUpcomingThisWeek;
+        });
+
+        return upcomingEvents.length;
+    }, [calendarData]);
     
     // AI Weather Recommendation State
     const [recommendation, setRecommendation] = useState<string | null>(null);
@@ -1249,15 +1277,15 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
                 </Link>
-                <Link to="/grades" className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
+                <Link to="/academic-calendar" className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-green-100 font-semibold mb-1">Credits Achieved</p>
-                            <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">{gradesData?.totalCredits ?? 'N/A'}</p>
+                            <p className="text-sm text-green-100 font-semibold mb-1">Upcoming Events</p>
+                            <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">{upcomingEventsCount}</p>
                         </div>
                         <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
-                            <span className="text-4xl">✨</span>
+                            <span className="text-4xl">📅</span>
                         </div>
                     </div>
                 </Link>
