@@ -6,11 +6,13 @@ import { useAuth } from '../hooks/useAuth';
 import { useForms } from '../contexts/FormsContext';
 import { useCampusMap } from '../contexts/CampusMapContext';
 import { useCalendar } from '../contexts/CalendarContext';
-import { HOSTEL_OPTIONS, BRANCH_OPTIONS, COURSE_OPTIONS } from '../data/profileOptions';
+import { HOSTEL_OPTIONS } from '../config/hostels';
+import { BRANCH_OPTIONS } from '../config/branches';
+import { COURSE_OPTIONS } from '../config/credits';
 import { db } from '../firebaseConfig';
 import 'firebase/firestore';
-import { X, Download, Calendar, Bell, MapPin, Check, Edit2, Globe, Layout, Image as ImageIcon, RotateCcw } from 'lucide-react';
-import { allForms } from '../data/formsData';
+import { X, Download, Calendar, Bell, MapPin, Check, Edit2, Globe, RotateCcw } from 'lucide-react';
+import { allForms } from '../config/forms';
 
 const formatTimeAgo = (timestamp: { seconds: number; nanoseconds: number } | null) => {
     if (!timestamp) return '...';

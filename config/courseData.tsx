@@ -1,16 +1,6 @@
 import {TimeTableCourse} from '../types';
+import { calculateCredits } from '../config/credits';
 
-const calculateCredits = (ltp: string): number => {
-    if (!ltp || typeof ltp !== 'string' || ltp.split('-').length !== 3) {
-        return 0;
-    }
-    const parts = ltp.split('-').map(Number);
-    if (parts.some(isNaN)) {
-        return 0;
-    }
-    const [l = 0, t = 0, p = 0] = parts;
-    return (3 * l) + (2 * t) + (1 * p);
-};
 
 export const TIMETABLE_DATA: TimeTableCourse[] = [
     {

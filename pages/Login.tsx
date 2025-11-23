@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LogoIcon } from '../components/icons/SidebarIcons';
 import ScrollToTop from '../components/ScrollToTop';
+import { getEmailValidationMessage } from '../config/collegeInfo';
 
 
 
@@ -107,7 +108,7 @@ const Login: React.FC = () => {
       // On success, useEffect will navigate
     } catch (err: any) {
       if (err.message && err.message.includes('INVALID_DOMAIN')) {
-        setError('Only IIT(ISM) email addresses (@iitism.ac.in) are allowed. Please use your institutional email.');
+        setError(getEmailValidationMessage());
       } else if (err.code === 'auth/popup-closed-by-user') {
         setError('Sign-in was cancelled. Please try again.');
       } else if (err.code === 'auth/popup-blocked') {

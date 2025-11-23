@@ -5,7 +5,7 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { auth, db, storage } from '../firebaseConfig';
 import { User } from '../types';
-import { STUDENT_DIRECTORY } from '../data/studentDirectoryData';
+import { STUDENT_DIRECTORY } from '../config/studentDirectory';
 import { logActivity, cleanupOldActivities } from '../services/activityService';
 import { MAX_FILE_SIZE_BYTES, ALLOWED_IMAGE_TYPES, PROFILE_PICTURES_PATH } from '../utils/constants';
 import { getImageCompression } from '../utils/lazyImports';

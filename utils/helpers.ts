@@ -2,7 +2,7 @@
  * General helper functions
  */
 
-import { GREETING_TIMES } from '../constants/app';
+import { GREETING_TIMES } from '../config/appConstants';
 
 /**
  * Get greeting based on time of day
@@ -18,7 +18,7 @@ export const getGreeting = (): { emoji: string; text: string } => {
  * Get a random item from an array
  */
 export const getRandomItem = <T>(array: readonly T[]): T => {
-  return array[Math.floor(Math.random() * array.length)];
+  return array[Math.floor(Math.random() * array.length)]!;
 };
 
 /**

@@ -19,7 +19,8 @@ import {
   getWeekNumber
 } from '../utils/dateUtils';
 import { getGreeting, getRandomItem } from '../utils/helpers';
-import { MOTIVATIONAL_QUOTES, TIME_INTERVALS, SEMESTER_DEFAULTS } from '../constants/app';
+import { TIME_INTERVALS, SEMESTER_DEFAULTS } from '../config/appConstants';
+import { MOTIVATIONAL_QUOTES } from '../config/quotes';
 import {
     InstructorIcon, LocationIcon, LibraryIcon,
     CalendarCheckIcon, HealthIcon, FeeIcon,
@@ -28,6 +29,7 @@ import {
     CodeIcon, ChatIcon, DocumentIcon, MusicIcon, ShoppingIcon,
     PhotoIcon, CalculatorIcon, GameIcon, BookmarkIcon, NewspaperIcon
 } from '../components/icons/SidebarIcons';
+import { defaultQuickLinks } from '../config/quickLinks';
 
 // Helper function to get emoji for calendar event type
 const getEventEmoji = (event: CalendarEvent): string => {
@@ -175,18 +177,7 @@ const getWindDirection = (degrees: number): string => {
 };
 
 // Default quick links (stored data without icons)
-const defaultQuickLinksData: QuickLink[] = [
-    { id: '1', name: 'MIS Portal', href: 'https://mis.iitism.ac.in/', isExternal: true, color: 'text-blue-600 dark:text-blue-400', isCustom: false },
-    { id: '2', name: 'Abhikalp Portal', href: 'https://abhikalp.iitism.ac.in/', isExternal: true, color: 'text-red-600 dark:text-red-400', isCustom: false },
-    { id: '3', name: 'ARK Portal', href: 'https://ark.iitism.ac.in/', isExternal: true, color: 'text-indigo-600 dark:text-indigo-400', isCustom: false },
-    { id: '4', name: 'CDC Portal', href: 'https://www.iitism.ac.in/career-development-centre', isExternal: true, color: 'text-green-600 dark:text-green-400', isCustom: false },
-    { id: '5', name: 'Central Library', href: 'https://library.iitism.ac.in/', isExternal: true, color: 'text-purple-600 dark:text-purple-400', isCustom: false },
-    { id: '6', name: 'Fee Payment/Pre-Registration', href: 'https://pre-registration.iitism.ac.in/login/', isExternal: true, color: 'text-orange-600 dark:text-orange-400', isCustom: false },
-    { id: '7', name: 'Scholarships', href: 'https://www.iitism.ac.in/name-of-scholarships', isExternal: true, color: 'text-teal-600 dark:text-teal-400', isCustom: false },
-    { id: '8', name: 'Health Centre', href: 'https://people.iitism.ac.in/~healthcenter/index.php', isExternal: true, color: 'text-pink-600 dark:text-pink-400', isCustom: false },
-    { id: '9', name: 'IIT(ISM) Website', href: 'https://www.iitism.ac.in/', isExternal: true, color: 'text-cyan-600 dark:text-cyan-400', isCustom: false },
-    { id: '10', name: 'College Directory', href: 'https://share.google/YnDiJNPeoRC7UMl5t', isExternal: true, color: 'text-yellow-600 dark:text-yellow-400', isCustom: false },
-];
+// Default quick links are now imported from collegeConfig
 
 // Get icon component by name (for custom links)
 const getIconByName = (iconName: string): React.ReactNode => {
@@ -338,7 +329,7 @@ const Dashboard: React.FC = () => {
             setQuickLinks(user.quickLinks);
         } else {
             // Initialize with default links if user has no custom links
-            setQuickLinks(defaultQuickLinksData);
+            setQuickLinks(defaultQuickLinks);
         }
     }, [user?.quickLinks]);
 
@@ -398,7 +389,7 @@ const Dashboard: React.FC = () => {
 
     // Reset to default links
     const handleResetToDefault = () => {
-        saveQuickLinks(defaultQuickLinksData);
+        saveQuickLinks(defaultQuickLinks);
         setIsManagingLinks(false);
     };
 

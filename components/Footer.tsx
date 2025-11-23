@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { LogoIcon } from './icons/SidebarIcons';
+import { COLLEGE_INFO } from '../config/collegeInfo';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -141,7 +142,7 @@ const Footer: React.FC = () => {
               </div>
               <div className="px-4 py-2 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 dark:from-slate-800/50 dark:to-slate-800/30 border border-blue-100 dark:border-slate-700">
                 <p className="text-xs text-slate-600 dark:text-slate-400 text-center md:text-left font-medium">
-                  Built with passion for the IIT(ISM) community
+                  Built with passion for the {COLLEGE_INFO.name.abbreviation} community
                 </p>
               </div>
             </div>

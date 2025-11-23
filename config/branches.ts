@@ -1,16 +1,3 @@
-export const HOSTEL_OPTIONS: string[] = [
-  "Amber Hostel",
-  "Aquamarine Hostel",
-  "Diamond Hostel",
-  "Emerald Hostel",
-  "International Hostel",
-  "Jasper Hostel",
-  "Opal Hostel",
-  "Rosaline & Ruby Hostel",
-  "Sapphire Hostel",
-  "Topaz Hostel",
-];
-
 export const BRANCH_OPTIONS: string[] = [
   "Applied Geology",
   "Applied Geophysics",
@@ -30,17 +17,4 @@ export const BRANCH_OPTIONS: string[] = [
   "Mining Machinery Engineering",
   "Petroleum Engineering",
   "Physical Science",
-];
-
-export const COURSE_OPTIONS: Array<{ value: 'CBCS' | 'NEP'; label: string; description: string }> = [
-  {
-    value: 'CBCS',
-    label: 'CBCS (Choice Based Credit System)',
-    description: 'Credits = 3×L + 2×T + 1×P'
-  },
-  {
-    value: 'NEP',
-    label: 'NEP (National Education Policy)',
-    description: 'Credits = L + T + 0.5×P'
-  }
 ];

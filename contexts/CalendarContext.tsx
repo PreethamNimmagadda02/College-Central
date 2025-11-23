@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { AcademicCalendarData, CalendarEvent } from '../types';
-import { PRELOADED_CALENDAR_DATA } from '../data/academicCalendarData';
+import { PRELOADED_CALENDAR_DATA } from '../config/academicCalendar';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebaseConfig';
 // FIX: Updated Firebase imports for v9 compatibility.

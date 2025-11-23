@@ -3,8 +3,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useGrades, GradesData } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useUser } from '../contexts/UserContext';
-import { TIMETABLE_DATA } from '../data/courseData';
-import { NEP_TIMETABLE_DATA } from '../data/nepCourseData';
+import { TIMETABLE_DATA } from '../config/courseData';
+import { NEP_TIMETABLE_DATA } from '../config/nepCourseData';
 import { Grade, Semester } from '../types';
 import { calculateCreditsFromLTP } from '../utils/creditCalculator';
 

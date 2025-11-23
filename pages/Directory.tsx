@@ -104,8 +104,8 @@ const Directory = () => {
     if (sortConfig.key) {
       groupedArray.sort((a, b) => {
         const key = sortConfig.key as keyof DirectoryEntry;
-        const aValue = a[0][key];
-        const bValue = b[0][key];
+        const aValue = a[0]![key];
+        const bValue = b[0]![key];
         if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
@@ -326,7 +326,7 @@ const Directory = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {activeTab === 'faculty' ? (
                   groupedFaculty.map(group => {
-                    const person = group[0];
+                    const person = group[0]!;
                     return (
                       <div
                         key={person.id}
@@ -375,7 +375,7 @@ const Directory = () => {
                   })
                 ) : (
                   groupedStudents.map(group => {
-                    const student = group[0]; // Student data is not expected to have multiple roles.
+                    const student = group[0]!; // Student data is not expected to have multiple roles.
                     return (
                     <div
                       key={student.id}
@@ -458,7 +458,7 @@ const Directory = () => {
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                     {groupedFaculty.map(group => {
-                        const person = group[0];
+                        const person = group[0]!;
                         const allDepartments = [...new Set(group.map(p => p.department))];
                         const allDesignations = [...new Set(group.map(p => p.designation))];
                         const allEmails = [...new Set(group.map(p => p.email))];
@@ -538,7 +538,7 @@ const Directory = () => {
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                     {groupedStudents.map(group => {
-                      const student = group[0]; // Students are not expected to have multiple roles
+                      const student = group[0]!; // Students are not expected to have multiple roles
                       return(
                       <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         <td className="px-6 py-4">

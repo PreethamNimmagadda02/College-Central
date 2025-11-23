@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useCampusMap } from '../contexts/CampusMapContext';
 import { CampusLocation, CampusLocationCategory } from '../types';
+import { COLLEGE_INFO } from '../config/collegeInfo';
 
 const CampusMap: React.FC = () => {
   const { locations, quickRoutes, loading, error, savedPlaces, toggleSavePlace, getDirections, shareLocation } = useCampusMap();
@@ -455,7 +456,7 @@ const CampusMap: React.FC = () => {
                 allowFullScreen={true}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="IIT(ISM) Dhanbad Campus Map"
+                title={`${COLLEGE_INFO.name.short} Campus Map`}
                 className="h-[60vh] w-full"
               ></iframe>
             </div>

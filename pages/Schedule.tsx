@@ -2,11 +2,12 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useUser } from '../contexts/UserContext';
 import { ClassSchedule } from '../types';
-import { TIMETABLE_DATA } from '../data/courseData';
-import { NEP_TIMETABLE_DATA } from '../data/nepCourseData';
+import { TIMETABLE_DATA } from '../config/courseData';
+import { NEP_TIMETABLE_DATA } from '../config/nepCourseData';
 import { useAuth } from '../hooks/useAuth';
 import { logActivity } from '../services/activityService';
 import { calculateCreditsFromLTP } from '../utils/creditCalculator';
+import { COLLEGE_INFO } from '../config/collegeInfo';
 
 const ChevronDownIcon: React.FC = () => (
     <svg className="w-5 h-5 ml-2 -mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -574,7 +575,7 @@ const Schedule: React.FC = () => {
         const currentDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
         doc.setFontSize(8);
         doc.setTextColor(149, 165, 166);
-        doc.text(`Generated on ${currentDate} via IIT(ISM) College Central`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+        doc.text(`Generated on ${currentDate} via ${COLLEGE_INFO.app.name}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
 
         // Save the PDF
         const fileDate = `${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}`;
