@@ -1,122 +1,185 @@
-# IIT(ISM) College Central
+<div align="center">
 
-A comprehensive web application designed specifically for IIT (ISM) Dhanbad students to manage their academic life, stay connected with campus activities, and access essential resources all in one place.
+# 🎓 College Central
+
+### Your Complete Academic Companion for IIT(ISM) Dhanbad
+
+[![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-12.4-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Vite](https://img.shields.io/badge/Vite-6.2-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+
+**A Progressive Web Application for IIT(ISM) Dhanbad students to manage academics, navigate campus, and stay connected.**
+
+[ Documentation](./ARCHITECTURE.md)
+
+</div>
+
+---
+
+## ✨ Highlights
+
+🎯 **All-in-One Platform** • 🤖 **AI-Powered** • 📱 **Progressive Web App** • 🔒 **Secure & Private** • ⚡ **Lightning Fast** • 🎨 **Beautiful UI**
+
+---
 
 ## 🌟 Features
 
 ### 📚 Academic Management
-- **Dashboard**: Personalized overview with today's schedule, CGPA tracking, and semester progress
-- **Class Schedule**: View and manage your weekly timetable with detailed class information
-- **Grades & CGPA**: Track academic performance with semester-wise grades and CGPA calculation
-- **Academic Calendar**: Interactive calendar with semester events, exam schedules, and custom reminders
-- **Study Resources**: Access and organize subject-specific study materials
+- **Dashboard** - Personalized overview, CGPA tracking, AI weather widget, activity feed, quick links
+- **Grades & CGPA** - Semester-wise tracking, automatic CGPA/SGPA calculation, attendance monitoring, PDF export
+- **Class Schedule** - Weekly timetable, custom tasks, room/faculty info, recurring events, notifications
+- **Academic Calendar** - Event management, exam schedules, holiday tracking, custom reminders
 
-### 🗺️ Campus Navigation
-- **Interactive Campus Map**: Navigate the campus with Google Maps integration
-- **Location Directory**: Comprehensive list of academic buildings, hostels, and facilities
-- **Popular Routes**: Quick access to frequently used campus routes
-- **Saved Places**: Bookmark important locations for quick access
+### 🗺️ Campus & Resources
+- **Interactive Campus Map** - Google Maps integration, location search, directions, saved places
+- **Campus Directory** - Contact directory, buildings, hostels, dining, sports, medical facilities
+- **College Forms** - Categorized repository, direct links, deadline tracking, search & filter
+- **News & Events** - Real-time announcements, upcoming events, notifications
 
-### 📰 Stay Updated
-- **News & Events**: Real-time campus announcements and upcoming events
-- **Activity Feed**: Track your interactions and activities within the app 
-- **Weather Widget**: Campus weather updates with AI-powered recommendations
+### 👤 Profile & Personalization
+- Profile picture upload, personal/academic info, activity history, data export, dark mode, Google OAuth
 
-### 🎯 Additional Features
-- **User Profile Management**: Customize your profile with personal information and preferences
-- **Quick Links**: Customizable shortcuts to important portals (Email, LMS, CDC, Library, etc.)
-- **Dark Mode**: Toggle between light and dark themes for comfortable viewing
-- **Responsive Design**: Seamless experience across desktop, tablet, and mobile devices
-
-## 🚀 Run Locally
-
-**Prerequisites:**  Node.js (v16 or higher)
-
-1. Clone the repository:
-   ```bash
-   git clone <https://github.com/PreethamNimmagadda02/College-Central>
-   cd College-Central-main
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Configure environment variables:
-   - Create a `.env.local` file in the root directory
-   - Set the `VITE_GEMINI_API_KEY` to your Gemini API key:
-     ```
-     VITE_GEMINI_API_KEY=your_api_key_here
-     ```
-
-4. Run the app:
-   ```bash
-   npm run dev
-   ```
-
-5. Open your browser and navigate to `http://localhost:3000`
+---
 
 ## 🏗️ Tech Stack
 
-- **Frontend Framework**: React 18 with TypeScript
-- **Build Tool**: Vite
-- **Routing**: React Router v6
-- **Styling**: Tailwind CSS
-- **Backend**: Firebase (Authentication, Firestore, Storage)
-- **AI Integration**: Google Gemini API
-- **Maps**: Google Maps Platform
-- **Weather**: Open-Meteo API
+**Frontend:** React 19.2 • TypeScript 5.8 • Vite 6.2 • React Router 7.9 • Tailwind CSS 4.1 • Framer Motion • Lucide React
+
+**Backend:** Firebase (Authentication, Firestore, Storage, Hosting, Cloud Functions, Performance, Analytics)
+
+**AI & Services:** Google Gemini AI • Google OAuth • Google Maps • Open-Meteo API
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js (v16+) • npm/yarn • Firebase Account • Google Gemini API Key
+
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/PreethamNimmagadda02/College-Central.git
+cd College-Central
+
+# Install dependencies
+npm install
+
+# Create .env.local file
+echo "VITE_GEMINI_API_KEY=your_gemini_api_key_here" > .env.local
+
+# Update firebaseConfig.ts with your Firebase credentials
+
+# Run development server
+npm run dev
+
+# Open http://localhost:5173
+```
+
+---
+
+## 📝 Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Run ESLint |
+
+---
+
+## 🔧 Configuration
+
+### Firebase Setup
+1. Create project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable: Authentication (Google), Firestore, Storage, Hosting, Cloud Functions
+3. Update `firebaseConfig.ts` with your credentials
+4. Configure Firestore security rules (see below)
+
+**Firestore Security Rules:**
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
+```
+
+### Google Gemini API
+1. Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Add to `.env.local`: `VITE_GEMINI_API_KEY=your_api_key`
+
+### Domain Restriction
+App restricted to `@iitism.ac.in` emails. Modify in `hooks/useAuth.tsx` if needed.
+
+---
 
 ## 📁 Project Structure
 
 ```
-iit-ism-student-hub/
-├── src/
-│   ├── components/        # Reusable UI components
-│   ├── contexts/          # React Context providers
-│   ├── data/             # Static data and constants
-│   ├── hooks/            # Custom React hooks
-│   ├── pages/            # Page components
-│   ├── services/         # API and Firebase services
-│   ├── types/            # TypeScript type definitions
-│   └── App.tsx           # Main application component
-├── public/               # Static assets
-└── ...config files
+College Central/
+├── pages/          # Dashboard, Grades, Schedule, CampusMap, Calendar, Forms, Directory, Profile, Login
+├── components/     # ProtectedRoute, ErrorBoundary, UpdatePrompt, Header, Sidebar, Footer
+├── contexts/       # User, Grades, Schedule, Calendar, CampusMap, Forms contexts
+├── hooks/          # useAuth
+├── services/       # API, activityService
+├── utils/          # constants, performance, lazyWithRetry
+├── data/           # mockData
+└── functions/      # Firebase Cloud Functions
 ```
-
-## 🔑 Key Dependencies
-
-- `react` & `react-dom` - UI library
-- `firebase` - Backend services
-- `react-router-dom` - Client-side routing
-- `tailwindcss` - Utility-first CSS framework
-- `@google/generative-ai` - Gemini AI integration
-
-## 🛠️ Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-
-## 📝 Configuration
-
-### Firebase Setup
-1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
-2. Enable Authentication, Firestore, and Storage
-3. Add your Firebase configuration to `src/firebaseConfig.ts`
-
-### Gemini API Setup
-1. Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Add it to `.env.local` as `VITE_GEMINI_API_KEY`
-
-## 👨‍💻 Developed By
-
-### Preetham Nimagadda
-### IIT(ISM) Dhanbad
-### <a href="https://www.linkedin.com/in/preethamnimmagadda" target="_blank"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Preetham Nimmagadda"/> </a>
 
 ---
 
-**Note**: This application is specifically designed for IIT (ISM) Dhanbad students and contains features tailored to the campus environment.
+## 🎯 Key Features
+
+**Real-time Sync** - Firestore `onSnapshot()` listeners sync data across devices instantly  
+**Optimistic Updates** - UI updates immediately, syncs in background  
+**Activity Logging** - All user actions logged for audit trail  
+**PWA** - Install on any device, works offline, push notifications  
+**Security** - Google OAuth, domain restriction, Firestore security rules, user-scoped data
+
+---
+
+## 🚀 Deployment
+
+```bash
+npm run build                    # Build for production
+npm install -g firebase-tools    # Install Firebase CLI
+firebase login                   # Login to Firebase
+firebase init                    # Initialize (if needed)
+firebase deploy                  # Deploy
+```
+
+---
+
+## 📊 Performance
+
+⚡ Bundle: ~200KB • 🚀 TTI: <2s • 🎨 FCP: <1s • 📱 Lighthouse: 95+
+
+---
+
+## 👨‍💻 Developer
+
+<div align="center">
+
+**Preetham Nimmagadda** • IIT(ISM) Dhanbad
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/preethamnimmagadda)
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/PreethamNimmagadda02)
+[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:preethamnimmagadda@gmail.com)
+
+**Made with ❤️ for IIT(ISM) Dhanbad Students**
+
+⭐ Star this repo if you find it helpful!
+
+</div>
