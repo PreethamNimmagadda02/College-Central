@@ -7,7 +7,6 @@ import { NEP_TIMETABLE_DATA } from '../config/nepCourseData';
 import { useAuth } from '../hooks/useAuth';
 import { logActivity } from '../services/activityService';
 import { calculateCreditsFromLTP } from '../utils/creditCalculator';
-import { COLLEGE_INFO } from '../config/collegeInfo';
 
 const ChevronDownIcon: React.FC = () => (
     <svg className="w-5 h-5 ml-2 -mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
