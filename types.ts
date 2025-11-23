@@ -9,6 +9,9 @@ export interface User {
   phone: string;
   profilePicture?: string;
   profilePicturePath?: string;
+
+  bannerGradient?: string;
+  profileFrame?: string;
   fullName?: string;
   rollNumber?: string;
   year?: string;

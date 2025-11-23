@@ -15,6 +15,7 @@ interface UserContextType {
   user: User | null;
   updateUser: (newDetails: Partial<User>) => Promise<void>;
   uploadProfilePicture: (file: File) => Promise<void>;
+
   loading: boolean;
   error: Error | null; // ENHANCEMENT: Expose error state to the UI.
 }
@@ -254,6 +255,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         );
     });
   }, [user, updateUser]);
+
+
 
   const contextValue = useMemo(
     () => ({ user, updateUser, uploadProfilePicture, loading, error }),

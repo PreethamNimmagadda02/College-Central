@@ -9,7 +9,7 @@ import { useCalendar } from '../contexts/CalendarContext';
 import { HOSTEL_OPTIONS, BRANCH_OPTIONS, COURSE_OPTIONS } from '../data/profileOptions';
 import { db } from '../firebaseConfig';
 import 'firebase/firestore';
-import { X, Download, Calendar, Bell, MapPin, Check, Edit2, Globe } from 'lucide-react';
+import { X, Download, Calendar, Bell, MapPin, Check, Edit2, Globe, Layout, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import { allForms } from '../data/formsData';
 
 const formatTimeAgo = (timestamp: { seconds: number; nanoseconds: number } | null) => {
@@ -53,6 +53,23 @@ const Profile: React.FC = () => {
     } | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+
+
+
+    // Frame options
+    const FRAME_OPTIONS = [
+        { id: 'none', name: 'None', class: 'ring-4 ring-white/50 rounded-full' },
+        { id: 'gradient-blue', name: 'Ocean', class: 'p-1 bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30 rounded-full' },
+        { id: 'gradient-purple', name: 'Nebula', class: 'p-1 bg-gradient-to-br from-fuchsia-500 via-purple-600 to-indigo-500 shadow-lg shadow-purple-500/30 rounded-full' },
+        { id: 'gradient-gold', name: 'Gold', class: 'p-1 bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-700 shadow-lg shadow-yellow-500/40 border border-yellow-300 rounded-full' },
+        { id: 'neon-green', name: 'Cyber', class: 'ring-4 ring-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.6)] bg-black rounded-full' },        { id: 'royal', name: 'Royal', class: 'p-1 bg-gradient-to-tr from-amber-700 via-yellow-500 to-amber-700 shadow-xl border border-yellow-600 rounded-full' },
+        { id: 'holographic', name: 'Holo', class: 'p-1 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 animate-gradient-x shadow-lg rounded-full' },
+        { id: 'neon-blue', name: 'Tron', class: 'ring-4 ring-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] bg-slate-900 rounded-full' },
+        { id: 'minimal', name: 'Minimal', class: 'ring-1 ring-white/80 offset-4 offset-black rounded-full' },
+    ];
+
+    // Banner Gradients
+
 
     const [activity, setActivity] = useState<ActivityItem[]>([]);
     const [activityLoading, setActivityLoading] = useState(true);
@@ -341,6 +358,13 @@ const Profile: React.FC = () => {
         }
     };
 
+
+
+    const getFrameClass = (frameId?: string) => {
+        const frame = FRAME_OPTIONS.find(f => f.id === frameId);
+        return frame ? frame.class : 'ring-4 ring-white/50';
+    };
+
     const getInitials = (name: string) => {
         return name
             .split(' ')
@@ -409,17 +433,111 @@ const Profile: React.FC = () => {
                 </div>
             )}
 
-            {/* Header Section */}
-            <div className="bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg overflow-hidden">
-                <div className="p-8 relative">
-                    {/* Background Pattern */}
-                    <div className="absolute inset-0 opacity-10">
-                        <div className="absolute inset-0" style={{
-                            backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-                            backgroundSize: '1.25rem 1.25rem'
-                        }}></div>
+            {/* Customization Toolbar (Edit Mode) */}
+            {isEditing && (
+                <div className="flex flex-col md:flex-row justify-end gap-4 mb-4 animate-fadeIn">
+                    
+                    {/* Banner Controls */}
+                    <div className="bg-white dark:bg-slate-800 rounded-full p-2 shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-3 pr-5">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-3 uppercase tracking-wider">Banner</span>
+                        
+                        <div className="flex items-center gap-2 ml-2 flex-wrap max-w-[200px] md:max-w-none">
+                            {[
+                                { id: 'gradient-midnight', class: 'bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-purple-900 to-slate-900' },
+                                { id: 'gradient-sunset', class: 'bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-200 via-orange-500 to-rose-500' },
+                                { id: 'gradient-forest', class: 'bg-gradient-to-br from-emerald-900 via-green-800 to-teal-900' },
+                                { id: 'gradient-ocean', class: 'bg-gradient-to-r from-blue-700 via-blue-800 to-gray-900' },
+                                { id: 'gradient-northern', class: 'bg-gradient-to-r from-teal-400 via-blue-500 to-purple-600' },
+                                { id: 'gradient-deepspace', class: 'bg-gradient-to-b from-black via-gray-900 to-slate-900' },
+                                { id: 'gradient-crimson', class: 'bg-gradient-to-br from-red-900 via-rose-800 to-pink-900' },
+                                { id: 'gradient-golden', class: 'bg-gradient-to-r from-amber-500 via-orange-400 to-yellow-500' },
+                                { id: 'gradient-synthwave', class: 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500' },
+                                { id: 'gradient-emerald', class: 'bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600' },
+                            ].map(gradient => (
+                                <button
+                                    key={gradient.id}
+                                    onClick={() => {
+                                        setFormData(prev => ({ 
+                                            ...prev, 
+                                            bannerGradient: gradient.class 
+                                        }));
+                                    }}
+                                    className={`w-8 h-8 rounded-full ${gradient.class} ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 transition-all ${
+                                        (formData.bannerGradient === gradient.class || (!formData.bannerGradient && gradient.id === 'gradient-midnight')) // default check logic could be improved but this is a start
+                                        || (!formData.bannerGradient && user.bannerGradient === gradient.class)
+                                            ? 'ring-primary scale-110' 
+                                            : 'ring-transparent opacity-70 hover:opacity-100 hover:scale-105'
+                                    }`}
+                                />
+                            ))}
+                        </div>
+
+                        {(formData.bannerGradient || user.bannerGradient) && (
+                            <>
+                                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                                <button
+                                    onClick={async () => {
+                                        setFormData(prev => ({ ...prev, bannerGradient: '' }));
+                                        await updateUser({ bannerGradient: '' });
+                                    }}
+                                    className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 rounded-full transition-colors"
+                                    title="Reset Banner"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                </button>
+                            </>
+                        )}
                     </div>
 
+                    {/* Frame Controls */}
+                    <div className="bg-white dark:bg-slate-800 rounded-full p-2 shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-3 pr-5">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-3 uppercase tracking-wider">Frame</span>
+                        <div className="flex items-center gap-2 flex-wrap max-w-[200px] md:max-w-none">
+                            {FRAME_OPTIONS.map(frame => (
+                                <button
+                                    key={frame.id}
+                                    onClick={() => setFormData(prev => ({ ...prev, profileFrame: frame.id }))}
+                                    className={`w-8 h-8 rounded-full transition-all ${frame.class} ${
+                                        (formData.profileFrame || user.profileFrame || 'none') === frame.id 
+                                            ? 'ring-2 ring-primary ring-offset-2 ring-offset-white dark:ring-offset-slate-900 scale-110' 
+                                            : 'opacity-70 hover:opacity-100 hover:scale-105'
+                                    }`}
+                                    title={frame.name}
+                                >
+                                    <div className="w-full h-full rounded-full bg-white/20"></div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Header Section */}
+            <div className="relative rounded-xl shadow-lg overflow-hidden group/banner">
+                {/* Banner Image */}
+                <div className={`absolute inset-0 ${
+                    formData.bannerGradient || user.bannerGradient || 'bg-gradient-to-r from-primary to-secondary'
+                }`}>
+                    {/* Overlay for better text readability */}
+                    <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
+                    
+                    {/* Default Pattern if no banner */}
+                    {!(user.bannerGradient || formData.bannerGradient) && (
+                        <div className="absolute inset-0 opacity-10">
+                            <div className="absolute inset-0" style={{
+                                backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+                                backgroundSize: '1.25rem 1.25rem'
+                            }}></div>
+                        </div>
+                    )}
+
+
+                </div>
+
+                {/* Banner Actions (Edit Mode) */}
+                {/* Banner Actions (Edit Mode) - REMOVED REDUNDANT BUTTONS */}
+
+                <div className="p-8 relative z-10">
                     <div className="relative flex flex-col md:flex-row items-center md:items-start gap-6">
                         {/* Profile Picture with Drag & Drop */}
                         <div
@@ -431,17 +549,19 @@ const Profile: React.FC = () => {
                         >
                             {/* Main Profile Image */}
                             {(previewImage || (user.profilePicture && !imageError)) ? (
-                                <img
-                                    className={`h-32 w-32 rounded-full ring-4 shadow-xl object-cover transition-all duration-300 ${
-                                        isDragging ? 'ring-blue-400 ring-8 scale-105' : 'ring-white/50'
-                                    } ${isUploading ? 'opacity-50' : 'opacity-100'}`}
-                                    src={previewImage || user.profilePicture}
-                                    alt="Profile"
-                                    onError={() => setImageError(true)}
-                                />
+                                <div className={getFrameClass(formData.profileFrame || user.profileFrame)}>
+                                    <img
+                                        className={`h-32 w-32 rounded-full object-cover transition-all duration-300 ${
+                                            isDragging ? 'scale-105 opacity-80' : ''
+                                        } ${isUploading ? 'opacity-50' : 'opacity-100'}`}
+                                        src={previewImage || user.profilePicture}
+                                        alt="Profile"
+                                        onError={() => setImageError(true)}
+                                    />
+                                </div>
                             ) : (
-                                <div className={`h-32 w-32 rounded-full bg-white text-primary flex items-center justify-center text-4xl font-bold ring-4 shadow-xl transition-all duration-300 ${
-                                    isDragging ? 'ring-blue-400 ring-8 scale-105' : 'ring-white/50'
+                                <div className={`h-32 w-32 rounded-full bg-white text-primary flex items-center justify-center text-4xl font-bold transition-all duration-300 ${getFrameClass(formData.profileFrame || user.profileFrame)} ${
+                                    isDragging ? 'scale-105' : ''
                                 }`}>
                                     {getInitials(user.name)}
                                 </div>
@@ -546,6 +666,8 @@ const Profile: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+
+
 
                         {/* Action Buttons */}
                         <div className="flex flex-col gap-2">
