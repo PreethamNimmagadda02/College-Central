@@ -1,8 +1,8 @@
 /**
  * College Information Configuration
  * 
- * This file contains all college-specific branding and information.
- * Administrators can update these values to customize the application for their institution.
+ * This file contains college-specific information that administrators can customize.
+ * Only college/institution information should be stored here.
  */
 
 export const COLLEGE_INFO = {
@@ -31,17 +31,10 @@ export const COLLEGE_INFO = {
     state: 'Jharkhand',
     country: 'India',
   },
-
-  // Application Branding
-  app: {
-    name: 'College Central',
-    tagline: 'Student Portal',
-    description: 'Comprehensive student portal for IIT(ISM) Dhanbad - Manage grades, schedules, campus navigation, events, and academic resources all in one place.',
-  },
 } as const;
 
 // Helper function to get the full title for the application
-export const getAppTitle = () => `${COLLEGE_INFO.app.name} - ${COLLEGE_INFO.name.short} ${COLLEGE_INFO.app.tagline}`;
+export const getAppTitle = () => `College Central - ${COLLEGE_INFO.name.short} Student Portal`;
 
 // Helper function to get email validation message
 export const getEmailValidationMessage = () => 

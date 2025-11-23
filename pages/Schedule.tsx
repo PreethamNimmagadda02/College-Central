@@ -575,7 +575,7 @@ const Schedule: React.FC = () => {
         const currentDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
         doc.setFontSize(8);
         doc.setTextColor(149, 165, 166);
-        doc.text(`Generated on ${currentDate} via ${COLLEGE_INFO.app.name}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+        doc.text(`Generated on ${currentDate} via College Central`, pageWidth / 2, pageHeight - 5, { align: 'center' });
 
         // Save the PDF
         const fileDate = `${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}`;
