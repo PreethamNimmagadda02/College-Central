@@ -1312,17 +1312,17 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                                                     <div
                                                         onClick={() => setSelectedCategory(selectedCategory === subject.category ? null : subject.category)}
                                                         className={`group relative overflow-hidden flex justify-between items-center p-3 rounded-lg hover:shadow-md transition-all duration-300 cursor-pointer transform hover:scale-[1.02] hover:-translate-y-0.5 ${
-                                                            index === 0 ? 'bg-amber-50/80 dark:bg-amber-900/10 border-l-4 border-amber-400' :
-                                                            index === 1 ? 'bg-slate-100/80 dark:bg-slate-700/30 border-l-4 border-slate-400' :
-                                                            index === 2 ? 'bg-orange-50/60 dark:bg-orange-900/10 border-l-4 border-orange-300' :
+                                                            index === 0 ? 'bg-[#FFD700]/20 dark:bg-[#FFD700]/10 border-l-4 border-[#FFD700]' :
+                                                            index === 1 ? 'bg-slate-200 dark:bg-slate-700/60 border-l-4 border-slate-500' :
+                                                            index === 2 ? 'bg-orange-100 dark:bg-orange-900/40 border-l-4 border-orange-400' :
                                                             'bg-slate-50 dark:bg-slate-800'
                                                         }`}
                                                     >
                                                         <div className="flex items-center gap-3">
                                                             <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                                                                index === 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-800/40 dark:text-amber-300' :
-                                                                index === 1 ? 'bg-slate-200 text-slate-700 dark:bg-slate-600 dark:text-slate-200' :
-                                                                index === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-800/40 dark:text-orange-300' :
+                                                                index === 0 ? 'bg-[#FFD700] text-yellow-900 dark:bg-[#FFD700]/80 dark:text-yellow-950' :
+                                                                index === 1 ? 'bg-slate-300 text-slate-800 dark:bg-slate-600 dark:text-slate-100' :
+                                                                index === 2 ? 'bg-orange-200 text-orange-800 dark:bg-orange-700 dark:text-orange-100' :
                                                                 'bg-slate-50 text-slate-600'
                                                             }`}>
                                                                 {index + 1}
@@ -1335,7 +1335,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                                                         <div className="flex items-center gap-3">
                                                             <div className="text-right">
                                                                 <span className={`text-lg font-semibold ${
-                                                                    index === 0 ? 'text-amber-600 dark:text-amber-400' :
+                                                                    index === 0 ? 'text-yellow-700 dark:text-[#FFD700]' :
                                                                     index === 1 ? 'text-slate-600 dark:text-slate-300' :
                                                                     index === 2 ? 'text-orange-600 dark:text-orange-400' :
                                                                     'text-primary'
