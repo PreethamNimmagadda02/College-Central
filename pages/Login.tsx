@@ -198,7 +198,7 @@ const Login: React.FC = () => {
             className="absolute inset-0 will-change-transform"
             style={{
               backgroundImage: "url('/iitism_banner_new.gif')",
-              backgroundSize: 'cover',
+              backgroundSize: '100% 100%',
               backgroundPosition: 'center center',
               backgroundRepeat: 'no-repeat',
               transform: `translate3d(0, ${scrollY * 0.3}px, 0)`,
