@@ -134,7 +134,7 @@ const Schedule: React.FC = () => {
 
     useEffect(() => {
         if (editingItem) {
-            setNewVenue(editingItem.location);
+            setNewVenue(editingItem.location); 
             setNewInstructor(editingItem.instructor);
             setNewDay(editingItem.day);
             setNewStartTime(editingItem.startTime);
