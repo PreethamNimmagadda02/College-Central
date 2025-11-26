@@ -1664,10 +1664,10 @@ const Schedule: React.FC = () => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={() => setEditingItem(null)}>
                     <div className="bg-white dark:bg-dark-card rounded-xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[90vh] overflow-y-auto" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         {/* Header */}
-                        <div className={`sticky top-0 border-b border-slate-200 dark:border-slate-700 p-6 rounded-t-xl ${editingItem.isCustomTask ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white' : 'bg-white dark:bg-dark-card'}`}>
+                        <div className={`sticky top-0 border-b border-slate-200 dark:border-slate-700 p-4 sm:p-6 rounded-t-xl ${editingItem.isCustomTask ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white' : 'bg-white dark:bg-dark-card'}`}>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className={`text-2xl font-bold ${editingItem.isCustomTask ? 'text-white' : 'text-slate-800 dark:text-white'}`}>
+                                    <h3 className={`text-xl sm:text-2xl font-bold ${editingItem.isCustomTask ? 'text-white' : 'text-slate-800 dark:text-white'}`}>
                                         {editingItem.isCustomTask ? 'Edit Custom Task' : 'Edit Class Details'}
                                     </h3>
                                     <p className={`text-sm mt-1 ${editingItem.isCustomTask ? 'text-teal-100' : 'text-slate-500 dark:text-slate-400'}`}>
@@ -1686,7 +1686,7 @@ const Schedule: React.FC = () => {
                         </div>
 
                         {/* Body */}
-                        <div className="p-6 space-y-6">
+                        <div className="p-4 sm:p-6 space-y-6">
                             {/* Task/Course Info - Read Only */}
                             <div className={`bg-gradient-to-br rounded-lg p-4 ${
                                 editingItem.isCustomTask
@@ -1910,7 +1910,7 @@ const Schedule: React.FC = () => {
                         </div>
  
                         {/* Footer */}
-                        <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 p-6 rounded-b-xl">
+                        <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 p-4 sm:p-6 rounded-b-xl">
                             <div className="flex flex-col gap-3">
                                 {/* Top Row - Destructive and Special Actions */}
                                 <div className="flex flex-col sm:flex-row gap-3">
@@ -1967,11 +1967,11 @@ const Schedule: React.FC = () => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={() => setIsCreatingCustomTask(false)}>
                     <div className="bg-white dark:bg-dark-card rounded-xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[90vh] overflow-y-auto" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         {/* Header */}
-                        <div className="sticky top-0 bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-t-xl">
+                        <div className="sticky top-0 bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 sm:p-6 rounded-t-xl">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-2xl font-bold flex items-center">
-                                        <svg className="w-7 h-7 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <h3 className="text-xl sm:text-2xl font-bold flex items-center">
+                                        <svg className="w-6 h-6 sm:w-7 sm:h-7 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                         </svg>
                                         Create Custom Task
@@ -1992,7 +1992,7 @@ const Schedule: React.FC = () => {
                         </div>
 
                         {/* Body */}
-                        <div className="p-6 space-y-6">
+                        <div className="p-4 sm:p-6 space-y-6">
                             {/* Task Info */}
                             <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                                 <div className="flex items-center gap-2 mb-2">
@@ -2214,7 +2214,7 @@ const Schedule: React.FC = () => {
                         </div>
 
                         {/* Footer */}
-                        <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 p-6 rounded-b-xl">
+                        <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 p-4 sm:p-6 rounded-b-xl">
                             <div className="flex gap-3 w-full">
                                 <button
                                     onClick={() => setIsCreatingCustomTask(false)}
