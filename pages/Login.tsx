@@ -222,7 +222,7 @@ const Login: React.FC = () => {
           <div className="relative z-10 w-full px-4 flex flex-col items-center justify-center min-h-screen -mt-[8vh] md:-mt-[10vh]">
             <div className="max-w-3xl mx-auto text-center space-y-5">
               {/* Logo */}
-              <div className="flex justify-center mb-4">
+              <div className="flex justify-center mb-3 -mt-8">
                 <div className="relative group cursor-pointer">
                   {/* Logo container with hover effects */}
                   <div className="relative bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-600 p-3 sm:p-4 md:p-5 rounded-2xl sm:rounded-3xl shadow-2xl shadow-blue-500/20 group-hover:shadow-purple-500/40 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 ease-out">
@@ -232,9 +232,14 @@ const Login: React.FC = () => {
               </div>
 
               {/* App Name */}
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-3 drop-shadow-lg">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-0 drop-shadow-lg">
                 College Central
               </h1>
+              
+              {/* Institute Name */}
+              <p className="text-base md:text-lg lg:text-xl text-white/90 font-semibold mb-8 drop-shadow-md">
+                IIT(ISM) Dhanbad
+              </p>
 
               {/* Animated typing text - Main Headline */}
               <div className="min-h-[15vh] md:min-h-[18vh] lg:min-h-[20vh] flex items-center justify-center px-4">
