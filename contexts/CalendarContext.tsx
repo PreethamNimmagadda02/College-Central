@@ -184,14 +184,83 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     // Adjust preloaded data to the current year
     const adjustedPreloadedData = adjustCalendarDatesToCurrentYear(PRELOADED_CALENDAR_DATA);
 
-    // Combine adjusted preloaded events with user events (user events are assumed to be for current year)
+    // Combine adjusted preloaded events with user events
     const mergedEvents = [
       ...adjustedPreloadedData.events,
       ...userEvents
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+    // Determine the current semester based on today's date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Define semester boundaries based on events
+    // We look for "Start of Semester" and "End-Semester Exams"
+    const semesterStarts = mergedEvents.filter(e => e.type === 'Start of Semester').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const semesterEnds = mergedEvents.filter(e => e.type === 'End-Semester Exams').sort((a, b) => new Date(a.endDate || a.date).getTime() - new Date(b.endDate || b.date).getTime());
+
+    let currentSemesterStart = adjustedPreloadedData.semesterStartDate;
+    let currentSemesterEnd = adjustedPreloadedData.semesterEndDate;
+
+    // Logic to find the active or next semester
+    // 1. Try to find a semester we are currently in
+    let foundActiveSemester = false;
+    
+    for (let i = 0; i < semesterStarts.length; i++) {
+        const startEvent = semesterStarts[i];
+        if (!startEvent) continue;
+
+        // Find the corresponding end event (the next one after this start)
+        const endEvent = semesterEnds.find(e => new Date(e.endDate || e.date) > new Date(startEvent.date));
+        
+        if (endEvent) {
+            const startDate = new Date(startEvent.date);
+            const endDate = new Date(endEvent.endDate || endEvent.date);
+            
+            // If today is within this range, or if today is before this range (and it's the first one we find), pick it?
+            // Actually, we want the *current* active one.
+            if (today >= startDate && today <= endDate) {
+                currentSemesterStart = startEvent.date;
+                currentSemesterEnd = endEvent.endDate || endEvent.date;
+                foundActiveSemester = true;
+                break;
+            }
+        }
+    }
+
+    // 2. If not in an active semester, find the NEXT semester
+    if (!foundActiveSemester) {
+        for (let i = 0; i < semesterStarts.length; i++) {
+            const startEvent = semesterStarts[i];
+            if (!startEvent) continue;
+
+            const startDate = new Date(startEvent.date);
+            
+            if (today < startDate) {
+                // This is the next upcoming semester
+                // Check if we are within 7 days of the start date
+                const diffTime = startDate.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays <= 7) {
+                    const endEvent = semesterEnds.find(e => new Date(e.endDate || e.date) > new Date(startEvent.date));
+                    if (endEvent) {
+                        currentSemesterStart = startEvent.date;
+                        currentSemesterEnd = endEvent.endDate || endEvent.date;
+                        foundActiveSemester = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+
+
     setCalendarData({
       ...adjustedPreloadedData,
+      semesterStartDate: currentSemesterStart,
+      semesterEndDate: currentSemesterEnd,
       events: mergedEvents
     });
 
