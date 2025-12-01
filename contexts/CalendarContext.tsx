@@ -264,6 +264,58 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     setLoading(false);
   }, [userEvents]);
 
+  // Cleanup reminders for past events automatically
+  const cleanupPastEventReminders = useCallback(async () => {
+    if (!currentUser || !calendarData) return;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Filter out reminder preferences for events that have passed
+    const updatedPreferences = reminderPreferences.filter(eventKey => {
+      // Find the event in calendarData that matches this key
+      const event = calendarData.events.find(e => getEventKey(e) === eventKey);
+      
+      if (!event) return false; // Remove if event doesn't exist
+      
+      // Get the end date of the event
+      const eventEndDate = new Date(event.endDate || event.date);
+      eventEndDate.setHours(0, 0, 0, 0);
+      
+      // Keep the reminder if the event hasn't ended yet
+      return eventEndDate >= today;
+    });
+    
+    // If there are reminders to remove, update the backend
+    if (updatedPreferences.length < reminderPreferences.length) {
+      setReminderPreferences(updatedPreferences);
+      
+      try {
+        const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
+        await prefDocRef.set({
+          userId: currentUser.uid,
+          reminderEventKeys: updatedPreferences
+        });
+      } catch (error) {
+        console.error('Error cleaning up past event reminders:', error);
+      }
+    }
+  }, [currentUser, calendarData, reminderPreferences, getEventKey]);
+
+  // Run reminder cleanup when calendar data or reminders change
+  useEffect(() => {
+    if (!currentUser || !calendarData) return;
+    
+    // Run cleanup immediately on mount
+    cleanupPastEventReminders();
+    
+    // Run cleanup once per day (24 hours)
+    const intervalId = setInterval(cleanupPastEventReminders, 24 * 60 * 60 * 1000);
+    
+    return () => clearInterval(intervalId);
+  }, [currentUser, calendarData, cleanupPastEventReminders]);
+
+
   // Add user event to Firebase
   const addUserEvent = useCallback(async (event: CalendarEvent) => {
     if (!currentUser) throw new Error('User must be logged in');
