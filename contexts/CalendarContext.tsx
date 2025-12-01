@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useMe
 import { AcademicCalendarData, CalendarEvent } from '../types';
 import { PRELOADED_CALENDAR_DATA } from '../config/academicCalendar';
 import { useAuth } from '../hooks/useAuth';
+import { useUser } from './UserContext';
+import { useSchedule } from './ScheduleContext';
 import { db } from '../firebaseConfig';
 // FIX: Updated Firebase imports for v9 compatibility.
 import firebase from 'firebase/compat/app';
@@ -266,6 +268,47 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     setLoading(false);
   }, [userEvents]);
+
+  const { user, updateUser } = useUser();
+  const { setScheduleData: setSchedule } = useSchedule();
+
+  // Reset schedule if new semester detected
+  useEffect(() => {
+    if (!user || !calendarData) return;
+
+    const currentSemesterStart = calendarData.semesterStartDate;
+    
+    // Check if we have already reset for this semester
+    if (user.lastSemesterReset === currentSemesterStart) return;
+
+    // Check if we are in the new semester (or within 7 days of start)
+    // The calendarData.semesterStartDate is already updated by the logic above
+    // So we just need to confirm we are in that "new" state compared to the user's last reset
+    
+    const performReset = async () => {
+        try {
+            // Clear schedule
+            await setSchedule([]);
+            
+            // Update user's last reset date
+            await updateUser({ lastSemesterReset: currentSemesterStart });
+            
+            await logActivity(user.id, {
+                type: 'schedule',
+                title: 'New Semester Reset',
+                description: 'Your weekly schedule has been reset for the new semester.',
+                icon: '🔄',
+                link: '/schedule'
+            });
+            
+            console.log('Schedule reset for new semester:', currentSemesterStart);
+        } catch (error) {
+            console.error('Error resetting schedule:', error);
+        }
+    };
+
+    performReset();
+  }, [user, calendarData, setSchedule, updateUser]);
 
   // Add user event to Firebase
   const addUserEvent = useCallback(async (event: CalendarEvent) => {

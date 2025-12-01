@@ -21,6 +21,7 @@ export interface User {
   bio?: string;
   socialLinks?: SocialLinks;
   createdAt?: any; // Firestore Timestamp
+  lastSemesterReset?: string; // Date string of the last semester reset (YYYY-MM-DD)
 }
 
 export interface Grade {
