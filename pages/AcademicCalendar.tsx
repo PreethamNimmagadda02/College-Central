@@ -477,9 +477,15 @@ const AcademicCalendar: React.FC = () => {
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
                             <p className="text-green-100 text-xs md:text-sm font-semibold">Days Remaining</p>
-                            <p className="text-2xl md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">
-                                {getDaysUntil(calendarData.semesterEndDate) < 0 ? 'Completed' : getDaysUntil(calendarData.semesterEndDate)}
-                            </p>
+                            {(() => {
+                                const days = getDaysUntil(calendarData.semesterEndDate);
+                                const isCompleted = days < 0;
+                                return (
+                                    <p className={`${isCompleted ? 'text-lg sm:text-xl' : 'text-2xl'} md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left`}>
+                                        {isCompleted ? 'Completed' : days}
+                                    </p>
+                                );
+                            })()}
                         </div>
                         <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
                             {getDaysUntil(calendarData.semesterEndDate) < 0 ? '✅' : '⏳'}
