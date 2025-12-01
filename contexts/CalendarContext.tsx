@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useMe
 import { AcademicCalendarData, CalendarEvent } from '../types';
 import { PRELOADED_CALENDAR_DATA } from '../config/academicCalendar';
 import { useAuth } from '../hooks/useAuth';
-import { useUser } from './UserContext';
-import { useSchedule } from './ScheduleContext';
 import { db } from '../firebaseConfig';
 // FIX: Updated Firebase imports for v9 compatibility.
 import firebase from 'firebase/compat/app';
@@ -186,129 +184,19 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     // Adjust preloaded data to the current year
     const adjustedPreloadedData = adjustCalendarDatesToCurrentYear(PRELOADED_CALENDAR_DATA);
 
-    // Combine adjusted preloaded events with user events
+    // Combine adjusted preloaded events with user events (user events are assumed to be for current year)
     const mergedEvents = [
       ...adjustedPreloadedData.events,
       ...userEvents
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    // Determine the current semester based on today's date
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Define semester boundaries based on events
-    // We look for "Start of Semester" and "End-Semester Exams"
-    const semesterStarts = mergedEvents.filter(e => e.type === 'Start of Semester').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const semesterEnds = mergedEvents.filter(e => e.type === 'End-Semester Exams').sort((a, b) => new Date(a.endDate || a.date).getTime() - new Date(b.endDate || b.date).getTime());
-
-    let currentSemesterStart = adjustedPreloadedData.semesterStartDate;
-    let currentSemesterEnd = adjustedPreloadedData.semesterEndDate;
-
-    // Logic to find the active or next semester
-    // 1. Try to find a semester we are currently in
-    let foundActiveSemester = false;
-    
-    for (let i = 0; i < semesterStarts.length; i++) {
-        const startEvent = semesterStarts[i];
-        if (!startEvent) continue;
-
-        // Find the corresponding end event (the next one after this start)
-        const endEvent = semesterEnds.find(e => new Date(e.endDate || e.date) > new Date(startEvent.date));
-        
-        if (endEvent) {
-            const startDate = new Date(startEvent.date);
-            const endDate = new Date(endEvent.endDate || endEvent.date);
-            
-            // If today is within this range, or if today is before this range (and it's the first one we find), pick it?
-            // Actually, we want the *current* active one.
-            if (today >= startDate && today <= endDate) {
-                currentSemesterStart = startEvent.date;
-                currentSemesterEnd = endEvent.endDate || endEvent.date;
-                foundActiveSemester = true;
-                break;
-            }
-        }
-    }
-
-    // 2. If not in an active semester, find the NEXT semester
-    if (!foundActiveSemester) {
-        for (let i = 0; i < semesterStarts.length; i++) {
-            const startEvent = semesterStarts[i];
-            if (!startEvent) continue;
-
-            const startDate = new Date(startEvent.date);
-            
-            if (today < startDate) {
-                // This is the next upcoming semester
-                // Check if we are within 7 days of the start date
-                const diffTime = startDate.getTime() - today.getTime();
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                if (diffDays <= 7) {
-                    const endEvent = semesterEnds.find(e => new Date(e.endDate || e.date) > new Date(startEvent.date));
-                    if (endEvent) {
-                        currentSemesterStart = startEvent.date;
-                        currentSemesterEnd = endEvent.endDate || endEvent.date;
-                        foundActiveSemester = true;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    
-
-
     setCalendarData({
       ...adjustedPreloadedData,
-      semesterStartDate: currentSemesterStart,
-      semesterEndDate: currentSemesterEnd,
       events: mergedEvents
     });
 
     setLoading(false);
   }, [userEvents]);
-
-  const { user, updateUser } = useUser();
-  const { setScheduleData: setSchedule } = useSchedule();
-
-  // Reset schedule if new semester detected
-  useEffect(() => {
-    if (!user || !calendarData) return;
-
-    const currentSemesterStart = calendarData.semesterStartDate;
-    
-    // Check if we have already reset for this semester
-    if (user.lastSemesterReset === currentSemesterStart) return;
-
-    // Check if we are in the new semester (or within 7 days of start)
-    // The calendarData.semesterStartDate is already updated by the logic above
-    // So we just need to confirm we are in that "new" state compared to the user's last reset
-    
-    const performReset = async () => {
-        try {
-            // Clear schedule
-            await setSchedule([]);
-            
-            // Update user's last reset date
-            await updateUser({ lastSemesterReset: currentSemesterStart });
-            
-            await logActivity(user.id, {
-                type: 'schedule',
-                title: 'New Semester Reset',
-                description: 'Your weekly schedule has been reset for the new semester.',
-                icon: '🔄',
-                link: '/schedule'
-            });
-            
-            console.log('Schedule reset for new semester:', currentSemesterStart);
-        } catch (error) {
-            console.error('Error resetting schedule:', error);
-        }
-    };
-
-    performReset();
-  }, [user, calendarData, setSchedule, updateUser]);
 
   // Add user event to Firebase
   const addUserEvent = useCallback(async (event: CalendarEvent) => {
@@ -427,57 +315,6 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         await eventRef.delete();
     }
   }, [currentUser, reminderPreferences, getEventKey]);
-
-  // Cleanup reminders for past events automatically
-  const cleanupPastEventReminders = useCallback(async () => {
-    if (!currentUser || !calendarData) return;
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Filter out reminder preferences for events that have passed
-    const updatedPreferences = reminderPreferences.filter(eventKey => {
-      // Find the event in calendarData that matches this key
-      const event = calendarData.events.find(e => getEventKey(e) === eventKey);
-      
-      if (!event) return false; // Remove if event doesn't exist
-      
-      // Get the end date of the event
-      const eventEndDate = new Date(event.endDate || event.date);
-      eventEndDate.setHours(0, 0, 0, 0);
-      
-      // Keep the reminder if the event hasn't ended yet
-      return eventEndDate >= today;
-    });
-    
-    // If there are reminders to remove, update the backend
-    if (updatedPreferences.length < reminderPreferences.length) {
-      setReminderPreferences(updatedPreferences);
-      
-      try {
-        const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
-        await prefDocRef.set({
-          userId: currentUser.uid,
-          reminderEventKeys: updatedPreferences
-        });
-      } catch (error) {
-        console.error('Error cleaning up past event reminders:', error);
-      }
-    }
-  }, [currentUser, calendarData, reminderPreferences, getEventKey]);
-
-  // Run reminder cleanup when calendar data or reminders change
-  useEffect(() => {
-    if (!currentUser || !calendarData) return;
-    
-    // Run cleanup immediately on mount
-    cleanupPastEventReminders();
-    
-    // Run cleanup once per day (24 hours)
-    const intervalId = setInterval(cleanupPastEventReminders, 24 * 60 * 60 * 1000);
-    
-    return () => clearInterval(intervalId);
-  }, [currentUser, calendarData, cleanupPastEventReminders]);
 
   const contextValue = useMemo(
     () => ({
