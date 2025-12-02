@@ -7,7 +7,7 @@ const DYNAMIC_CACHE = `dynamic-${APP_VERSION}`;
 const urlsToCache = [
   '/',
   '/logo.svg'
-  // index.html and other assets will be cached dynamically with network-first strategy
+  // App shell and critical pages will be cached dynamically
 ];
 
 self.addEventListener('install', event => {
@@ -120,6 +120,9 @@ self.addEventListener('fetch', event => {
                      event.request.url.endsWith('/') ||
                      event.request.url.includes('/assets/');
 
+  // Check if this is a navigation request
+  const isNavigationRequest = event.request.mode === 'navigate';
+
   if (isAppAsset) {
     event.respondWith(
       fetch(event.request)
@@ -136,7 +139,27 @@ self.addEventListener('fetch', event => {
         .catch(() => {
           // Network failed, fallback to cache
           return caches.match(event.request).then(cachedResponse => {
-            return cachedResponse || new Response('Offline', {
+            // If we have a cached version, return it
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            
+            // For navigation requests, redirect to offline page
+            if (isNavigationRequest) {
+              return caches.match('/').then(rootResponse => {
+                if (rootResponse) {
+                  // Clone the response and modify to show offline route
+                  return rootResponse;
+                }
+                return new Response('Offline', {
+                  status: 503,
+                  statusText: 'Service Unavailable'
+                });
+              });
+            }
+            
+            // For other requests, return error
+            return new Response('Offline', {
               status: 503,
               statusText: 'Service Unavailable'
             });

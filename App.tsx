@@ -13,6 +13,8 @@ import Layout from './pages/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import UpdatePrompt from './components/UpdatePrompt';
+import { InstallPrompt } from './components/InstallPrompt';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { measurePageLoad } from './utils/performance';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
@@ -29,6 +31,7 @@ const AcademicCalendar = lazyWithRetry(() => import('./pages/AcademicCalendar'))
 const Login = lazyWithRetry(() => import('./pages/Login'));
 const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService'));
+const OfflinePage = lazyWithRetry(() => import('./pages/OfflinePage'));
 
 // Loading fallback component
 const PageLoader = React.memo(() => (
@@ -47,6 +50,14 @@ const router = createHashRouter([
     element: (
       <Suspense fallback={<PageLoader />}>
         <Login />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/offline',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <OfflinePage />
       </Suspense>
     ),
   },
@@ -175,6 +186,8 @@ const App: React.FC = () => {
         </UserProvider>
       </AuthProvider>
       <UpdatePrompt />
+      <InstallPrompt />
+      <OfflineIndicator />
     </>
   );
 };
