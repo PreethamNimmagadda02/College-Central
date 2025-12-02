@@ -1637,10 +1637,19 @@ const Dashboard: React.FC = () => {
                                         const eventKey = getEventKey(event);
                                         const isUserCreatedWithReminder = event.remindMe === true && !!event.userId;
                                         const isPreloadedWithReminder = !event.userId && reminderPreferences.includes(eventKey);
+                                        
                                         if (!isUserCreatedWithReminder && !isPreloadedWithReminder) return false;
-                                        const eventDate = new Date(event.date);
-                                        eventDate.setHours(0, 0, 0, 0);
-                                        return eventDate >= today;
+                                        
+                                        // Include ongoing and future events
+                                        const eventStartDate = new Date(event.date);
+                                        const eventEndDate = new Date(event.endDate || event.date);
+                                        eventStartDate.setHours(0, 0, 0, 0);
+                                        eventEndDate.setHours(0, 0, 0, 0);
+                                        
+                                        const isOngoing = eventStartDate < today && eventEndDate >= today;
+                                        const daysUntil = Math.ceil((eventStartDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                                        
+                                        return daysUntil >= 0 || isOngoing;
                                     }).length;
                                     return count > 0 ? (
                                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
