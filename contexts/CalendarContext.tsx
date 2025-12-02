@@ -276,7 +276,9 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       // Find the event in calendarData that matches this key
       const event = calendarData.events.find(e => getEventKey(e) === eventKey);
       
-      if (!event) return false; // Remove if event doesn't exist
+      if (!event) {
+        return false; // Remove if event doesn't exist
+      }
       
       // Get the end date of the event
       const eventEndDate = new Date(event.endDate || event.date);
@@ -306,14 +308,14 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     if (!currentUser || !calendarData) return;
     
-    // Run cleanup immediately on mount
+    // Run cleanup immediately
     cleanupPastEventReminders();
     
     // Run cleanup once per day (24 hours)
     const intervalId = setInterval(cleanupPastEventReminders, 24 * 60 * 60 * 1000);
     
     return () => clearInterval(intervalId);
-  }, [currentUser, calendarData, cleanupPastEventReminders]);
+  }, [currentUser, calendarData]); // Removed cleanupPastEventReminders from deps to avoid infinite loop
 
 
   // Add user event to Firebase
