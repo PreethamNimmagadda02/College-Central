@@ -608,9 +608,15 @@ const Dashboard: React.FC = () => {
         );
 
         if (examEvent) {
+            // Extract personal tasks to show even during exam period
+            const personalTasks = (scheduleData || [])
+                .filter(c => c.isCustomTask && c.day.toLowerCase() === displayWeekday.toLowerCase())
+                .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
             return {
                 ...defaultState,
                 title: "Exam Period 📝",
+                classes: personalTasks,
                 isHoliday: true,
                 isExam: true,
                 holidayDescription: examEvent.description,
@@ -629,9 +635,17 @@ const Dashboard: React.FC = () => {
         );
 
         if (holidayEvent) {
+            // Extract personal tasks to show even during holidays
+            const personalTasks = (scheduleData || [])
+                .filter(c => c.isCustomTask && c.day.toLowerCase() === displayWeekday.toLowerCase())
+                .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+
+
             return {
                 ...defaultState,
                 title: "It's a Holiday! 🎉",
+                classes: personalTasks,
                 isHoliday: true,
                 holidayDescription: holidayEvent.description,
                 infoMessage: specialEventMessage,
@@ -646,9 +660,15 @@ const Dashboard: React.FC = () => {
         );
 
         if (semesterEvent) {
+            // Extract personal tasks to show even during semester events
+            const personalTasks = (scheduleData || [])
+                .filter(c => c.isCustomTask && c.day.toLowerCase() === displayWeekday.toLowerCase())
+                .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
             return {
                 ...defaultState,
                 title: "Semester Event 📚",
+                classes: personalTasks,
                 isHoliday: true,
                 holidayDescription: `${semesterEvent.description} - Check with your department for schedule changes.`,
                 infoMessage: specialEventMessage,
@@ -1483,7 +1503,9 @@ const Dashboard: React.FC = () => {
                                         <p className="text-sm text-blue-700 dark:text-blue-300 whitespace-pre-line">{scheduleInfo.infoMessage}</p>
                                     </div>
                                 )}
-                                <div className="text-center py-12">
+                                
+                                {/* Show holiday message */}
+                                <div className="text-center py-8">
                                     {scheduleInfo.isExam ? (
                                         <>
                                             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 mb-4">
@@ -1502,6 +1524,62 @@ const Dashboard: React.FC = () => {
                                         </>
                                     )}
                                 </div>
+
+                                {/* Show personal tasks if any exist */}
+                                {scheduleInfo.classes.length > 0 && (
+                                    <div className="mt-6">
+                                        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                                            <span className="inline-block w-2 h-2 rounded-full bg-purple-500"></span>
+                                            Your Personal Tasks
+                                        </h4>
+                                        <ul className="space-y-3">
+                                            {scheduleInfo.classes.map((c, index) => (
+                                                <li key={c.slotId} className="relative pl-8">
+                                                    {/* Timeline segment for this task */}
+                                                    {index < scheduleInfo.classes.length - 1 && (
+                                                        <div
+                                                            className="absolute left-2.5 w-0.5 bg-purple-300 dark:bg-purple-600"
+                                                            style={{
+                                                                top: '1.25rem',
+                                                                height: 'calc(100% + 0.75rem)'
+                                                            }}
+                                                        />
+                                                    )}
+
+                                                    <div className="absolute left-0 top-2.5 h-5 w-5 rounded-full flex items-center justify-center bg-purple-500 ring-4 ring-purple-500/15">
+                                                        <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+                                                    </div>
+
+                                                    <div className="py-2">
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">
+                                                                        {c.startTime} - {c.endTime}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="font-semibold text-sm mb-2 text-slate-900 dark:text-white">{c.courseName}</p>
+                                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                                                                    <span className="flex items-center gap-1">
+                                                                        <span className={`inline-block px-2 py-0.5 rounded text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30`}>
+                                                                            ✓ {c.courseCode}
+                                                                        </span>
+                                                                    </span>
+                                                                    {c.location && (
+                                                                        <span className="flex items-center gap-1">
+                                                                            <LocationIcon className="w-3.5 h-3.5" />
+                                                                            {c.location}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                             </>
                         ) : (
                             <>
