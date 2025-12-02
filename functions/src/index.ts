@@ -219,12 +219,14 @@ async function storeEvents(events: Omit<CampusEvent, 'id'>[]): Promise<void> {
       console.log(`Added new event (${event.date}): ${event.title}`);
     } else {
       // Update existing event
-      const docId = existingQuery.docs[0].id;
-      await eventsRef.doc(docId).update({
-        ...event,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      console.log(`Updated existing event (${event.date}): ${event.title}`);
+      const doc = existingQuery.docs[0];
+      if (doc) {
+        await eventsRef.doc(doc.id).update({
+          ...event,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        console.log(`Updated existing event (${event.date}): ${event.title}`);
+      }
     }
   }
 }
@@ -260,12 +262,14 @@ async function storeAnnouncements(announcements: Omit<Announcement, 'id'>[]): Pr
       console.log(`Added new announcement (${announcement.date}): ${announcement.title}`);
     } else {
       // Update existing announcement
-      const docId = existingQuery.docs[0].id;
-      await newsRef.doc(docId).update({
-        ...announcement,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      console.log(`Updated existing announcement (${announcement.date}): ${announcement.title}`);
+      const doc = existingQuery.docs[0];
+      if (doc) {
+        await newsRef.doc(doc.id).update({
+          ...announcement,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        console.log(`Updated existing announcement (${announcement.date}): ${announcement.title}`);
+      }
     }
   }
 }

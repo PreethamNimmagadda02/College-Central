@@ -84,7 +84,12 @@ export const formatDateLong = (date: Date): string => {
  * Parse date string (YYYY-MM-DD) to Date object
  */
 export const parseDateString = (dateString: string): Date => {
-  const [year, month, day] = dateString.split('-').map(Number);
+  const parts = dateString.split('-').map(Number);
+  if (parts.length !== 3) {
+    console.error(`Invalid date string format: ${dateString}`);
+    return new Date(); // Return current date as fallback
+  }
+  const [year, month, day] = parts as [number, number, number];
   return new Date(year, month - 1, day);
 };
 

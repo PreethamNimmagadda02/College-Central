@@ -16,12 +16,21 @@
  */
 
 import * as admin from 'firebase-admin';
-import * as path from 'path';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 // Initialize Firebase Admin SDK
 // You'll need to download your service account key from Firebase Console
 // Place it in the project root as 'serviceAccountKey.json'
-const serviceAccount = require(path.join(__dirname, '../serviceAccountKey.json'));
+const serviceAccountPath = join(process.cwd(), 'serviceAccountKey.json');
+let serviceAccount;
+
+try {
+  serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
+} catch (error) {
+  console.error('Error loading serviceAccountKey.json. Make sure it exists in the project root.');
+  process.exit(1);
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -43,7 +52,7 @@ interface User {
 function shouldUseNEP(admissionNumber: string): boolean {
   const yearMatch = admissionNumber.match(/^(\d{2})/);
   if (yearMatch) {
-    const year = parseInt(yearMatch[1], 10);
+    const year = parseInt(yearMatch[1]!, 10);
     return year >= 24;
   }
   return false;

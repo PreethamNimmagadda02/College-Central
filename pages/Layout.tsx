@@ -48,7 +48,7 @@ const Layout: React.FC = () => {
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         sidebarCollapsed={sidebarCollapsed}
-        setSidebarCollapsed={setSidebarCollapsed}
+
         onHoverChange={setSidebarHovering}
       />
 
