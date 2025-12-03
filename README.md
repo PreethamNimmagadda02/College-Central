@@ -12,7 +12,7 @@
 
 **A Progressive Web Application for IIT(ISM) Dhanbad students to manage academics, navigate campus, and stay connected.**
 
-[ Documentation](./ARCHITECTURE.md)
+[Architecture](./ARCHITECTURE.md)
 
 </div>
 
