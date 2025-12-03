@@ -36,7 +36,6 @@
 - **Interactive Campus Map** - Google Maps integration, location search, directions, saved places
 - **Campus Directory** - Contact directory, buildings, hostels, dining, sports, medical facilities
 - **College Forms** - Categorized repository, direct links, deadline tracking, search & filter
-- **News & Events** - Real-time announcements, upcoming events, notifications
 
 ### 👤 Profile & Personalization
 - Profile picture upload, personal/academic info, activity history, data export, dark mode, Google OAuth
