@@ -1310,20 +1310,20 @@ const Schedule: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 hidden sm:inline">Filter:</span>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 flex-1 sm:flex-initial min-w-0">
+                            <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 hidden sm:inline whitespace-nowrap">Filter:</span>
                             <select
                                 value={filterCourse}
                                 onChange={(e) => setFilterCourse(e.target.value)}
-                                className="flex-1 sm:flex-initial px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700"
+                                className="w-full sm:w-auto max-w-[150px] sm:max-w-xs px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 truncate"
                             >
                                 <option value="all">All Items</option>
                                 <option value="courses-only" className="font-semibold">📚 Courses Only</option>
                                 <option value="tasks-only" className="font-semibold">➕ Tasks Only</option>
                                 {selectedCoursesForFilter.length > 0 && <option disabled>──────────</option>}
                                 {selectedCoursesForFilter.map(course => (
-                                    <option key={course.code} value={course.code}>{course.name}</option>
+                                    <option key={course.code} value={course.code} className="truncate">{course.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -1331,7 +1331,7 @@ const Schedule: React.FC = () => {
                         <button
                             onClick={handleExportPDF}
                             disabled={!scheduleData || scheduleData.length === 0}
-                            className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium text-xs sm:text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="flex-shrink-0 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium text-xs sm:text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             title="Export schedule as PDF"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
