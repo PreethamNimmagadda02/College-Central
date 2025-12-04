@@ -1375,10 +1375,10 @@ const Schedule: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
-                            <div className="relative grid gap-px min-w-[40rem] sm:min-w-[50rem] lg:min-w-[56.25rem]" style={{ gridTemplateColumns: `auto repeat(${days.length}, minmax(7rem, 1fr))`, gridTemplateRows: `auto repeat(${timeSlots.length * 2}, 2.5rem)` }}>
+                        <div className="overflow-x-auto -mx-3 sm:mx-0 sm:px-0 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
+                            <div className="relative grid min-w-[40rem] sm:min-w-[50rem] lg:min-w-[56.25rem]" style={{ gridTemplateColumns: `auto repeat(${days.length}, minmax(7rem, 1fr))`, gridTemplateRows: `auto repeat(${timeSlots.length * 2}, 2.5rem)` }}>
                                 {/* Corner cell */}
-                                <div className="sticky left-0 top-0 z-20 bg-slate-50 dark:bg-slate-800 rounded-tl-lg"></div>
+                                <div className="sticky left-0 top-0 z-40 bg-slate-50 dark:bg-slate-800 rounded-tl-lg border-r border-slate-200 dark:border-slate-700"></div>
                                 
                                 {/* Time labels */}
                                 {timeSlots.flatMap((time, index) => {
@@ -1389,25 +1389,25 @@ const Schedule: React.FC = () => {
                                         // Full hour label
                                         <div
                                             key={`${time}-full`}
-                                            className="sticky left-0 z-10 text-right pr-3 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 flex items-start justify-end pt-1"
+                                            className="sticky left-0 z-40 text-right pr-3 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 flex items-start justify-end border-r border-slate-200 dark:border-slate-700"
                                             style={{ gridColumn: 1, gridRow: index * 2 + 2 }}
                                         >
-                                            {formatTime(time)}
+                                            <span className="-translate-y-1/2 bg-slate-50 dark:bg-slate-800 py-1">{formatTime(time)}</span>
                                         </div>,
                                         // Half hour mark
                                         <div
                                             key={`${time}-half`}
-                                            className="sticky left-0 z-10 text-right pr-3 text-xs text-slate-500 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 flex items-start justify-end pt-1"
+                                            className="sticky left-0 z-40 text-right pr-3 text-xs text-slate-500 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 flex items-start justify-end border-r border-slate-200 dark:border-slate-700"
                                             style={{ gridColumn: 1, gridRow: index * 2 + 3 }}
                                         >
-                                            {formatTime(halfHourTime)}
+                                            <span className="-translate-y-1/2 bg-slate-50 dark:bg-slate-800 py-1">{formatTime(halfHourTime)}</span>
                                         </div>
                                     ];
                                 })}
 
                                 {/* Day headers */}
                                 {days.map((day, index) => (
-                                    <div key={day} className={`sticky top-0 z-10 text-center font-semibold p-3 bg-slate-50 dark:bg-slate-800 ${day === today ? 'text-primary dark:text-secondary bg-primary/10 dark:bg-primary/20' : ''}`} style={{ gridColumn: index + 2, gridRow: 1 }}>
+                                    <div key={day} className={`sticky top-0 z-10 text-center font-semibold p-3 bg-slate-50 dark:bg-slate-800 border-r border-b border-slate-200 dark:border-slate-700 ${day === today ? 'text-primary dark:text-secondary bg-primary/10 dark:bg-primary/20' : ''}`} style={{ gridColumn: index + 2, gridRow: 1 }}>
                                         <p className="text-sm uppercase tracking-wider">{day}</p>
                                         {day === today && <p className="text-xs mt-1">Today</p>}
                                     </div>
