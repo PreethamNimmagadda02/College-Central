@@ -75,7 +75,7 @@ echo "VITE_GEMINI_API_KEY=your_gemini_api_key_here" > .env.local
 # Run development server
 npm run dev
 
-# Open http://localhost:5173
+# Open http://localhost:3000
 ```
 
 ---
