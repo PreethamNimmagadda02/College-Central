@@ -42,6 +42,22 @@ const Directory = () => {
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setViewMode('card');
+      } else {
+        setViewMode('table');
+      }
+    };
+
+    // Set initial view mode
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
  useEffect(() => {
         const loadDirectories = async () => {
             try {
@@ -277,7 +293,7 @@ const Directory = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 hidden md:flex">
                 {/* View Mode Toggle */}
                 <div className="flex bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden">
                   <button
