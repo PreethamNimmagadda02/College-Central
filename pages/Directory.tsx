@@ -41,7 +41,7 @@ const Directory = () => {
   const [activeTab, setActiveTab] = useState('faculty');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
-
+  
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) {
