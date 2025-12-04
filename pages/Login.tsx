@@ -1,9 +1,150 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LogoIcon } from '../components/icons/SidebarIcons';
 import ScrollToTop from '../components/ScrollToTop';
 import { getEmailValidationMessage } from '../config/collegeInfo';
+
+// Custom hook for animated counting
+const useCountUp = (end: number, duration: number = 2000, startCounting: boolean = false) => {
+  const [count, setCount] = useState(0);
+  const countRef = useRef(0);
+  const startTimeRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!startCounting) {
+      setCount(0);
+      countRef.current = 0;
+      startTimeRef.current = null;
+      return;
+    }
+
+    const animate = (timestamp: number) => {
+      if (!startTimeRef.current) startTimeRef.current = timestamp;
+      const progress = Math.min((timestamp - startTimeRef.current) / duration, 1);
+      
+      // Ease out cubic for smooth deceleration
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const currentCount = Math.floor(easeOut * end);
+      
+      if (currentCount !== countRef.current) {
+        countRef.current = currentCount;
+        setCount(currentCount);
+      }
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setCount(end);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [end, duration, startCounting]);
+
+  return count;
+};
+
+// Custom hook for intersection observer
+const useInView = (threshold: number = 0.1) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry && entry.isIntersecting && !isInView) {
+          setIsInView(true);
+        }
+      },
+      { threshold }
+    );
+
+    const currentRef = ref.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+      observer.disconnect();
+    };
+  }, [threshold, isInView]);
+
+  return { ref, isInView };
+};
+
+// Custom hook for mouse position tracking
+const useMousePosition = () => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const elementRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (elementRef.current) {
+      const rect = elementRef.current.getBoundingClientRect();
+      setMousePosition({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (element) {
+      element.addEventListener('mousemove', handleMouseMove);
+      return () => element.removeEventListener('mousemove', handleMouseMove);
+    }
+    return undefined;
+  }, [handleMouseMove]);
+
+  return { elementRef, mousePosition };
+};
+
+// Smart metrics data - original metrics with animations
+const smartMetrics = [
+  { label: "Active Students", value: 500, suffix: "+", icon: "🎓", description: "Students using the app" },
+  { label: "Grades Tracked", value: 5000, suffix: "+", icon: "📈", description: "Academic records managed" },
+  { label: "User Rating", value: 4.8, suffix: "★", icon: "⭐", description: "Average user rating" },
+  { label: "Uptime", value: 98, suffix: "%", icon: "⚡", description: "System availability" },
+];
+
+// Animated metric card component
+const AnimatedMetricCard: React.FC<{
+  metric: typeof smartMetrics[0];
+  isInView: boolean;
+  index: number;
+}> = ({ metric, isInView, index }) => {
+  const count = useCountUp(metric.value, 2000 + index * 200, isInView);
+  
+  return (
+    <div 
+      className="group flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-5 md:p-6 border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-purple-500/20"
+      style={{ 
+        animationDelay: `${index * 100}ms`,
+        transform: isInView ? 'translateY(0)' : 'translateY(20px)',
+        opacity: isInView ? 1 : 0,
+        transition: `all 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${index * 100}ms`
+      }}
+    >
+      <div className="text-3xl sm:text-4xl mb-1 group-hover:scale-125 group-hover:rotate-12 transition-transform duration-500">
+        {metric.icon}
+      </div>
+      <div className="text-3xl sm:text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-300 to-orange-400 group-hover:scale-110 transition-transform duration-300">
+        {count}{metric.suffix}
+      </div>
+      <div className="text-white/90 text-xs sm:text-sm md:text-base text-center font-semibold">
+        {metric.label}
+      </div>
+      <div className="text-white/50 text-[10px] sm:text-xs text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        {metric.description}
+      </div>
+    </div>
+  );
+};
 
 
 
@@ -18,6 +159,11 @@ const Login: React.FC = () => {
   const [typedText, setTypedText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
   const [showCursor, setShowCursor] = useState(true);
+  
+  // Hooks for interactive elements
+  const { ref: metricsRef, isInView: metricsInView } = useInView(0.2);
+  const { elementRef: loginCardRef, mousePosition } = useMousePosition();
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
   
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -95,6 +241,14 @@ const Login: React.FC = () => {
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTextIndex, isTyping]);
+
+  // Testimonial auto-rotation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTestimonialIndex((prev) => (prev + 1) % 3);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Capacitor back button handler
 
@@ -304,7 +458,7 @@ const Login: React.FC = () => {
                   Built by students, for students
                 </span>
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white mb-6 leading-tight tracking-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight tracking-tight">
                 Your Complete Campus Companion
               </h1>
               <p className="text-lg md:text-xl lg:text-2xl text-white/80 leading-relaxed max-w-3xl mx-auto">
@@ -435,51 +589,107 @@ const Login: React.FC = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 max-w-3xl mx-auto">
-                <div className="group flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                  <div className="text-3xl sm:text-4xl md:text-5xl font-black text-yellow-300 group-hover:scale-110 transition-transform duration-300">500+</div>
-                  <div className="text-white/80 text-xs sm:text-sm md:text-base text-center">Active Students</div>
-                </div>
-                <div className="group flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                  <div className="text-3xl sm:text-4xl md:text-5xl font-black text-yellow-300 group-hover:scale-110 transition-transform duration-300">5K+</div>
-                  <div className="text-white/80 text-xs sm:text-sm md:text-base text-center">Grades Tracked</div>
-                </div>
-                <div className="group flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                  <div className="text-3xl sm:text-4xl md:text-5xl font-black text-yellow-300 group-hover:scale-110 transition-transform duration-300">4.8★</div>
-                  <div className="text-white/80 text-xs sm:text-sm md:text-base text-center">User Rating</div>
-                </div>
-                <div className="group flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                  <div className="text-3xl sm:text-4xl md:text-5xl font-black text-yellow-300 group-hover:scale-110 transition-transform duration-300">98%</div>
-                  <div className="text-white/80 text-xs sm:text-sm md:text-base text-center">Uptime</div>
-                </div>
+              <div ref={metricsRef} className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 max-w-3xl mx-auto">
+                {smartMetrics.map((metric, index) => (
+                  <AnimatedMetricCard 
+                    key={metric.label} 
+                    metric={metric} 
+                    isInView={metricsInView} 
+                    index={index} 
+                  />
+                ))}
               </div>
 
-              {/* Testimonials */}
-              <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 max-w-3xl mx-auto">
-                <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                  <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
-                    "College Central has made my life so much easier. I can check my schedule, track my CGPA, and find classrooms all in one app!"
-                  </p>
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 group-hover:scale-110 transition-transform duration-300"></div>
-                    <div className="text-left">
-                      <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">CSE Student</p>
-                      <p className="text-white/60 text-xs md:text-sm">2nd Year</p>
+              {/* Testimonial Carousel */}
+              <div className="relative max-w-3xl mx-auto overflow-hidden pb-4 pt-4">
+                <div 
+                  className="flex transition-transform duration-700 ease-out"
+                  style={{ transform: `translateX(-${testimonialIndex * 100}%)` }}
+                >
+                  {/* Testimonial 1 */}
+                  <div className="w-full flex-shrink-0 px-2">
+                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
+                      <div className="flex items-center gap-1 mb-3">
+                        {[1,2,3,4,5].map(star => (
+                          <svg key={star} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
+                        "College Central has made my life so much easier. I can check my schedule, track my CGPA, and find classrooms all in one app!"
+                      </p>
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">A</div>
+                        <div className="text-left">
+                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">CSE Student</p>
+                          <p className="text-white/60 text-xs md:text-sm">2nd Year</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Testimonial 2 */}
+                  <div className="w-full flex-shrink-0 px-2">
+                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
+                      <div className="flex items-center gap-1 mb-3">
+                        {[1,2,3,4,5].map(star => (
+                          <svg key={star} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
+                        "The CGPA tracker is amazing! No more manual calculations. It's accurate, fast, and helps me stay on top of my academics."
+                      </p>
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-pink-400 to-orange-500 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">R</div>
+                        <div className="text-left">
+                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">ECE Student</p>
+                          <p className="text-white/60 text-xs md:text-sm">3rd Year</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Testimonial 3 */}
+                  <div className="w-full flex-shrink-0 px-2">
+                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
+                      <div className="flex items-center gap-1 mb-3">
+                        {[1,2,3,4,5].map(star => (
+                          <svg key={star} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
+                        "Finally, a campus map that actually works! No more asking random seniors for directions. The interactive map is a lifesaver."
+                      </p>
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-green-400 to-cyan-500 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">P</div>
+                        <div className="text-left">
+                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">Mechanical Student</p>
+                          <p className="text-white/60 text-xs md:text-sm">1st Year</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                  <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
-                    "The CGPA tracker is amazing! No more manual calculations. It's accurate, fast, and helps me stay on top of my academics."
-                  </p>
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-pink-400 to-orange-500 group-hover:scale-110 transition-transform duration-300"></div>
-                    <div className="text-left">
-                      <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">ECE Student</p>
-                      <p className="text-white/60 text-xs md:text-sm">3rd Year</p>
-                    </div>
-                  </div>
+                
+                {/* Carousel Navigation Dots */}
+                <div className="flex justify-center gap-2 mt-4">
+                  {[0, 1, 2].map((index) => (
+                    <button
+                      key={index}
+                      onClick={() => setTestimonialIndex(index)}
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                        testimonialIndex === index 
+                          ? 'bg-white scale-125 shadow-lg shadow-white/30' 
+                          : 'bg-white/30 hover:bg-white/50'
+                      }`}
+                      aria-label={`Go to testimonial ${index + 1}`}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -529,8 +739,18 @@ const Login: React.FC = () => {
           <div className="relative flex flex-col justify-center items-center px-6 pb-16 md:pb-20">
             <div className="w-full max-w-md relative z-10">
 
-            {/* Login Card with enhanced glassmorphism */}
-            <div className="relative group perspective-1000">
+            {/* Login Card with enhanced glassmorphism and mouse-following glow */}
+            <div ref={loginCardRef} className="relative group perspective-1000">
+              {/* Mouse-following glow effect */}
+              <div 
+                className="absolute pointer-events-none transition-opacity duration-300 w-64 h-64 rounded-full bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-cyan-500/30 blur-3xl opacity-0 group-hover:opacity-100"
+                style={{
+                  left: mousePosition.x - 128,
+                  top: mousePosition.y - 128,
+                  transform: 'translate3d(0, 0, 0)',
+                }}
+              />
+              
               {/* Animated border gradient */}
               <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition-all duration-1000 animate-gradient"></div>
 
