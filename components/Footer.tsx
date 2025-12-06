@@ -19,8 +19,8 @@ const Footer: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Main Footer Content */}
-        <div className="py-6 md:py-10">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-12">
+        <div className="py-4 md:py-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
             {/* Brand Section */}
             <div className="col-span-2 md:col-span-1 flex flex-col items-center md:items-start gap-4">
               <div className="flex items-center gap-3 group">
@@ -46,13 +46,13 @@ const Footer: React.FC = () => {
 
             {/* Quick Links Section */}
             <div className="flex flex-col items-start">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-2">
                 <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
                 <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                   Quick Links
                 </h4>
               </div>
-              <nav className="flex flex-col gap-3">
+              <nav className="flex flex-col gap-2">
                 <Link
                   to="/grades"
                   className="group text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 hover:translate-x-1 inline-flex items-center gap-2"
@@ -97,13 +97,13 @@ const Footer: React.FC = () => {
 
             {/* Connect Section */}
             <div className="flex flex-col items-start">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-2">
                 <div className="w-1 h-4 bg-gradient-to-b from-purple-500 to-blue-600 rounded-full"></div>
                 <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                   Connect
                 </h4>
               </div>
-              <div className="flex gap-4 mb-4">
+              <div className="flex gap-3 mb-3">
                 {/* <a
                   href="https://www.linkedin.com/in/preethamnimmagadda/"
                   target="_blank"
@@ -150,7 +150,7 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="relative border-t border-slate-200/60 dark:border-slate-800/60 py-6">
+        <div className="relative border-t border-slate-200/60 dark:border-slate-800/60 py-4">
           {/* Decorative gradient line */}
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
 
