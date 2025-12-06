@@ -19,10 +19,10 @@ const Footer: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Main Footer Content */}
-        <div className="py-8 md:py-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+        <div className="py-6 md:py-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-12">
             {/* Brand Section */}
-            <div className="flex flex-col items-center md:items-start gap-4">
+            <div className="col-span-2 md:col-span-1 flex flex-col items-center md:items-start gap-4">
               <div className="flex items-center gap-3 group">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur opacity-40 group-hover:opacity-70 transition-all duration-300 group-hover:scale-110"></div>
@@ -45,7 +45,7 @@ const Footer: React.FC = () => {
             </div>
 
             {/* Quick Links Section */}
-            <div className="flex flex-col items-center md:items-start">
+            <div className="flex flex-col items-start">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
                 <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
@@ -96,7 +96,7 @@ const Footer: React.FC = () => {
             </div>
 
             {/* Connect Section */}
-            <div className="flex flex-col items-center md:items-start">
+            <div className="flex flex-col items-start">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-1 h-4 bg-gradient-to-b from-purple-500 to-blue-600 rounded-full"></div>
                 <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
