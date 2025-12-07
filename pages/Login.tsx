@@ -245,7 +245,7 @@ const Login: React.FC = () => {
   // Testimonial auto-rotation
   useEffect(() => {
     const interval = setInterval(() => {
-      setTestimonialIndex((prev) => (prev + 1) % 3);
+      setTestimonialIndex((prev) => (prev + 1) % 6);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -674,11 +674,80 @@ const Login: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Testimonial 4 */}
+                  <div className="w-full flex-shrink-0 px-2">
+                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
+                      <div className="flex items-center gap-1 mb-3">
+                        {[1,2,3,4,5].map(star => (
+                          <svg key={star} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
+                        "The schedule feature is incredible. I can add custom tasks, track my deadlines, and never forget a submission date again!"
+                      </p>
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-yellow-400 to-red-500 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">S</div>
+                        <div className="text-left">
+                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">Electrical Engineering</p>
+                          <p className="text-white/60 text-xs md:text-sm">4th Year</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Testimonial 5 */}
+                  <div className="w-full flex-shrink-0 px-2">
+                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
+                      <div className="flex items-center gap-1 mb-3">
+                        {[1,2,3,4,5].map(star => (
+                          <svg key={star} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
+                        "Love how everything syncs in real-time! The dark mode is perfect for late-night study sessions. Best campus app ever."
+                      </p>
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-violet-400 to-indigo-600 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">M</div>
+                        <div className="text-left">
+                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">MnC Student</p>
+                          <p className="text-white/60 text-xs md:text-sm">2nd Year</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Testimonial 6 */}
+                  <div className="w-full flex-shrink-0 px-2">
+                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
+                      <div className="flex items-center gap-1 mb-3">
+                        {[1,2,3,4,5].map(star => (
+                          <svg key={star} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
+                        "The academic calendar integration is a game-changer. I'm always on top of exam dates, holidays, and important events now."
+                      </p>
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">K</div>
+                        <div className="text-left">
+                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">Civil Engineering</p>
+                          <p className="text-white/60 text-xs md:text-sm">3rd Year</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Carousel Navigation Dots */}
                 <div className="flex justify-center gap-2 mt-4">
-                  {[0, 1, 2].map((index) => (
+                  {[0, 1, 2, 3, 4, 5].map((index) => (
                     <button
                       key={index}
                       onClick={() => setTestimonialIndex(index)}
