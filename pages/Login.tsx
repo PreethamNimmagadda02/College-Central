@@ -763,23 +763,28 @@ const Login: React.FC = () => {
               </div>
 
               {/* Why Choose Section */}
-              <div className="bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm rounded-xl p-5 sm:p-6 md:p-8 border border-white/10">
+              <div className="bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm rounded-xl p-5 sm:p-6 md:p-8 border border-white/10 hover:border-white/20 transition-all duration-300">
                 <h4 className="text-white font-bold text-lg sm:text-xl md:text-2xl text-center mb-4 sm:mb-6">Why Students Love College Central</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-                  <div className="group text-center p-4 rounded-lg hover:bg-white/5 transition-all duration-300 hover:-translate-y-1">
-                    <div className="text-2xl sm:text-3xl md:text-4xl mb-2 group-hover:scale-110 transition-transform duration-300">🔒</div>
+                  {/* Card 1 - Secure & Private */}
+                  <div className="group text-center p-4 sm:p-5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-green-500/10">
+                    <div className="text-3xl sm:text-4xl md:text-5xl mb-3 transform group-hover:scale-110 transition-transform duration-300">🔒</div>
                     <h5 className="text-white font-semibold text-sm sm:text-base md:text-lg mb-1 sm:mb-2">Secure & Private</h5>
-                    <p className="text-white/60 text-xs sm:text-sm md:text-base">Your data is encrypted and only accessible by you</p>
+                    <p className="text-white/60 text-xs sm:text-sm md:text-base group-hover:text-white/70 transition-colors duration-300">Your data is encrypted and only accessible by you</p>
                   </div>
-                  <div className="group text-center p-4 rounded-lg hover:bg-white/5 transition-all duration-300 hover:-translate-y-1">
-                    <div className="text-2xl sm:text-3xl md:text-4xl mb-2 group-hover:scale-110 transition-transform duration-300">📱</div>
+                  
+                  {/* Card 2 - Works Everywhere */}
+                  <div className="group text-center p-4 sm:p-5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/10">
+                    <div className="text-3xl sm:text-4xl md:text-5xl mb-3 transform group-hover:scale-110 transition-transform duration-300">📱</div>
                     <h5 className="text-white font-semibold text-sm sm:text-base md:text-lg mb-1 sm:mb-2">Works Everywhere</h5>
-                    <p className="text-white/60 text-xs sm:text-sm md:text-base">Access from any device, anytime, anywhere</p>
+                    <p className="text-white/60 text-xs sm:text-sm md:text-base group-hover:text-white/70 transition-colors duration-300">Access from any device, anytime, anywhere</p>
                   </div>
-                  <div className="group text-center p-4 rounded-lg hover:bg-white/5 transition-all duration-300 hover:-translate-y-1 sm:col-span-2 md:col-span-1">
-                    <div className="text-2xl sm:text-3xl md:text-4xl mb-2 group-hover:scale-110 transition-transform duration-300">⚡</div>
+                  
+                  {/* Card 3 - Lightning Fast */}
+                  <div className="group text-center p-4 sm:p-5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-yellow-500/10 sm:col-span-2 md:col-span-1">
+                    <div className="text-3xl sm:text-4xl md:text-5xl mb-3 transform group-hover:scale-110 transition-transform duration-300">⚡</div>
                     <h5 className="text-white font-semibold text-sm sm:text-base md:text-lg mb-1 sm:mb-2">Lightning Fast</h5>
-                    <p className="text-white/60 text-xs sm:text-sm md:text-base">Optimized performance for quick access to all features</p>
+                    <p className="text-white/60 text-xs sm:text-sm md:text-base group-hover:text-white/70 transition-colors duration-300">Optimized performance for quick access to all features</p>
                   </div>
                 </div>
               </div>
