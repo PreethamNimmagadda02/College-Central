@@ -237,15 +237,15 @@ const Directory = () => {
                   setActiveTab('faculty');
                   clearFilters();
                 }}
-                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'faculty'
                     ? 'border-primary text-primary dark:text-secondary bg-white dark:bg-dark-card'
                     : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
-                <Building2 className="w-4 h-4" />
-                Faculty & Staff
-                <span className="bg-primary/10 text-primary dark:bg-secondary/20 dark:text-secondary px-2 py-0.5 rounded-full text-xs font-semibold">
+                <Building2 className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">Faculty<span className="hidden sm:inline"> & Staff</span></span>
+                <span className="bg-primary/10 text-primary dark:bg-secondary/20 dark:text-secondary px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-semibold flex-shrink-0">
                   {Array.from(new Map(facultyDirectory.map(e => [e.name, e])).values()).length}
                 </span>
               </button>
@@ -254,15 +254,15 @@ const Directory = () => {
                   setActiveTab('student');
                   clearFilters();
                 }}
-                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'student'
                     ? 'border-primary text-primary dark:text-secondary bg-white dark:bg-dark-card'
                     : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
-                <GraduationCap className="w-4 h-4" />
-                Student Directory
-                <span className="bg-primary/10 text-primary dark:bg-secondary/20 dark:text-secondary px-2 py-0.5 rounded-full text-xs font-semibold">
+                <GraduationCap className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">Students<span className="hidden sm:inline"></span></span>
+                <span className="bg-primary/10 text-primary dark:bg-secondary/20 dark:text-secondary px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-semibold flex-shrink-0">
                   {studentDirectory.length}
                 </span>
               </button>
