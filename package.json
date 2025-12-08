@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@firebase/firestore": "^4.9.2",
     "@google/genai": "^0.14.0",
     "browser-image-compression": "^2.0.2",

@@ -32,6 +32,7 @@ const Login = lazyWithRetry(() => import('./pages/Login'));
 const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService'));
 const OfflinePage = lazyWithRetry(() => import('./pages/OfflinePage'));
+const Support = lazyWithRetry(() => import('./pages/Support'));
 
 // Loading fallback component
 const PageLoader = React.memo(() => (
@@ -147,6 +148,14 @@ const router = createHashRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <TermsOfService />
+          </Suspense>
+        )
+      },
+      {
+        path: 'support',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <Support />
           </Suspense>
         )
       },
