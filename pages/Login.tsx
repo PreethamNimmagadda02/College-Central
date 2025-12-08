@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { LogoIcon } from '../components/icons/SidebarIcons';
 import ScrollToTop from '../components/ScrollToTop';
@@ -106,10 +107,10 @@ const useMousePosition = () => {
 
 // Smart metrics data - original metrics with animations
 const smartMetrics = [
-  { label: "Active Students", value: 500, suffix: "+", icon: "🎓", description: "Students using the app" },
+  { label: "Active Students", value: 800, suffix: "+", icon: "🎓", description: "Students using the app" },
   { label: "Grades Tracked", value: 5000, suffix: "+", icon: "📈", description: "Academic records managed" },
   { label: "User Rating", value: 4.8, suffix: "★", icon: "⭐", description: "Average user rating" },
-  { label: "Uptime", value: 98, suffix: "%", icon: "⚡", description: "System availability" },
+  { label: "Uptime", value: 99, suffix: "%", icon: "⚡", description: "System availability" },
 ];
 
 // Animated metric card component
@@ -165,6 +166,45 @@ const Login: React.FC = () => {
   const { elementRef: loginCardRef, mousePosition } = useMousePosition();
   const [testimonialIndex, setTestimonialIndex] = useState(0);
   
+  // Refs for scroll-based reveal animations
+  const missionRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
+  const socialRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
+  
+  // useScroll hooks for each section - triggers animation as section enters viewport
+  const { scrollYProgress: missionProgress } = useScroll({
+    target: missionRef,
+    offset: ["start end", "end center"]
+  });
+  
+  const { scrollYProgress: featuresProgress } = useScroll({
+    target: featuresRef,
+    offset: ["start end", "end center"]
+  });
+  
+  const { scrollYProgress: socialProgress } = useScroll({
+    target: socialRef,
+    offset: ["start end", "end center"]
+  });
+  
+  const { scrollYProgress: ctaProgress } = useScroll({
+    target: ctaRef,
+    offset: ["start end", "end center"]
+  });
+  
+  // Transform values for reveal animations - fade in and slide up as user scrolls
+  const missionOpacity = useTransform(missionProgress, [0, 0.4], [0, 1]);
+  const missionY = useTransform(missionProgress, [0, 0.4], [80, 0]);
+  
+  const featuresOpacity = useTransform(featuresProgress, [0, 0.4], [0, 1]);
+  const featuresY = useTransform(featuresProgress, [0, 0.4], [80, 0]);
+  
+  const socialOpacity = useTransform(socialProgress, [0, 0.4], [0, 1]);
+  const socialY = useTransform(socialProgress, [0, 0.4], [80, 0]);
+  
+  const ctaOpacity = useTransform(ctaProgress, [0, 0.4], [0, 1]);
+  const ctaY = useTransform(ctaProgress, [0, 0.4], [60, 0]);
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
         navigate('/', { replace: true });
@@ -447,7 +487,11 @@ const Login: React.FC = () => {
           </div>
 
           {/* Mission Statement */}
-          <div className="relative flex flex-col justify-center items-center px-6 py-12 md:py-16">
+          <motion.div 
+            ref={missionRef}
+            className="relative flex flex-col justify-center items-center px-6 py-12 md:py-16"
+            style={{ opacity: missionOpacity, y: missionY }}
+          >
             <div className="max-w-4xl space-y-6 text-center relative z-10">
               <div className="group/tag inline-flex items-center gap-2.5 px-6 py-3 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-md rounded-full text-base md:text-lg font-semibold text-white border border-purple-400/30 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-105 transition-all duration-300">
                 <span className="relative flex h-3 w-3">
@@ -486,10 +530,14 @@ const Login: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Features Grid - Why Students Love College Central */}
-          <div className="relative flex flex-col justify-center items-center px-6 py-10 md:py-14">
+          <motion.div 
+            ref={featuresRef}
+            className="relative flex flex-col justify-center items-center px-6 py-10 md:py-14"
+            style={{ opacity: featuresOpacity, y: featuresY }}
+          >
             <div className="max-w-7xl w-full space-y-8 relative z-10">
               <div className="text-center space-y-3">
                 <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white">
@@ -574,10 +622,14 @@ const Login: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Social Proof */}
-          <div className="relative flex flex-col justify-center items-center px-6 py-10 md:py-14">
+          <motion.div 
+            ref={socialRef}
+            className="relative flex flex-col justify-center items-center px-6 py-10 md:py-14"
+            style={{ opacity: socialOpacity, y: socialY }}
+          >
             <div className="max-w-4xl w-full space-y-8 relative z-10">
               <div className="text-center space-y-3">
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight">
@@ -789,10 +841,14 @@ const Login: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Call to Action */}
-          <div className="relative flex flex-col justify-center items-center px-6 py-8 md:py-10">
+          <motion.div 
+            ref={ctaRef}
+            className="relative flex flex-col justify-center items-center px-6 py-8 md:py-10"
+            style={{ opacity: ctaOpacity, y: ctaY }}
+          >
             <div className="max-w-2xl text-center space-y-4 relative z-10">
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight">
                 Ready to Simplify Your College Life?
@@ -807,7 +863,7 @@ const Login: React.FC = () => {
                 <span>Only @iitism.ac.in emails accepted</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Login Form */}
           <div className="relative flex flex-col justify-center items-center px-6 pb-16 md:pb-20">
