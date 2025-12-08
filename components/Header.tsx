@@ -48,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
       root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
       if (themeColorMeta) {
-        themeColorMeta.setAttribute('content', '#f1f5f9');
+        themeColorMeta.setAttribute('content', '#ffffff');
       }
     }
   }, [isDark]);
