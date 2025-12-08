@@ -205,6 +205,25 @@ const Login: React.FC = () => {
   
   const ctaOpacity = useTransform(ctaProgress, [0, 0.4], [0, 1]);
   const ctaY = useTransform(ctaProgress, [0, 0.4], [60, 0]);
+  // Set theme-color for notch to match Login page background
+  useEffect(() => {
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    
+    // Set to dark indigo to match the hero overlay (slate-900/indigo blend)
+    if (themeColorMeta) {
+      themeColorMeta.setAttribute('content', '#1e1b4b');
+    }
+    
+    // Restore original theme-color when leaving Login page
+    return () => {
+      if (themeColorMeta) {
+        // Check current theme and restore appropriate color
+        const isDark = document.documentElement.classList.contains('dark');
+        themeColorMeta.setAttribute('content', isDark ? '#0f172a' : '#ffffff');
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
         navigate('/', { replace: true });
