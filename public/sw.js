@@ -129,10 +129,13 @@ self.addEventListener('fetch', event => {
         .then(response => {
           // Cache the fresh response
           if (response && response.status === 200 && event.request.method === 'GET') {
-            const responseToCache = response.clone();
-            caches.open(DYNAMIC_CACHE).then(cache => {
-              cache.put(event.request, responseToCache);
-            });
+            // Only cache http and https requests, skip chrome-extension and others
+            if (event.request.url.startsWith('http')) {
+              const responseToCache = response.clone();
+              caches.open(DYNAMIC_CACHE).then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+            }
           }
           return response;
         })
@@ -182,10 +185,12 @@ self.addEventListener('fetch', event => {
             return response;
           }
 
-          const responseToCache = response.clone();
-          caches.open(STATIC_CACHE).then(cache => {
-            cache.put(event.request, responseToCache);
-          });
+          if (event.request.url.startsWith('http')) {
+            const responseToCache = response.clone();
+            caches.open(STATIC_CACHE).then(cache => {
+              cache.put(event.request, responseToCache);
+            });
+          }
 
           return response;
         }).catch(() => {
