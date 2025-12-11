@@ -30,25 +30,28 @@ const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
         return 'bg-teal-500/25 border-2 border-teal-600 text-teal-800 dark:text-teal-200';
     }
 
-    // Carefully curated color palette with maximum visual distinction and appeal
-    // Colors chosen to be easily distinguishable from each other with vibrant, pleasing tones
+    // 20 maximally distinct colors using varied shades for maximum distinction
     const colors = [
-        'bg-blue-500/25 border-2 border-blue-600 text-blue-800 dark:text-blue-200',        // Bright Blue
-        'bg-emerald-500/25 border-2 border-emerald-600 text-emerald-800 dark:text-emerald-200',  // Fresh Green
-        'bg-purple-500/25 border-2 border-purple-600 text-purple-800 dark:text-purple-200',      // Rich Purple
-        'bg-orange-500/25 border-2 border-orange-600 text-orange-800 dark:text-orange-200',      // Warm Orange
-        'bg-rose-500/25 border-2 border-rose-600 text-rose-800 dark:text-rose-200',              // Soft Rose
-        'bg-indigo-500/25 border-2 border-indigo-600 text-indigo-800 dark:text-indigo-200',      // Deep Indigo
-        'bg-amber-500/25 border-2 border-amber-600 text-amber-800 dark:text-amber-200',          // Golden Amber
-        'bg-cyan-500/25 border-2 border-cyan-600 text-cyan-800 dark:text-cyan-200',              // Bright Cyan
-        'bg-fuchsia-500/25 border-2 border-fuchsia-600 text-fuchsia-800 dark:text-fuchsia-200',  // Vibrant Fuchsia
-        'bg-lime-500/25 border-2 border-lime-600 text-lime-800 dark:text-lime-200',              // Electric Lime
-        'bg-violet-500/25 border-2 border-violet-600 text-violet-800 dark:text-violet-200',      // Royal Violet
-        'bg-sky-500/25 border-2 border-sky-600 text-sky-800 dark:text-sky-200',                  // Sky Blue
-        'bg-pink-500/25 border-2 border-pink-600 text-pink-800 dark:text-pink-200',              // Hot Pink
-        'bg-green-500/25 border-2 border-green-600 text-green-800 dark:text-green-200',          // Classic Green
-        'bg-red-500/25 border-2 border-red-600 text-red-800 dark:text-red-200',                  // Bold Red
-        'bg-yellow-500/25 border-2 border-yellow-600 text-yellow-800 dark:text-yellow-200',      // Sunny Yellow
+        'bg-red-600/50 border-2 border-red-700 text-white',                    // Deep Red
+        'bg-orange-500/50 border-2 border-orange-600 text-white',              // Orange
+        'bg-amber-400/60 border-2 border-amber-500 text-gray-900',             // Amber/Gold
+        'bg-yellow-300/60 border-2 border-yellow-500 text-gray-900',           // Bright Yellow
+        'bg-lime-500/50 border-2 border-lime-600 text-white',                  // Lime
+        'bg-green-600/50 border-2 border-green-700 text-white',                // Forest Green
+        'bg-emerald-400/50 border-2 border-emerald-500 text-gray-900',         // Light Emerald
+        'bg-teal-600/50 border-2 border-teal-700 text-white',                  // Teal
+        'bg-cyan-400/50 border-2 border-cyan-500 text-gray-900',               // Light Cyan
+        'bg-sky-600/50 border-2 border-sky-700 text-white',                    // Sky Blue
+        'bg-blue-500/50 border-2 border-blue-600 text-white',                  // Blue
+        'bg-indigo-600/50 border-2 border-indigo-700 text-white',              // Indigo
+        'bg-violet-500/50 border-2 border-violet-600 text-white',              // Violet
+        'bg-purple-600/50 border-2 border-purple-700 text-white',              // Deep Purple
+        'bg-fuchsia-500/50 border-2 border-fuchsia-600 text-white',            // Fuchsia
+        'bg-pink-400/50 border-2 border-pink-500 text-gray-900',               // Light Pink
+        'bg-rose-600/50 border-2 border-rose-700 text-white',                  // Rose
+        'bg-stone-500/50 border-2 border-stone-600 text-white',                // Stone/Gray
+        'bg-zinc-600/50 border-2 border-zinc-700 text-white',                  // Dark Gray
+        'bg-slate-500/50 border-2 border-slate-600 text-white',                // Slate Blue-Gray
     ];
 
     // Use a better hash function for more uniform distribution
