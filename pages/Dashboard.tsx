@@ -81,28 +81,26 @@ const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
         return 'bg-teal-500/25 border-2 border-teal-600 text-teal-800 dark:text-teal-200';
     }
 
-    // 20 maximally distinct colors using varied shades for maximum distinction
+    // 18 vibrant, saturated colors - no muted or gray tones
     const colors = [
-        'bg-red-600/50 border-2 border-red-700 text-white',                    // Deep Red
-        'bg-orange-500/50 border-2 border-orange-600 text-white',              // Orange
-        'bg-amber-400/60 border-2 border-amber-500 text-gray-900',             // Amber/Gold
-        'bg-yellow-300/60 border-2 border-yellow-500 text-gray-900',           // Bright Yellow
-        'bg-lime-500/50 border-2 border-lime-600 text-white',                  // Lime
-        'bg-green-600/50 border-2 border-green-700 text-white',                // Forest Green
-        'bg-emerald-400/50 border-2 border-emerald-500 text-gray-900',         // Light Emerald
-        'bg-teal-600/50 border-2 border-teal-700 text-white',                  // Teal
-        'bg-cyan-400/50 border-2 border-cyan-500 text-gray-900',               // Light Cyan
-        'bg-sky-600/50 border-2 border-sky-700 text-white',                    // Sky Blue
-        'bg-blue-500/50 border-2 border-blue-600 text-white',                  // Blue
-        'bg-indigo-600/50 border-2 border-indigo-700 text-white',              // Indigo
-        'bg-violet-500/50 border-2 border-violet-600 text-white',              // Violet
-        'bg-purple-600/50 border-2 border-purple-700 text-white',              // Deep Purple
-        'bg-fuchsia-500/50 border-2 border-fuchsia-600 text-white',            // Fuchsia
-        'bg-pink-400/50 border-2 border-pink-500 text-gray-900',               // Light Pink
-        'bg-rose-600/50 border-2 border-rose-700 text-white',                  // Rose
-        'bg-stone-500/50 border-2 border-stone-600 text-white',                // Stone/Gray
-        'bg-zinc-600/50 border-2 border-zinc-700 text-white',                  // Dark Gray
-        'bg-slate-500/50 border-2 border-slate-600 text-white',                // Slate Blue-Gray
+        'bg-red-500/60 border-2 border-red-600 text-white',                    // Vibrant Red
+        'bg-orange-500/60 border-2 border-orange-600 text-white',              // Bright Orange
+        'bg-amber-500/60 border-2 border-amber-600 text-white',                // Rich Amber
+        'bg-yellow-400/70 border-2 border-yellow-500 text-gray-900',           // Sunny Yellow
+        'bg-lime-500/60 border-2 border-lime-600 text-white',                  // Electric Lime
+        'bg-green-500/60 border-2 border-green-600 text-white',                // Vivid Green
+        'bg-emerald-500/60 border-2 border-emerald-600 text-white',            // Emerald
+        'bg-teal-500/60 border-2 border-teal-600 text-white',                  // Teal
+        'bg-cyan-500/60 border-2 border-cyan-600 text-white',                  // Cyan
+        'bg-sky-500/60 border-2 border-sky-600 text-white',                    // Sky Blue
+        'bg-blue-500/60 border-2 border-blue-600 text-white',                  // Bold Blue
+        'bg-indigo-500/60 border-2 border-indigo-600 text-white',              // Indigo
+        'bg-violet-500/60 border-2 border-violet-600 text-white',              // Violet
+        'bg-purple-500/60 border-2 border-purple-600 text-white',              // Purple
+        'bg-fuchsia-500/60 border-2 border-fuchsia-600 text-white',            // Hot Fuchsia
+        'bg-pink-500/60 border-2 border-pink-600 text-white',                  // Hot Pink
+        'bg-rose-500/60 border-2 border-rose-600 text-white',                  // Rose
+        'bg-red-400/60 border-2 border-red-500 text-white',                    // Coral
     ];
 
     // Use a better hash function for more uniform distribution
