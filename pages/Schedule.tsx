@@ -24,43 +24,46 @@ const formatTime = (time: string) => {
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 
+// Original 16-color palette with order-based assignment
+// Ordered for maximum visual distinction - alternating warm/cool, no similar colors adjacent
+const COURSE_COLORS = [
+    'bg-purple-500/25 border-2 border-purple-600 text-purple-800 dark:text-purple-200',      // Purple
+    'bg-emerald-500/25 border-2 border-emerald-600 text-emerald-800 dark:text-emerald-200',  // Emerald (green-blue)
+    'bg-rose-500/25 border-2 border-rose-600 text-rose-800 dark:text-rose-200',              // Rose (pink-red)
+    'bg-cyan-500/25 border-2 border-cyan-600 text-cyan-800 dark:text-cyan-200',              // Cyan (blue-green)
+    'bg-amber-500/25 border-2 border-amber-600 text-amber-800 dark:text-amber-200',          // Amber (yellow-orange)
+    'bg-indigo-500/25 border-2 border-indigo-600 text-indigo-800 dark:text-indigo-200',      // Indigo (blue-purple)
+    'bg-orange-500/25 border-2 border-orange-600 text-orange-800 dark:text-orange-200',      // Orange
+    'bg-sky-500/25 border-2 border-sky-600 text-sky-800 dark:text-sky-200',                  // Sky Blue
+    'bg-fuchsia-500/25 border-2 border-fuchsia-600 text-fuchsia-800 dark:text-fuchsia-200',  // Fuchsia (magenta)
+    'bg-lime-500/25 border-2 border-lime-600 text-lime-800 dark:text-lime-200',              // Lime (yellow-green)
+    'bg-red-500/25 border-2 border-red-600 text-red-800 dark:text-red-200',                  // Red
+    'bg-blue-500/25 border-2 border-blue-600 text-blue-800 dark:text-blue-200',              // Blue
+    'bg-yellow-500/25 border-2 border-yellow-600 text-yellow-800 dark:text-yellow-200',      // Yellow
+    'bg-violet-500/25 border-2 border-violet-600 text-violet-800 dark:text-violet-200',      // Violet
+    'bg-green-500/25 border-2 border-green-600 text-green-800 dark:text-green-200',          // Green
+    'bg-pink-500/25 border-2 border-pink-600 text-pink-800 dark:text-pink-200',              // Pink
+];
+
+// Map to track color assignments per course code
+const courseColorMap = new Map<string, number>();
+let nextColorIndex = 0;
+
 const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
     // Custom tasks get a distinctive teal/cyan color scheme
     if (isCustomTask) {
         return 'bg-teal-500/25 border-2 border-teal-600 text-teal-800 dark:text-teal-200';
     }
 
-    // 18 vibrant, saturated colors - no muted or gray tones
-    const colors = [
-        'bg-red-500/60 border-2 border-red-600 text-white',                    // Vibrant Red
-        'bg-orange-500/60 border-2 border-orange-600 text-white',              // Bright Orange
-        'bg-amber-500/60 border-2 border-amber-600 text-white',                // Rich Amber
-        'bg-yellow-400/70 border-2 border-yellow-500 text-gray-900',           // Sunny Yellow
-        'bg-lime-500/60 border-2 border-lime-600 text-white',                  // Electric Lime
-        'bg-green-500/60 border-2 border-green-600 text-white',                // Vivid Green
-        'bg-emerald-500/60 border-2 border-emerald-600 text-white',            // Emerald
-        'bg-teal-500/60 border-2 border-teal-600 text-white',                  // Teal
-        'bg-cyan-500/60 border-2 border-cyan-600 text-white',                  // Cyan
-        'bg-sky-500/60 border-2 border-sky-600 text-white',                    // Sky Blue
-        'bg-blue-500/60 border-2 border-blue-600 text-white',                  // Bold Blue
-        'bg-indigo-500/60 border-2 border-indigo-600 text-white',              // Indigo
-        'bg-violet-500/60 border-2 border-violet-600 text-white',              // Violet
-        'bg-purple-500/60 border-2 border-purple-600 text-white',              // Purple
-        'bg-fuchsia-500/60 border-2 border-fuchsia-600 text-white',            // Hot Fuchsia
-        'bg-pink-500/60 border-2 border-pink-600 text-white',                  // Hot Pink
-        'bg-rose-500/60 border-2 border-rose-600 text-white',                  // Rose
-        'bg-red-400/60 border-2 border-red-500 text-white',                    // Coral
-    ];
-
-    // Use a better hash function for more uniform distribution
-    let hash = 0;
-    for (let i = 0; i < courseCode.length; i++) {
-        hash = ((hash << 5) - hash) + courseCode.charCodeAt(i);
-        hash = hash & hash; // Convert to 32-bit integer
+    // Check if this course already has a color assigned
+    if (!courseColorMap.has(courseCode)) {
+        // Assign the next color in sequence
+        courseColorMap.set(courseCode, nextColorIndex);
+        nextColorIndex = (nextColorIndex + 1) % COURSE_COLORS.length;
     }
-    hash = Math.abs(hash);
 
-    return colors[hash % colors.length];
+    const colorIndex = courseColorMap.get(courseCode)!;
+    return COURSE_COLORS[colorIndex];
 };
 
 const Schedule: React.FC = () => {
