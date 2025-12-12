@@ -402,21 +402,21 @@ const CollegeForms: React.FC = () => {
                                 return (
                                     <div
                                         key={index}
-                                        className="group relative overflow-hidden flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 border border-transparent hover:border-primary/30 dark:hover:border-secondary/30"
+                                        className="group relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-slate-50 dark:bg-slate-800 rounded-lg hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 border border-transparent hover:border-primary/30 dark:hover:border-secondary/30 gap-3"
                                     >
                                         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                         <div className="relative z-10 flex-1 min-w-0">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex-shrink-0 w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
+                                            <div className="flex items-start sm:items-center gap-3">
+                                                <div className="hidden sm:flex flex-shrink-0 w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                     </svg>
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors truncate">
+                                                    <p className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors line-clamp-2 sm:truncate">
                                                         {download.title}
                                                     </p>
-                                                    <div className="flex items-center gap-2 mt-1">
+                                                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
                                                         <span className="text-xs font-mono bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded">
                                                             {download.formNumber}
                                                         </span>
@@ -429,7 +429,7 @@ const CollegeForms: React.FC = () => {
                                         </div>
                                         <button
                                             onClick={() => handleDownload(form)}
-                                            className="relative z-10 ml-4 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary dark:from-secondary dark:to-secondary/80 dark:hover:from-secondary/80 dark:hover:to-secondary text-white rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105 active:scale-95 text-sm font-medium"
+                                            className="relative z-10 w-full sm:w-auto sm:ml-4 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary dark:from-secondary dark:to-secondary/80 dark:hover:from-secondary/80 dark:hover:to-secondary text-white rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105 active:scale-95 text-sm font-medium"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
