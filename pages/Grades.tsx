@@ -1892,6 +1892,8 @@ const Grades: React.FC = () => {
     const [showForecaster, setShowForecaster] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [selectedSemester, setSelectedSemester] = useState<number | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [dropSuccess, setDropSuccess] = useState(false);
 
     const sortedGradesData = useMemo(() => {
         if (!gradesData) return null;
@@ -1903,6 +1905,54 @@ const Grades: React.FC = () => {
         const file = event.target.files?.[0];
         selectFile(file || null);
     };
+
+    const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only set to false if leaving the drop zone entirely
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setIsDragging(false);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            if (file) {
+                // Check if file type is valid (image or PDF)
+                if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+                    selectFile(file);
+                    setDropSuccess(true);
+                }
+            }
+        }
+    };
+
+    // Auto-hide drop success animation
+    useEffect(() => {
+        if (dropSuccess) {
+            const timer = setTimeout(() => {
+                setDropSuccess(false);
+            }, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [dropSuccess]);
 
     const cgpaStatus = useMemo(() => {
         if (!sortedGradesData) return null;
@@ -1984,22 +2034,89 @@ const Grades: React.FC = () => {
                     </div>
 
                     {/* Upload Section */}
-                    <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 text-center">
+                    <div 
+                        className={`relative border-2 border-dashed rounded-xl p-4 sm:p-6 md:p-8 text-center transition-all duration-300 ${
+                            isDragging 
+                                ? 'border-primary bg-primary/10 dark:bg-primary/20 scale-[1.02] shadow-lg' 
+                                : 'border-slate-300 dark:border-slate-600 hover:border-primary/50 dark:hover:border-primary/50'
+                        }`}
+                        onDragEnter={handleDragEnter}
+                        onDragLeave={handleDragLeave}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                    >
+                        {/* Drag overlay indicator */}
+                        {isDragging && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-primary/5 dark:bg-primary/10 rounded-xl z-10 pointer-events-none">
+                                <div className="text-center">
+                                    <svg className="w-12 h-12 sm:w-16 sm:h-16 text-primary mx-auto mb-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <p className="text-primary font-semibold text-sm sm:text-base">Drop your grade sheet here</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Drop success animation */}
+                        {dropSuccess && (
+                            <motion.div 
+                                className="absolute inset-0 flex items-center justify-center bg-green-50 dark:bg-green-900/30 rounded-xl z-20 pointer-events-none"
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                transition={{ duration: 0.3, ease: "easeOut" }}
+                            >
+                                <motion.div 
+                                    className="text-center"
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 15 }}
+                                >
+                                    <motion.div
+                                        className="w-14 h-14 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg"
+                                        initial={{ scale: 0, rotate: -180 }}
+                                        animate={{ scale: 1, rotate: 0 }}
+                                        transition={{ delay: 0.15, type: "spring", stiffness: 200, damping: 12 }}
+                                    >
+                                        <svg className="w-8 h-8 sm:w-9 sm:h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <motion.path 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round" 
+                                                strokeWidth={3} 
+                                                d="M5 13l4 4L19 7"
+                                                initial={{ pathLength: 0 }}
+                                                animate={{ pathLength: 1 }}
+                                                transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
+                                            />
+                                        </svg>
+                                    </motion.div>
+                                    <motion.p 
+                                        className="text-green-700 dark:text-green-300 font-semibold text-sm sm:text-base"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.4, duration: 0.3 }}
+                                    >
+                                        File received!
+                                    </motion.p>
+                                </motion.div>
+                            </motion.div>
+                        )}
+                        
                         {!selectedFile && !imagePreview ? (
-                            <div className="space-y-4">
-                                <label htmlFor="file-upload" className="cursor-pointer">
-                                    <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors">
-                                        <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className={`space-y-3 sm:space-y-4 ${isDragging ? 'opacity-30' : ''}`}>
+                                <label htmlFor="file-upload" className="cursor-pointer block">
+                                    <div className="mx-auto w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors">
+                                        <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                         </svg>
                                     </div>
                                 </label>
-                                <div>
+                                <div className="px-2">
                                     <label htmlFor="file-upload" className="cursor-pointer">
-                                        <span className="text-primary font-semibold hover:text-primary-dark">Upload grade sheet</span>
-                                        <span className="text-slate-600 dark:text-slate-400"> or drag and drop</span>
+                                        <span className="text-primary font-semibold hover:text-primary-dark text-sm sm:text-base">Upload grade sheet</span>
+                                        <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base"> or drag and drop</span>
                                     </label>
-                                    <p className="text-xs text-slate-500 mt-1">PNG, JPG or PDF up to 10MB</p>
+                                    <p className="text-[10px] sm:text-xs text-slate-500 mt-1">PNG, JPG or PDF up to 10MB</p>
                                 </div>
                                 <input
                                     id="file-upload"
@@ -2010,43 +2127,45 @@ const Grades: React.FC = () => {
                                 />
                             </div>
                         ) : (
-                            <div className="space-y-4">
+                            <div className="space-y-3 sm:space-y-4">
                                 {imagePreview && (
                                     <img 
                                         src={imagePreview} 
                                         alt="Grade sheet preview" 
-                                        className="max-w-full max-h-64 mx-auto rounded-lg shadow-md"
+                                        className="max-w-full max-h-48 sm:max-h-56 md:max-h-64 mx-auto rounded-lg shadow-md"
                                     />
                                 )}
-                                <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 px-2">
+                                    <svg className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    <span>{selectedFile?.name}</span>
+                                    <span className="truncate max-w-[200px] sm:max-w-xs md:max-w-sm">{selectedFile?.name}</span>
                                 </div>
-                                <div className="flex gap-3 justify-center">
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
                                     <button
                                         onClick={processGrades}
                                         disabled={isProcessing}
-                                        className="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                        className="px-4 sm:px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
                                     >
                                         {isProcessing ? (
                                             <>
                                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                                Processing...
+                                                <span className="hidden sm:inline">Processing...</span>
+                                                <span className="sm:hidden">Processing</span>
                                             </>
                                         ) : (
                                             <>
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                                 </svg>
-                                                Process Grade Sheet
+                                                <span className="hidden sm:inline">Process Grade Sheet</span>
+                                                <span className="sm:hidden">Process</span>
                                             </>
                                         )}
                                     </button>
                                     <button
                                         onClick={resetGradesState}
-                                        className="px-6 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors"
+                                        className="px-4 sm:px-6 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors text-sm sm:text-base"
                                     >
                                         Cancel
                                     </button>
