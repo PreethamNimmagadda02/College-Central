@@ -7,6 +7,16 @@ import { TIMETABLE_DATA } from '../config/courseData';
 import { NEP_TIMETABLE_DATA } from '../config/nepCourseData';
 import { Grade, Semester } from '../types';
 import { calculateCreditsFromLTP } from '../utils/creditCalculator';
+import {
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Area,
+    ComposedChart
+} from 'recharts';
 
 // Animated Counter Component - counts up smoothly when value changes
 const AnimatedCounter: React.FC<{ value: number; decimals?: number; duration?: number; className?: string }> = ({
@@ -1393,6 +1403,371 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             {/* Trends Tab */}
             {activeTab === 'trends' && (
                 <div className="space-y-4 sm:space-y-6">
+                    {/* SGPA & CGPA Line Chart */}
+                    <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 sm:mb-6">
+                            <div className="flex items-center gap-2">
+                                <h4 className="font-semibold text-base sm:text-lg flex items-center gap-2 text-slate-800 dark:text-white">
+                                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                                    </svg>
+                                    Academic Performance Graph
+                                </h4>
+                                <button
+                                    onClick={() => setSelectedGrade(selectedGrade === 'info-performance-graph' ? null : 'info-performance-graph')}
+                                    className="text-slate-400 hover:text-primary transition-colors"
+                                    title="Click for details"
+                                >
+                                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-4 sm:gap-6">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded-full" style={{ background: 'linear-gradient(135deg, #10b981 0%, #22c55e 100%)' }}></div>
+                                    <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">SGPA</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded-full" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}></div>
+                                    <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">CGPA</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Info Box */}
+                        {selectedGrade === 'info-performance-graph' && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="mb-4 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+                            >
+                                <h5 className="font-semibold text-sm mb-2 text-blue-900 dark:text-blue-300">📊 Understanding the Performance Graph</h5>
+                                <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 mb-3">
+                                    This graph visualizes your academic performance across all semesters, showing both SGPA (Semester GPA) and CGPA (Cumulative GPA) trends.
+                                </p>
+                                <div className="space-y-2 text-xs sm:text-sm">
+                                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                                        <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">What you're seeing:</p>
+                                        <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                                            <li><strong className="text-emerald-600">Green line (SGPA)</strong>: Your grade point average for each individual semester</li>
+                                            <li><strong className="text-blue-600">Blue line (CGPA)</strong>: Your cumulative GPA from semester 1 up to that point</li>
+                                            <li><strong>Hover on points</strong>: See exact values, credits, and course count for each semester</li>
+                                        </ul>
+                                    </div>
+                                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                                        <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">How to interpret:</p>
+                                        <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                                            <li>CGPA is always more stable than SGPA as it averages all your semesters</li>
+                                            <li>A rising CGPA indicates consistent improvement in your overall performance</li>
+                                            <li>Summary cards below show your Best SGPA, Current CGPA, Average SGPA, and total semesters</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                        
+                        {/* Recharts Line Chart */}
+                        {(() => {
+                            // Calculate CGPA progression for each semester
+                            const chartData = performanceTrend.reduce((acc: any[], item, index) => {
+                                const prevCredits = index > 0 ? acc[index - 1].cumulativeCredits : 0;
+                                const prevCgpaPoints = index > 0 ? acc[index - 1].cumulativeCgpaPoints : 0;
+                                const cumulativeCredits = prevCredits + item.credits;
+                                const cumulativeCgpaPoints = prevCgpaPoints + (item.sgpa * item.credits);
+                                const cgpa = cumulativeCredits > 0 ? cumulativeCgpaPoints / cumulativeCredits : 0;
+                                
+                                acc.push({
+                                    name: `Sem ${item.semesterNum}`,
+                                    semester: item.semesterNum,
+                                    SGPA: parseFloat(item.sgpa.toFixed(2)),
+                                    CGPA: parseFloat(cgpa.toFixed(2)),
+                                    credits: item.credits,
+                                    courses: item.courseCount,
+                                    cumulativeCredits,
+                                    cumulativeCgpaPoints
+                                });
+                                return acc;
+                            }, []);
+
+                            // Custom tooltip component
+                            const CustomTooltip = ({ active, payload, label }: any) => {
+                                if (active && payload && payload.length) {
+                                    // Skip first 2 entries (Area components), show only Line entries
+                                    const linePayload = payload.slice(2);
+                                    
+                                    return (
+                                        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700">
+                                            <p className="font-bold text-slate-800 dark:text-white mb-2 text-sm">{label}</p>
+                                            <div className="space-y-1.5">
+                                                {linePayload.map((entry: any, index: number) => (
+                                                    <div key={index} className="flex items-center gap-2">
+                                                        <div 
+                                                            className="w-2.5 h-2.5 rounded-full" 
+                                                            style={{ backgroundColor: entry.color }}
+                                                        />
+                                                        <span className="text-xs font-medium" style={{ color: entry.color }}>
+                                                            {entry.name}: <span className="font-bold">{entry.value.toFixed(2)}</span>
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {payload[0]?.payload && (
+                                                <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-600">
+                                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                                        {payload[0].payload.credits} credits • {payload[0].payload.courses} courses
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            };
+
+                            return (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.5 }}
+                                >
+                                    {/* Responsive chart container */}
+                                    <div className="w-full outline-none focus:outline-none [&_svg]:outline-none [&_svg]:focus:outline-none [&_*]:outline-none">
+                                        <ResponsiveContainer width="100%" height={250}>
+                                            <ComposedChart
+                                                data={chartData.map(d => ({
+                                                    ...d,
+                                                    // Use shorter labels on mobile
+                                                    displayName: d.name
+                                                }))}
+                                                margin={{ 
+                                                    top: 15, 
+                                                    right: 20, 
+                                                    left: 5, 
+                                                    bottom: 10 
+                                                }}
+                                            >
+                                                <defs>
+                                                    <linearGradient id="sgpaGradientFill" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
+                                                    </linearGradient>
+                                                    <linearGradient id="cgpaGradientFill" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05}/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid 
+                                                    strokeDasharray="3 3" 
+                                                    stroke="#e2e8f0" 
+                                                    className="dark:opacity-20"
+                                                    vertical={false}
+                                                />
+                                                <XAxis 
+                                                    dataKey="name" 
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fill: '#64748b', fontSize: 10 }}
+                                                    dy={5}
+                                                    interval={0}
+                                                    tickFormatter={(value) => {
+                                                        // Use shorter format on mobile: S1 instead of Sem 1
+                                                        const semNum = value.replace('Sem ', '');
+                                                        return window.innerWidth < 640 ? `S${semNum}` : value;
+                                                    }}
+                                                />
+                                                <YAxis 
+                                                    domain={[0, 10]} 
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fill: '#64748b', fontSize: 10 }}
+                                                    ticks={[0, 5, 10]}
+                                                    width={25}
+                                                />
+                                                <Tooltip content={<CustomTooltip />} />
+                                                
+                                                {/* Area fills */}
+                                                <Area
+                                                    type="monotone"
+                                                    dataKey="CGPA"
+                                                    fill="url(#cgpaGradientFill)"
+                                                    stroke="none"
+                                                />
+                                                <Area
+                                                    type="monotone"
+                                                    dataKey="SGPA"
+                                                    fill="url(#sgpaGradientFill)"
+                                                    stroke="none"
+                                                />
+                                                
+                                                {/* Lines - thinner on mobile */}
+                                                <Line 
+                                                    type="monotone" 
+                                                    dataKey="CGPA" 
+                                                    stroke="#3b82f6"
+                                                    strokeWidth={2}
+                                                    dot={{ 
+                                                        fill: '#3b82f6', 
+                                                        strokeWidth: 2, 
+                                                        r: 4,
+                                                        stroke: '#fff'
+                                                    }}
+                                                    activeDot={{ 
+                                                        r: 6, 
+                                                        fill: '#3b82f6',
+                                                        stroke: '#fff',
+                                                        strokeWidth: 2
+                                                    }}
+                                                    animationDuration={1500}
+                                                    animationEasing="ease-in-out"
+                                                />
+                                                <Line 
+                                                    type="monotone" 
+                                                    dataKey="SGPA" 
+                                                    stroke="#10b981"
+                                                    strokeWidth={2}
+                                                    dot={{ 
+                                                        fill: '#10b981', 
+                                                        strokeWidth: 2, 
+                                                        r: 4,
+                                                        stroke: '#fff'
+                                                    }}
+                                                    activeDot={{ 
+                                                        r: 6, 
+                                                        fill: '#10b981',
+                                                        stroke: '#fff',
+                                                        strokeWidth: 2
+                                                    }}
+                                                    animationDuration={1500}
+                                                    animationEasing="ease-in-out"
+                                                />
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    
+                                    {/* Summary Stats - more compact on mobile */}
+                                    <motion.div 
+                                        className="mt-3 sm:mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3"
+                                        variants={{
+                                            hidden: { opacity: 0 },
+                                            show: {
+                                                opacity: 1,
+                                                transition: { staggerChildren: 0.1 }
+                                            }
+                                        }}
+                                        initial="hidden"
+                                        animate="show"
+                                    >
+                                        <motion.div 
+                                            className="group relative overflow-hidden bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl p-2.5 sm:p-3 border border-emerald-100 dark:border-emerald-800/50 cursor-pointer"
+                                            variants={{
+                                                hidden: { opacity: 0, y: 20, scale: 0.9 },
+                                                show: { opacity: 1, y: 0, scale: 1 }
+                                            }}
+                                            whileHover={{ 
+                                                y: -4, 
+                                                scale: 1.03,
+                                                boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.25)"
+                                            }}
+                                            whileTap={{ scale: 0.98 }}
+                                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-[9px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Best SGPA</p>
+                                                <motion.span 
+                                                    className="text-sm sm:text-base"
+                                                    whileHover={{ scale: 1.2, rotate: 10 }}
+                                                >⭐</motion.span>
+                                            </div>
+                                            <p className="text-lg sm:text-2xl font-bold text-emerald-700 dark:text-emerald-300 group-hover:scale-105 transition-transform origin-left">
+                                                {chartData.length > 0 ? Math.max(...chartData.map(d => d.SGPA)).toFixed(2) : '0.00'}
+                                            </p>
+                                        </motion.div>
+                                        
+                                        <motion.div 
+                                            className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-2.5 sm:p-3 border border-blue-100 dark:border-blue-800/50 cursor-pointer"
+                                            variants={{
+                                                hidden: { opacity: 0, y: 20, scale: 0.9 },
+                                                show: { opacity: 1, y: 0, scale: 1 }
+                                            }}
+                                            whileHover={{ 
+                                                y: -4, 
+                                                scale: 1.03,
+                                                boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.25)"
+                                            }}
+                                            whileTap={{ scale: 0.98 }}
+                                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-[9px] sm:text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">Current CGPA</p>
+                                                <motion.span 
+                                                    className="text-sm sm:text-base"
+                                                    whileHover={{ scale: 1.2, rotate: -10 }}
+                                                >📊</motion.span>
+                                            </div>
+                                            <p className="text-lg sm:text-2xl font-bold text-blue-700 dark:text-blue-300 group-hover:scale-105 transition-transform origin-left">
+                                                {chartData.length > 0 ? chartData[chartData.length - 1].CGPA.toFixed(2) : '0.00'}
+                                            </p>
+                                        </motion.div>
+                                        
+                                        <motion.div 
+                                            className="group relative overflow-hidden bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-xl p-2.5 sm:p-3 border border-purple-100 dark:border-purple-800/50 cursor-pointer"
+                                            variants={{
+                                                hidden: { opacity: 0, y: 20, scale: 0.9 },
+                                                show: { opacity: 1, y: 0, scale: 1 }
+                                            }}
+                                            whileHover={{ 
+                                                y: -4, 
+                                                scale: 1.03,
+                                                boxShadow: "0 10px 25px -5px rgba(139, 92, 246, 0.25)"
+                                            }}
+                                            whileTap={{ scale: 0.98 }}
+                                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-[9px] sm:text-xs font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide">Avg SGPA</p>
+                                                <motion.span 
+                                                    className="text-sm sm:text-base"
+                                                    whileHover={{ scale: 1.2, rotate: 10 }}
+                                                >📈</motion.span>
+                                            </div>
+                                            <p className="text-lg sm:text-2xl font-bold text-purple-700 dark:text-purple-300 group-hover:scale-105 transition-transform origin-left">
+                                                {chartData.length > 0 ? (chartData.reduce((sum, d) => sum + d.SGPA, 0) / chartData.length).toFixed(2) : '0.00'}
+                                            </p>
+                                        </motion.div>
+                                        
+                                        <motion.div 
+                                            className="group relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-2.5 sm:p-3 border border-amber-100 dark:border-amber-800/50 cursor-pointer"
+                                            variants={{
+                                                hidden: { opacity: 0, y: 20, scale: 0.9 },
+                                                show: { opacity: 1, y: 0, scale: 1 }
+                                            }}
+                                            whileHover={{ 
+                                                y: -4, 
+                                                scale: 1.03,
+                                                boxShadow: "0 10px 25px -5px rgba(245, 158, 11, 0.25)"
+                                            }}
+                                            whileTap={{ scale: 0.98 }}
+                                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-[9px] sm:text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wide">Semesters</p>
+                                                <motion.span 
+                                                    className="text-sm sm:text-base"
+                                                    whileHover={{ scale: 1.2, rotate: -10 }}
+                                                >📚</motion.span>
+                                            </div>
+                                            <p className="text-lg sm:text-2xl font-bold text-amber-700 dark:text-amber-300 group-hover:scale-105 transition-transform origin-left">
+                                                {chartData.length}
+                                            </p>
+                                        </motion.div>
+                                    </motion.div>
+                                </motion.div>
+                            );
+                        })()}
+                    </div>
+
                     {/* SGPA Trend with Delta */}
                     <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
                         <div className="flex items-start justify-between mb-3 sm:mb-4">
