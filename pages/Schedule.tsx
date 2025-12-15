@@ -1666,7 +1666,7 @@ const Schedule: React.FC = () => {
             {/* Edit Modal */}
             {editingItem && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={() => setEditingItem(null)}>
-                    <div className="bg-white dark:bg-dark-card rounded-xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[90vh] overflow-y-auto" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                    <div className="bg-white dark:bg-dark-card rounded-xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[90vh] overflow-y-auto outline-none focus:outline-none" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         {/* Header */}
                         <div className={`sticky top-0 border-b border-slate-200 dark:border-slate-700 p-4 sm:p-6 rounded-t-xl ${editingItem.isCustomTask ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white' : 'bg-white dark:bg-dark-card'}`}>
                             <div className="flex items-center justify-between">
@@ -1735,7 +1735,7 @@ const Schedule: React.FC = () => {
                                         id="instructor"
                                         value={newInstructor}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewInstructor(e.target.value)}
-                                        className={`w-full px-4 py-3 rounded-lg border-2 ${
+                                        className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
                                             validationErrors.instructor
                                                 ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                                                 : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
@@ -1788,7 +1788,7 @@ const Schedule: React.FC = () => {
                                         id="venue"
                                         value={newVenue}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewVenue(e.target.value)}
-                                        className={`w-full px-4 py-3 rounded-lg border-2 ${
+                                        className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
                                             validationErrors.venue
                                                 ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                                                 : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
@@ -1817,7 +1817,7 @@ const Schedule: React.FC = () => {
                                         id="day"
                                         value={newDay}
                                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewDay(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700 transition-colors"
+                                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none dark:bg-slate-700 transition-colors"
                                     >
                                         {allDays.map(day => (
                                             <option key={day} value={day}>{day}</option>
@@ -1838,7 +1838,7 @@ const Schedule: React.FC = () => {
                                             type="time"
                                             value={newStartTime}
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStartTime(e.target.value)}
-                                            className={`flex-1 px-3 py-3 rounded-lg border-2 ${
+                                            className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
                                                 validationErrors.time || validationErrors.startTime
                                                     ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                                                     : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
@@ -1849,7 +1849,7 @@ const Schedule: React.FC = () => {
                                             type="time"
                                             value={newEndTime}
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEndTime(e.target.value)}
-                                            className={`flex-1 px-3 py-3 rounded-lg border-2 ${
+                                            className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
                                                 validationErrors.time || validationErrors.endTime
                                                     ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                                                     : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
@@ -1914,50 +1914,51 @@ const Schedule: React.FC = () => {
                         </div>
  
                         {/* Footer */}
-                        <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 p-4 sm:p-6 rounded-b-xl">
-                            <div className="flex flex-col gap-3">
+                        <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 sm:p-6 rounded-b-xl">
+                            <div className="flex flex-col gap-2 sm:gap-3">
                                 {/* Top Row - Destructive and Special Actions */}
-                                <div className="flex flex-col sm:flex-row gap-3">
+                                <div className="flex flex-row gap-2 sm:gap-3">
                                     <button
                                         onClick={handleDeleteSlot}
-                                        className="w-full sm:w-auto px-5 py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors flex items-center justify-center shadow-lg hover:shadow-xl"
+                                        className="flex-1 px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm sm:text-base font-semibold transition-colors flex items-center justify-center shadow-lg hover:shadow-xl"
                                     >
-                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
-                                        {editingItem.isCustomTask ? 'Delete Task' : 'Delete Class'}
+                                        Delete
                                     </button>
                                     <button
                                         onClick={handleDuplicateClass}
-                                        className="w-full sm:w-auto px-5 py-3 rounded-lg bg-purple-500 hover:bg-purple-600 text-white font-semibold transition-colors flex items-center justify-center shadow-lg hover:shadow-xl"
+                                        className="flex-1 px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm sm:text-base font-semibold transition-colors flex items-center justify-center shadow-lg hover:shadow-xl"
                                     >
-                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                         </svg>
-                                        {editingItem.isCustomTask ? 'Duplicate as New Task' : 'Duplicate as New Class'}
+                                        Duplicate
                                     </button>
                                 </div>
 
                                 {/* Bottom Row - Primary Actions */}
-                                <div className="flex gap-3 w-full">
+                                <div className="flex gap-2 sm:gap-3 w-full">
                                     <button
                                         onClick={() => setEditingItem(null)}
-                                        className="flex-1 px-5 py-3 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 font-semibold transition-colors"
+                                        className="flex-1 px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-sm sm:text-base font-semibold transition-colors"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={handleUpdateClassDetails}
-                                        className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center ${
+                                        className={`flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center ${
                                             editingItem.isCustomTask
                                                 ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
                                                 : 'bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white'
                                         }`}
                                     >
-                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                         </svg>
-                                        {editingItem.isCustomTask ? 'Save Task' : 'Save Changes'}
+                                        <span className="hidden xs:inline">{editingItem.isCustomTask ? 'Save Task' : 'Save Changes'}</span>
+                                        <span className="xs:hidden">Save</span>
                                     </button>
                                 </div>
                             </div>
@@ -1969,7 +1970,7 @@ const Schedule: React.FC = () => {
             {/* Custom Task Creation Modal */}
             {isCreatingCustomTask && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4" onClick={() => setIsCreatingCustomTask(false)}>
-                    <div className="bg-white dark:bg-dark-card rounded-xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[90vh] overflow-y-auto" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                    <div className="bg-white dark:bg-dark-card rounded-xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[90vh] overflow-y-auto outline-none focus:outline-none" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         {/* Header */}
                         <div className="sticky top-0 bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 sm:p-6 rounded-t-xl">
                             <div className="flex items-center justify-between">
@@ -2025,7 +2026,7 @@ const Schedule: React.FC = () => {
                                         id="taskName"
                                         value={customTaskName}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomTaskName(e.target.value)}
-                                        className={`w-full px-4 py-3 rounded-lg border-2 ${
+                                        className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
                                             validationErrors.customTaskName
                                                 ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                                                 : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
@@ -2055,7 +2056,7 @@ const Schedule: React.FC = () => {
                                         id="taskDescription"
                                         value={customTaskDescription}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomTaskDescription(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20 dark:bg-slate-700 transition-colors"
+                                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20 focus:outline-none dark:bg-slate-700 transition-colors"
                                         placeholder="e.g., Personal, Study, Sports, Club Activity"
                                     />
                                 </div>
@@ -2074,7 +2075,7 @@ const Schedule: React.FC = () => {
                                         id="taskVenue"
                                         value={newVenue}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewVenue(e.target.value)}
-                                        className={`w-full px-4 py-3 rounded-lg border-2 ${
+                                        className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
                                             validationErrors.venue
                                                 ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                                                 : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
@@ -2104,7 +2105,7 @@ const Schedule: React.FC = () => {
                                         id="taskOrganizer"
                                         value={newInstructor}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewInstructor(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20 dark:bg-slate-700 transition-colors"
+                                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20 focus:outline-none dark:bg-slate-700 transition-colors"
                                         placeholder="e.g., Study Group, Club Name, Self"
                                     />
                                 </div>
@@ -2121,7 +2122,7 @@ const Schedule: React.FC = () => {
                                         id="taskDay"
                                         value={newDay}
                                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewDay(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700 transition-colors"
+                                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none dark:bg-slate-700 transition-colors"
                                     >
                                         {allDays.map(day => (
                                             <option key={day} value={day}>{day}</option>
@@ -2142,7 +2143,7 @@ const Schedule: React.FC = () => {
                                             type="time"
                                             value={newStartTime}
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStartTime(e.target.value)}
-                                            className={`flex-1 px-3 py-3 rounded-lg border-2 ${
+                                            className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
                                                 validationErrors.time || validationErrors.startTime
                                                     ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                                                     : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
@@ -2153,7 +2154,7 @@ const Schedule: React.FC = () => {
                                             type="time"
                                             value={newEndTime}
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEndTime(e.target.value)}
-                                            className={`flex-1 px-3 py-3 rounded-lg border-2 ${
+                                            className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
                                                 validationErrors.time || validationErrors.endTime
                                                     ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                                                     : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
@@ -2218,22 +2219,23 @@ const Schedule: React.FC = () => {
                         </div>
 
                         {/* Footer */}
-                        <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 p-4 sm:p-6 rounded-b-xl">
-                            <div className="flex gap-3 w-full">
+                        <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 sm:p-6 rounded-b-xl">
+                            <div className="flex gap-2 sm:gap-3 w-full">
                                 <button
                                     onClick={() => setIsCreatingCustomTask(false)}
-                                    className="flex-1 px-5 py-3 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 font-semibold transition-colors"
+                                    className="flex-1 px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-sm sm:text-base font-semibold transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleCreateCustomTask}
-                                    className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center"
+                                    className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm sm:text-base font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center"
                                 >
-                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                     </svg>
-                                    Create Task
+                                    <span className="hidden xs:inline">Create Task</span>
+                                    <span className="xs:hidden">Create</span>
                                 </button>
                             </div>
                         </div>
