@@ -27,6 +27,9 @@ export default defineConfig({
     hmr: {
       port: 3000,
       host: 'localhost'
+    },
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
     }
   },
   plugins: [react(), injectBuildTime()],
