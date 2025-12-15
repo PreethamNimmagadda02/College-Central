@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 
-const FILE_PATH = 'TimeTable (1) (2).xlsx';
+const FILE_PATH = 'TimeTable (1) (2).xlsx'; // Update this to your file path
 
 try {
   const fileBuffer = fs.readFileSync(FILE_PATH);

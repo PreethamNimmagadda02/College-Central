@@ -1,6 +1,7 @@
 ---
 description: How to extract timetable data from Excel files
 ---
+
 # Extracting Timetable Data
 
 This project includes scripts to extract course usage data from Excel timetable files.
@@ -9,8 +10,8 @@ This project includes scripts to extract course usage data from Excel timetable 
 - Node.js installed
 - `xlsx` package installed (`npm install xlsx`)
 - Excel files placed in the project root:
-  - `Winter_2025-2026_Time_Table (3).xls` (for regular courses)
-  - `TimeTable (1) (2).xlsx` (for NEP courses)
+  - `TimeTable_CBCS.xls` (for regular courses)
+  - `TimeTable_NEP.xlsx` (for NEP courses)
 
 ## Scripts
 

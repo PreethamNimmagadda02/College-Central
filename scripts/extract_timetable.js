@@ -2,7 +2,7 @@
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 
-const FILE_PATH = 'Winter_2025-2026_Time_Table (3).xls';
+const FILE_PATH = 'Winter_2025-2026_Time_Table (3).xls'; // Update this to your file path
 const OUTPUT_FILE = 'config/courseData.tsx';
 
 try {
