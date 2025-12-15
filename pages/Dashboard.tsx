@@ -1049,6 +1049,15 @@ const Dashboard: React.FC = () => {
         return { now, currentTime, isSelectedDateToday };
     }, [selectedDate]);
 
+    // Stable date reference for semester progress - only changes once per day
+    const todayDateString = useMemo(() => {
+        return new Date().toDateString();
+    }, []);
+
+    const stableNow = useMemo(() => {
+        return new Date();
+    }, [todayDateString]);
+
     // Only calculate upcoming class if viewing today's schedule
     const upcomingClassIndex = useMemo(() => {
         return isSelectedDateToday
@@ -1064,7 +1073,7 @@ const Dashboard: React.FC = () => {
     }, [isSelectedDateToday, scheduleInfo.classes.length, upcomingClassIndex]);
 
     const { semesterProgress, currentWeek } = useMemo(() => {
-        const year = now.getFullYear();
+        const year = stableNow.getFullYear();
         const defaultStartDate = new Date(year, SEMESTER_DEFAULTS.START_MONTH, SEMESTER_DEFAULTS.START_DAY);
         const defaultEndDate = new Date(year, SEMESTER_DEFAULTS.END_MONTH, SEMESTER_DEFAULTS.END_DAY);
 
@@ -1079,11 +1088,11 @@ const Dashboard: React.FC = () => {
             return { semesterProgress: 0, currentWeek: 1 };
         }
 
-        const progress = calculateDateProgress(semesterStartDate, semesterEndDate, now);
-        const week = getWeekNumber(semesterStartDate, now);
+        const progress = calculateDateProgress(semesterStartDate, semesterEndDate, stableNow);
+        const week = getWeekNumber(semesterStartDate, stableNow);
 
         return { semesterProgress: progress, currentWeek: week };
-    }, [now, calendarData?.semesterStartDate, calendarData?.semesterEndDate]);
+    }, [stableNow, calendarData?.semesterStartDate, calendarData?.semesterEndDate]);
 
     if (overallLoading || !user) {
         return (
@@ -1191,7 +1200,7 @@ const Dashboard: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-pulse">
+                                    <p className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
                                         {Math.round(semesterProgress)}%
                                     </p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Complete</p>
@@ -1242,7 +1251,7 @@ const Dashboard: React.FC = () => {
                                     <div>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Days Passed</p>
                                         <p className="text-sm font-bold text-slate-800 dark:text-white">
-                                            {Math.floor((now.getTime() - (calendarData?.semesterStartDate ? new Date(calendarData.semesterStartDate).getTime() : new Date(now.getFullYear(), SEMESTER_DEFAULTS.START_MONTH, SEMESTER_DEFAULTS.START_DAY).getTime())) / (1000 * 60 * 60 * 24))}
+                                            {Math.floor((stableNow.getTime() - (calendarData?.semesterStartDate ? new Date(calendarData.semesterStartDate).getTime() : new Date(stableNow.getFullYear(), SEMESTER_DEFAULTS.START_MONTH, SEMESTER_DEFAULTS.START_DAY).getTime())) / (1000 * 60 * 60 * 24))}
                                         </p>
                                     </div>
                                 </div>
@@ -1251,7 +1260,7 @@ const Dashboard: React.FC = () => {
                                     <div>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Days Left</p>
                                         <p className="text-sm font-bold text-slate-800 dark:text-white">
-                                            {Math.max(0, Math.ceil(((calendarData?.semesterEndDate ? new Date(calendarData.semesterEndDate).getTime() : new Date(now.getFullYear(), SEMESTER_DEFAULTS.END_MONTH, SEMESTER_DEFAULTS.END_DAY).getTime()) - now.getTime()) / (1000 * 60 * 60 * 24)))}
+                                            {Math.max(0, Math.ceil(((calendarData?.semesterEndDate ? new Date(calendarData.semesterEndDate).getTime() : new Date(stableNow.getFullYear(), SEMESTER_DEFAULTS.END_MONTH, SEMESTER_DEFAULTS.END_DAY).getTime()) - stableNow.getTime()) / (1000 * 60 * 60 * 24)))}
                                         </p>
                                     </div>
                                 </div>
