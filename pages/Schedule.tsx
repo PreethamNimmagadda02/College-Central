@@ -1674,8 +1674,16 @@ const Schedule: React.FC = () => {
                                     <h3 className={`text-xl sm:text-2xl font-bold ${editingItem.isCustomTask ? 'text-white' : 'text-slate-800 dark:text-white'}`}>
                                         {editingItem.isCustomTask ? 'Edit Custom Task' : 'Edit Class Details'}
                                     </h3>
-                                    <p className={`text-sm mt-1 ${editingItem.isCustomTask ? 'text-teal-100' : 'text-slate-500 dark:text-slate-400'}`}>
-                                        {editingItem.isCustomTask ? editingItem.courseName : `${editingItem.courseCode} - ${editingItem.courseName}`}
+                                    <p className={`text-base sm:text-lg font-semibold mt-1 ${editingItem.isCustomTask ? 'text-white/90' : 'text-slate-800 dark:text-white'}`}>
+                                        {editingItem.isCustomTask ? (
+                                            <span>{editingItem.courseName}</span>
+                                        ) : (
+                                            <>
+                                                <span className="font-bold">{editingItem.courseCode}</span>
+                                                <span className="mx-2">•</span>
+                                                <span>{editingItem.courseName}</span>
+                                            </>
+                                        )}
                                     </p>
                                 </div>
                                 <button
@@ -1691,35 +1699,6 @@ const Schedule: React.FC = () => {
 
                         {/* Body */}
                         <div className="p-4 sm:p-6 space-y-6">
-                            {/* Task/Course Info - Read Only */}
-                            <div className={`bg-gradient-to-br rounded-lg p-4 ${
-                                editingItem.isCustomTask
-                                    ? 'from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 border border-teal-200 dark:border-teal-800'
-                                    : 'from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800'
-                            }`}>
-                                <div className="flex items-center gap-2 mb-2">
-                                    {editingItem.isCustomTask ? (
-                                        <svg className="w-5 h-5 text-teal-600 dark:text-teal-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    )}
-                                    <p className={`text-sm font-medium ${
-                                        editingItem.isCustomTask
-                                            ? 'text-teal-800 dark:text-teal-300'
-                                            : 'text-blue-800 dark:text-blue-300'
-                                    }`}>
-                                        {editingItem.isCustomTask ? 'Task Information' : 'Course Information'}
-                                    </p>
-                                </div>
-                                <p className="text-slate-700 dark:text-slate-300">
-                                    <span className="font-semibold">{editingItem.courseCode}</span> - {editingItem.courseName}
-                                </p>
-                            </div>
-
                             {/* Editable Fields */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Instructor / Person/Organizer */}
