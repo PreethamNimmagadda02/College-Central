@@ -99,17 +99,28 @@ const ChartBarIcon = () => (
 
 
 const tabs: { id: AdminTab; path: string; label: string; icon: React.ReactNode }[] = [
+  // Institution Settings
   { id: 'college-info', path: '/admin/college-info', label: 'College Info', icon: <BuildingIcon /> },
+  
+  // Academic
   { id: 'branches', path: '/admin/branches', label: 'Branches', icon: <AcademicCapIcon /> },
-  { id: 'hostels', path: '/admin/hostels', label: 'Hostels', icon: <HomeIcon /> },
-  { id: 'quick-links', path: '/admin/quick-links', label: 'Quick Links', icon: <LinkIcon /> },
-  { id: 'quotes', path: '/admin/quotes', label: 'Quotes', icon: <SparklesIcon /> },
-  { id: 'forms', path: '/admin/forms', label: 'Forms', icon: <DocumentIcon /> },
-  { id: 'calendar', path: '/admin/calendar', label: 'Calendar', icon: <CalendarIcon /> },
-  { id: 'directory', path: '/admin/directory', label: 'Faculty & Staff Directory', icon: <UsersIcon /> },
   { id: 'courses', path: '/admin/courses', label: 'Courses', icon: <BookOpenIcon /> },
+  { id: 'calendar', path: '/admin/calendar', label: 'Calendar', icon: <CalendarIcon /> },
+  
+  // People
+  { id: 'directory', path: '/admin/directory', label: 'Faculty Directory', icon: <UsersIcon /> },
   { id: 'students', path: '/admin/students', label: 'Students Directory', icon: <UserGroupIcon /> },
+  
+  // Campus
+  { id: 'hostels', path: '/admin/hostels', label: 'Hostels', icon: <HomeIcon /> },
   { id: 'campus-map', path: '/admin/campus-map', label: 'Campus Map', icon: <MapPinIcon /> },
+  
+  // Content
+  { id: 'quick-links', path: '/admin/quick-links', label: 'Quick Links', icon: <LinkIcon /> },
+  { id: 'forms', path: '/admin/forms', label: 'Forms', icon: <DocumentIcon /> },
+  { id: 'quotes', path: '/admin/quotes', label: 'Quotes', icon: <SparklesIcon /> },
+  
+  // Monitoring
   { id: 'analytics', path: '/admin/analytics', label: 'Analytics', icon: <ChartBarIcon /> },
 ];
 

@@ -95,7 +95,7 @@ const DirectoryEditor: React.FC<Props> = ({
       {/* Header */}
       <AdminHeader 
         icon={<UsersIcon />} 
-        title="Faculty Directory" 
+        title="Faculty & Staff Directory" 
         subtitle="Manage faculty, staff, and department contacts"
       >
         <div className="flex gap-3">
