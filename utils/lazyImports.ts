@@ -19,13 +19,7 @@ export async function getGoogleGenAI() {
   return { GoogleGenAI, Type };
 }
 
-/**
- * Lazy load OpenAI only when needed (fallback for Gemini)
- */
-export async function getOpenAI() {
-  const OpenAI = await import('openai');
-  return OpenAI.default;
-}
+
 
 /**
  * Lazy load image compression only when needed

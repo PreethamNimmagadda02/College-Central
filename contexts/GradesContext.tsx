@@ -5,7 +5,7 @@ import { db } from '../firebaseConfig';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/storage';
 import { logActivity } from '../services/activityService';
-import { getGoogleGenAI, getOpenAI } from '../utils/lazyImports';
+import { getGoogleGenAI } from '../utils/lazyImports';
 
 /**
  * GradesContext handles academic grade data with intelligent retake logic:
@@ -174,7 +174,6 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const base64Data = await fileToBase64(selectedFile);
 
         let result: Omit<GradesData, 'gradeSheetUrl' | 'gradeSheetFileName'>;
-        let aiModel = 'Gemini';
 
         // Try Gemini first
         try {
@@ -243,80 +242,9 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             result = JSON.parse(text.trim());
 
         } catch (geminiError) {
-            // Check if OpenAI can handle this file type
-            const isPDF = selectedFile.type === 'application/pdf';
-            if (isPDF) {
-                throw new Error('Gemini API is currently unavailable and OpenAI does not support PDF files. Please try again with an image file (PNG, JPG) or wait a few minutes for Gemini to become available.');
-            }
-
-            // Fallback to OpenAI (images only)
-            if (!import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY === 'your_openai_api_key_here') {
-                throw new Error('OpenAI remove aigured. Please add VITE_OPENAI_API_KEY to your .env file.');
-            }
-
-            aiModel = 'ChatGPT';
-            const OpenAI = await getOpenAI();
-            const openai = new OpenAI({
-                apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-                dangerouslyAllowBrowser: true // Required for client-side usage
-            });
-
-            const systemPrompt = `You are an expert at analyzing academic grade sheets. Extract data from the provided image and return ONLY valid JSON matching this exact structure:
-{
-  "cgpa": number (overall CGPA as shown on grade sheet),
-  "totalCredits": number (total credits, will be recalculated),
-  "semesters": [
-    {
-      "semester": number (e.g., 4),
-      "sessionYear": string (e.g., "2023-2024"),
-      "sessionType": string ("Monsoon", "Winter", or "Summer"),
-      "sgpa": number,
-      "grades": [
-        {
-          "subjectCode": string (e.g., "CSL201"),
-          "subjectName": string,
-          "credits": number,
-          "grade": string (letter grade like "A", "B", "EX")
-        }
-      ]
-    }
-  ]
-}
-
-IMPORTANT: Include ALL course instances including retakes. If a student took the same course multiple times, include each instance in its respective semester. Return ONLY the JSON, no markdown or additional text.`;
-
-            const response = await openai.chat.completions.create({
-                model: 'gpt-4o', // gpt-4o has vision capabilities
-                messages: [
-                    {
-                        role: 'system',
-                        content: systemPrompt
-                    },
-                    {
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'text',
-                                text: 'Please analyze this grade sheet image and extract the data according to the JSON schema provided.'
-                            },
-                            {
-                                type: 'image_url',
-                                image_url: {
-                                    url: `data:${selectedFile.type};base64,${base64Data}`
-                                }
-                            }
-                        ]
-                    }
-                ],
-                response_format: { type: 'json_object' },
-                max_tokens: 4096
-            });
-
-            const responseText = response.choices[0]?.message?.content;
-            if (!responseText) {
-                throw new Error('OpenAI response was empty or invalid.');
-            }
-            result = JSON.parse(responseText.trim());
+            // Re-throw with a user-friendly message
+            console.error('Gemini API error:', geminiError);
+            throw new Error('Failed to process grade sheet. Please ensure the Gemini API is configured correctly and try again.');
         }
 
         // Get latest grades for each course (handles retakes)
@@ -364,7 +292,7 @@ IMPORTANT: Include ALL course instances including retakes. If a student took the
         await logActivity(currentUser.uid, {
             type: 'grades',
             title: 'Grades Processed',
-            description: `Successfully processed and updated your grade sheet using ${aiModel}.`,
+            description: 'Successfully processed and updated your grade sheet using Gemini AI.',
             icon: '📊',
             link: '/grades'
         });
