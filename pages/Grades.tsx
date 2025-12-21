@@ -3,8 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useGrades, GradesData } from '../contexts/GradesContext';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useUser } from '../contexts/UserContext';
-import { TIMETABLE_DATA } from '../config/courseData';
-import { NEP_TIMETABLE_DATA } from '../config/nepCourseData';
+import { useAppConfig } from '../contexts/AppConfigContext';
 import { Grade, Semester } from '../types';
 import { calculateCreditsFromLTP } from '../utils/creditCalculator';
 import {
@@ -162,7 +161,13 @@ const CGPAForecaster: React.FC = () => {
     const { scheduleData } = useSchedule();
     const { user } = useUser();
     const courseOption = user?.courseOption || 'CBCS';
-    const timetableData = courseOption === 'NEP' ? NEP_TIMETABLE_DATA : TIMETABLE_DATA;
+    const { config } = useAppConfig();
+
+    const timetableData = useMemo(() => {
+        const courses = config?.courses || [];
+        // Filter courses based on the user's course option (NEP/CBCS)
+        return courses.filter(c => c.courseType === courseOption);
+    }, [config?.courses, courseOption]);
     const [targetCGPA, setTargetCGPA] = useState('7.0');
 
     const currentCourses = useMemo(() => {

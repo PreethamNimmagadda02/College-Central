@@ -428,7 +428,7 @@ const AcademicCalendar: React.FC = () => {
                         Academic Calendar
                     </h1>
                     <p className="text-slate-600 dark:text-slate-400 mt-1">
-                        {formatDateRange(calendarData.semesterStartDate, calendarData.semesterEndDate)}
+                        {formatDateRange(calendarData.academicYearStartDate || calendarData.semesterStartDate, calendarData.academicYearEndDate || calendarData.semesterEndDate)}
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2 md:gap-3">
@@ -478,7 +478,7 @@ const AcademicCalendar: React.FC = () => {
                         <div>
                             <p className="text-green-100 text-xs md:text-sm font-semibold">Days Remaining</p>
                             {(() => {
-                                const days = getDaysUntil(calendarData.semesterEndDate);
+                                const days = getDaysUntil(calendarData.academicYearEndDate || calendarData.semesterEndDate);
                                 const isCompleted = days < 0;
                                 return (
                                     <p className={`${isCompleted ? 'text-lg sm:text-xl' : 'text-2xl'} md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left`}>
@@ -488,7 +488,7 @@ const AcademicCalendar: React.FC = () => {
                             })()}
                         </div>
                         <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
-                            {getDaysUntil(calendarData.semesterEndDate) < 0 ? '✅' : '⏳'}
+                            {getDaysUntil(calendarData.academicYearEndDate || calendarData.semesterEndDate) < 0 ? '✅' : '⏳'}
                         </div>
                     </div>
                 </div>

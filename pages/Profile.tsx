@@ -6,13 +6,13 @@ import { useAuth } from '../hooks/useAuth';
 import { useForms } from '../contexts/FormsContext';
 import { useCampusMap } from '../contexts/CampusMapContext';
 import { useCalendar } from '../contexts/CalendarContext';
-import { HOSTEL_OPTIONS } from '../config/hostels';
-import { BRANCH_OPTIONS } from '../config/branches';
+import { useAppConfig } from '../contexts/AppConfigContext';
 import { COURSE_OPTIONS } from '../config/credits';
+import { BRANCH_OPTIONS } from '../config/branches';
+import { HOSTEL_OPTIONS } from '../config/hostels';
 import { db } from '../firebaseConfig';
 import 'firebase/firestore';
 import { X, Download, Calendar, Bell, MapPin, Check, Edit2, Globe, RotateCcw } from 'lucide-react';
-import { allForms } from '../config/forms';
 
 const formatTimeAgo = (timestamp: { seconds: number; nanoseconds: number } | null) => {
     if (!timestamp) return '...';
@@ -36,6 +36,7 @@ const Profile: React.FC = () => {
     const { userFormsData, addRecentDownload } = useForms();
     const { savedPlaces, locations } = useCampusMap();
     const { reminderPreferences, calendarData, getEventKey } = useCalendar();
+    const { config: appConfig } = useAppConfig();
 
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<Partial<User>>({});
@@ -92,11 +93,14 @@ const Profile: React.FC = () => {
         website: ''
     });
 
-    // Calculate stats for overview
-    const savedFormsCount = userFormsData?.favorites?.length ?? 0;
+    // Calculate stats for overview - filter to only count favorites that still exist
+    const existingFormNumbers = new Set((appConfig?.forms || []).map((f: Form) => f.formNumber));
+    const savedFormsCount = (userFormsData?.favorites || []).filter(formNumber => existingFormNumbers.has(formNumber)).length;
     const userAddedEventsCount = calendarData?.events.filter(e => e.userId === currentUser?.uid).length ?? 0;
     const remindersCount = reminderPreferences?.length ?? 0;
-    const savedPlacesCount = savedPlaces?.length ?? 0;
+    // Filter saved places to only count locations that still exist
+    const existingLocationIds = new Set((appConfig?.campusMap || []).map((loc: CampusLocation) => loc.id));
+    const savedPlacesCount = (savedPlaces || []).filter(locId => existingLocationIds.has(locId)).length;
 
     // Get unique activity types for filter
     const activityTypes = ['all', ...Array.from(new Set(activity.map(item => item.type)))];
@@ -645,7 +649,7 @@ const Profile: React.FC = () => {
                                     className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/50 w-full"
                                 >
                                     <option value="" className="text-slate-800">Select a branch...</option>
-                                    {BRANCH_OPTIONS.map(branch => (
+                                    {(appConfig?.branches || BRANCH_OPTIONS).map(branch => (
                                         <option key={branch} value={branch} className="text-slate-800">{branch}</option>
                                     ))}
                                 </select>
@@ -838,7 +842,7 @@ const Profile: React.FC = () => {
                                                     className="w-full mt-1 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                                                 >
                                                     <option value="">Select a hostel...</option>
-                                                    {HOSTEL_OPTIONS.map(hostel => (
+                                                    {(appConfig?.hostels || HOSTEL_OPTIONS).map(hostel => (
                                                         <option key={hostel} value={hostel}>{hostel}</option>
                                                     ))}
                                                 </select>
@@ -888,7 +892,8 @@ const Profile: React.FC = () => {
                             {/* Quick Stats */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                                 <button onClick={() => {
-                                        const favoriteForms = allForms.filter(form => userFormsData?.favorites?.includes(form.formNumber));
+                                        const configForms = appConfig?.forms || [];
+                                        const favoriteForms = configForms.filter((form: Form) => userFormsData?.favorites?.includes(form.formNumber));
                                         setModalData({ title: 'Saved Forms', data: favoriteForms, type: 'forms', link: '/college-forms', linkText: 'Forms' });
                                     }} className="w-full text-left group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95">
                                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

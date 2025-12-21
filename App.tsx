@@ -2,16 +2,19 @@ import React, { Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 
 import { AuthProvider } from './hooks/useAuth';
+import { RoleProvider } from './hooks/useRole';
 import { UserProvider } from './contexts/UserContext';
 import { GradesProvider } from './contexts/GradesContext';
 import { ScheduleProvider } from './contexts/ScheduleContext';
 import { CalendarProvider } from './contexts/CalendarContext';
 import { CampusMapProvider } from './contexts/CampusMapContext';
 import { FormsProvider } from './contexts/FormsContext';
+import { AppConfigProvider } from './contexts/AppConfigContext';
 
 import Layout from './pages/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminProtectedRoute from './components/AdminProtectedRoute';
 import UpdatePrompt from './components/UpdatePrompt';
 import { InstallPrompt } from './components/InstallPrompt';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -32,7 +35,13 @@ const Login = lazyWithRetry(() => import('./pages/Login'));
 const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService'));
 const OfflinePage = lazyWithRetry(() => import('./pages/OfflinePage'));
-const Support = lazyWithRetry(() => import('./pages/Support'));
+
+
+// Admin Dashboard - available for admin users in all environments
+const AdminDashboard = lazyWithRetry(() => import('./admin/AdminDashboard'));
+// Auth redirect page for role-based routing
+const AuthRedirect = lazyWithRetry(() => import('./pages/AuthRedirect'));
+
 
 // Loading fallback component
 const PageLoader = React.memo(() => (
@@ -46,12 +55,49 @@ const PageLoader = React.memo(() => (
 PageLoader.displayName = 'PageLoader';
 
 const router = createHashRouter([
+  // Admin Dashboard routes (protected - requires admin role)
+  {
+    path: '/admin',
+    element: (
+      <AdminProtectedRoute>
+        <Suspense fallback={<PageLoader />}>
+          <AdminDashboard />
+        </Suspense>
+      </AdminProtectedRoute>
+    ),
+    children: [
+      { index: true, element: null }, // Default to college-info
+      { path: 'college-info', element: null },
+      { path: 'branches', element: null },
+      { path: 'hostels', element: null },
+      { path: 'quick-links', element: null },
+      { path: 'quotes', element: null },
+      { path: 'forms', element: null },
+      { path: 'calendar', element: null },
+      { path: 'directory', element: null },
+      { path: 'courses', element: null },
+      { path: 'students', element: null },
+      { path: 'campus-map', element: null },
+      { path: 'analytics', element: null },
+      { path: 'support', element: null },
+    ],
+  },
   {
     path: '/login',
     element: (
       <Suspense fallback={<PageLoader />}>
         <Login />
       </Suspense>
+    ),
+  },
+  {
+    path: '/auth-redirect',
+    element: (
+      <ProtectedRoute>
+        <Suspense fallback={<PageLoader />}>
+          <AuthRedirect />
+        </Suspense>
+      </ProtectedRoute>
     ),
   },
   {
@@ -151,14 +197,7 @@ const router = createHashRouter([
           </Suspense>
         )
       },
-      {
-        path: 'support',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <Support />
-          </Suspense>
-        )
-      },
+
       {
         path: '*',
         element: (
@@ -180,19 +219,23 @@ const App: React.FC = () => {
   return (
     <>
       <AuthProvider>
-        <UserProvider>
-          <GradesProvider>
-            <ScheduleProvider>
-              <CalendarProvider>
-                <FormsProvider>
-                  <CampusMapProvider>
-                    <RouterProvider router={router} />
-                  </CampusMapProvider>
-                </FormsProvider>
-              </CalendarProvider>
-            </ScheduleProvider>
-          </GradesProvider>
-        </UserProvider>
+        <AppConfigProvider>
+          <UserProvider>
+            <RoleProvider>
+              <GradesProvider>
+                <ScheduleProvider>
+                  <CalendarProvider>
+                    <FormsProvider>
+                      <CampusMapProvider>
+                        <RouterProvider router={router} />
+                      </CampusMapProvider>
+                    </FormsProvider>
+                  </CalendarProvider>
+                </ScheduleProvider>
+              </GradesProvider>
+            </RoleProvider>
+          </UserProvider>
+        </AppConfigProvider>
       </AuthProvider>
       <UpdatePrompt />
       <InstallPrompt />

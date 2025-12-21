@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { LogoIcon } from './icons/SidebarIcons';
-import { COLLEGE_INFO } from '../config/collegeInfo';
+import { useAppConfig } from '../contexts/AppConfigContext';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const { config: appConfig } = useAppConfig();
 
   return (
     <footer className="relative bg-gradient-to-b from-white/80 via-slate-50/80 to-white/80 dark:from-slate-900/80 dark:via-slate-900/70 dark:to-slate-900/80 backdrop-blur-lg border-t border-slate-200/60 dark:border-slate-800/60 mt-auto overflow-hidden">
@@ -35,7 +36,7 @@ const Footer: React.FC = () => {
                     College Central
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    IIT (ISM) Dhanbad
+                    {appConfig?.collegeInfo?.name?.short}
                   </p>
                 </div>
               </div>
@@ -142,7 +143,7 @@ const Footer: React.FC = () => {
               </div>
               <div className="px-4 py-2 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 dark:from-slate-800/50 dark:to-slate-800/30 border border-blue-100 dark:border-slate-700">
                 <p className="text-xs text-slate-600 dark:text-slate-400 text-center md:text-left font-medium">
-                  Built with passion for the {COLLEGE_INFO.name.abbreviation} community
+                  Built with passion for the {appConfig?.collegeInfo?.name?.abbreviation} community
                 </p>
               </div>
             </div>
@@ -173,12 +174,12 @@ const Footer: React.FC = () => {
                 <span className="relative z-10">Terms of Service</span>
               </Link>
               <span className="text-slate-300 dark:text-slate-600">•</span>
-              <Link
-                to="/support"
+              <a
+                href="mailto:collegecentral01@gmail.com"
                 className="group relative px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 hover:bg-blue-50 dark:hover:bg-slate-800 overflow-hidden inline-flex items-center gap-1"
               >
                 <span className="relative z-10">Support</span>
-              </Link>
+              </a>
             </div>
           </div>
         </div>

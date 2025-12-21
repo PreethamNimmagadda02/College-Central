@@ -15,6 +15,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
+import { useAppConfig } from '../contexts/AppConfigContext';
 import { SunIcon, MoonIcon, LogoIcon } from './icons/SidebarIcons';
 
 interface HeaderProps {
@@ -32,6 +33,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
   });
 
   const { user, updateUser } = useUser();
+  const { config: appConfig } = useAppConfig();
   const [isTogglingCourse, setIsTogglingCourse] = useState(false);
 
   React.useEffect(() => {
@@ -104,10 +106,19 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
                 </div>
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent group-hover:from-blue-500 group-hover:via-purple-500 group-hover:to-blue-500 transition-all duration-300">
-                  College Central
-                </h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 -mt-0.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">IIT (ISM) Dhanbad</p>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent group-hover:from-blue-500 group-hover:via-purple-500 group-hover:to-blue-500 transition-all duration-300">
+                    College Central
+                  </h1>
+                  {appConfig?.collegeInfo?.name?.short && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-gradient-to-r from-purple-500/30 to-pink-500/30 dark:from-purple-500/40 dark:to-pink-500/40 border border-purple-400/50 dark:border-purple-400/60 text-purple-700 dark:text-purple-200 font-semibold shadow-sm animate-pulse">
+                      {appConfig.collegeInfo.name.short}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  Empowering Students • Elevating Excellence
+                </p>
               </div>
             </Link>
           </div>

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useMe
 import { AcademicCalendarData, CalendarEvent } from '../types';
 import { PRELOADED_CALENDAR_DATA } from '../config/academicCalendar';
 import { useAuth } from '../hooks/useAuth';
+import { useAppConfig } from './AppConfigContext';
 import { db } from '../firebaseConfig';
 // FIX: Updated Firebase imports for v9 compatibility.
 import firebase from 'firebase/compat/app';
@@ -80,6 +81,7 @@ const adjustCalendarDatesToCurrentYear = (data: AcademicCalendarData): AcademicC
 
 export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { currentUser } = useAuth();
+  const { config } = useAppConfig();
   const [calendarData, setCalendarData] = useState<AcademicCalendarData | null>(null);
   const [loading, setLoading] = useState(true);
   const [userEvents, setUserEvents] = useState<CalendarEvent[]>([]);
@@ -177,12 +179,24 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [currentUser, reminderPreferences]);
 
-  // Merge preloaded data with user events and adjust dates
+  // Merge config calendar data (from database) with user events and adjust dates
   useEffect(() => {
     setLoading(true);
 
-    // Adjust preloaded data to the current year
-    const adjustedPreloadedData = adjustCalendarDatesToCurrentYear(PRELOADED_CALENDAR_DATA);
+    // Use calendar data from database config if available, otherwise fallback to preloaded
+    const baseCalendarData = config?.calendar && config.calendar.events?.length > 0
+      ? {
+          semesterStartDate: config.calendar.semesterStartDate,
+          semesterEndDate: config.calendar.semesterEndDate,
+          events: config.calendar.events.map(e => ({
+            ...e,
+            type: e.type as CalendarEvent['type']
+          }))
+        }
+      : PRELOADED_CALENDAR_DATA;
+
+    // Adjust preloaded/config data to the current year
+    const adjustedPreloadedData = adjustCalendarDatesToCurrentYear(baseCalendarData);
 
     // Combine adjusted preloaded events with user events (user events are assumed to be for current year)
     const mergedEvents = [
@@ -254,15 +268,21 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
     }
 
+    const lastSemesterEnd = semesterEnds.length > 0 ? semesterEnds[semesterEnds.length - 1] : null;
+    const firstSemesterStart = semesterStarts.length > 0 ? semesterStarts[0] : null;
+
     setCalendarData({
       ...adjustedPreloadedData,
       semesterStartDate: currentSemesterStart,
       semesterEndDate: currentSemesterEnd,
-      events: mergedEvents
+      semesterName: config?.calendar?.semesterName || undefined, // Propagate admin-configured semester name
+      events: mergedEvents,
+      academicYearStartDate: firstSemesterStart ? firstSemesterStart.date : currentSemesterStart,
+      academicYearEndDate: lastSemesterEnd ? (lastSemesterEnd.endDate || lastSemesterEnd.date) : currentSemesterEnd
     });
 
     setLoading(false);
-  }, [userEvents]);
+  }, [userEvents, config?.calendar]);
 
   // Cleanup reminders for past events automatically
   const cleanupPastEventReminders = useCallback(async () => {

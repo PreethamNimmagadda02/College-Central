@@ -2,50 +2,68 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users collection - users can read/write their own data
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Helper function to check if user is an admin
+    function isAdmin() {
+      return request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
 
-      // Subcollections under users
+    // App-wide configuration - readable by all (needed before login), writable by admins only
+    match /appConfig/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Users collection - users can read/write their own data
+    // Admins can read all users and delete any user
+    match /users/{userId} {
+      // Allow any authenticated user to list/read users for analytics
+      allow read: if request.auth != null;
+      // Only allow writing to own document (role field auto-managed by useRole hook)
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      // Allow delete for admins only
+      allow delete: if isAdmin();
+
+      // Subcollections under users - only accessible by the user themselves
       match /{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
 
-    // Events collection - read for all authenticated users
+    // Events collection - read for all authenticated users, write for admins
     match /events/{eventId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
-    // Announcements collection - read for all authenticated users
+    // Announcements collection - read for all authenticated users, write for admins
     match /announcements/{announcementId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
-    // News collection - read for all authenticated users
+    // News collection - read for all authenticated users, write for admins
     match /news/{newsId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
-    // Faculty directory - read for all authenticated users
+    // Faculty directory - read for all authenticated users, write for admins
     match /faculty/{facultyId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
-    // Student directory - read for all authenticated users
+    // Student directory - read for all authenticated users, write for admins
     match /students/{studentId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
-    // Academic calendar - read for all authenticated users
+    // Academic calendar - read for all authenticated users, write for admins
     match /academicCalendar/{calendarId} {
       allow read: if request.auth != null; 
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
     // User forms data - users can only read/write their own data

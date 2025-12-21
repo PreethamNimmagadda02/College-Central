@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useForms } from '../contexts/FormsContext';
 import { Form } from '../types';
-import { allForms, generalForms, ugForms, pgForms, phdForms } from '../config/forms';
+import { useAppConfig } from '../contexts/AppConfigContext';
 
 const DownloadIcon: React.FC = () => (
     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -84,10 +84,18 @@ const FormCard: React.FC<{
 
 const CollegeForms: React.FC = () => {
     const { userFormsData, loading, toggleFavorite, addRecentDownload } = useForms();
+    const { config: appConfig } = useAppConfig();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
 
     const safeUserFormsData = userFormsData || { favorites: [], recentDownloads: [] };
+
+    // Derive forms from config
+    const allForms = useMemo(() => (appConfig?.forms || []) as Form[], [appConfig?.forms]);
+    const generalForms = useMemo(() => allForms.filter(f => f.category === 'general'), [allForms]);
+    const ugForms = useMemo(() => allForms.filter(f => f.category === 'ug'), [allForms]);
+    const pgForms = useMemo(() => allForms.filter(f => f.category === 'pg'), [allForms]);
+    const phdForms = useMemo(() => allForms.filter(f => f.category === 'phd'), [allForms]);
 
     const filters = ['All', 'Favorites', 'General', 'UG', 'PG', 'PhD'];
     
@@ -120,13 +128,13 @@ const CollegeForms: React.FC = () => {
     
     const favoriteForms = useMemo(() =>
         allForms.filter(form => safeUserFormsData.favorites.includes(form.formNumber)),
-        [safeUserFormsData.favorites]
+        [allForms, safeUserFormsData.favorites]
     );
 
-    const filteredGeneralForms = useMemo(() => filterForms(generalForms), [searchTerm, safeUserFormsData.favorites, activeFilter]);
-    const filteredUgForms = useMemo(() => filterForms(ugForms), [searchTerm, safeUserFormsData.favorites, activeFilter]);
-    const filteredPgForms = useMemo(() => filterForms(pgForms), [searchTerm, safeUserFormsData.favorites, activeFilter]);
-    const filteredPhdForms = useMemo(() => filterForms(phdForms), [searchTerm, safeUserFormsData.favorites, activeFilter]);
+    const filteredGeneralForms = useMemo(() => filterForms(generalForms), [generalForms, searchTerm, safeUserFormsData.favorites, activeFilter]);
+    const filteredUgForms = useMemo(() => filterForms(ugForms), [ugForms, searchTerm, safeUserFormsData.favorites, activeFilter]);
+    const filteredPgForms = useMemo(() => filterForms(pgForms), [pgForms, searchTerm, safeUserFormsData.favorites, activeFilter]);
+    const filteredPhdForms = useMemo(() => filterForms(phdForms), [phdForms, searchTerm, safeUserFormsData.favorites, activeFilter]);
 
     const getFilterLabel = (filter: string) => {
         switch (filter) {
@@ -180,7 +188,7 @@ const CollegeForms: React.FC = () => {
                     <div className="relative z-10 flex items-center justify-between text-white">
                         <div>
                             <p className="text-yellow-100 text-sm font-medium mb-1">Your Favorites</p>
-                            <p className="text-4xl font-black group-hover:scale-110 transition-transform origin-left">{safeUserFormsData.favorites.length}</p>
+                            <p className="text-4xl font-black group-hover:scale-110 transition-transform origin-left">{favoriteForms.length}</p>
                         </div>
                         <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
                             <StarIcon />

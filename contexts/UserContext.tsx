@@ -43,6 +43,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const newUserProfile: Partial<User> = {
               id: authUser.uid,
               name: directoryEntry?.name ?? authUser.displayName ?? 'New Student',
+              role: 'user',  // Default role, may be upgraded to 'admin' by useRole hook
               admissionNumber: directoryEntry?.admNo ?? admissionNumber,
               branch: directoryEntry?.branch ?? '',
               hostel: '',

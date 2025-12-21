@@ -2,6 +2,7 @@
 export interface User {
   id: string;
   name: string;
+  role: 'user' | 'admin';  // User role for access control
   admissionNumber: string;
   branch: string;
   hostel: string;
@@ -127,6 +128,9 @@ export interface CalendarEvent {
 export interface AcademicCalendarData {
     semesterStartDate: string; // YYYY-MM-DD
     semesterEndDate: string; // YYYY-MM-DD
+    semesterName?: string; // Name of the ongoing semester (e.g., "Monsoon 2025-26")
+    academicYearStartDate?: string; // YYYY-MM-DD
+    academicYearEndDate?: string; // YYYY-MM-DD
     events: CalendarEvent[];
 }
 
@@ -191,6 +195,7 @@ export interface Form {
     formNumber: string;
     downloadLink: string;
     submitTo: string;
+    category?: 'general' | 'ug' | 'pg' | 'phd';
 }
 
 export interface UserFormsData {

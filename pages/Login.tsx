@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
+import { useAppConfig } from '../contexts/AppConfigContext';
 import { LogoIcon } from '../components/icons/SidebarIcons';
 import ScrollToTop from '../components/ScrollToTop';
-import { getEmailValidationMessage } from '../config/collegeInfo';
 
 // Custom hook for animated counting
 const useCountUp = (end: number, duration: number = 2000, startCounting: boolean = false) => {
@@ -154,6 +154,7 @@ const Login: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const { loginWithGoogle, isAuthenticated, loading: authLoading } = useAuth();
+  const { config: appConfig } = useAppConfig();
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const navigate = useNavigate();
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
@@ -226,7 +227,8 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-        navigate('/', { replace: true });
+        // Redirect to auth-redirect for role-based routing
+        navigate('/auth-redirect', { replace: true });
     }
   }, [authLoading, isAuthenticated, navigate]);
 
@@ -321,7 +323,10 @@ const Login: React.FC = () => {
       // On success, useEffect will navigate
     } catch (err: any) {
       if (err.message && err.message.includes('INVALID_DOMAIN')) {
-        setError(getEmailValidationMessage());
+        // Use database config for validation message
+        const abbr = appConfig?.collegeInfo?.name?.abbreviation;
+        const domain = appConfig?.collegeInfo?.email?.allowedDomain;
+        setError(`Only ${abbr} email addresses (${domain}) are allowed. Please use your institutional email.`);
       } else if (err.code === 'auth/popup-closed-by-user') {
         setError('Sign-in was cancelled. Please try again.');
       } else if (err.code === 'auth/popup-blocked') {
@@ -396,7 +401,7 @@ const Login: React.FC = () => {
               College Central
             </h1>
             <p className="text-[0.625rem] sm:text-xs text-white/80 font-light drop-shadow-md">
-              IIT (ISM) Dhanbad
+              {appConfig?.collegeInfo?.name?.short}
             </p>
           </div>
         </div>
@@ -410,7 +415,7 @@ const Login: React.FC = () => {
           <div
             className="absolute inset-0 will-change-transform"
             style={{
-              backgroundImage: "url('/iitism_banner_new.gif')",
+              backgroundImage: `url('${appConfig?.collegeInfo?.heroImageUrl || '/iitism_banner_new.gif'}')`,
               backgroundSize: '100% 100%',
               backgroundPosition: 'center center',
               backgroundRepeat: 'no-repeat',
@@ -451,7 +456,7 @@ const Login: React.FC = () => {
               
               {/* Institute Name */}
               <p className="text-base md:text-lg lg:text-xl text-white/90 font-semibold mb-8 drop-shadow-md">
-                IIT(ISM) Dhanbad
+                {appConfig?.collegeInfo?.name?.short}
               </p>
 
               {/* Animated typing text - Main Headline */}
@@ -525,7 +530,7 @@ const Login: React.FC = () => {
                 Your Complete Campus Companion
               </h1>
               <p className="text-lg md:text-xl lg:text-2xl text-white/80 leading-relaxed max-w-3xl mx-auto">
-                College Central is the all-in-one platform designed specifically for IIT (ISM) Dhanbad students.
+                College Central is the all-in-one platform designed specifically for {appConfig?.collegeInfo?.name?.short} students.
                 From tracking your academic performance to navigating campus and staying organized, we bring
                 everything you need into one seamless experience.
               </p>
@@ -587,7 +592,7 @@ const Login: React.FC = () => {
                   {
                     icon: "🗺️",
                     title: "Campus Map",
-                    description: "Navigate the IIT (ISM) campus with an interactive map of all buildings and facilities",
+                    description: `Navigate the ${appConfig?.collegeInfo?.name?.abbreviation} campus with an interactive map of all buildings and facilities`,
                     color: "from-indigo-500 to-purple-500",
                     features: ["Building Locations", "Department Info", "Campus Navigation"]
                   }
@@ -652,7 +657,7 @@ const Login: React.FC = () => {
             <div className="max-w-4xl w-full space-y-8 relative z-10">
               <div className="text-center space-y-3">
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight">
-                  Trusted by the IIT (ISM) Community
+                  Trusted by the {appConfig?.collegeInfo?.name?.abbreviation} Community
                 </h2>
                 <p className="text-base md:text-lg lg:text-xl text-white/70 max-w-2xl mx-auto">
                   Join hundreds of students who are already using College Central to stay organized,
@@ -873,13 +878,13 @@ const Login: React.FC = () => {
                 Ready to Simplify Your College Life?
               </h2>
               <p className="text-base md:text-lg lg:text-xl text-white/70">
-                Sign in with your IIT (ISM) email and get started in seconds. No setup required.
+                Sign in with your {appConfig?.collegeInfo?.name?.abbreviation} email and get started in seconds. No setup required.
               </p>
               <div className="flex items-center justify-center gap-2 text-white/60 text-sm md:text-base">
                 <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span>Only @iitism.ac.in emails accepted</span>
+                <span>Only {appConfig?.collegeInfo?.email?.allowedDomain} emails accepted</span>
               </div>
             </div>
           </motion.div>

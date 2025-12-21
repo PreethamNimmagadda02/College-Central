@@ -1,10 +1,11 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useCampusMap } from '../contexts/CampusMapContext';
 import { CampusLocation, CampusLocationCategory } from '../types';
-import { COLLEGE_INFO } from '../config/collegeInfo';
+import { useAppConfig } from '../contexts/AppConfigContext';
 
 const CampusMap: React.FC = () => {
   const { locations, quickRoutes, loading, error, savedPlaces, toggleSavePlace, getDirections, shareLocation } = useCampusMap();
+  const { config: appConfig } = useAppConfig();
   const [selectedCategory, setSelectedCategory] = useState<CampusLocationCategory | 'all'>('all');
   const [selectedLocation, setSelectedLocation] = useState<CampusLocation | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -456,7 +457,7 @@ const CampusMap: React.FC = () => {
                 allowFullScreen={true}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title={`${COLLEGE_INFO.name.short} Campus Map`}
+                title={`${appConfig?.collegeInfo?.name?.short || 'IIT ISM'} Campus Map`}
                 className="h-[60vh] w-full"
               ></iframe>
             </div>
@@ -470,9 +471,9 @@ const CampusMap: React.FC = () => {
             <svg className="w-5 h-5 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
               <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             </svg>
-            Saved Places ({savedPlaces.length})
+            Saved Places ({locations.filter(loc => savedPlaces.includes(loc.id)).length})
           </h3>
-          {savedPlaces.length > 0 ? (
+          {locations.filter(loc => savedPlaces.includes(loc.id)).length > 0 ? (
             <div className="space-y-2 max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-slate-100 dark:scrollbar-track-slate-800 pr-2">
               {locations
                 .filter(loc => savedPlaces.includes(loc.id))

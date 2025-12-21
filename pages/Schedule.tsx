@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useUser } from '../contexts/UserContext';
+import { useAppConfig } from '../contexts/AppConfigContext';
 import { ClassSchedule } from '../types';
-import { TIMETABLE_DATA } from '../config/courseData';
-import { NEP_TIMETABLE_DATA } from '../config/nepCourseData';
 import { useAuth } from '../hooks/useAuth';
 import { logActivity } from '../services/activityService';
 import { calculateCreditsFromLTP } from '../utils/creditCalculator';
@@ -70,8 +69,17 @@ const Schedule: React.FC = () => {
     const { scheduleData, setScheduleData, loading: scheduleLoading } = useSchedule();
     const { currentUser } = useAuth();
     const { user } = useUser();
+    const { config } = useAppConfig();
     const courseOption = user?.courseOption || 'CBCS';
-    const timetableData = courseOption === 'NEP' ? NEP_TIMETABLE_DATA : TIMETABLE_DATA;
+    
+    // Get timetable data from database config, filtered by course type
+    const timetableData = useMemo(() => {
+        const courses = config?.courses || [];
+        return courses.filter(c => c.courseType === courseOption);
+    }, [config?.courses, courseOption]);
+    
+    // Get all courses for fallback matching (both CBCS and NEP)
+    const allCoursesData = useMemo(() => config?.courses || [], [config?.courses]);
 
     const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -233,24 +241,16 @@ const Schedule: React.FC = () => {
 
     const totalCredits = useMemo(() => {
         // Always use courses from actual schedule data for accurate credit count
-        // Search in both CBCS and NEP timetables to handle mixed schedules
+        // Search in all courses to handle mixed CBCS/NEP schedules
         return uniqueCoursesFromSchedule.reduce((acc, code) => {
-            // First try current timetable, then try the opposite one
-            let course = timetableData.find(c => c.courseCode === code);
-            let foundCourseOption = courseOption;
-
-            if (!course) {
-                // Try the opposite timetable
-                const oppositeTimetable = courseOption === 'NEP' ? TIMETABLE_DATA : NEP_TIMETABLE_DATA;
-                course = oppositeTimetable.find(c => c.courseCode === code);
-                foundCourseOption = courseOption === 'NEP' ? 'CBCS' : 'NEP';
-            }
-
+            // Find course in all courses (both CBCS and NEP)
+            const course = allCoursesData.find(c => c.courseCode === code);
+            
             if (!course) return acc;
-            const credits = calculateCreditsFromLTP(course.ltp, foundCourseOption);
+            const credits = calculateCreditsFromLTP(course.ltp, course.courseType || courseOption);
             return acc + credits;
         }, 0);
-    }, [uniqueCoursesFromSchedule, courseOption, timetableData]);
+    }, [uniqueCoursesFromSchedule, courseOption, allCoursesData]);
 
     const todaysClasses = useMemo(() => {
         if (!scheduleData || !today) return [];

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { DirectoryEntry, StudentDirectoryEntry } from '../types';
-import { fetchDirectory, fetchStudentDirectory } from '../services/api';
+import { useAppConfig } from '../contexts/AppConfigContext';
 import { Search, Mail, Phone, Users, GraduationCap, Building2, X, ChevronDown, ChevronUp } from 'lucide-react';
 
 const isValidIndianPhoneNumber = (phone: string): boolean => {
@@ -34,9 +34,13 @@ const isValidIndianPhoneNumber = (phone: string): boolean => {
 
 
 const Directory = () => {
-  const [facultyDirectory, setFacultyDirectory] =  useState<DirectoryEntry[]>([]);
-  const [studentDirectory, setStudentDirectory] = useState<StudentDirectoryEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { config, loading: configLoading } = useAppConfig();
+  
+  // Get directory data from config
+  const facultyDirectory = useMemo<DirectoryEntry[]>(() => config?.directory || [], [config?.directory]);
+  const studentDirectory = useMemo<StudentDirectoryEntry[]>(() => config?.students || [], [config?.students]);
+  const loading = configLoading;
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('faculty');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
@@ -58,23 +62,6 @@ const Directory = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
- useEffect(() => {
-        const loadDirectories = async () => {
-            try {
-                const [facultyData, studentData] = await Promise.all([
-                    fetchDirectory(),
-                    fetchStudentDirectory()
-                ]);
-                setFacultyDirectory(facultyData);
-                setStudentDirectory(studentData);
-            } catch (error) {
-                console.error("Failed to load directories", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadDirectories();
-    }, []);
 
 
 

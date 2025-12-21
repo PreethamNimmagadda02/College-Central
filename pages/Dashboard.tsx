@@ -20,7 +20,7 @@ import {
 } from '../utils/dateUtils';
 import { getGreeting, getRandomItem } from '../utils/helpers';
 import { TIME_INTERVALS, SEMESTER_DEFAULTS } from '../config/appConstants';
-import { MOTIVATIONAL_QUOTES } from '../config/quotes';
+import { useAppConfig } from '../contexts/AppConfigContext';
 import {
     InstructorIcon, LocationIcon, LibraryIcon,
     CalendarCheckIcon, HealthIcon, FeeIcon,
@@ -29,7 +29,6 @@ import {
     CodeIcon, ChatIcon, DocumentIcon, MusicIcon, ShoppingIcon,
     PhotoIcon, CalculatorIcon, GameIcon, BookmarkIcon, NewspaperIcon
 } from '../components/icons/SidebarIcons';
-import { defaultQuickLinks } from '../config/quickLinks';
 
 // Helper function to get emoji for calendar event type
 const getEventEmoji = (event: CalendarEvent): string => {
@@ -72,6 +71,103 @@ const getEventEmoji = (event: CalendarEvent): string => {
 
     // Default based on type
     return '📌';
+};
+
+// Interface for semester information
+interface SemesterInfo {
+    name: string;           // "Monsoon 2025" or "Winter 2025-26"
+    startDate: Date;
+    endDate: Date;
+    isActive: boolean;      // Whether we're currently in this semester
+}
+
+/**
+ * Intelligently detects the current/next semester from calendar events
+ * Uses "Start of Semester" and "End-Semester Exams" events to determine boundaries
+ */
+const getSemesterInfo = (events: CalendarEvent[], today: Date): SemesterInfo | null => {
+    if (!events || events.length === 0) return null;
+    
+    // Find all semester start events
+    const startEvents = events
+        .filter(e => e.type === 'Start of Semester')
+        .map(e => ({
+            date: new Date(e.date),
+            description: e.description
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
+    
+    // Find all end-semester exam events (use endDate if available, else date)
+    const endEvents = events
+        .filter(e => e.type === 'End-Semester Exams')
+        .map(e => ({
+            date: new Date(e.endDate || e.date),
+            description: e.description
+        }))
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
+    
+    if (startEvents.length === 0) return null;
+    
+    // Build semester periods by pairing each start with the next available end
+    const semesters: SemesterInfo[] = [];
+    
+    for (const start of startEvents) {
+        // Find the next end event after this start
+        const nextEnd = endEvents.find(e => e.date > start.date);
+        
+        if (nextEnd) {
+            // Determine semester name from description or month
+            const startMonth = start.date.getMonth();
+            const startYear = start.date.getFullYear();
+            
+            // Determine academic year based on semester type
+            // Monsoon (Jul-Dec): Academic year starts same year (2025-26 for Monsoon starting Jul 2025)
+            // Winter (Dec-May): Academic year started previous year (2025-26 for Winter starting Jan 2026)
+            
+            let academicYearStart: number;
+            let name: string;
+            const desc = start.description.toLowerCase();
+            const isMonsoon = desc.includes('monsoon') || (startMonth >= 6 && startMonth <= 11);
+            const isWinter = desc.includes('winter') || desc.includes('spring') || (startMonth >= 0 && startMonth <= 5);
+            
+            if (isMonsoon) {
+                // Monsoon: starts Jul-Dec, academic year is that year to next year
+                academicYearStart = startYear;
+            } else if (isWinter || startMonth === 11) {
+                // Winter: starts Dec-May, academic year uses previous year if Jan-May
+                academicYearStart = startMonth >= 0 && startMonth <= 5 ? startYear - 1 : startYear;
+            } else {
+                academicYearStart = startYear;
+            }
+            
+            const academicYear = `${academicYearStart}-${((academicYearStart + 1) % 100).toString().padStart(2, '0')}`;
+            
+            if (isMonsoon) {
+                name = `Monsoon Semester ${academicYear}`;
+            } else {
+                name = `Winter Semester ${academicYear}`;
+            }
+            
+            semesters.push({
+                name,
+                startDate: start.date,
+                endDate: nextEnd.date,
+                isActive: today >= start.date && today <= nextEnd.date
+            });
+        }
+    }
+    
+    // Find the active semester (current date falls within)
+    const activeSemester = semesters.find(s => s.isActive);
+    if (activeSemester) return activeSemester;
+    
+    // If no active semester, find the next upcoming one
+    const upcomingSemester = semesters.find(s => s.startDate > today);
+    if (upcomingSemester) return upcomingSemester;
+    
+    // If no upcoming, return the most recent one
+    const recentSemester = semesters[semesters.length - 1];
+    return recentSemester || null;
 };
 
 // Original 16-color palette with order-based assignment
@@ -227,9 +323,39 @@ const getIconForLink = (link: QuickLink): React.ReactNode => {
     return iconMap[link.id] || <WebsiteIcon />;
 };
 
+// Default city used as fallback when cities array is unexpectedly empty
+const DEFAULT_CITY: City = cities[0] ?? { name: 'Dhanbad', state: 'Jharkhand', lat: 23.79, lon: 86.43 };
+
 const Dashboard: React.FC = () => {
     // Performance monitoring
     usePageLoadTrace('dashboard');
+
+    const { config: appConfig } = useAppConfig();
+    
+    // Helper function to get default city from admin config
+    const getDefaultCityFromConfig = (): City => {
+        // Try to find city matching admin config location
+        if (appConfig?.collegeInfo?.location?.city) {
+            const adminCity = appConfig.collegeInfo.location.city.toLowerCase();
+            const adminState = appConfig.collegeInfo.location.state?.toLowerCase();
+            
+            // Try to find exact match with city and state
+            const exactMatch = cities.find(c => 
+                c.name.toLowerCase() === adminCity && 
+                (!adminState || c.state.toLowerCase() === adminState)
+            );
+            if (exactMatch) return exactMatch;
+            
+            // Try to find partial match with just city name
+            const partialMatch = cities.find(c => 
+                c.name.toLowerCase() === adminCity
+            );
+            if (partialMatch) return partialMatch;
+        }
+        
+        // Fallback to default city
+        return DEFAULT_CITY;
+    };
 
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const [weatherLoading, setWeatherLoading] = useState(true);
@@ -242,10 +368,11 @@ const Dashboard: React.FC = () => {
             try {
                 return JSON.parse(savedCity);
             } catch {
-                return cities[0]; // Default to Dhanbad
+                return DEFAULT_CITY; // Fallback to default if parsing fails
             }
         }
-        return cities[0]; // Default to Dhanbad
+        // No saved preference - will be updated with admin config city in useEffect
+        return DEFAULT_CITY;
     });
     const [citySearchOpen, setCitySearchOpen] = useState(false);
     const [citySearchQuery, setCitySearchQuery] = useState('');
@@ -254,6 +381,25 @@ const Dashboard: React.FC = () => {
     const { gradesData, loading: gradesLoading } = useGrades();
     const { scheduleData, loading: scheduleLoading } = useSchedule();
     const { calendarData, loading: calendarLoading, reminderPreferences, getEventKey, toggleReminderPreference, updateUserEvent } = useCalendar();
+
+    // Get quotes from config
+    const configQuotes = useMemo(() => {
+        if (appConfig?.quotes && appConfig.quotes.length > 0) {
+            return appConfig.quotes.map(q => ({ text: q.text, author: q.author }));
+        }
+        return [{ text: 'The only way to do great work is to love what you do.', author: 'Steve Jobs' }];
+    }, [appConfig?.quotes]);
+
+    // Update default city from admin config when config loads (only if user hasn't saved a preference)
+    useEffect(() => {
+        const savedCity = localStorage.getItem('selectedCity');
+        if (!savedCity && appConfig?.collegeInfo?.location?.city) {
+            const defaultCity = getDefaultCityFromConfig();
+            if (defaultCity && (defaultCity.name !== selectedCity.name || defaultCity.state !== selectedCity.state)) {
+                setSelectedCity(defaultCity);
+            }
+        }
+    }, [appConfig?.collegeInfo?.location?.city, appConfig?.collegeInfo?.location?.state]);
 
     const upcomingEventsCount = useMemo(() => {
         if (!calendarData) return 0;
@@ -328,24 +474,29 @@ const Dashboard: React.FC = () => {
         return () => clearInterval(intervalId);
     }, [selectedDate]);
 
-    // Load quick links from Firestore on mount (synced with user profile)
+    // Load quick links from admin config, with user's custom links merged on top
     useEffect(() => {
-        if (user?.quickLinks && user.quickLinks.length > 0) {
-            setQuickLinks(user.quickLinks);
-        } else {
-            // Initialize with default links if user has no custom links
-            setQuickLinks(defaultQuickLinks);
-        }
-    }, [user?.quickLinks]);
+        // Start with admin-configured links (source of truth for default links)
+        const adminLinks = appConfig?.quickLinks || [];
+        
+        // Get user's custom links only (links they personally added)
+        const userCustomLinks = (user?.quickLinks || []).filter(link => link.isCustom);
+        
+        // Merge: admin links first, then user's custom links
+        const mergedLinks = [...adminLinks, ...userCustomLinks];
+        setQuickLinks(mergedLinks);
+    }, [appConfig?.quickLinks, user?.quickLinks]);
 
-    // Save quick links to Firestore
+    // Save quick links to Firestore (only saves user's custom links)
     const saveQuickLinks = async (links: QuickLink[]) => {
         setQuickLinks(links);
 
-        // Update user profile in Firestore with new quick links
+        // Only save user's custom links to their profile
+        // Default links come from admin config
         if (user?.id) {
             try {
-                await updateUser({ quickLinks: links });
+                const customLinksOnly = links.filter(link => link.isCustom);
+                await updateUser({ quickLinks: customLinksOnly });
             } catch (error) {
                 console.error('Failed to save quick links:', error);
             }
@@ -392,9 +543,14 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    // Reset to default links
+    // Reset to default links (removes user's custom links, keeps only admin-configured)
     const handleResetToDefault = () => {
-        saveQuickLinks(defaultQuickLinks);
+        const adminLinks = appConfig?.quickLinks || [];
+        setQuickLinks(adminLinks);
+        // Clear user's custom links from their profile
+        if (user?.id) {
+            updateUser({ quickLinks: [] }).catch(console.error);
+        }
         setIsManagingLinks(false);
     };
 
@@ -1028,25 +1184,25 @@ const Dashboard: React.FC = () => {
     }, [selectedCity]);
 
     // Start with a random quote, then change every 30 seconds
-    const [motivationalQuote, setMotivationalQuote] = useState(() => getRandomItem(MOTIVATIONAL_QUOTES));
+    const [motivationalQuote, setMotivationalQuote] = useState(() => getRandomItem(configQuotes));
 
     useEffect(() => {
         const quoteInterval = setInterval(() => {
-            setMotivationalQuote(getRandomItem(MOTIVATIONAL_QUOTES));
+            setMotivationalQuote(getRandomItem(configQuotes));
         }, 30000); // 30 seconds
 
         return () => clearInterval(quoteInterval);
-    }, []);
+    }, [configQuotes]);
 
     const overallLoading = userLoading || gradesLoading || scheduleLoading || calendarLoading;
 
     const displayCgpa = gradesData?.cgpa;
 
-    const { now, currentTime, isSelectedDateToday } = useMemo(() => {
+    const { currentTime, isSelectedDateToday } = useMemo(() => {
         const now = new Date();
         const currentTime = formatTime(now);
         const isSelectedDateToday = checkIsToday(selectedDate);
-        return { now, currentTime, isSelectedDateToday };
+        return { currentTime, isSelectedDateToday };
     }, [selectedDate]);
 
     // Stable date reference for semester progress - only changes once per day
@@ -1072,27 +1228,47 @@ const Dashboard: React.FC = () => {
                upcomingClassIndex === -1;
     }, [isSelectedDateToday, scheduleInfo.classes.length, upcomingClassIndex]);
 
-    const { semesterProgress, currentWeek } = useMemo(() => {
+    const { semesterProgress, currentWeek, semesterName, semesterStartDate, semesterEndDate } = useMemo(() => {
         const year = stableNow.getFullYear();
         const defaultStartDate = new Date(year, SEMESTER_DEFAULTS.START_MONTH, SEMESTER_DEFAULTS.START_DAY);
         const defaultEndDate = new Date(year, SEMESTER_DEFAULTS.END_MONTH, SEMESTER_DEFAULTS.END_DAY);
 
-        const semesterStartDate = calendarData?.semesterStartDate
-            ? new Date(calendarData.semesterStartDate)
-            : defaultStartDate;
-        const semesterEndDate = calendarData?.semesterEndDate
-            ? new Date(calendarData.semesterEndDate)
-            : defaultEndDate;
-
-        if (semesterStartDate > semesterEndDate) {
-            return { semesterProgress: 0, currentWeek: 1 };
+        // Try to intelligently detect semester from calendar events
+        const detectedSemester = getSemesterInfo(calendarData?.events || [], stableNow);
+        
+        let startDate: Date;
+        let endDate: Date;
+        let name: string | null = null;
+        
+        if (detectedSemester) {
+            // Use detected semester dates
+            startDate = detectedSemester.startDate;
+            endDate = detectedSemester.endDate;
+            name = detectedSemester.name;
+        } else if (calendarData?.semesterStartDate && calendarData?.semesterEndDate) {
+            // Fall back to configured dates
+            startDate = new Date(calendarData.semesterStartDate);
+            endDate = new Date(calendarData.semesterEndDate);
+        } else {
+            // Fall back to defaults
+            startDate = defaultStartDate;
+            endDate = defaultEndDate;
         }
 
-        const progress = calculateDateProgress(semesterStartDate, semesterEndDate, stableNow);
-        const week = getWeekNumber(semesterStartDate, stableNow);
+        // Prioritize admin-configured semester name over auto-detected name
+        if (calendarData?.semesterName) {
+            name = calendarData.semesterName;
+        }
 
-        return { semesterProgress: progress, currentWeek: week };
-    }, [stableNow, calendarData?.semesterStartDate, calendarData?.semesterEndDate]);
+        if (startDate > endDate) {
+            return { semesterProgress: 0, currentWeek: 1, semesterName: null, semesterStartDate: defaultStartDate, semesterEndDate: defaultEndDate };
+        }
+
+        const progress = calculateDateProgress(startDate, endDate, stableNow);
+        const week = getWeekNumber(startDate, stableNow);
+
+        return { semesterProgress: progress, currentWeek: week, semesterName: name, semesterStartDate: startDate, semesterEndDate: endDate };
+    }, [stableNow, calendarData?.semesterStartDate, calendarData?.semesterEndDate, calendarData?.events, calendarData?.semesterName]);
 
     if (overallLoading || !user) {
         return (
@@ -1195,7 +1371,9 @@ const Dashboard: React.FC = () => {
                                         <span className="text-2xl">🎯</span>
                                     </div>
                                     <div>
-                                        <h3 className="text-slate-800 dark:text-white font-bold text-lg">Semester Progress</h3>
+                                        <h3 className="text-slate-800 dark:text-white font-bold text-lg">
+                                            {semesterName ? `${semesterName} Progress` : 'Semester Progress'}
+                                        </h3>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Week {currentWeek}</p>
                                     </div>
                                 </div>
@@ -1251,7 +1429,7 @@ const Dashboard: React.FC = () => {
                                     <div>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Days Passed</p>
                                         <p className="text-sm font-bold text-slate-800 dark:text-white">
-                                            {Math.floor((stableNow.getTime() - (calendarData?.semesterStartDate ? new Date(calendarData.semesterStartDate).getTime() : new Date(stableNow.getFullYear(), SEMESTER_DEFAULTS.START_MONTH, SEMESTER_DEFAULTS.START_DAY).getTime())) / (1000 * 60 * 60 * 24))}
+                                            {Math.max(0, Math.floor((stableNow.getTime() - semesterStartDate.getTime()) / (1000 * 60 * 60 * 24)))}
                                         </p>
                                     </div>
                                 </div>
@@ -1260,17 +1438,39 @@ const Dashboard: React.FC = () => {
                                     <div>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Days Left</p>
                                         <p className="text-sm font-bold text-slate-800 dark:text-white">
-                                            {Math.max(0, Math.ceil(((calendarData?.semesterEndDate ? new Date(calendarData.semesterEndDate).getTime() : new Date(stableNow.getFullYear(), SEMESTER_DEFAULTS.END_MONTH, SEMESTER_DEFAULTS.END_DAY).getTime()) - stableNow.getTime()) / (1000 * 60 * 60 * 24)))}
+                                            {Math.max(0, Math.ceil((semesterEndDate.getTime() - stableNow.getTime()) / (1000 * 60 * 60 * 24)))}
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            {calendarData ? null : (
+                            {/* Semester Dates */}
+                            <div className="grid grid-cols-2 gap-3 mt-3">
+                                <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
+                                    <div className="text-lg">🚀</div>
+                                    <div>
+                                        <p className="text-xs text-green-600 dark:text-green-400 font-medium">Starts</p>
+                                        <p className="text-sm font-bold text-green-700 dark:text-green-300">
+                                            {semesterStartDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
+                                    <div className="text-lg">🎓</div>
+                                    <div>
+                                        <p className="text-xs text-red-600 dark:text-red-400 font-medium">Ends</p>
+                                        <p className="text-sm font-bold text-red-700 dark:text-red-300">
+                                            {semesterEndDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {!semesterName && !calendarData ? (
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-4 text-center">
                                     Using default dates • <Link to="/academic-calendar" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">Upload your calendar</Link>
                                 </p>
-                            )}
+                            ) : null}
                         </div>
                     </div>
                 </div>
