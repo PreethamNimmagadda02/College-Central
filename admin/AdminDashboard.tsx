@@ -219,7 +219,7 @@ const AdminDashboard: React.FC = () => {
                     College Central
                   </span>
                   <span className="text-xs px-2 py-1 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-300 font-medium animate-pulse">
-                    IIT(ISM) Dhanbad
+                    {adminConfig.config.collegeInfo?.name?.short || 'Admin'}
                   </span>
                 </h1>
                 <p className="admin-header-subtitle text-sm mt-0.5">
