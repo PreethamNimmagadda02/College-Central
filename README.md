@@ -12,7 +12,7 @@
 
 **A Progressive Web Application for IIT(ISM) Dhanbad students to manage academics, navigate campus, and stay connected.**
 
-[Architecture](./ARCHITECTURE.md)
+[Architecture](./docs/ARCHITECTURE.md)
 
 </div>
 
@@ -39,6 +39,15 @@
 
 ### 👤 Profile & Personalization
 - Profile picture upload, personal/academic info, activity history, data export, dark mode, Google OAuth
+
+### 🔧 Admin Dashboard
+- **Role-based Access** - Admin emails configured in Firestore
+- **College Configuration** - Manage college info, branches, hostels
+- **Content Management** - Quick links, quotes, forms, academic calendar
+- **Directory Management** - Faculty and student directories with Excel import
+- **Course Catalog** - Manage courses with CBCS/NEP support
+- **User Analytics** - Track user engagement, demographics, activity
+- **Campus Map Editor** - Manage locations and routes
 
 ---
 
@@ -70,7 +79,7 @@ npm install
 # Create .env.local file
 echo "VITE_GEMINI_API_KEY=your_gemini_api_key_here" > .env.local
 
-# Update firebaseConfig.ts with your Firebase credentials
+# Update src/lib/firebase.ts with your Firebase credentials
 
 # Run development server
 npm run dev
@@ -88,6 +97,7 @@ npm run dev
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
 | `npm run lint` | Run ESLint |
+| `npm run add-admin` | Add admin user to Firestore |
 
 ---
 
@@ -96,8 +106,9 @@ npm run dev
 ### Firebase Setup
 1. Create project at [Firebase Console](https://console.firebase.google.com/)
 2. Enable: Authentication (Google), Firestore, Storage, Hosting, Cloud Functions
-3. Update `firebaseConfig.ts` with your credentials
+3. Update `src/lib/firebase.ts` with your credentials
 4. Configure Firestore security rules (see below)
+5. Add your email to `adminEmails` in Firestore `config/app` document
 
 **Firestore Security Rules:**
 ```javascript
@@ -119,7 +130,7 @@ service cloud.firestore {
 2. Add to `.env.local`: `VITE_GEMINI_API_KEY=your_api_key`
 
 ### Domain Restriction
-App restricted to `@iitism.ac.in` emails. Modify in `hooks/useAuth.tsx` if needed.
+App restricted to `@iitism.ac.in` emails. Modify in `src/features/auth/hooks/useAuth.tsx` if needed.
 
 ---
 
@@ -127,14 +138,28 @@ App restricted to `@iitism.ac.in` emails. Modify in `hooks/useAuth.tsx` if neede
 
 ```
 College Central/
-├── pages/          # Dashboard, Grades, Schedule, CampusMap, Calendar, Forms, Directory, Profile, Login
-├── components/     # ProtectedRoute, ErrorBoundary, UpdatePrompt, Header, Sidebar, Footer
-├── contexts/       # User, Grades, Schedule, Calendar, CampusMap, Forms contexts
-├── hooks/          # useAuth
-├── services/       # API, activityService
-├── utils/          # constants, performance, lazyWithRetry
-├── data/           # mockData
-└── functions/      # Firebase Cloud Functions
+├── src/                    # All source code
+│   ├── main.tsx            # Application entry point
+│   ├── App.tsx             # Root component, router & providers
+│   ├── components/         # Shared UI components
+│   │   ├── common/         # ErrorBoundary, ProtectedRoute, etc.
+│   │   ├── layout/         # Header, Sidebar, Footer
+│   │   └── icons/          # SVG icon components
+│   ├── features/           # Feature modules
+│   │   ├── admin/          # Admin dashboard (20+ components)
+│   │   └── auth/           # Authentication hooks
+│   ├── pages/              # Route-level page components
+│   ├── contexts/           # React Context providers
+│   ├── hooks/              # Shared custom hooks
+│   ├── services/           # API & external services
+│   ├── lib/                # Core utilities (firebase, utils/)
+│   ├── config/             # Static configuration data
+│   ├── data/               # Static data files
+│   └── types/              # Global TypeScript types
+├── docs/                   # ARCHITECTURE.md, guides
+├── public/                 # Static assets
+├── scripts/                # Build/deployment scripts
+└── functions/              # Firebase Cloud Functions
 ```
 
 ---
@@ -145,7 +170,9 @@ College Central/
 **Optimistic Updates** - UI updates immediately, syncs in background  
 **Activity Logging** - All user actions logged for audit trail  
 **PWA** - Install on any device, works offline, push notifications  
-**Security** - Google OAuth, domain restriction, Firestore security rules, user-scoped data
+**Security** - Google OAuth, domain restriction, Firestore security rules, user-scoped data  
+**Admin Panel** - Role-based configuration management with real-time sync  
+**Path Aliases** - Clean imports with `@components/`, `@features/`, `@lib/`, etc.
 
 ---
 
@@ -176,9 +203,5 @@ firebase deploy                  # Deploy
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/preethamnimmagadda)
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/PreethamNimmagadda02)
 [![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:preethamnimmagadda@gmail.com)
-
-**Made with ❤️ for IIT(ISM) Dhanbad Students**
-
-⭐ Star this repo if you find it helpful!
 
 </div>
