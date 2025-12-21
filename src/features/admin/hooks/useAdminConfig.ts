@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AdminConfig, AdminQuote, AdminQuickLink, AdminForm, AdminCalendarEvent, AdminDirectoryEntry, AdminCourse, AdminStudentEntry } from '@/types';
+import { AdminConfig, AdminQuote, AdminQuickLink, AdminForm, AdminCalendarEvent, AdminDirectoryEntry, AdminCourse, AdminStudentEntry } from '../types';
 import { updateConfig as updateFirestoreConfig, updateConfigSection, subscribeToConfig } from '@services/configService';
 import { generateDefaultConfig } from '@contexts/AppConfigContext';
 
@@ -450,10 +450,14 @@ export const useAdminConfig = () => {
     });
   }, [updateConfigAndSave]);
 
-  // Reset to defaults
+  // Reset to defaults (preserves adminEmails to prevent lockout)
   const resetToDefaults = useCallback(() => {
     const defaultConfig = generateDefaultConfig();
-    updateConfigAndSave(() => defaultConfig);
+    // Preserve adminEmails from current config to prevent accidental lockout
+    updateConfigAndSave((prev) => ({
+      ...defaultConfig,
+      adminEmails: prev.adminEmails, // Keep existing admin emails
+    }));
   }, [updateConfigAndSave]);
 
   // Mark as saved (for UI feedback)
