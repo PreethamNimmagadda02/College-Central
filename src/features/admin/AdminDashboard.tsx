@@ -109,7 +109,7 @@ const tabs: { id: AdminTab; path: string; label: string; icon: React.ReactNode }
   
   // People
   { id: 'directory', path: '/admin/directory', label: 'Faculty Directory', icon: <UsersIcon /> },
-  { id: 'students', path: '/admin/students', label: 'Students Directory', icon: <UserGroupIcon /> },
+  { id: 'students', path: '/admin/students', label: 'Student Directory', icon: <UserGroupIcon /> },
   
   // Campus
   { id: 'hostels', path: '/admin/hostels', label: 'Hostels', icon: <HomeIcon /> },
