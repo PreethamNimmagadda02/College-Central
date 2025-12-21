@@ -451,14 +451,33 @@ export const useAdminConfig = () => {
   }, [updateConfigAndSave]);
 
   // Reset to defaults (preserves adminEmails to prevent lockout)
-  const resetToDefaults = useCallback(() => {
-    const defaultConfig = generateDefaultConfig();
-    // Preserve adminEmails from current config to prevent accidental lockout
-    updateConfigAndSave((prev) => ({
-      ...defaultConfig,
-      adminEmails: prev.adminEmails, // Keep existing admin emails
-    }));
-  }, [updateConfigAndSave]);
+  // Fetches adminEmails directly from Firestore to ensure they're never lost
+  const resetToDefaults = useCallback(async () => {
+    try {
+      // Fetch current adminEmails directly from Firestore to ensure we don't lose them
+      const { db } = await import('@lib/firebase');
+      const adminEmailsDoc = await db.collection('appConfig').doc('adminEmails').get();
+      const currentAdminEmails = adminEmailsDoc.exists 
+        ? (adminEmailsDoc.data()?.items || []) 
+        : config.adminEmails || [];
+      
+      const defaultConfig = generateDefaultConfig();
+      
+      // Preserve adminEmails from Firestore
+      updateConfigAndSave(() => ({
+        ...defaultConfig,
+        adminEmails: currentAdminEmails,
+      }));
+    } catch (error) {
+      console.error('Error during reset:', error);
+      // Fallback: preserve from current state
+      const defaultConfig = generateDefaultConfig();
+      updateConfigAndSave((prev) => ({
+        ...defaultConfig,
+        adminEmails: prev.adminEmails || [],
+      }));
+    }
+  }, [config.adminEmails, updateConfigAndSave]);
 
   // Mark as saved (for UI feedback)
   const markAsSaved = useCallback(() => {
