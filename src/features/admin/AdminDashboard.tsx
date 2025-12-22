@@ -200,7 +200,7 @@ const AdminDashboard: React.FC = () => {
       <header className="admin-header">
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center gap-3 sm:gap-5">
-            {/* Mobile menu button */}
+            {/* Menu button - show on all screens */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="admin-btn admin-btn-secondary p-2"
@@ -272,7 +272,7 @@ const AdminDashboard: React.FC = () => {
 
       {/* Main Content Wrapper - grows to push footer down */}
       <div className="flex relative flex-1">
-        {/* Mobile sidebar backdrop */}
+        {/* Sidebar backdrop - show when sidebar is open */}
         {sidebarOpen && (
           <div 
             className="fixed inset-0 bg-black/50 z-40"
@@ -280,31 +280,32 @@ const AdminDashboard: React.FC = () => {
           />
         )}
 
-        {/* Sidebar */}
+        {/* Sidebar - toggleable on all screen sizes */}
         <aside className={`
-          admin-sidebar w-64 h-[calc(100vh-87px)]
-          fixed top-[87px] left-0 z-40
+          admin-sidebar w-64
+          fixed top-[64px] sm:top-[72px] lg:top-[76px] left-0 z-50
+          h-[calc(100vh-64px)] sm:h-[calc(100vh-72px)] lg:h-[calc(100vh-76px)]
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           overflow-y-auto
         `}>
           {/* Navigation Header */}
-          <div className="px-5 pt-6 pb-4 border-b border-blue-500/10">
+          <div className="px-4 sm:px-5 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-blue-500/10">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Navigation</h3>
           </div>
           
           {/* Navigation Tabs */}
-          <nav className="py-4 px-2">
+          <nav className="py-3 sm:py-4 px-2">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => { navigate(tab.path); setSidebarOpen(false); }}
-                className={`admin-tab text-left ${activeTab === tab.id ? 'active' : ''}`}
+                className={`admin-tab text-left text-sm sm:text-base ${activeTab === tab.id ? 'active' : ''}`}
               >
                 {tab.icon}
-                <span>{tab.label}</span>
+                <span className="truncate">{tab.label}</span>
                 {activeTab === tab.id && (
-                  <svg className="w-4 h-4 ml-auto opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 ml-auto opacity-70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 )}
@@ -314,12 +315,15 @@ const AdminDashboard: React.FC = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full lg:ml-0 min-h-[calc(100vh-87px-200px)]">
-          <div className="admin-fade-in pb-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full min-h-[calc(100vh-64px-200px)] sm:min-h-[calc(100vh-72px-200px)] lg:min-h-[calc(100vh-76px-200px)]">
+          <div className="admin-fade-in pb-16 sm:pb-20">
             {renderContent()}
           </div>
         </main>
       </div>
+
+      {/* Separator line before footer */}
+      <div className="border-t border-slate-700/50 mx-4 sm:mx-6 lg:mx-8"></div>
 
       {/* Footer - positioned properly at bottom */}
       <AdminFooter />

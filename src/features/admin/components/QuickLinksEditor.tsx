@@ -103,30 +103,30 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
         title="Quick Links" 
         subtitle="Default institutional links shown on the dashboard"
       >
-        <button onClick={() => setShowAddModal(true)} className="admin-btn admin-btn-primary">
+        <button onClick={() => setShowAddModal(true)} className="admin-btn admin-btn-primary text-xs sm:text-sm">
           <PlusIcon />
           Add Link
         </button>
       </AdminHeader>
 
       {/* Links Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {(config.quickLinks || []).map(link => (
           <div key={link.id} className="admin-card">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 flex items-center justify-center text-2xl">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">
                 {getIconEmoji(link.icon)}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-white font-medium truncate">{link.name}</h4>
+                <h4 className="text-white font-medium text-sm sm:text-base truncate">{link.name}</h4>
                 <a
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-indigo-400 text-sm hover:text-indigo-300 flex items-center gap-1 truncate"
+                  className="text-indigo-400 text-xs sm:text-sm hover:text-indigo-300 flex items-center gap-1 truncate"
                 >
                   <LinkIcon />
-                  {link.href}
+                  <span className="truncate">{link.href}</span>
                 </a>
                 <div className="flex items-center gap-2 mt-2">
                   <span className={`w-3 h-3 rounded-full ${COLOR_OPTIONS.find(c => c.value === link.color)?.class || 'bg-blue-500'}`}></span>
@@ -135,16 +135,16 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1 sm:gap-2 flex-shrink-0">
                 <button
                   onClick={() => setEditingLink({ ...link })}
-                  className="admin-btn admin-btn-secondary text-sm"
+                  className="admin-btn admin-btn-secondary text-xs sm:text-sm px-2 sm:px-3"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => deleteQuickLink(link.id)}
-                  className="admin-btn admin-btn-danger text-sm"
+                  className="admin-btn admin-btn-danger text-xs sm:text-sm px-2 sm:px-3"
                 >
                   <TrashIcon />
                 </button>
@@ -154,7 +154,7 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
         ))}
 
         {(config.quickLinks?.length || 0) === 0 && (
-          <div className="col-span-full text-center py-12 text-indigo-400 admin-card">
+          <div className="col-span-full text-center py-8 sm:py-12 text-indigo-400 text-sm sm:text-base admin-card">
             No quick links added. Click "Add Link" to create one.
           </div>
         )}

@@ -66,7 +66,7 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
         title="Motivational Quotes" 
         subtitle="Quotes displayed on the student dashboard"
       >
-        <button onClick={() => setShowAddModal(true)} className="admin-btn admin-btn-primary">
+        <button onClick={() => setShowAddModal(true)} className="admin-btn admin-btn-primary text-xs sm:text-sm">
           <PlusIcon />
           Add Quote
         </button>
@@ -88,41 +88,41 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="admin-stat-card">
-          <div className="admin-stat-value">{config.quotes?.length || 0}</div>
-          <div className="admin-stat-label">Total Quotes</div>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="admin-stat-card p-3 sm:p-6">
+          <div className="admin-stat-value text-xl sm:text-3xl">{config.quotes?.length || 0}</div>
+          <div className="admin-stat-label text-xs">Total Quotes</div>
         </div>
-        <div className="admin-stat-card">
-          <div className="admin-stat-value">
+        <div className="admin-stat-card p-3 sm:p-6">
+          <div className="admin-stat-value text-xl sm:text-3xl">
             {new Set((config.quotes || []).map(q => q.author)).size}
           </div>
-          <div className="admin-stat-label">Unique Authors</div>
+          <div className="admin-stat-label text-xs">Unique Authors</div>
         </div>
       </div>
 
       {/* Quotes List */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {filteredQuotes.map(quote => (
           <div key={quote.id} className="admin-card">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/30 to-orange-500/30 flex items-center justify-center text-amber-400">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-500/30 to-orange-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
                 <QuoteIcon />
               </div>
-              <div className="flex-1">
-                <p className="text-white text-lg italic">"{quote.text}"</p>
-                <p className="text-indigo-400 mt-2">— {quote.author}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm sm:text-lg italic break-words">"{quote.text}"</p>
+                <p className="text-indigo-400 text-xs sm:text-base mt-2">— {quote.author}</p>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex sm:flex-col gap-2 mt-2 sm:mt-0">
                 <button
                   onClick={() => setEditingQuote({ ...quote })}
-                  className="admin-btn admin-btn-secondary text-sm"
+                  className="admin-btn admin-btn-secondary text-xs sm:text-sm flex-1 sm:flex-none justify-center"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => deleteQuote(quote.id)}
-                  className="admin-btn admin-btn-danger text-sm"
+                  className="admin-btn admin-btn-danger text-xs sm:text-sm flex-1 sm:flex-none justify-center"
                 >
                   <TrashIcon />
                 </button>
@@ -132,7 +132,7 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
         ))}
 
         {filteredQuotes.length === 0 && (
-          <div className="text-center py-12 text-indigo-400 admin-card">
+          <div className="text-center py-8 sm:py-12 text-indigo-400 text-sm sm:text-base admin-card">
             {searchQuery ? 'No quotes match your search' : 'No quotes added. Click "Add Quote" to create one.'}
           </div>
         )}

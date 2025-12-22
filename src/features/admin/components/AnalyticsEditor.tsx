@@ -419,72 +419,73 @@ const AnalyticsEditor: React.FC = () => {
         title="User Analytics" 
         subtitle={lastUpdated ? `Last updated: ${lastUpdated.toLocaleTimeString()}` : ''}
       >
-        <button onClick={fetchAnalytics} className="admin-btn admin-btn-secondary">
-          <RefreshIcon /> Refresh
+        <button onClick={fetchAnalytics} className="admin-btn admin-btn-secondary text-xs sm:text-sm">
+          <RefreshIcon />
+          <span className="hidden xs:inline">Refresh</span>
         </button>
       </AdminHeader>
 
       {/* Key Metrics - Row 1 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="admin-stat-card">
-          <div className="flex items-center justify-center gap-3 mb-2 text-blue-400">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="admin-stat-card p-3 sm:p-6">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 text-blue-400">
             <UsersIcon />
           </div>
-          <div className="admin-stat-value">{stats.totalUsers}</div>
-          <div className="admin-stat-label">Total Users</div>
+          <div className="admin-stat-value text-xl sm:text-3xl">{stats.totalUsers}</div>
+          <div className="admin-stat-label text-xs">Total Users</div>
         </div>
-        <div className="admin-stat-card">
+        <div className="admin-stat-card p-3 sm:p-6">
           <div className="flex items-center justify-center gap-2 mb-2 text-emerald-400">
             <TrendUpIcon />
           </div>
-          <div className="admin-stat-value text-emerald-400">+{stats.newUsersThisWeek}</div>
-          <div className="admin-stat-label">This Week</div>
+          <div className="admin-stat-value text-xl sm:text-3xl text-emerald-400">+{stats.newUsersThisWeek}</div>
+          <div className="admin-stat-label text-xs">This Week</div>
         </div>
-        <div className="admin-stat-card">
+        <div className="admin-stat-card p-3 sm:p-6">
           <div className="flex items-center justify-center gap-2 mb-2 text-cyan-400">
             <CalendarIcon />
           </div>
-          <div className="admin-stat-value text-cyan-400">+{stats.newUsersThisMonth}</div>
-          <div className="admin-stat-label">This Month</div>
+          <div className="admin-stat-value text-xl sm:text-3xl text-cyan-400">+{stats.newUsersThisMonth}</div>
+          <div className="admin-stat-label text-xs">This Month</div>
         </div>
-        <div className="admin-stat-card">
+        <div className="admin-stat-card p-3 sm:p-6">
           <div className="flex items-center justify-center gap-2 mb-2 text-purple-400">
             <UserCheckIcon />
           </div>
-          <div className="admin-stat-value text-purple-400">{stats.profileCompletionRate}%</div>
-          <div className="admin-stat-label">Profile Completion</div>
+          <div className="admin-stat-value text-xl sm:text-3xl text-purple-400">{stats.profileCompletionRate}%</div>
+          <div className="admin-stat-label text-xs">Profile Completion</div>
         </div>
       </div>
 
       {/* Engagement Metrics - Row 2 (Clickable) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="admin-card p-4 text-center cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all" onClick={filterByProfilePhoto}>
-          <div className="text-3xl font-bold text-purple-400">{stats.usersWithPhoto}</div>
-          <div className="text-sm text-indigo-400 mt-1">Profile Photo</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="admin-card p-3 sm:p-4 text-center cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all" onClick={filterByProfilePhoto}>
+          <div className="text-xl sm:text-3xl font-bold text-purple-400">{stats.usersWithPhoto}</div>
+          <div className="text-xs sm:text-sm text-indigo-400 mt-1">Profile Photo</div>
           <div className="text-xs text-indigo-500">{stats.totalUsers > 0 ? Math.round((stats.usersWithPhoto / stats.totalUsers) * 100) : 0}%</div>
         </div>
-        <div className="admin-card p-4 text-center cursor-pointer hover:ring-2 hover:ring-pink-500/50 transition-all" onClick={filterByBio}>
-          <div className="text-3xl font-bold text-pink-400">{stats.usersWithBio}</div>
-          <div className="text-sm text-indigo-400 mt-1">Bio Written</div>
+        <div className="admin-card p-3 sm:p-4 text-center cursor-pointer hover:ring-2 hover:ring-pink-500/50 transition-all" onClick={filterByBio}>
+          <div className="text-xl sm:text-3xl font-bold text-pink-400">{stats.usersWithBio}</div>
+          <div className="text-xs sm:text-sm text-indigo-400 mt-1">Bio Written</div>
           <div className="text-xs text-indigo-500">{stats.totalUsers > 0 ? Math.round((stats.usersWithBio / stats.totalUsers) * 100) : 0}%</div>
         </div>
-        <div className="admin-card p-4 text-center cursor-pointer hover:ring-2 hover:ring-cyan-500/50 transition-all" onClick={filterByGradesheets}>
-          <div className="text-3xl font-bold text-cyan-400">{stats.gradesheetsUploaded}</div>
-          <div className="text-sm text-indigo-400 mt-1">Gradesheets Uploaded</div>
+        <div className="admin-card p-3 sm:p-4 text-center cursor-pointer hover:ring-2 hover:ring-cyan-500/50 transition-all" onClick={filterByGradesheets}>
+          <div className="text-xl sm:text-3xl font-bold text-cyan-400">{stats.gradesheetsUploaded}</div>
+          <div className="text-xs sm:text-sm text-indigo-400 mt-1">Gradesheets</div>
           <div className="text-xs text-indigo-500">{stats.totalUsers > 0 ? Math.round((stats.gradesheetsUploaded / stats.totalUsers) * 100) : 0}%</div>
         </div>
-        <div className="admin-card p-4 text-center cursor-pointer hover:ring-2 hover:ring-emerald-500/50 transition-all" onClick={filterBySocialLinks}>
-          <div className="text-3xl font-bold text-emerald-400">{stats.usersWithSocialLinks}</div>
-          <div className="text-sm text-indigo-400 mt-1">Social Links</div>
+        <div className="admin-card p-3 sm:p-4 text-center cursor-pointer hover:ring-2 hover:ring-emerald-500/50 transition-all" onClick={filterBySocialLinks}>
+          <div className="text-xl sm:text-3xl font-bold text-emerald-400">{stats.usersWithSocialLinks}</div>
+          <div className="text-xs sm:text-sm text-indigo-400 mt-1">Social Links</div>
           <div className="text-xs text-indigo-500">{stats.totalUsers > 0 ? Math.round((stats.usersWithSocialLinks / stats.totalUsers) * 100) : 0}%</div>
         </div>
       </div>
 
       {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Branch Distribution */}
         <div className="admin-card">
-          <h3 className="text-lg font-semibold text-white mb-4">Users by Branch</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Users by Branch</h3>
           {stats.branchDistribution.length > 0 ? (
             <div style={{ width: '100%', height: 280 }}>
               <ResponsiveContainer width="100%" height="100%" debounce={50}>
@@ -532,7 +533,7 @@ const AnalyticsEditor: React.FC = () => {
 
         {/* Year Distribution */}
         <div className="admin-card">
-          <h3 className="text-lg font-semibold text-white mb-4">Users by Admission Year</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Users by Admission Year</h3>
           {stats.yearDistribution.length > 0 ? (
             <div style={{ width: '100%', height: 280 }}>
               <ResponsiveContainer width="100%" height="100%" debounce={50}>
@@ -570,10 +571,10 @@ const AnalyticsEditor: React.FC = () => {
       </div>
 
       {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* CBCS vs NEP Distribution */}
         <div className="admin-card">
-          <h3 className="text-lg font-semibold text-white mb-4">Course Option Distribution</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Course Option Distribution</h3>
           {stats.courseOptionDistribution.length > 0 ? (
             <div style={{ width: '100%', height: 280 }}>
               <ResponsiveContainer width="100%" height="100%" debounce={50}>
@@ -617,7 +618,7 @@ const AnalyticsEditor: React.FC = () => {
 
         {/* Hostel Distribution */}
         <div className="admin-card">
-          <h3 className="text-lg font-semibold text-white mb-4">Users by Hostel</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Users by Hostel</h3>
           {stats.branchDistribution.length > 0 ? (
             <div style={{ width: '100%', height: 280 }}>
               <ResponsiveContainer width="100%" height="100%" debounce={50}>
@@ -674,7 +675,7 @@ const AnalyticsEditor: React.FC = () => {
       <div className="admin-card">
         <div className="flex flex-col gap-4 mb-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-white">All Users</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-white">All Users</h3>
           </div>
           
           {/* Search and Filters */}
@@ -760,7 +761,7 @@ const AnalyticsEditor: React.FC = () => {
           
           return filteredUsers.length > 0 ? (
             <>
-              <div className="text-sm text-indigo-400 mb-3">
+              <div className="text-xs sm:text-sm text-indigo-400 mb-3">
                 Showing {((currentPage - 1) * usersPerPage) + 1}-{Math.min(currentPage * usersPerPage, filteredUsers.length)} of {filteredUsers.length} users
                 {(searchQuery || branchFilter !== 'all' || yearFilter !== 'all') && (
                   <button onClick={() => { setSearchQuery(''); setBranchFilter('all'); setYearFilter('all'); }} className="ml-2 text-blue-400 hover:text-blue-300">
@@ -770,16 +771,16 @@ const AnalyticsEditor: React.FC = () => {
               </div>
               <div className="space-y-3">
                 {paginatedUsers.map((user, index) => (
-                  <div key={user.id} className="admin-list-item flex items-center gap-4">
+                  <div key={user.id} className="admin-list-item flex items-center gap-3 sm:gap-4">
                     <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold shrink-0"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold shrink-0 text-sm sm:text-base"
                       style={{ backgroundColor: CHART_COLORS[(index + (currentPage - 1) * usersPerPage) % CHART_COLORS.length] }}
                     >
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium truncate">{user.name}</p>
-                      <p className="text-indigo-400 text-sm truncate">{user.email}</p>
+                      <p className="text-white font-medium truncate text-sm sm:text-base">{user.name}</p>
+                      <p className="text-indigo-400 text-xs sm:text-sm truncate">{user.email}</p>
                     </div>
                     <div className="text-right hidden sm:block">
                       <p className="text-indigo-300 text-sm">{user.branch}</p>
@@ -787,10 +788,10 @@ const AnalyticsEditor: React.FC = () => {
                     </div>
                     <button
                       onClick={() => setUserToDelete(user)}
-                      className="p-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors"
+                      className="p-1.5 sm:p-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors"
                       title="Remove user"
                     >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
@@ -798,15 +799,15 @@ const AnalyticsEditor: React.FC = () => {
                 ))}
               </div>
               {/* Pagination Controls */}
-              <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-700">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-6 pt-4 border-t border-slate-700">
                 <button 
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="admin-btn admin-btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="admin-btn admin-btn-secondary text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
                 >
                   ← Previous
                 </button>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum;
                     if (totalPages <= 5) {
@@ -822,7 +823,7 @@ const AnalyticsEditor: React.FC = () => {
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                           currentPage === pageNum 
                             ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
                             : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600'
@@ -836,7 +837,7 @@ const AnalyticsEditor: React.FC = () => {
                 <button 
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage >= totalPages}
-                  className="admin-btn admin-btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="admin-btn admin-btn-secondary text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
                 >
                   Next →
                 </button>

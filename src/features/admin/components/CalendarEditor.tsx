@@ -166,12 +166,12 @@ const CalendarEditor: React.FC<Props> = ({
         title="Academic Calendar" 
         subtitle="Manage semester dates and calendar events"
       >
-        <div className="flex gap-3">
-          <button onClick={() => setShowUploader(true)} className="admin-btn admin-btn-secondary">
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          <button onClick={() => setShowUploader(true)} className="admin-btn admin-btn-secondary text-xs sm:text-sm">
             <UploadIcon />
-            Upload Calendar
+            <span className="hidden xs:inline">Upload</span> Calendar
           </button>
-          <button onClick={() => setShowAddModal(true)} className="admin-btn admin-btn-primary">
+          <button onClick={() => setShowAddModal(true)} className="admin-btn admin-btn-primary text-xs sm:text-sm">
             <PlusIcon />
             Add Event
           </button>
@@ -180,9 +180,9 @@ const CalendarEditor: React.FC<Props> = ({
 
       {/* Ongoing Semester Name */}
       <div className="admin-card">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">Ongoing Semester</h3>
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+        <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 mb-4">
+          <h3 className="text-base sm:text-lg font-semibold text-white">Ongoing Semester</h3>
+          <span className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
             Displayed in Dashboard
           </span>
         </div>
@@ -265,9 +265,9 @@ const CalendarEditor: React.FC<Props> = ({
         
         return (
           <div className="admin-card">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Academic Year Dates</h3>
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
+            <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 mb-4">
+              <h3 className="text-base sm:text-lg font-semibold text-white">Academic Year Dates</h3>
+              <span className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
                 Auto-detected
               </span>
             </div>
@@ -300,20 +300,20 @@ const CalendarEditor: React.FC<Props> = ({
       })()}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 xs:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4">
         {EVENT_TYPES.map(type => (
-          <div key={type} className="admin-stat-card">
-            <div className="admin-stat-value">
+          <div key={type} className="admin-stat-card p-3 sm:p-6">
+            <div className="admin-stat-value text-xl sm:text-3xl">
               {config.calendar.events.filter(e => e.type === type).length}
             </div>
-            <div className="admin-stat-label text-xs">{type}</div>
+            <div className="admin-stat-label text-xs leading-tight">{type}</div>
           </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4">
-        <div className="admin-search flex-1 min-w-[200px]">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="admin-search flex-1">
           <svg className="admin-search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -327,7 +327,7 @@ const CalendarEditor: React.FC<Props> = ({
           />
         </div>
         <select
-          className="admin-select w-auto"
+          className="admin-select w-full sm:w-auto"
           value={filterType}
           onChange={e => setFilterType(e.target.value as AdminCalendarEvent['type'] | 'all')}
         >
@@ -341,28 +341,37 @@ const CalendarEditor: React.FC<Props> = ({
       {/* Events List */}
       <div className="space-y-3">
         {filteredEvents.map(event => (
-          <div key={event.id} className="admin-list-item flex items-center gap-4">
-            <div className={`w-3 h-3 rounded-full ${EVENT_TYPE_COLORS[event.type]}`} />
-            <div className="w-32 text-indigo-400 text-sm">
-              {formatDate(event.date)}
-              {event.endDate && event.endDate !== event.date && (
-                <> - {formatDate(event.endDate)}</>
-              )}
+          <div key={event.id} className="admin-list-item flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            {/* Top row on mobile: color dot, date, and type */}
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+              <div className={`w-3 h-3 rounded-full flex-shrink-0 ${EVENT_TYPE_COLORS[event.type]}`} />
+              <div className="text-indigo-400 text-xs sm:text-sm sm:w-32 flex-shrink-0">
+                {formatDate(event.date)}
+                {event.endDate && event.endDate !== event.date && (
+                  <span className="block sm:inline"> - {formatDate(event.endDate)}</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0 hidden sm:block">
+                <p className="text-white text-sm sm:text-base break-words">{event.description}</p>
+                <span className="text-indigo-400 text-xs">{event.type}</span>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-white">{event.description}</p>
+            {/* Description on mobile - separate row */}
+            <div className="flex-1 min-w-0 sm:hidden pl-6">
+              <p className="text-white text-sm break-words">{event.description}</p>
               <span className="text-indigo-400 text-xs">{event.type}</span>
             </div>
-            <div className="flex gap-2">
+            {/* Action buttons */}
+            <div className="flex gap-2 ml-auto sm:ml-0 flex-shrink-0">
               <button
                 onClick={() => setEditingEvent({ ...event })}
-                className="admin-btn admin-btn-secondary text-sm"
+                className="admin-btn admin-btn-secondary text-xs sm:text-sm"
               >
                 Edit
               </button>
               <button
                 onClick={() => deleteCalendarEvent(event.id)}
-                className="admin-btn admin-btn-danger text-sm"
+                className="admin-btn admin-btn-danger text-xs sm:text-sm"
               >
                 <TrashIcon />
               </button>
@@ -385,7 +394,7 @@ const CalendarEditor: React.FC<Props> = ({
           <div className="admin-modal" onClick={e => e.stopPropagation()}>
             <h3 className="admin-modal-title">Add Calendar Event</h3>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
                 <div>
                   <label className="admin-label">Start Date</label>
                   <input
@@ -445,7 +454,7 @@ const CalendarEditor: React.FC<Props> = ({
           <div className="admin-modal" onClick={e => e.stopPropagation()}>
             <h3 className="admin-modal-title">Edit Calendar Event</h3>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
                 <div>
                   <label className="admin-label">Start Date</label>
                   <input

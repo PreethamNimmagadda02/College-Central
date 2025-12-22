@@ -1,7 +1,10 @@
 // Admin-specific types for the dev-only admin dashboard
 // These types mirror the config structures but are used for editing
 
-import { CampusLocation, QuickRoute } from '@/types';
+import { CampusLocation, CampusLocationCategory, QuickRoute } from '@/types';
+
+// Re-export campus map types for use in components
+export type { CampusLocation, CampusLocationCategory, QuickRoute };
 
 export interface AdminCollegeInfo {
   name: {

@@ -95,7 +95,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
             setNewForm({ ...newForm, category: activeCategory });
             setShowAddModal(true);
           }} 
-          className="admin-btn admin-btn-primary"
+          className="admin-btn admin-btn-primary text-xs sm:text-sm"
         >
           <PlusIcon />
           Add Form
@@ -103,12 +103,12 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
       </AdminHeader>
 
       {/* Category Tabs */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2 sm:gap-3">
         {CATEGORIES.map(cat => (
           <button
             key={cat.value}
             onClick={() => setActiveCategory(cat.value as AdminForm['category'])}
-            className={`px-4 py-2 rounded-xl font-medium transition-all ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium transition-all ${
               activeCategory === cat.value
                 ? `bg-gradient-to-r ${cat.color} text-white shadow-lg`
                 : 'bg-slate-800/50 text-indigo-300 hover:bg-slate-700/50'
@@ -134,8 +134,8 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
         />
       </div>
 
-      {/* Forms Table */}
-      <div className="admin-card overflow-hidden p-0">
+      {/* Forms Table - Desktop */}
+      <div className="admin-card overflow-hidden p-0 hidden md:block">
         <table className="admin-table">
           <thead>
             <tr>
@@ -184,6 +184,52 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
 
         {filteredForms.length === 0 && (
           <div className="text-center py-12 text-indigo-400">
+            {searchQuery ? 'No forms match your search' : 'No forms in this category yet'}
+          </div>
+        )}
+      </div>
+
+      {/* Forms Cards - Mobile */}
+      <div className="space-y-3 md:hidden">
+        {filteredForms.map(form => (
+          <div key={form.id} className="admin-card">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex-1 min-w-0">
+                <span className="admin-badge admin-badge-info text-xs">{form.formNumber}</span>
+                <h4 className="text-white font-medium text-sm mt-2 break-words">{form.title}</h4>
+                {form.submitTo && (
+                  <p className="text-indigo-400 text-xs mt-1">Submit to: {form.submitTo}</p>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <a
+                href={form.downloadLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="admin-btn admin-btn-secondary text-xs flex-1 justify-center"
+              >
+                <DownloadIcon />
+                Download
+              </a>
+              <button
+                onClick={() => setEditingForm({ ...form })}
+                className="admin-btn admin-btn-secondary text-xs px-3"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => deleteForm(form.id)}
+                className="admin-btn admin-btn-danger text-xs px-3"
+              >
+                <TrashIcon />
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {filteredForms.length === 0 && (
+          <div className="text-center py-8 text-indigo-400 text-sm admin-card">
             {searchQuery ? 'No forms match your search' : 'No forms in this category yet'}
           </div>
         )}

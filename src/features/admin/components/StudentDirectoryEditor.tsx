@@ -106,7 +106,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
         title="Student Directory" 
         subtitle="Manage student records and information"
       >
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 sm:gap-3">
           {/* Delete Filtered - only show when filters are active */}
           {(searchTerm || branchFilter !== 'All' || yearFilter !== 'All') && filteredStudents.length > 0 && (
             <button
@@ -115,10 +115,10 @@ const StudentDirectoryEditor: React.FC<Props> = ({
                   deleteStudentsByIds(filteredStudents.map(s => s.id));
                 }
               }}
-              className="admin-btn bg-red-600 hover:bg-red-700 text-white"
+              className="admin-btn bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-4"
             >
-              <Trash2 className="w-4 h-4" />
-              Delete {filteredStudents.length} Filtered
+              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+              Delete {filteredStudents.length}
             </button>
           )}
           {/* Clear All Students */}
@@ -129,24 +129,24 @@ const StudentDirectoryEditor: React.FC<Props> = ({
                   clearAllStudents();
                 }
               }}
-              className="admin-btn bg-red-900 hover:bg-red-800 text-white border border-red-700"
+              className="admin-btn bg-red-900 hover:bg-red-800 text-white border border-red-700 text-xs sm:text-sm px-3 sm:px-4"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
               Clear All ({config.students.length.toLocaleString()})
             </button>
           )}
           <button
             onClick={() => setShowUploader(true)}
-            className="admin-btn admin-btn-secondary"
+            className="admin-btn admin-btn-secondary text-xs sm:text-sm px-3 sm:px-4"
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
             Upload Excel
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="admin-btn admin-btn-primary"
+            className="admin-btn admin-btn-primary text-xs sm:text-sm px-3 sm:px-4"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
             Add Student
           </button>
         </div>
@@ -156,8 +156,8 @@ const StudentDirectoryEditor: React.FC<Props> = ({
 
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4">
-        <div className="admin-search flex-1 min-w-[200px]">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="admin-search flex-1">
           <Search className="admin-search-icon w-5 h-5" />
           <input
             type="text"
@@ -168,30 +168,32 @@ const StudentDirectoryEditor: React.FC<Props> = ({
             style={{ paddingLeft: '48px' }}
           />
         </div>
-        <select
-          value={branchFilter}
-          onChange={(e) => { setBranchFilter(e.target.value); setCurrentPage(1); }}
-          className="admin-select w-auto min-w-[180px] max-w-[250px]"
-        >
-          <option value="All">All Branches</option>
-          {branches.map(branch => (
-            <option key={branch} value={branch}>{branch}</option>
-          ))}
-        </select>
-        <select
-          value={yearFilter}
-          onChange={(e) => { setYearFilter(e.target.value); setCurrentPage(1); }}
-          className="admin-select w-auto min-w-[120px]"
-        >
-          <option value="All">All Years</option>
-          {years.map(year => (
-            <option key={year} value={year}>{year}</option>
-          ))}
-        </select>
+        <div className="flex gap-2 sm:gap-4">
+          <select
+            value={branchFilter}
+            onChange={(e) => { setBranchFilter(e.target.value); setCurrentPage(1); }}
+            className="admin-select flex-1 sm:flex-none sm:w-auto sm:min-w-[150px]"
+          >
+            <option value="All">All Branches</option>
+            {branches.map(branch => (
+              <option key={branch} value={branch}>{branch}</option>
+            ))}
+          </select>
+          <select
+            value={yearFilter}
+            onChange={(e) => { setYearFilter(e.target.value); setCurrentPage(1); }}
+            className="admin-select w-[100px] sm:w-auto sm:min-w-[100px]"
+          >
+            <option value="All">All Years</option>
+            {years.map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Student Table */}
-      <div className="admin-card p-0 overflow-hidden">
+      {/* Student Table - Desktop */}
+      <div className="admin-card p-0 overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="admin-table">
             <thead>
@@ -232,7 +234,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination - Desktop */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-blue-500/10">
             <div className="text-sm text-slate-400">
@@ -274,6 +276,68 @@ const StudentDirectoryEditor: React.FC<Props> = ({
           </div>
         )}
       </div>
+
+      {/* Student Cards - Mobile */}
+      <div className="space-y-3 md:hidden">
+        {paginatedStudents.map(student => (
+          <div key={student.id} className="admin-card p-4">
+            {/* Header with admission number and actions */}
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="flex-1 min-w-0">
+                <span className="font-mono text-cyan-400 text-sm">{student.admNo}</span>
+                <span className="text-slate-500 text-xs ml-2">({getYear(student.admNo)})</span>
+              </div>
+              <div className="flex gap-1 flex-shrink-0">
+                <button
+                  onClick={() => { setEditingStudent(student); setShowAddModal(true); }}
+                  className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => deleteStudent(student.id)}
+                  className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Name */}
+            <h4 className="font-medium text-white text-sm mb-2 break-words">{student.name}</h4>
+            
+            {/* Branch */}
+            <p className="text-slate-400 text-xs truncate">{student.branch}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination - Mobile */}
+      {totalPages > 1 && (
+        <div className="admin-card md:hidden">
+          <div className="flex flex-col gap-3">
+            <div className="text-xs text-slate-400 text-center">
+              Page {currentPage} of {totalPages} ({filteredStudents.length.toLocaleString()} students)
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40 flex-1 justify-center"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40 flex-1 justify-center"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
       {showAddModal && (

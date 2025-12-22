@@ -161,7 +161,7 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
         <div className="flex bg-slate-800/50 rounded-lg p-1 border border-blue-500/20">
           <button
             onClick={() => { setActiveTab('locations'); resetForm(); }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
               activeTab === 'locations'
                 ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
                 : 'text-slate-400 hover:text-white'
@@ -171,20 +171,20 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
           </button>
           <button
             onClick={() => { setActiveTab('routes'); resetForm(); }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
               activeTab === 'routes'
                 ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Quick Routes
+            Routes
           </button>
         </div>
       </AdminHeader>
 
       {/* Search and Add */}
-      <div className="flex justify-between items-center admin-card">
-        <div className="admin-search flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 admin-card">
+        <div className="admin-search flex-1">
           <Search className="admin-search-icon" size={20} />
           <input
             type="text"
@@ -197,9 +197,9 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
         </div>
         <button
           onClick={() => setIsAdding(true)}
-          className="ml-4 admin-btn admin-btn-primary"
+          className="admin-btn admin-btn-primary w-full sm:w-auto justify-center text-xs sm:text-sm"
         >
-          <Plus size={20} />
+          <Plus size={18} />
           Add {activeTab === 'locations' ? 'Location' : 'Route'}
         </button>
       </div>
@@ -390,14 +390,14 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
 
       {/* Locations Grid */}
       {activeTab === 'locations' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filteredLocations.map((location) => (
             <div key={location.id} className="admin-card hover:border-blue-500/40 transition-all">
               <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl" role="img" aria-label="icon">{location.icon}</span>
-                  <div>
-                    <h3 className="font-semibold text-white">{location.name}</h3>
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  <span className="text-xl sm:text-2xl flex-shrink-0" role="img" aria-label="icon">{location.icon}</span>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-white text-sm sm:text-base truncate">{location.name}</h3>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       location.category === 'academic' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
                       location.category === 'residential' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
@@ -409,74 +409,74 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
                     </span>
                   </div>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-shrink-0">
                   <button 
                     onClick={() => handleEditLocation(location)} 
-                    className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
+                    className="p-1.5 sm:p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
                   >
-                    <Edit2 size={16} />
+                    <Edit2 size={14} className="sm:w-4 sm:h-4" />
                   </button>
                   <button 
                     onClick={() => handleDeleteLocation(location.id)} 
-                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                    className="p-1.5 sm:p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={14} className="sm:w-4 sm:h-4" />
                   </button>
                 </div>
               </div>
-              <p className="text-sm text-slate-400 line-clamp-2 mb-3">{location.description}</p>
+              <p className="text-xs sm:text-sm text-slate-400 line-clamp-2 mb-3">{location.description}</p>
               <div className="flex items-center gap-1 text-xs text-slate-500">
                 <MapPin size={12} />
-                <span>{location.coordinates.lat.toFixed(6)}, {location.coordinates.lng.toFixed(6)}</span>
+                <span className="truncate">{location.coordinates.lat.toFixed(4)}, {location.coordinates.lng.toFixed(4)}</span>
               </div>
             </div>
           ))}
           {filteredLocations.length === 0 && (
-            <div className="col-span-full text-center py-12 text-slate-500">No locations found.</div>
+            <div className="col-span-full text-center py-8 sm:py-12 text-slate-500 text-sm sm:text-base">No locations found.</div>
           )}
         </div>
       ) : (
         /* Routes List */
         <div className="space-y-3">
           {filteredRoutes.map((route) => (
-            <div key={route.id} className="admin-card flex justify-between items-center hover:border-blue-500/40 transition-all">
-              <div className="flex items-center gap-4">
-                <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-3 rounded-xl text-blue-400 border border-blue-500/20">
-                  <Navigation size={20} />
+            <div key={route.id} className="admin-card flex flex-col sm:flex-row justify-between sm:items-center gap-3 hover:border-blue-500/40 transition-all">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-2 sm:p-3 rounded-xl text-blue-400 border border-blue-500/20 flex-shrink-0">
+                  <Navigation size={18} className="sm:w-5 sm:h-5" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-white">{route.from}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="font-semibold text-white text-sm sm:text-base">{route.from}</span>
                     <span className="text-blue-400">→</span>
-                    <span className="font-semibold text-white">{route.to}</span>
+                    <span className="font-semibold text-white text-sm sm:text-base">{route.to}</span>
                   </div>
-                  <div className="flex gap-4 text-sm text-slate-400">
+                  <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-slate-400">
                     <span>{route.time}</span>
-                    <span className="text-slate-600">•</span>
+                    <span className="text-slate-600 hidden sm:inline">•</span>
                     <span>{route.distance}</span>
-                    <span className="text-slate-600">•</span>
+                    <span className="text-slate-600 hidden sm:inline">•</span>
                     <span>{route.steps?.length || 0} steps</span>
                   </div>
                 </div>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1 self-end sm:self-center flex-shrink-0">
                 <button 
                   onClick={() => handleEditRoute(route)} 
                   className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
                 >
-                  <Edit2 size={18} />
+                  <Edit2 size={16} />
                 </button>
                 <button 
                   onClick={() => handleDeleteRoute(route.id)} 
                   className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                 >
-                  <Trash2 size={18} />
+                  <Trash2 size={16} />
                 </button>
               </div>
             </div>
           ))}
           {filteredRoutes.length === 0 && (
-            <div className="text-center py-12 text-slate-500">No routes found.</div>
+            <div className="text-center py-8 sm:py-12 text-slate-500 text-sm sm:text-base">No routes found.</div>
           )}
         </div>
       )}
