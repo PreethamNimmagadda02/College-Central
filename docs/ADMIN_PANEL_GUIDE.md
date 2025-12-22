@@ -2,7 +2,7 @@
 
 ## Administrator Panel User Guide
 
-**Version:** 1.0  
+**Version:** 2.0  
 **Last Updated:** December 2024
 
 ---
