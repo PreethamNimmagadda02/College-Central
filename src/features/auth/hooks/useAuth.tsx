@@ -86,6 +86,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Verify the email domain after authentication
       const email = userCredential.user?.email;
+      if (!ALLOWED_EMAIL_DOMAIN) {
+        await auth.signOut();
+        throw new Error('CONFIGURATION_ERROR: Email domain restriction not configured.');
+      }
       if (!email || !email.endsWith(ALLOWED_EMAIL_DOMAIN)) {
         // Sign out the user immediately
         await auth.signOut();

@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "add-admin": "ts-node scripts/addAdmin.ts"
+    "add-admin": "ts-node scripts/addAdmin.ts",
+    "deploy:college": "./scripts/deploy-college.sh",
+    "deploy:iitism": "./scripts/deploy-college.sh iitism"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

@@ -33,6 +33,7 @@ export const DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 // Firebase Storage Paths
 export const PROFILE_PICTURES_PATH = 'profile_pictures';
 
-// Domain Restrictions
-export const ALLOWED_EMAIL_DOMAIN = '@iitism.ac.in';
-export const HOSTED_DOMAIN = 'iitism.ac.in';
+// Domain Restrictions - Configurable per tenant via environment variables
+// Falls back to IIT(ISM) Dhanbad for backward compatibility
+export const ALLOWED_EMAIL_DOMAIN = import.meta.env.VITE_ALLOWED_EMAIL_DOMAIN;
+export const HOSTED_DOMAIN = import.meta.env.VITE_HOSTED_DOMAIN;
