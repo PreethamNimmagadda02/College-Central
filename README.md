@@ -194,7 +194,7 @@ firebase deploy                  # Deploy
 
 ---
 
-## 👨‍💻 Developer
+## 👨‍💻 Founder
 
 <div align="center">
 
