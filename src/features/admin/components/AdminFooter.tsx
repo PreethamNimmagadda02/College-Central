@@ -122,7 +122,7 @@ const AdminFooter: React.FC = () => {
                   </svg>
                 </Link>
                 <a
-                  href="https://drive.google.com/file/d/1H_SNmUZUR2T9BjzDRjDG5oT4U00rjCtk/view?usp=sharing"
+                  href="https://drive.google.com/file/d/165efBK3Z0QPOoj7mpry-SzAoFZo-uHED/view?usp=sharing"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative p-2 sm:p-3 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-all duration-300 hover:scale-110 hover:shadow-xl hover:shadow-green-500/50 overflow-hidden"
