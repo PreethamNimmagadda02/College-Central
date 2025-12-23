@@ -293,10 +293,6 @@ const AdminDashboard: React.FC = () => {
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           overflow-y-auto
         `}>
-          {/* Navigation Header */}
-          <div className="px-4 sm:px-5 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-blue-500/10">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Navigation</h3>
-          </div>
           
           {/* Navigation Tabs */}
           <nav className="py-3 sm:py-4 px-2">

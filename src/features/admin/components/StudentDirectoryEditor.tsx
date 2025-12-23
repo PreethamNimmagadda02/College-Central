@@ -156,8 +156,9 @@ const StudentDirectoryEditor: React.FC<Props> = ({
 
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <div className="admin-search flex-1">
+      <div className="flex flex-col gap-3">
+        {/* Search Bar - Always full width */}
+        <div className="admin-search w-full">
           <Search className="admin-search-icon w-5 h-5" />
           <input
             type="text"
@@ -168,25 +169,31 @@ const StudentDirectoryEditor: React.FC<Props> = ({
             style={{ paddingLeft: '48px' }}
           />
         </div>
-        <div className="flex gap-2 sm:gap-4">
-          <select
-            value={branchFilter}
-            onChange={(e) => { setBranchFilter(e.target.value); setCurrentPage(1); }}
-            className="admin-select flex-1 sm:flex-none sm:w-auto sm:min-w-[150px]"
-          >
-            <option value="All">All Branches</option>
-            {branches.map(branch => (
-              <option key={branch} value={branch}>{branch}</option>
-            ))}
-          </select>
+        
+        {/* Filter Dropdowns - Stack on mobile, row on larger */}
+        <div className="flex flex-col xs:flex-row gap-2 sm:gap-3">
           <select
             value={yearFilter}
             onChange={(e) => { setYearFilter(e.target.value); setCurrentPage(1); }}
-            className="admin-select w-[100px] sm:w-auto sm:min-w-[100px]"
+            className="admin-select w-full xs:flex-1 sm:w-auto sm:min-w-[180px]"
           >
             <option value="All">All Years</option>
             {years.map(year => (
-              <option key={year} value={year}>{year}</option>
+              <option key={year} value={year}>
+                {year} ({config.students.filter(s => getYear(s.admNo) === year).length})
+              </option>
+            ))}
+          </select>
+          <select
+            value={branchFilter}
+            onChange={(e) => { setBranchFilter(e.target.value); setCurrentPage(1); }}
+            className="admin-select w-full xs:w-[140px] sm:w-auto sm:min-w-[140px]"
+          >
+            <option value="All">All Branches ({config.students.length})</option>
+            {branches.map(branch => (
+              <option key={branch} value={branch}>
+                {branch} ({config.students.filter(s => s.branch === branch).length})
+              </option>
             ))}
           </select>
         </div>

@@ -59,6 +59,7 @@ const LinkIcon = () => (
 const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLink, deleteQuickLink }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingLink, setEditingLink] = useState<AdminQuickLink | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const defaultColor = COLOR_OPTIONS[0]?.value ?? 'text-blue-600 dark:text-blue-400';
   const [newLink, setNewLink] = useState({
     name: '',
@@ -96,6 +97,12 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
     return ICON_OPTIONS.find(opt => opt.value === iconValue)?.label.split(' ')[0] || '🌐';
   };
 
+  // Filter links based on search query
+  const filteredLinks = (config.quickLinks || []).filter(link =>
+    link.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    link.href.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-8">
       <AdminHeader 
@@ -109,9 +116,24 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
         </button>
       </AdminHeader>
 
+      {/* Search */}
+      <div className="admin-search">
+        <svg className="admin-search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          className="admin-input"
+          style={{ paddingLeft: '48px' }}
+          placeholder="Search links..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       {/* Links Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {(config.quickLinks || []).map(link => (
+        {filteredLinks.map(link => (
           <div key={link.id} className="admin-card">
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">
@@ -153,9 +175,9 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
           </div>
         ))}
 
-        {(config.quickLinks?.length || 0) === 0 && (
+        {filteredLinks.length === 0 && (
           <div className="col-span-full text-center py-8 sm:py-12 text-indigo-400 text-sm sm:text-base admin-card">
-            No quick links added. Click "Add Link" to create one.
+            {searchQuery ? 'No links match your search' : 'No quick links added. Click "Add Link" to create one.'}
           </div>
         )}
       </div>
