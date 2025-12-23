@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AdminConfig, AdminQuote, AdminQuickLink, AdminForm, AdminCalendarEvent, AdminDirectoryEntry, AdminCourse, AdminStudentEntry } from '../types';
+import { AdminConfig, AdminQuote, AdminQuickLink, AdminForm, AdminCalendarEvent, AdminDirectoryEntry, AdminCourse, AdminStudentEntry, AdminGradeDefinition } from '../types';
 import { updateConfig as updateFirestoreConfig, updateConfigSection, subscribeToConfig } from '@services/configService';
 import { generateDefaultConfig } from '@contexts/AppConfigContext';
 
@@ -450,6 +450,36 @@ export const useAdminConfig = () => {
     });
   }, [updateConfigAndSave]);
 
+  // Grading Scale CRUD operations
+  const addGrade = useCallback((grade: Omit<AdminGradeDefinition, 'id'>) => {
+    updateConfigAndSave(prev => ({
+      ...prev,
+      gradingScale: [...(prev.gradingScale || []), { ...grade, id: `grade-${Date.now()}` }],
+    }));
+  }, [updateConfigAndSave]);
+
+  const updateGrade = useCallback((id: string, grade: Partial<AdminGradeDefinition>) => {
+    updateConfigAndSave(prev => ({
+      ...prev,
+      gradingScale: (prev.gradingScale || []).map(g => g.id === id ? { ...g, ...grade } : g),
+    }));
+  }, [updateConfigAndSave]);
+
+  const deleteGrade = useCallback((id: string) => {
+    updateConfigAndSave(prev => ({
+      ...prev,
+      gradingScale: (prev.gradingScale || []).filter(g => g.id !== id),
+    }));
+  }, [updateConfigAndSave]);
+
+  const reorderGrades = useCallback((gradingScale: AdminGradeDefinition[]) => {
+    updateConfigAndSave(prev => ({ ...prev, gradingScale }));
+  }, [updateConfigAndSave]);
+
+  const updateGradingScale = useCallback((gradingScale: AdminGradeDefinition[]) => {
+    updateConfigAndSave(prev => ({ ...prev, gradingScale }));
+  }, [updateConfigAndSave]);
+
   // Reset to defaults (preserves adminEmails to prevent lockout)
   // Fetches adminEmails directly from Firestore to ensure they're never lost
   const resetToDefaults = useCallback(async () => {
@@ -542,6 +572,12 @@ export const useAdminConfig = () => {
     deleteStudentsByIds,
     clearAllStudents,
     importStudents,
+    // Grading Scale
+    addGrade,
+    updateGrade,
+    deleteGrade,
+    reorderGrades,
+    updateGradingScale,
     // Utility
     // Utility
     resetToDefaults,

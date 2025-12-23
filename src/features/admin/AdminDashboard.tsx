@@ -18,6 +18,7 @@ import StudentDirectoryEditor from './components/StudentDirectoryEditor';
 import CampusMapEditor from './components/CampusMapEditor';
 import AnalyticsEditor from './components/AnalyticsEditor';
 import SupportEditor from './components/SupportEditor';
+import GradingEditor from './components/GradingEditor';
 import AdminFooter from './components/AdminFooter';
 
 // Icons
@@ -105,6 +106,7 @@ const tabs: { id: AdminTab; path: string; label: string; icon: React.ReactNode }
   // Academic
   { id: 'branches', path: '/admin/branches', label: 'Branches', icon: <AcademicCapIcon /> },
   { id: 'courses', path: '/admin/courses', label: 'Courses', icon: <BookOpenIcon /> },
+  { id: 'grading', path: '/admin/grading', label: 'Grading Scale', icon: <ChartBarIcon /> },
   { id: 'calendar', path: '/admin/calendar', label: 'Calendar', icon: <CalendarIcon /> },
   
   // People
@@ -187,6 +189,8 @@ const AdminDashboard: React.FC = () => {
         return <CampusMapEditor {...adminConfig} />;
       case 'analytics':
         return <AnalyticsEditor />;
+      case 'grading':
+        return <GradingEditor {...adminConfig} />;
       case 'support':
         return <SupportEditor />;
       default:

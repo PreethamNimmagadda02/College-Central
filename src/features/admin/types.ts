@@ -110,6 +110,14 @@ export interface AdminStudentEntry {
   branch: string;
 }
 
+export interface AdminGradeDefinition {
+  id: string;
+  grade: string;        // e.g., 'A+', 'A', 'B+', etc.
+  points: number;       // e.g., 10, 9, 8, etc.
+  minPercentage?: number; // Optional: minimum percentage for this grade
+  color: string;        // Tailwind color class for display
+}
+
 export interface AdminConfig {
   collegeInfo: AdminCollegeInfo;
   adminEmails: string[];  // List of admin email addresses
@@ -125,6 +133,7 @@ export interface AdminConfig {
   students: AdminStudentEntry[];
   campusMap: CampusLocation[];
   quickRoutes: QuickRoute[];
+  gradingScale: AdminGradeDefinition[];
 }
 
 export type AdminTab = 
@@ -139,6 +148,7 @@ export type AdminTab =
   | 'courses'
   | 'students'
   | 'campus-map'
+  | 'grading'
   | 'analytics'
   | 'support'
   | 'export';

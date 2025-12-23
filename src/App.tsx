@@ -83,6 +83,7 @@ const router = createHashRouter([
       { path: 'courses', element: null },
       { path: 'students', element: null },
       { path: 'campus-map', element: null },
+      { path: 'grading', element: null },
       { path: 'analytics', element: null },
       { path: 'support', element: null },
     ],

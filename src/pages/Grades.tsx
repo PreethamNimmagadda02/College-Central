@@ -4,6 +4,7 @@ import { useGrades, GradesData } from '@contexts/GradesContext';
 import { useSchedule } from '@contexts/ScheduleContext';
 import { useUser } from '@contexts/UserContext';
 import { useAppConfig } from '@contexts/AppConfigContext';
+import { useGradingScale } from '@hooks/useGradingScale';
 import { Grade, Semester } from '@/types';
 import { calculateCreditsFromLTP } from '@lib/utils/creditCalculator';
 import {
@@ -131,22 +132,8 @@ const ProgressRing: React.FC<{
     );
 };
 
-const gradeOptions = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'];
-const gradePoints: { [key: string]: number } = { 'A+': 10, 'A': 9, 'B+': 8, 'B': 7, 'C+': 6, 'C': 5, 'D': 4, 'F': 0 };
-
-const getGradeColor = (grade: string) => {
-    switch(grade) {
-        case 'A+': return 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400';
-        case 'A': return 'text-emerald-800 bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-200';
-        case 'B+': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400';
-        case 'B': return 'text-sky-700 bg-sky-200 dark:bg-sky-900/40 dark:text-sky-300';
-        case 'C+': return 'text-amber-700 bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300';
-        case 'C': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400';
-        case 'D': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400';
-        case 'F': return 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400';
-        default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/30 dark:text-gray-400';
-    }
-};
+// Legacy hardcoded values moved to useGradingScale hook for configurability
+// These are now fetched from app config via useGradingScale()
 
 const getCGPAStatus = (cgpa: number) => {
     if (cgpa >= 9) return { text: 'Outstanding', color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/20' };
@@ -162,6 +149,7 @@ const CGPAForecaster: React.FC = () => {
     const { user } = useUser();
     const courseOption = user?.courseOption || 'CBCS';
     const { config } = useAppConfig();
+    const { gradeOptions, gradePoints, getGradeColor } = useGradingScale();
 
     const timetableData = useMemo(() => {
         const courses = config?.courses || [];
@@ -465,6 +453,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
     const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'distribution' | 'insights'>('overview');
     const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
+    const { gradePoints, getGradeColor } = useGradingScale();
 
     // Helper function to get latest grade for each course (handles retakes)
     const getLatestGrades = useMemo(() => {
@@ -2268,6 +2257,7 @@ const Grades: React.FC = () => {
 
     const { user } = useUser();
     const courseOption = user?.courseOption || 'CBCS';
+    const { getGradeColor } = useGradingScale();
 
     const [showForecaster, setShowForecaster] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);

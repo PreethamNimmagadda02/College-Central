@@ -21,6 +21,7 @@ const CONFIG_DOCS = {
   students: 'students',
   campusMap: 'campusMap',
   quickRoutes: 'quickRoutes',
+  gradingScale: 'gradingScale',
 } as const;
 
 // Config sections that are arrays and need to be wrapped in { items: [...] }
@@ -36,6 +37,7 @@ const ARRAY_CONFIG_KEYS = [
   'students',
   'campusMap',
   'quickRoutes',
+  'gradingScale',
 ] as const;
 
 /**
