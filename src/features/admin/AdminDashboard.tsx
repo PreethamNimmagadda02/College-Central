@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAdminConfig } from './hooks/useAdminConfig';
+import { useAuth } from '../auth/hooks/useAuth';
 import { AdminTab } from './types';
 import './styles.css';
 
@@ -141,6 +142,7 @@ const AdminDashboard: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [showResetModal, setShowResetModal] = React.useState(false);
   const adminConfig = useAdminConfig();
+  const { logout } = useAuth();
 
   // Derive active tab from URL
   const activeTab = getActiveTabFromPath(location.pathname);
@@ -297,22 +299,37 @@ const AdminDashboard: React.FC = () => {
         `}>
           
           {/* Navigation Tabs */}
-          <nav className="py-3 sm:py-4 px-2">
-            {tabs.map(tab => (
+          <nav className="py-3 sm:py-4 px-2 flex flex-col h-full">
+            <div className="flex-1">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => { navigate(tab.path); setSidebarOpen(false); }}
+                  className={`admin-tab text-left text-sm sm:text-base ${activeTab === tab.id ? 'active' : ''}`}
+                >
+                  {tab.icon}
+                  <span className="truncate">{tab.label}</span>
+                  {activeTab === tab.id && (
+                    <svg className="w-4 h-4 ml-auto opacity-70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            {/* Logout Button */}
+            <div className="border-t border-slate-700/50 pt-3 mt-3">
               <button
-                key={tab.id}
-                onClick={() => { navigate(tab.path); setSidebarOpen(false); }}
-                className={`admin-tab text-left text-sm sm:text-base ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => { logout(); setSidebarOpen(false); }}
+                className="admin-tab text-left text-sm sm:text-base w-full text-red-400 hover:bg-red-500/10 hover:text-red-300"
               >
-                {tab.icon}
-                <span className="truncate">{tab.label}</span>
-                {activeTab === tab.id && (
-                  <svg className="w-4 h-4 ml-auto opacity-70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                )}
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>Logout</span>
               </button>
-            ))}
+            </div>
           </nav>
         </aside>
 
