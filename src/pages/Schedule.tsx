@@ -1012,7 +1012,7 @@ const Schedule: React.FC = () => {
     }
     
     return (
-        <div className="max-w-full mx-auto space-y-6 p-4 sm:p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
                 <div>

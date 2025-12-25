@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { DirectoryEntry, StudentDirectoryEntry } from '@/types';
 import { useAppConfig } from '@contexts/AppConfigContext';
-import { Search, Mail, Phone, Users, GraduationCap, Building2, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Mail, Phone, GraduationCap, Building2, X, ChevronDown, ChevronUp } from 'lucide-react';
 
 const isValidIndianPhoneNumber = (phone: string): boolean => {
   if (!phone || typeof phone !== 'string' || !/\d/.test(phone)) {
@@ -192,25 +192,21 @@ const Directory = () => {
     studentDirectory.length;
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-primary to-primary-dark dark:from-dark-card dark:to-dark-background rounded-2xl shadow-xl p-6 text-white">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white/20 rounded-lg">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold">Campus Directory</h1>
-                <p className="text-white/80 mt-1">Find faculty, staff, and students</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-white/90 bg-white/20 px-3 py-1.5 rounded-full">
-                {activeCount} of {totalCount} entries
-              </span>
-            </div>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Campus Directory
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-1">
+              Find faculty, staff, and students
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm bg-primary/10 dark:bg-secondary/20 text-primary dark:text-secondary px-3 py-1.5 rounded-full font-medium">
+              {activeCount} of {totalCount} entries
+            </span>
           </div>
         </div>
 
@@ -574,7 +570,6 @@ const Directory = () => {
           )}
         </div>
       </div>
-    </div>
   );
 };
 

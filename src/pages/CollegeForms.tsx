@@ -154,13 +154,17 @@ const CollegeForms: React.FC = () => {
     }
 
     return (
-        <div className="space-y-8">
-            {/* Header with gradient */}
-            <div className="relative bg-gradient-to-r from-primary to-secondary p-8 rounded-xl shadow-lg text-white">
-                <h1 className="text-4xl font-bold mb-2">College Forms</h1>
-                <p className="text-blue-100">
-                    Find and download important academic and administrative forms
-                </p>
+        <div className="max-w-7xl mx-auto space-y-8">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                <div>
+                    <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                        College Forms
+                    </h1>
+                    <p className="text-slate-600 dark:text-slate-400 mt-1">
+                        Find and download important academic and administrative forms
+                    </p>
+                </div>
             </div>
 
             {/* Quick Stats */}
