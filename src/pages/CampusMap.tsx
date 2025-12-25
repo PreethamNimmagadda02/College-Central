@@ -109,7 +109,7 @@ const CampusMap: React.FC = () => {
   }
 
   return (
-    <div className="max-w-full mx-auto space-y-6 p-4 lg:p-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
