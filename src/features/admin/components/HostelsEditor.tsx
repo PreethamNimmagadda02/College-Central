@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AdminConfig } from '../types';
 import { AdminHeader, HomeIcon } from './AdminIcons';
+import AdminPageLayout from './AdminPageLayout';
 
 interface Props {
   config: AdminConfig;
@@ -52,7 +53,7 @@ const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, delet
   };
 
   return (
-    <div className="space-y-8">
+    <AdminPageLayout>
       <AdminHeader 
         icon={<HomeIcon />} 
         title="Hostels" 
@@ -141,7 +142,7 @@ const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, delet
           )}
         </div>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 };
 

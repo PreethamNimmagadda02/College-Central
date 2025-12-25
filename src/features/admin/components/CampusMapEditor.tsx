@@ -4,6 +4,7 @@ import { CampusLocation, CampusLocationCategory, QuickRoute } from '../types';
 import { useAdminConfig } from '@features/admin/hooks/useAdminConfig';
 import { Search, Plus, Trash2, MapPin, Edit2, X, Save, Navigation } from 'lucide-react';
 import { AdminHeader, MapPinIcon } from './AdminIcons';
+import AdminPageLayout from './AdminPageLayout';
 
 interface Props {
   config: AdminConfig;
@@ -151,7 +152,7 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <AdminPageLayout>
       {/* Header */}
       <AdminHeader 
         icon={<MapPinIcon />} 
@@ -480,7 +481,7 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
           )}
         </div>
       )}
-    </div>
+    </AdminPageLayout>
   );
 };
 

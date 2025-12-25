@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AdminConfig, AdminQuote } from '../types';
 import { AdminHeader, SparklesIcon } from './AdminIcons';
+import AdminPageLayout from './AdminPageLayout';
 
 interface Props {
   config: AdminConfig;
@@ -60,7 +61,7 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
   );
 
   return (
-    <div className="space-y-8">
+    <AdminPageLayout>
       <AdminHeader 
         icon={<SparklesIcon />} 
         title="Motivational Quotes" 
@@ -211,7 +212,7 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
           </div>
         </div>
       )}
-    </div>
+    </AdminPageLayout>
   );
 };
 

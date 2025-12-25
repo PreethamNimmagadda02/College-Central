@@ -3,6 +3,7 @@ import { MessageSquare, Send, Loader2, CheckCircle, AlertCircle, HelpCircle, Bug
 import { useAuth } from '@features/auth/hooks/useAuth';
 import emailjs from '@emailjs/browser';
 import { AdminHeader, SupportIcon } from './AdminIcons';
+import AdminPageLayout from './AdminPageLayout';
 
 // Types
 interface FormState {
@@ -318,7 +319,7 @@ const SupportEditor: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <AdminPageLayout>
       {/* Header */}
       <AdminHeader 
         icon={<SupportIcon />} 
@@ -486,7 +487,7 @@ const SupportEditor: React.FC = () => {
           </a>
         </p>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 };
 

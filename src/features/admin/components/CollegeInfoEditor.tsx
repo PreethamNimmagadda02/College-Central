@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AdminConfig } from '../types';
 import { uploadHeroImage, deleteHeroImage, isValidImageFile, isValidFileSize, MAX_HERO_IMAGE_SIZE } from '@services/storageService';
 import { AdminHeader, BuildingIcon } from './AdminIcons';
+import AdminPageLayout from './AdminPageLayout';
 
 interface Props {
   config: AdminConfig;
@@ -62,7 +63,7 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
   const appConstants = isEditing ? localAppConstants : config.appConstants;
 
   return (
-    <div className="space-y-6">
+    <AdminPageLayout>
       {/* Header with Edit/Save/Cancel buttons */}
       <AdminHeader 
         icon={<BuildingIcon />} 
@@ -498,7 +499,7 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
           <span className="text-sm text-blue-100">Remember to save your changes</span>
         </div>
       )}
-    </div>
+    </AdminPageLayout>
   );
 };
 

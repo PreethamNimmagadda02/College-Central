@@ -3,6 +3,7 @@ import { AdminConfig, AdminDirectoryEntry } from '../types';
 import { Plus, Search, Trash2, Edit2, Phone, Mail, Building, Upload } from 'lucide-react';
 import DirectoryUploader from './DirectoryUploader';
 import { AdminHeader, UsersIcon } from './AdminIcons';
+import AdminPageLayout from './AdminPageLayout';
 
 interface Props {
   config: AdminConfig;
@@ -91,7 +92,7 @@ const DirectoryEditor: React.FC<Props> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <AdminPageLayout>
       {/* Header */}
       <AdminHeader 
         icon={<UsersIcon />} 
@@ -533,7 +534,7 @@ const DirectoryEditor: React.FC<Props> = ({
           existingDepartments={departments}
         />
       )}
-    </div>
+    </AdminPageLayout>
   );
 };
 

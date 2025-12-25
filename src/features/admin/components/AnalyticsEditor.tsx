@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '@lib/firebase';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { AdminHeader, ChartBarIcon } from './AdminIcons';
+import AdminPageLayout from './AdminPageLayout';
 
 interface UserData {
   id: string;
@@ -412,7 +413,7 @@ const AnalyticsEditor: React.FC = () => {
   if (!stats) return null;
 
   return (
-    <div className="space-y-8">
+    <AdminPageLayout>
       {/* Header */}
       <AdminHeader 
         icon={<ChartBarIcon />} 
@@ -938,7 +939,7 @@ const AnalyticsEditor: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </AdminPageLayout>
   );
 };
 

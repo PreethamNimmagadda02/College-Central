@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AdminConfig, AdminForm } from '../types';
 import { AdminHeader, DocumentIcon } from './AdminIcons';
+import AdminPageLayout from './AdminPageLayout';
 
 interface Props {
   config: AdminConfig;
@@ -84,7 +85,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
     (config.forms || []).filter(f => f.category === cat).length;
 
   return (
-    <div className="space-y-8">
+    <AdminPageLayout>
       <AdminHeader 
         icon={<DocumentIcon />} 
         title="Academic Forms" 
@@ -372,7 +373,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
           </div>
         </div>
       )}
-    </div>
+    </AdminPageLayout>
   );
 };
 

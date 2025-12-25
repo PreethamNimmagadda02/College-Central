@@ -3,6 +3,7 @@ import { AdminConfig, AdminStudentEntry } from '../types';
 import { Plus, Search, Upload, Trash2, Edit, X } from 'lucide-react';
 import StudentUploader from './StudentUploader';
 import { AdminHeader, UserGroupIcon } from './AdminIcons';
+import AdminPageLayout from './AdminPageLayout';
 
 interface Props {
   config: AdminConfig;
@@ -99,7 +100,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <AdminPageLayout>
       {/* Header */}
       <AdminHeader 
         icon={<UserGroupIcon />} 
@@ -417,7 +418,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
           existingBranches={branches}
         />
       )}
-    </div>
+    </AdminPageLayout>
   );
 };
 

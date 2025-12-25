@@ -3,6 +3,7 @@ import { AdminConfig, AdminCourse } from '../types';
 import { Plus, Search, Upload, Trash2, Edit, X, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import CourseUploader from './CourseUploader';
 import { AdminHeader, BookOpenIcon } from './AdminIcons';
+import AdminPageLayout from './AdminPageLayout';
 
 interface Props {
   config: AdminConfig;
@@ -107,7 +108,7 @@ const CoursesEditor: React.FC<Props> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <AdminPageLayout>
       {/* Header */}
       <AdminHeader 
         icon={<BookOpenIcon />} 
@@ -599,7 +600,7 @@ const CoursesEditor: React.FC<Props> = ({
           onClose={() => setShowUploader(false)}
         />
       )}
-    </div>
+    </AdminPageLayout>
   );
 };
 
