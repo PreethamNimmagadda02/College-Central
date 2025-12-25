@@ -100,39 +100,44 @@ const ChartBarIcon = () => (
 
 
 
-const tabs: { id: AdminTab; path: string; label: string; icon: React.ReactNode }[] = [
-  // Institution Settings
-  { id: 'college-info', path: '/admin/college-info', label: 'College Info', icon: <BuildingIcon /> },
-  
-  // Academic
-  { id: 'branches', path: '/admin/branches', label: 'Branches', icon: <AcademicCapIcon /> },
-  { id: 'courses', path: '/admin/courses', label: 'Courses', icon: <BookOpenIcon /> },
-  { id: 'grading', path: '/admin/grading', label: 'Grading Scale', icon: <ChartBarIcon /> },
-  { id: 'calendar', path: '/admin/calendar', label: 'Calendar', icon: <CalendarIcon /> },
-  
-  // People
-  { id: 'directory', path: '/admin/directory', label: 'Faculty Directory', icon: <UsersIcon /> },
-  { id: 'students', path: '/admin/students', label: 'Student Directory', icon: <UserGroupIcon /> },
-  
-  // Campus
-  { id: 'hostels', path: '/admin/hostels', label: 'Hostels', icon: <HomeIcon /> },
-  { id: 'campus-map', path: '/admin/campus-map', label: 'Campus Map', icon: <MapPinIcon /> },
-  
-  // Content
-  { id: 'quick-links', path: '/admin/quick-links', label: 'Quick Links', icon: <LinkIcon /> },
-  { id: 'forms', path: '/admin/forms', label: 'Forms', icon: <DocumentIcon /> },
-  { id: 'quotes', path: '/admin/quotes', label: 'Quotes', icon: <SparklesIcon /> },
-  
-  // Monitoring
-  { id: 'analytics', path: '/admin/analytics', label: 'Analytics', icon: <ChartBarIcon /> },
-];
+// Categorized menu sections
+const menuSections = {
+  institution: [
+    { id: 'college-info' as AdminTab, path: '/admin/college-info', label: 'College Info', icon: <BuildingIcon /> },
+  ],
+  academic: [
+    { id: 'branches' as AdminTab, path: '/admin/branches', label: 'Branches', icon: <AcademicCapIcon /> },
+    { id: 'courses' as AdminTab, path: '/admin/courses', label: 'Courses', icon: <BookOpenIcon /> },
+    { id: 'grading' as AdminTab, path: '/admin/grading', label: 'Grading Scale', icon: <ChartBarIcon /> },
+    { id: 'calendar' as AdminTab, path: '/admin/calendar', label: 'Calendar', icon: <CalendarIcon /> },
+  ],
+  people: [
+    { id: 'directory' as AdminTab, path: '/admin/directory', label: 'Faculty Directory', icon: <UsersIcon /> },
+    { id: 'students' as AdminTab, path: '/admin/students', label: 'Student Directory', icon: <UserGroupIcon /> },
+  ],
+  campus: [
+    { id: 'hostels' as AdminTab, path: '/admin/hostels', label: 'Hostels', icon: <HomeIcon /> },
+    { id: 'campus-map' as AdminTab, path: '/admin/campus-map', label: 'Campus Map', icon: <MapPinIcon /> },
+  ],
+  content: [
+    { id: 'quick-links' as AdminTab, path: '/admin/quick-links', label: 'Quick Links', icon: <LinkIcon /> },
+    { id: 'forms' as AdminTab, path: '/admin/forms', label: 'Forms', icon: <DocumentIcon /> },
+    { id: 'quotes' as AdminTab, path: '/admin/quotes', label: 'Quotes', icon: <SparklesIcon /> },
+  ],
+  monitoring: [
+    { id: 'analytics' as AdminTab, path: '/admin/analytics', label: 'Analytics', icon: <ChartBarIcon /> },
+  ],
+};
+
+// Flatten tabs for path matching
+const allTabs = Object.values(menuSections).flat();
 
 // Get active tab from current path
 const getActiveTabFromPath = (pathname: string): AdminTab => {
   const segment = pathname.replace('/admin/', '').replace('/admin', '');
   // Handle support route which is not in sidebar tabs but still a valid route
   if (segment === 'support') return 'support';
-  const tab = tabs.find(t => t.id === segment);
+  const tab = allTabs.find(t => t.id === segment);
   return tab?.id || 'college-info';
 };
 
@@ -299,23 +304,109 @@ const AdminDashboard: React.FC = () => {
         `}>
           
           {/* Navigation Tabs */}
-          <nav className="py-3 sm:py-4 px-2 flex flex-col h-full">
-            <div className="flex-1">
-              {tabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => { navigate(tab.path); setSidebarOpen(false); }}
-                  className={`admin-tab text-left text-sm sm:text-base ${activeTab === tab.id ? 'active' : ''}`}
-                >
-                  {tab.icon}
-                  <span className="truncate">{tab.label}</span>
-                  {activeTab === tab.id && (
-                    <svg className="w-4 h-4 ml-auto opacity-70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  )}
-                </button>
-              ))}
+          <nav className="py-3 sm:py-4 px-2 flex flex-col h-full overflow-y-auto">
+            <div className="flex-1 space-y-4">
+              {/* Institution Section */}
+              <div>
+                <div className="px-3 pt-2 pb-1 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-4 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></div>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Institution</h3>
+                  </div>
+                </div>
+                {menuSections.institution.map(tab => (
+                  <button key={tab.id} onClick={() => { navigate(tab.path); setSidebarOpen(false); }} className={`admin-tab text-left text-sm sm:text-base ${activeTab === tab.id ? 'active' : ''}`}>
+                    {tab.icon}
+                    <span className="truncate">{tab.label}</span>
+                    {activeTab === tab.id && <svg className="w-4 h-4 ml-auto opacity-70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>}
+                  </button>
+                ))}
+              </div>
+
+              {/* Academic Section */}
+              <div>
+                <div className="px-3 pt-2 pb-1 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full"></div>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Academic</h3>
+                  </div>
+                </div>
+                {menuSections.academic.map(tab => (
+                  <button key={tab.id} onClick={() => { navigate(tab.path); setSidebarOpen(false); }} className={`admin-tab text-left text-sm sm:text-base ${activeTab === tab.id ? 'active' : ''}`}>
+                    {tab.icon}
+                    <span className="truncate">{tab.label}</span>
+                    {activeTab === tab.id && <svg className="w-4 h-4 ml-auto opacity-70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>}
+                  </button>
+                ))}
+              </div>
+
+              {/* People Section */}
+              <div>
+                <div className="px-3 pt-2 pb-1 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-4 bg-gradient-to-b from-green-500 to-teal-500 rounded-full"></div>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">People</h3>
+                  </div>
+                </div>
+                {menuSections.people.map(tab => (
+                  <button key={tab.id} onClick={() => { navigate(tab.path); setSidebarOpen(false); }} className={`admin-tab text-left text-sm sm:text-base ${activeTab === tab.id ? 'active' : ''}`}>
+                    {tab.icon}
+                    <span className="truncate">{tab.label}</span>
+                    {activeTab === tab.id && <svg className="w-4 h-4 ml-auto opacity-70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>}
+                  </button>
+                ))}
+              </div>
+
+              {/* Campus Section */}
+              <div>
+                <div className="px-3 pt-2 pb-1 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-4 bg-gradient-to-b from-amber-500 to-orange-500 rounded-full"></div>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Campus</h3>
+                  </div>
+                </div>
+                {menuSections.campus.map(tab => (
+                  <button key={tab.id} onClick={() => { navigate(tab.path); setSidebarOpen(false); }} className={`admin-tab text-left text-sm sm:text-base ${activeTab === tab.id ? 'active' : ''}`}>
+                    {tab.icon}
+                    <span className="truncate">{tab.label}</span>
+                    {activeTab === tab.id && <svg className="w-4 h-4 ml-auto opacity-70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>}
+                  </button>
+                ))}
+              </div>
+
+              {/* Content Section */}
+              <div>
+                <div className="px-3 pt-2 pb-1 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-4 bg-gradient-to-b from-pink-500 to-rose-500 rounded-full"></div>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Content</h3>
+                  </div>
+                </div>
+                {menuSections.content.map(tab => (
+                  <button key={tab.id} onClick={() => { navigate(tab.path); setSidebarOpen(false); }} className={`admin-tab text-left text-sm sm:text-base ${activeTab === tab.id ? 'active' : ''}`}>
+                    {tab.icon}
+                    <span className="truncate">{tab.label}</span>
+                    {activeTab === tab.id && <svg className="w-4 h-4 ml-auto opacity-70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>}
+                  </button>
+                ))}
+              </div>
+
+              {/* Monitoring Section */}
+              <div>
+                <div className="px-3 pt-2 pb-1 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-4 bg-gradient-to-b from-cyan-500 to-blue-500 rounded-full"></div>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Monitoring</h3>
+                  </div>
+                </div>
+                {menuSections.monitoring.map(tab => (
+                  <button key={tab.id} onClick={() => { navigate(tab.path); setSidebarOpen(false); }} className={`admin-tab text-left text-sm sm:text-base ${activeTab === tab.id ? 'active' : ''}`}>
+                    {tab.icon}
+                    <span className="truncate">{tab.label}</span>
+                    {activeTab === tab.id && <svg className="w-4 h-4 ml-auto opacity-70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>}
+                  </button>
+                ))}
+              </div>
             </div>
             
             {/* Logout Button */}
