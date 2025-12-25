@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AdminConfig } from '../types';
 import { CampusLocation, CampusLocationCategory, QuickRoute } from '../types';
 import { useAdminConfig } from '@features/admin/hooks/useAdminConfig';
-import { Search, Plus, Trash2, MapPin, Edit2, X, Save, Navigation } from 'lucide-react';
+import { Search, Plus, Trash2, MapPin, Edit2, X, Save, Navigation, Link, Locate, ExternalLink, Check } from 'lucide-react';
 import { AdminHeader, MapPinIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 
@@ -12,6 +12,28 @@ interface Props {
 
 const CATEGORIES: CampusLocationCategory[] = ['academic', 'residential', 'facilities', 'dining', 'administration'];
 
+// Common location emoji icons for quick selection
+const LOCATION_ICONS = [
+  { emoji: '🏛️', label: 'Academic' },
+  { emoji: '🏢', label: 'Office' },
+  { emoji: '🏠', label: 'Residential' },
+  { emoji: '🍽️', label: 'Dining' },
+  { emoji: '☕', label: 'Cafe' },
+  { emoji: '📚', label: 'Library' },
+  { emoji: '🔬', label: 'Lab' },
+  { emoji: '🏥', label: 'Medical' },
+  { emoji: '🏟️', label: 'Sports' },
+  { emoji: '🎭', label: 'Auditorium' },
+  { emoji: '🏪', label: 'Shop' },
+  { emoji: '🚌', label: 'Transport' },
+  { emoji: '🅿️', label: 'Parking' },
+  { emoji: '🏦', label: 'Bank/ATM' },
+  { emoji: '⛪', label: 'Temple' },
+  { emoji: '🌳', label: 'Garden' },
+  { emoji: '📍', label: 'General' },
+  { emoji: '🎓', label: 'Convocation' },
+];
+
 type Tab = 'locations' | 'routes';
 
 const CampusMapEditor: React.FC<Props> = ({ config }) => {
@@ -20,6 +42,17 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // Google Maps link parsing state
+  const [mapsLink, setMapsLink] = useState('');
+  const [linkError, setLinkError] = useState('');
+  const [linkSuccess, setLinkSuccess] = useState(false);
+  
+  // Current location loading state
+  const [gettingLocation, setGettingLocation] = useState(false);
+  
+  // Icon picker state
+  const [showIconPicker, setShowIconPicker] = useState(false);
 
   // Location Form state
   const [locationForm, setLocationForm] = useState<Partial<CampusLocation>>({
@@ -30,6 +63,137 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
     icon: '📍',
     details: {}
   });
+  
+  // Parse coordinates from Google Maps link
+  const parseGoogleMapsLink = (link: string): { lat: number; lng: number } | null => {
+    try {
+      // Handle different Google Maps URL formats
+      // Priority order matters - we want the actual place location, not the viewport
+      
+      // PRIORITY 1: Place data coordinates (actual pin location)
+      // Format: !3d23.816009!4d86.4422404 (3d = lat, 4d = lng)
+      // This is the actual marker position, not the viewport
+      const placeDataPattern = /!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/;
+      const placeDataMatch = link.match(placeDataPattern);
+      if (placeDataMatch && placeDataMatch[1] && placeDataMatch[2]) {
+        return { lat: parseFloat(placeDataMatch[1]), lng: parseFloat(placeDataMatch[2]) };
+      }
+      
+      // PRIORITY 2: Query parameter with coordinates
+      // Format: ?q=23.814333,86.441225
+      const qPattern = /[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/;
+      const qMatch = link.match(qPattern);
+      if (qMatch && qMatch[1] && qMatch[2]) {
+        return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
+      }
+      
+      // PRIORITY 3: ll parameter
+      // Format: ?ll=23.814333,86.441225
+      const llPattern = /ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/;
+      const llMatch = link.match(llPattern);
+      if (llMatch && llMatch[1] && llMatch[2]) {
+        return { lat: parseFloat(llMatch[1]), lng: parseFloat(llMatch[2]) };
+      }
+      
+      // PRIORITY 4: place/ direct coordinates
+      // Format: /place/23.814333,86.441225
+      const placeCoordsPattern = /place\/(-?\d+\.?\d*),(-?\d+\.?\d*)/;
+      const placeCoordsMatch = link.match(placeCoordsPattern);
+      if (placeCoordsMatch && placeCoordsMatch[1] && placeCoordsMatch[2]) {
+        return { lat: parseFloat(placeCoordsMatch[1]), lng: parseFloat(placeCoordsMatch[2]) };
+      }
+      
+      // PRIORITY 5 (FALLBACK): @ viewport coordinates
+      // Format: @23.8156784,86.4394229,1093m
+      // This is the camera center, less precise but better than nothing
+      const atPattern = /@(-?\d+\.?\d*),(-?\d+\.?\d*)/;
+      const atMatch = link.match(atPattern);
+      if (atMatch && atMatch[1] && atMatch[2]) {
+        return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
+      }
+      
+      return null;
+    } catch {
+      return null;
+    }
+  };
+  
+  const handleParseMapsLink = () => {
+    setLinkError('');
+    setLinkSuccess(false);
+    
+    if (!mapsLink.trim()) {
+      setLinkError('Please paste a Google Maps link');
+      return;
+    }
+    
+    const coords = parseGoogleMapsLink(mapsLink);
+    if (coords) {
+      setLocationForm({ ...locationForm, coordinates: coords });
+      setLinkSuccess(true);
+      setMapsLink('');
+      setTimeout(() => setLinkSuccess(false), 3000);
+    } else {
+      setLinkError('Could not extract coordinates. Try copying the full URL from Google Maps.');
+    }
+  };
+  
+  // Get current location using browser geolocation
+  const handleGetCurrentLocation = () => {
+    // Check if running in a secure context (HTTPS or localhost)
+    if (!window.isSecureContext) {
+      setLinkError('Location requires HTTPS. Use the Google Maps link method instead, or access via localhost.');
+      return;
+    }
+    
+    if (!navigator.geolocation) {
+      setLinkError('Geolocation is not supported by your browser. Try using a Google Maps link instead.');
+      return;
+    }
+    
+    setGettingLocation(true);
+    setLinkError('');
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocationForm({
+          ...locationForm,
+          coordinates: {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          }
+        });
+        setGettingLocation(false);
+        setLinkError(''); // Clear any previous error
+        setLinkSuccess(true);
+        setTimeout(() => setLinkSuccess(false), 3000);
+      },
+      (error) => {
+        setGettingLocation(false);
+        console.error('Geolocation error:', error.code, error.message);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLinkError('Location access denied. Please allow location access in your browser settings, then try again.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLinkError('Location unavailable. Your device may not have GPS, or location services are disabled.');
+            break;
+          case error.TIMEOUT:
+            setLinkError('Location request timed out. Try again or use a Google Maps link instead.');
+            break;
+          default:
+            setLinkError(`Location error: ${error.message || 'Unknown error'}. Try using a Google Maps link instead.`);
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
+  };
+  
+  // Open location in Google Maps for verification
+  const openInGoogleMaps = () => {
+    const { lat, lng } = locationForm.coordinates || { lat: 23.814, lng: 86.441 };
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+  };
 
   // Route Form state
   const [routeForm, setRouteForm] = useState<Partial<QuickRoute>>({
@@ -247,29 +411,105 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="admin-label">Latitude</label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={locationForm.coordinates?.lat}
-                    onChange={e => setLocationForm({ ...locationForm, coordinates: { ...locationForm.coordinates!, lat: parseFloat(e.target.value) } })}
-                    className="admin-input"
-                    required
-                  />
+              {/* Convenient Coordinate Input Section */}
+              <div className="bg-slate-800/30 border border-blue-500/20 rounded-xl p-4 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin size={18} className="text-blue-400" />
+                  <span className="text-sm font-medium text-white">Get Coordinates</span>
+                  <span className="text-xs text-slate-400">— Choose your preferred method</span>
                 </div>
-                <div>
-                  <label className="admin-label">Longitude</label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={locationForm.coordinates?.lng}
-                    onChange={e => setLocationForm({ ...locationForm, coordinates: { ...locationForm.coordinates!, lng: parseFloat(e.target.value) } })}
-                    className="admin-input"
-                    required
-                  />
+                
+                {/* Method 1: Google Maps Link */}
+                <div className="space-y-2">
+                  <label className="admin-label flex items-center gap-2">
+                    <Link size={14} className="text-slate-400" />
+                    From Google Maps Link
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Paste a Google Maps URL here..."
+                      value={mapsLink}
+                      onChange={e => { setMapsLink(e.target.value); setLinkError(''); }}
+                      className="admin-input flex-1 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleParseMapsLink}
+                      className="admin-btn admin-btn-secondary whitespace-nowrap text-xs"
+                    >
+                      <Check size={14} />
+                      Extract
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Open Google Maps → Right-click on location → "What's here?" → Copy the URL
+                  </p>
                 </div>
+                
+                {/* Method 2: Current Location */}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-400">Or</span>
+                  <button
+                    type="button"
+                    onClick={handleGetCurrentLocation}
+                    disabled={gettingLocation}
+                    className="admin-btn admin-btn-secondary text-xs flex items-center gap-2"
+                  >
+                    <Locate size={14} className={gettingLocation ? 'animate-pulse' : ''} />
+                    {gettingLocation ? 'Getting Location...' : 'Use My Current Location'}
+                  </button>
+                </div>
+                
+                {/* Success/Error Messages */}
+                {linkError && (
+                  <div className="flex items-center gap-2 text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                    <X size={14} />
+                    {linkError}
+                  </div>
+                )}
+                {linkSuccess && (
+                  <div className="flex items-center gap-2 text-emerald-400 text-xs bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
+                    <Check size={14} />
+                    Coordinates extracted successfully!
+                  </div>
+                )}
+                
+                {/* Manual Coordinate Inputs */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-700/50">
+                  <div>
+                    <label className="admin-label">Latitude</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={locationForm.coordinates?.lat}
+                      onChange={e => setLocationForm({ ...locationForm, coordinates: { ...locationForm.coordinates!, lat: parseFloat(e.target.value) } })}
+                      className="admin-input"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="admin-label">Longitude</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={locationForm.coordinates?.lng}
+                      onChange={e => setLocationForm({ ...locationForm, coordinates: { ...locationForm.coordinates!, lng: parseFloat(e.target.value) } })}
+                      className="admin-input"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                {/* Verify Location Button */}
+                <button
+                  type="button"
+                  onClick={openInGoogleMaps}
+                  className="admin-btn admin-btn-secondary w-full text-xs justify-center"
+                >
+                  <ExternalLink size={14} />
+                  Verify Location in Google Maps
+                </button>
               </div>
 
               <div>
@@ -282,14 +522,44 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
                 />
               </div>
 
+              {/* Icon Picker */}
               <div>
-                <label className="admin-label">Icon (Emoji)</label>
-                <input
-                  type="text"
-                  value={locationForm.icon}
-                  onChange={e => setLocationForm({ ...locationForm, icon: e.target.value })}
-                  className="admin-input w-24"
-                />
+                <label className="admin-label">Icon</label>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center justify-center w-12 h-12 bg-slate-700/50 rounded-xl border border-blue-500/30 text-2xl">
+                    {locationForm.icon}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowIconPicker(!showIconPicker)}
+                    className="admin-btn admin-btn-secondary text-xs"
+                  >
+                    {showIconPicker ? 'Hide Icons' : 'Choose Icon'}
+                  </button>
+                  <input
+                    type="text"
+                    value={locationForm.icon}
+                    onChange={e => setLocationForm({ ...locationForm, icon: e.target.value })}
+                    className="admin-input w-20 text-center text-lg"
+                    placeholder="📍"
+                  />
+                </div>
+                
+                {showIconPicker && (
+                  <div className="grid grid-cols-6 sm:grid-cols-9 gap-2 p-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                    {LOCATION_ICONS.map(({ emoji, label }) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => { setLocationForm({ ...locationForm, icon: emoji }); setShowIconPicker(false); }}
+                        className={`p-2 rounded-lg text-xl hover:bg-blue-500/20 hover:scale-110 transition-all ${locationForm.icon === emoji ? 'bg-blue-500/30 ring-2 ring-blue-500' : 'bg-slate-700/30'}`}
+                        title={label}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
