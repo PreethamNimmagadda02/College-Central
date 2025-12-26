@@ -45,17 +45,21 @@ const Directory = () => {
   const [activeTab, setActiveTab] = useState('faculty');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) {
         setViewMode('card');
+        setItemsPerPage(10);
       } else {
         setViewMode('table');
+        setItemsPerPage(20);
       }
     };
 
-    // Set initial view mode
+    // Set initial view mode and items per page based on screen size
     handleResize();
 
     window.addEventListener('resize', handleResize);
@@ -164,7 +168,22 @@ const Directory = () => {
   const clearFilters = () => {
     setSearchTerm('');
     setSortConfig({ key: null, direction: 'asc' });
+    setCurrentPage(1);
   };
+
+  // Pagination
+  const totalFacultyPages = Math.ceil(groupedFaculty.length / itemsPerPage);
+  const totalStudentPages = Math.ceil(groupedStudents.length / itemsPerPage);
+  const totalPages = activeTab === 'faculty' ? totalFacultyPages : totalStudentPages;
+  
+  const paginatedFaculty = groupedFaculty.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  const paginatedStudents = groupedStudents.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const SortIcon: React.FC<{ column: string }> = ({ column }) => {
     if (sortConfig.key !== column) return null;
@@ -262,12 +281,18 @@ const Directory = () => {
                   type="text"
                   placeholder={searchPlaceholder}
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary focus:border-transparent transition-all"
                 />
                 {searchTerm && (
                   <button
-                    onClick={() => setSearchTerm('')}
+                    onClick={() => {
+                      setSearchTerm('');
+                      setCurrentPage(1);
+                    }}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
                     <X className="w-4 h-4" />
@@ -324,7 +349,7 @@ const Directory = () => {
             <div className="p-4 md:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {activeTab === 'faculty' ? (
-                  groupedFaculty.map(group => {
+                  paginatedFaculty.map(group => {
                     const person = group[0]!;
                     return (
                       <div
@@ -373,7 +398,7 @@ const Directory = () => {
                     );
                   })
                 ) : (
-                  groupedStudents.map(group => {
+                  paginatedStudents.map(group => {
                     const student = group[0]!; // Student data is not expected to have multiple roles.
                     return (
                     <div
@@ -456,7 +481,7 @@ const Directory = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {groupedFaculty.map(group => {
+                    {paginatedFaculty.map(group => {
                         const person = group[0]!;
                         const allDepartments = [...new Set(group.map(p => p.department))];
                         const allDesignations = [...new Set(group.map(p => p.designation))];
@@ -536,7 +561,7 @@ const Directory = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {groupedStudents.map(group => {
+                    {paginatedStudents.map(group => {
                       const student = group[0]!; // Students are not expected to have multiple roles
                       return(
                       <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
@@ -569,6 +594,36 @@ const Directory = () => {
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="bg-white dark:bg-dark-card rounded-xl shadow-md border border-slate-200 dark:border-slate-700 p-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
+                Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, activeTab === 'faculty' ? groupedFaculty.length : groupedStudents.length)} of {activeTab === 'faculty' ? groupedFaculty.length : groupedStudents.length} entries
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="flex items-center px-3 text-sm text-slate-600 dark:text-slate-400">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
   );
 };

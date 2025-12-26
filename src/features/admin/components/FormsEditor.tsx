@@ -40,6 +40,9 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingForm, setEditingForm] = useState<AdminForm | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+  
   const [newForm, setNewForm] = useState<Omit<AdminForm, 'id'>>({
     title: '',
     formNumber: '',
@@ -81,6 +84,13 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
     form.formNumber.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Pagination
+  const totalPages = Math.ceil(filteredForms.length / itemsPerPage);
+  const paginatedForms = filteredForms.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const getCategoryCount = (cat: AdminForm['category']) =>
     (config.forms || []).filter(f => f.category === cat).length;
 
@@ -108,7 +118,10 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
         {CATEGORIES.map(cat => (
           <button
             key={cat.value}
-            onClick={() => setActiveCategory(cat.value as AdminForm['category'])}
+            onClick={() => {
+              setActiveCategory(cat.value as AdminForm['category']);
+              setCurrentPage(1);
+            }}
             className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium transition-all ${
               activeCategory === cat.value
                 ? `bg-gradient-to-r ${cat.color} text-white shadow-lg`
@@ -131,7 +144,10 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
           style={{ paddingLeft: '48px' }}
           placeholder="Search forms..."
           value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
+          onChange={e => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
         />
       </div>
 
@@ -192,7 +208,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
 
       {/* Forms Cards - Mobile */}
       <div className="space-y-3 md:hidden">
-        {filteredForms.map(form => (
+        {paginatedForms.map(form => (
           <div key={form.id} className="admin-card">
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex-1 min-w-0">
@@ -235,6 +251,36 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="admin-card">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-sm text-slate-400">
+              Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredForms.length)} of {filteredForms.length} forms
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="flex items-center px-3 text-sm text-slate-400">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Modal */}
       {showAddModal && (

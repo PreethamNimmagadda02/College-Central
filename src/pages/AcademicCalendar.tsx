@@ -76,6 +76,23 @@ const AcademicCalendar: React.FC = () => {
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [selectedEventIndex, setSelectedEventIndex] = useState<number | null>(null);
     const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(15);
+    
+    // Handle responsive items per page
+    React.useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setItemsPerPage(8);
+            } else {
+                setItemsPerPage(15);
+            }
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    
     const [newEvent, setNewEvent] = useState<Partial<CalendarEvent>>({
         date: '',
         endDate: '',
@@ -104,8 +121,17 @@ const AcademicCalendar: React.FC = () => {
         return events;
     }, [calendarData, filterType, searchTerm]);
 
+    // Pagination
+    const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+    const paginatedEvents = useMemo(() => {
+        return filteredEvents.slice(
+            (currentPage - 1) * itemsPerPage,
+            currentPage * itemsPerPage
+        );
+    }, [filteredEvents, currentPage, itemsPerPage]);
+
     const groupedEvents = useMemo(() => {
-        return filteredEvents.reduce((acc, event) => {
+        return paginatedEvents.reduce((acc, event) => {
             const month = new Date(event.date).toLocaleString('default', { month: 'long', year: 'numeric' });
             if (!acc[month]) {
                 acc[month] = [];
@@ -113,7 +139,7 @@ const AcademicCalendar: React.FC = () => {
             acc[month].push(event);
             return acc;
         }, {} as Record<string, CalendarEvent[]>);
-    }, [filteredEvents]);
+    }, [paginatedEvents]);
 
     const upcomingEvents = useMemo(() => {
         if (!calendarData) return [];
@@ -593,7 +619,10 @@ const AcademicCalendar: React.FC = () => {
                             {(['timeline', 'grid', 'list'] as const).map((mode) => (
                                 <button
                                     key={mode}
-                                    onClick={() => setViewMode(mode)}
+                                    onClick={() => {
+                                        setViewMode(mode);
+                                        setCurrentPage(1);
+                                    }}
                                     className={`flex-1 lg:flex-initial px-3 py-1.5 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${
                                         viewMode === mode
                                             ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
@@ -614,7 +643,10 @@ const AcademicCalendar: React.FC = () => {
                                 type="text"
                                 placeholder="Search events..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1);
+                                }}
                                 className="w-full sm:w-auto pl-9 pr-3 py-2 text-xs md:text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 transition-all hover:border-primary/50"
                             />
                             <svg className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -625,7 +657,10 @@ const AcademicCalendar: React.FC = () => {
                         {/* Type Filter */}
                         <select
                             value={filterType}
-                            onChange={(e) => setFilterType(e.target.value as CalendarEventType | 'all')}
+                            onChange={(e) => {
+                                setFilterType(e.target.value as CalendarEventType | 'all');
+                                setCurrentPage(1);
+                            }}
                             className="w-full sm:w-auto px-3 py-2 text-xs md:text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 transition-all hover:border-primary/50 cursor-pointer"
                         >
                             <option value="all">All Types</option>
@@ -1180,6 +1215,36 @@ const AcademicCalendar: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4 md:p-6">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="text-sm text-slate-600 dark:text-slate-400">
+                            Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredEvents.length)} of {filteredEvents.length} events
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Previous
+                            </button>
+                            <span className="px-3 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Add Event Modal */}
             {showAddEventModal && (

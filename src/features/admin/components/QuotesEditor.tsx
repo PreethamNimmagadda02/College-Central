@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminConfig, AdminQuote } from '../types';
 import { AdminHeader, SparklesIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
@@ -33,6 +33,22 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
   const [editingQuote, setEditingQuote] = useState<AdminQuote | null>(null);
   const [newQuote, setNewQuote] = useState({ text: '', author: '' });
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  
+  // Handle responsive items per page
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setItemsPerPage(10);
+      } else {
+        setItemsPerPage(20);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleAddQuote = () => {
     if (newQuote.text.trim() && newQuote.author.trim()) {
@@ -60,6 +76,13 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
     quote.author.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Pagination
+  const totalPages = Math.ceil(filteredQuotes.length / itemsPerPage);
+  const paginatedQuotes = filteredQuotes.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <AdminPageLayout>
       <AdminHeader 
@@ -84,7 +107,10 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
           style={{ paddingLeft: '48px' }}
           placeholder="Search quotes..."
           value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
+          onChange={e => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
         />
       </div>
 
@@ -104,7 +130,7 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
 
       {/* Quotes List */}
       <div className="space-y-3 sm:space-y-4">
-        {filteredQuotes.map(quote => (
+        {paginatedQuotes.map(quote => (
           <div key={quote.id} className="admin-card">
             <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-500/30 to-orange-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
@@ -138,6 +164,36 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="admin-card">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-sm text-slate-400">
+              Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredQuotes.length)} of {filteredQuotes.length} quotes
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="flex items-center px-3 text-sm text-slate-400">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Modal */}
       {showAddModal && (

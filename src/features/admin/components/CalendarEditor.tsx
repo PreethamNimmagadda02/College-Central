@@ -62,6 +62,9 @@ const CalendarEditor: React.FC<Props> = ({
   const [editingEvent, setEditingEvent] = useState<AdminCalendarEvent | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<AdminCalendarEvent['type'] | 'all'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+  
   const [newEvent, setNewEvent] = useState<Omit<AdminCalendarEvent, 'id'>>({
     date: '',
     endDate: '',
@@ -159,6 +162,13 @@ const CalendarEditor: React.FC<Props> = ({
       return matchesSearch && matchesType;
     })
     .sort((a, b) => a.date.localeCompare(b.date));
+
+  // Pagination
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const paginatedEvents = filteredEvents.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <AdminPageLayout>
@@ -324,13 +334,19 @@ const CalendarEditor: React.FC<Props> = ({
             style={{ paddingLeft: '48px' }}
             placeholder="Search events..."
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={e => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
         <select
           className="admin-select w-full sm:w-auto"
           value={filterType}
-          onChange={e => setFilterType(e.target.value as AdminCalendarEvent['type'] | 'all')}
+          onChange={e => {
+            setFilterType(e.target.value as AdminCalendarEvent['type'] | 'all');
+            setCurrentPage(1);
+          }}
         >
           <option value="all">All Types</option>
           {EVENT_TYPES.map(type => (
@@ -341,7 +357,7 @@ const CalendarEditor: React.FC<Props> = ({
 
       {/* Events List */}
       <div className="space-y-3">
-        {filteredEvents.map(event => (
+        {paginatedEvents.map(event => (
           <div key={event.id} className="admin-list-item flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             {/* Top row on mobile: color dot, date, and type */}
             <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
@@ -388,6 +404,36 @@ const CalendarEditor: React.FC<Props> = ({
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="admin-card">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-sm text-slate-400">
+              Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredEvents.length)} of {filteredEvents.length} events
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="flex items-center px-3 text-sm text-slate-400">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Modal */}
       {showAddModal && (

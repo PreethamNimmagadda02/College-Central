@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminConfig } from '../types';
 import { CampusLocation, CampusLocationCategory, QuickRoute } from '../types';
 import { useAdminConfig } from '@features/admin/hooks/useAdminConfig';
@@ -42,6 +42,22 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+  
+  // Handle responsive items per page
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setItemsPerPage(10);
+      } else {
+        setItemsPerPage(20);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // Google Maps link parsing state
   const [mapsLink, setMapsLink] = useState('');
@@ -215,6 +231,20 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
     route.to.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Pagination
+  const totalLocationPages = Math.ceil(filteredLocations.length / itemsPerPage);
+  const totalRoutePages = Math.ceil(filteredRoutes.length / itemsPerPage);
+  const totalPages = activeTab === 'locations' ? totalLocationPages : totalRoutePages;
+  
+  const paginatedLocations = filteredLocations.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  const paginatedRoutes = filteredRoutes.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const resetForm = () => {
     setLocationForm({
       name: '',
@@ -325,7 +355,7 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
       >
         <div className="flex bg-slate-800/50 rounded-lg p-1 border border-blue-500/20">
           <button
-            onClick={() => { setActiveTab('locations'); resetForm(); }}
+            onClick={() => { setActiveTab('locations'); resetForm(); setCurrentPage(1); }}
             className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
               activeTab === 'locations'
                 ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
@@ -335,7 +365,7 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
             Locations
           </button>
           <button
-            onClick={() => { setActiveTab('routes'); resetForm(); }}
+            onClick={() => { setActiveTab('routes'); resetForm(); setCurrentPage(1); }}
             className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
               activeTab === 'routes'
                 ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
@@ -355,7 +385,10 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
             type="text"
             placeholder={`Search ${activeTab === 'locations' ? 'locations' : 'routes'}...`}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
             className="admin-input"
             style={{ paddingLeft: '48px' }}
           />
@@ -662,7 +695,7 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
       {/* Locations Grid */}
       {activeTab === 'locations' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {filteredLocations.map((location) => (
+          {paginatedLocations.map((location) => (
             <div key={location.id} className="admin-card hover:border-blue-500/40 transition-all">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -709,7 +742,7 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
       ) : (
         /* Routes List */
         <div className="space-y-3">
-          {filteredRoutes.map((route) => (
+          {paginatedRoutes.map((route) => (
             <div key={route.id} className="admin-card flex flex-col sm:flex-row justify-between sm:items-center gap-3 hover:border-blue-500/40 transition-all">
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-2 sm:p-3 rounded-xl text-blue-400 border border-blue-500/20 flex-shrink-0">
@@ -749,6 +782,36 @@ const CampusMapEditor: React.FC<Props> = ({ config }) => {
           {filteredRoutes.length === 0 && (
             <div className="text-center py-8 sm:py-12 text-slate-500 text-sm sm:text-base">No routes found.</div>
           )}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="admin-card">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-sm text-slate-400">
+              Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, activeTab === 'locations' ? filteredLocations.length : filteredRoutes.length)} of {activeTab === 'locations' ? filteredLocations.length : filteredRoutes.length} {activeTab}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="flex items-center px-3 text-sm text-slate-400">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </AdminPageLayout>
