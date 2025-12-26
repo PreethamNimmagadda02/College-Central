@@ -117,7 +117,7 @@ const CampusMap: React.FC = () => {
             Interactive Campus Map
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Navigate IIT (ISM) Dhanbad campus with ease
+            Navigate {appConfig?.collegeInfo?.name?.short || 'IIT(ISM) Dhanbad'} campus with ease
           </p>
         </div>
         
