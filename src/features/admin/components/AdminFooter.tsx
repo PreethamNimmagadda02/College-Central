@@ -152,14 +152,14 @@ const AdminFooter: React.FC = () => {
                 to="/privacy"
                 className="group relative px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-slate-400 hover:text-purple-400 transition-all duration-200 hover:bg-slate-800 overflow-hidden"
               >
-                <span className="relative z-10">Privacy</span>
+                <span className="relative z-10">Privacy Policy</span>
               </Link>
               <span className="text-slate-600 hidden sm:inline">•</span>
               <Link
                 to="/terms"
                 className="group relative px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-slate-400 hover:text-purple-400 transition-all duration-200 hover:bg-slate-800 overflow-hidden"
               >
-                <span className="relative z-10">Terms</span>
+                <span className="relative z-10">Terms of Service</span>
               </Link>
               <span className="text-slate-600 hidden sm:inline">•</span>
               <Link
