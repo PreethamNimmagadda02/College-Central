@@ -1,21 +1,20 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import { AdminConfig } from '@features/admin/types';
-import { subscribeToConfig, initializeConfig } from '@services/configService';
-
 // Import default config values for fallback
-import { COLLEGE_INFO } from '@config/collegeInfo';
+import { PRELOADED_CALENDAR_DATA } from '@config/academicCalendar';
 import { GREETING_TIMES, WEATHER } from '@config/appConstants';
 import { BRANCH_OPTIONS } from '@config/branches';
-import { HOSTEL_OPTIONS } from '@config/hostels';
-import { MOTIVATIONAL_QUOTES } from '@config/quotes';
-import { defaultQuickLinks } from '@config/quickLinks';
-import { generalForms, ugForms, pgForms, phdForms } from '@config/forms';
-import { PRELOADED_CALENDAR_DATA } from '@config/academicCalendar';
 import { CAMPUS_DIRECTORY } from '@config/directory';
 import { CAMPUS_LOCATIONS, CAMPUS_QUICK_ROUTES } from '@config/campusMap';
+import { COLLEGE_INFO } from '@config/collegeInfo';
 import { TIMETABLE_DATA as CBCS_COURSES } from '@config/courseData';
+import { generalForms, ugForms, pgForms, phdForms } from '@config/forms';
+import { HOSTEL_OPTIONS } from '@config/hostels';
 import { NEP_TIMETABLE_DATA as NEP_COURSES } from '@config/nepCourseData';
+import { defaultQuickLinks } from '@config/quickLinks';
+import { MOTIVATIONAL_QUOTES } from '@config/quotes';
 import { STUDENT_DIRECTORY } from '@config/studentDirectory';
+import { AdminConfig } from '@features/admin/types';
+import { subscribeToConfig, initializeConfig } from '@services/configService';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 
 interface AppConfigContextType {
   config: AdminConfig;
@@ -54,7 +53,7 @@ const generateDefaultConfig = (): AdminConfig => {
       text: q.text,
       author: q.author,
     })),
-    quickLinks: defaultQuickLinks.map(link => ({
+    quickLinks: defaultQuickLinks.map((link) => ({
       id: link.id,
       name: link.name,
       href: link.href,
@@ -75,7 +74,7 @@ const generateDefaultConfig = (): AdminConfig => {
         ...e,
       })),
     },
-    directory: CAMPUS_DIRECTORY.map(entry => ({ ...entry })),
+    directory: CAMPUS_DIRECTORY.map((entry) => ({ ...entry })),
     courses: [
       ...CBCS_COURSES.map((c, i) => ({
         id: `cbcs-${i}`,
@@ -83,7 +82,7 @@ const generateDefaultConfig = (): AdminConfig => {
         courseName: c.courseName,
         ltp: c.ltp,
         credits: c.credits,
-        slots: c.slots.map(s => ({ ...s })),
+        slots: c.slots.map((s) => ({ ...s })),
         courseType: 'CBCS' as const,
       })),
       ...NEP_COURSES.map((c, i) => ({
@@ -92,7 +91,7 @@ const generateDefaultConfig = (): AdminConfig => {
         courseName: c.courseName,
         ltp: c.ltp,
         credits: c.credits,
-        slots: c.slots.map(s => ({ ...s })),
+        slots: c.slots.map((s) => ({ ...s })),
         courseType: 'NEP' as const,
       })),
     ],
@@ -100,14 +99,54 @@ const generateDefaultConfig = (): AdminConfig => {
     campusMap: CAMPUS_LOCATIONS.map((l) => ({ ...l })),
     quickRoutes: CAMPUS_QUICK_ROUTES.map((r) => ({ ...r })),
     gradingScale: [
-      { id: 'grade-1', grade: 'A+', points: 10, color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400' },
-      { id: 'grade-2', grade: 'A', points: 9, color: 'text-emerald-800 bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-200' },
-      { id: 'grade-3', grade: 'B+', points: 8, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400' },
-      { id: 'grade-4', grade: 'B', points: 7, color: 'text-sky-700 bg-sky-200 dark:bg-sky-900/40 dark:text-sky-300' },
-      { id: 'grade-5', grade: 'C+', points: 6, color: 'text-amber-700 bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300' },
-      { id: 'grade-6', grade: 'C', points: 5, color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400' },
-      { id: 'grade-7', grade: 'D', points: 4, color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400' },
-      { id: 'grade-8', grade: 'F', points: 0, color: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400' },
+      {
+        id: 'grade-1',
+        grade: 'A+',
+        points: 10,
+        color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
+      },
+      {
+        id: 'grade-2',
+        grade: 'A',
+        points: 9,
+        color: 'text-emerald-800 bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-200',
+      },
+      {
+        id: 'grade-3',
+        grade: 'B+',
+        points: 8,
+        color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+      },
+      {
+        id: 'grade-4',
+        grade: 'B',
+        points: 7,
+        color: 'text-sky-700 bg-sky-200 dark:bg-sky-900/40 dark:text-sky-300',
+      },
+      {
+        id: 'grade-5',
+        grade: 'C+',
+        points: 6,
+        color: 'text-amber-700 bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300',
+      },
+      {
+        id: 'grade-6',
+        grade: 'C',
+        points: 5,
+        color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400',
+      },
+      {
+        id: 'grade-7',
+        grade: 'D',
+        points: 4,
+        color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400',
+      },
+      {
+        id: 'grade-8',
+        grade: 'F',
+        points: 0,
+        color: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400',
+      },
     ],
   };
 };
@@ -155,11 +194,7 @@ export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children 
     [config, loading, error, isFirestoreConfig]
   );
 
-  return (
-    <AppConfigContext.Provider value={contextValue}>
-      {children}
-    </AppConfigContext.Provider>
-  );
+  return <AppConfigContext.Provider value={contextValue}>{children}</AppConfigContext.Provider>;
 };
 
 export const useAppConfig = (): AppConfigContextType => {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import { AdminConfig, AdminForm } from '../types';
 import { AdminHeader, DocumentIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
@@ -25,13 +26,23 @@ const PlusIcon = () => (
 
 const TrashIcon = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+    />
   </svg>
 );
 
 const DownloadIcon = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+    />
   </svg>
 );
 
@@ -42,7 +53,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
-  
+
   const [newForm, setNewForm] = useState<Omit<AdminForm, 'id'>>({
     title: '',
     formNumber: '',
@@ -60,7 +71,13 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
         submitTo: newForm.submitTo.trim(),
         category: newForm.category,
       });
-      setNewForm({ title: '', formNumber: '', downloadLink: '', submitTo: '', category: activeCategory });
+      setNewForm({
+        title: '',
+        formNumber: '',
+        downloadLink: '',
+        submitTo: '',
+        category: activeCategory,
+      });
       setShowAddModal(false);
     }
   };
@@ -78,10 +95,11 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
     }
   };
 
-  const categoryForms = (config.forms || []).filter(f => f.category === activeCategory);
-  const filteredForms = categoryForms.filter(form =>
-    form.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    form.formNumber.toLowerCase().includes(searchQuery.toLowerCase())
+  const categoryForms = (config.forms || []).filter((f) => f.category === activeCategory);
+  const filteredForms = categoryForms.filter(
+    (form) =>
+      form.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      form.formNumber.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Pagination
@@ -92,20 +110,20 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
   );
 
   const getCategoryCount = (cat: AdminForm['category']) =>
-    (config.forms || []).filter(f => f.category === cat).length;
+    (config.forms || []).filter((f) => f.category === cat).length;
 
   return (
     <AdminPageLayout>
-      <AdminHeader 
-        icon={<DocumentIcon />} 
-        title="Academic Forms" 
+      <AdminHeader
+        icon={<DocumentIcon />}
+        title="Academic Forms"
         subtitle="Manage downloadable forms for students"
       >
-        <button 
+        <button
           onClick={() => {
             setNewForm({ ...newForm, category: activeCategory });
             setShowAddModal(true);
-          }} 
+          }}
           className="admin-btn admin-btn-primary text-xs sm:text-sm"
         >
           <PlusIcon />
@@ -115,7 +133,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
 
       {/* Category Tabs */}
       <div className="flex flex-wrap gap-2 sm:gap-3">
-        {CATEGORIES.map(cat => (
+        {CATEGORIES.map((cat) => (
           <button
             key={cat.value}
             onClick={() => {
@@ -135,8 +153,18 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
 
       {/* Search */}
       <div className="admin-search flex-1 max-w-2xl">
-        <svg className="admin-search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <svg
+          className="admin-search-icon w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
         </svg>
         <input
           type="text"
@@ -144,7 +172,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
           style={{ paddingLeft: '48px' }}
           placeholder="Search forms..."
           value={searchQuery}
-          onChange={e => {
+          onChange={(e) => {
             setSearchQuery(e.target.value);
             setCurrentPage(1);
           }}
@@ -163,7 +191,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
             </tr>
           </thead>
           <tbody>
-            {filteredForms.map(form => (
+            {filteredForms.map((form) => (
               <tr key={form.id}>
                 <td>
                   <span className="admin-badge admin-badge-info">{form.formNumber}</span>
@@ -208,7 +236,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
 
       {/* Forms Cards - Mobile */}
       <div className="space-y-3 md:hidden">
-        {paginatedForms.map(form => (
+        {paginatedForms.map((form) => (
           <div key={form.id} className="admin-card">
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex-1 min-w-0">
@@ -257,11 +285,13 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
         <div className="admin-card">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-sm text-slate-400">
-              Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredForms.length)} of {filteredForms.length} forms
+              Showing {(currentPage - 1) * itemsPerPage + 1} -{' '}
+              {Math.min(currentPage * itemsPerPage, filteredForms.length)} of {filteredForms.length}{' '}
+              forms
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
               >
@@ -271,7 +301,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                 Page {currentPage} of {totalPages}
               </span>
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
               >
@@ -285,7 +315,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
       {/* Add Modal */}
       {showAddModal && (
         <div className="admin-modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">Add New Form</h3>
             <div className="space-y-4">
               <div>
@@ -295,7 +325,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                   className="admin-input"
                   placeholder="e.g., A1, UG5"
                   value={newForm.formNumber}
-                  onChange={e => setNewForm({ ...newForm, formNumber: e.target.value })}
+                  onChange={(e) => setNewForm({ ...newForm, formNumber: e.target.value })}
                 />
               </div>
               <div>
@@ -305,7 +335,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                   className="admin-input"
                   placeholder="Form title..."
                   value={newForm.title}
-                  onChange={e => setNewForm({ ...newForm, title: e.target.value })}
+                  onChange={(e) => setNewForm({ ...newForm, title: e.target.value })}
                 />
               </div>
               <div>
@@ -315,7 +345,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                   className="admin-input"
                   placeholder="https://example.com/form.pdf"
                   value={newForm.downloadLink}
-                  onChange={e => setNewForm({ ...newForm, downloadLink: e.target.value })}
+                  onChange={(e) => setNewForm({ ...newForm, downloadLink: e.target.value })}
                 />
               </div>
               <div>
@@ -325,7 +355,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                   className="admin-input"
                   placeholder="e.g., Academic Section"
                   value={newForm.submitTo}
-                  onChange={e => setNewForm({ ...newForm, submitTo: e.target.value })}
+                  onChange={(e) => setNewForm({ ...newForm, submitTo: e.target.value })}
                 />
               </div>
               <div>
@@ -333,10 +363,14 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                 <select
                   className="admin-select"
                   value={newForm.category}
-                  onChange={e => setNewForm({ ...newForm, category: e.target.value as AdminForm['category'] })}
+                  onChange={(e) =>
+                    setNewForm({ ...newForm, category: e.target.value as AdminForm['category'] })
+                  }
                 >
-                  {CATEGORIES.map(cat => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -344,7 +378,10 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                 <button onClick={handleAddForm} className="admin-btn admin-btn-primary flex-1">
                   Add Form
                 </button>
-                <button onClick={() => setShowAddModal(false)} className="admin-btn admin-btn-secondary flex-1">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="admin-btn admin-btn-secondary flex-1"
+                >
                   Cancel
                 </button>
               </div>
@@ -356,7 +393,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
       {/* Edit Modal */}
       {editingForm && (
         <div className="admin-modal-overlay" onClick={() => setEditingForm(null)}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">Edit Form</h3>
             <div className="space-y-4">
               <div>
@@ -365,7 +402,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                   type="text"
                   className="admin-input"
                   value={editingForm.formNumber}
-                  onChange={e => setEditingForm({ ...editingForm, formNumber: e.target.value })}
+                  onChange={(e) => setEditingForm({ ...editingForm, formNumber: e.target.value })}
                 />
               </div>
               <div>
@@ -374,7 +411,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                   type="text"
                   className="admin-input"
                   value={editingForm.title}
-                  onChange={e => setEditingForm({ ...editingForm, title: e.target.value })}
+                  onChange={(e) => setEditingForm({ ...editingForm, title: e.target.value })}
                 />
               </div>
               <div>
@@ -383,7 +420,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                   type="url"
                   className="admin-input"
                   value={editingForm.downloadLink}
-                  onChange={e => setEditingForm({ ...editingForm, downloadLink: e.target.value })}
+                  onChange={(e) => setEditingForm({ ...editingForm, downloadLink: e.target.value })}
                 />
               </div>
               <div>
@@ -392,7 +429,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                   type="text"
                   className="admin-input"
                   value={editingForm.submitTo}
-                  onChange={e => setEditingForm({ ...editingForm, submitTo: e.target.value })}
+                  onChange={(e) => setEditingForm({ ...editingForm, submitTo: e.target.value })}
                 />
               </div>
               <div>
@@ -400,10 +437,17 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                 <select
                   className="admin-select"
                   value={editingForm.category}
-                  onChange={e => setEditingForm({ ...editingForm, category: e.target.value as AdminForm['category'] })}
+                  onChange={(e) =>
+                    setEditingForm({
+                      ...editingForm,
+                      category: e.target.value as AdminForm['category'],
+                    })
+                  }
                 >
-                  {CATEGORIES.map(cat => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -411,7 +455,10 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                 <button onClick={handleUpdateForm} className="admin-btn admin-btn-success flex-1">
                   Save Changes
                 </button>
-                <button onClick={() => setEditingForm(null)} className="admin-btn admin-btn-secondary flex-1">
+                <button
+                  onClick={() => setEditingForm(null)}
+                  className="admin-btn admin-btn-secondary flex-1"
+                >
                   Cancel
                 </button>
               </div>

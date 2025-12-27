@@ -1,17 +1,6 @@
-import React, { Suspense, useEffect } from 'react';
-import { createHashRouter, RouterProvider } from 'react-router-dom';
-
 // Auth feature hooks
-import { AuthProvider } from '@features/auth/hooks/useAuth';
-import { RoleProvider } from '@features/auth/hooks/useRole';
 
 // Context providers
-import { UserProvider } from '@contexts/UserContext';
-import { GradesProvider } from '@contexts/GradesContext';
-import { ScheduleProvider } from '@contexts/ScheduleContext';
-import { CalendarProvider } from '@contexts/CalendarContext';
-import { CampusMapProvider } from '@contexts/CampusMapContext';
-import { FormsProvider } from '@contexts/FormsContext';
 import { AppConfigProvider } from '@contexts/AppConfigContext';
 
 // Layout and common components
@@ -22,10 +11,20 @@ import AdminProtectedRoute from '@components/common/AdminProtectedRoute';
 import UpdatePrompt from '@components/common/UpdatePrompt';
 import { InstallPrompt } from '@components/common/InstallPrompt';
 import { OfflineIndicator } from '@components/common/OfflineIndicator';
+import { CalendarProvider } from '@contexts/CalendarContext';
+import { CampusMapProvider } from '@contexts/CampusMapContext';
+import { FormsProvider } from '@contexts/FormsContext';
+import { GradesProvider } from '@contexts/GradesContext';
+import { ScheduleProvider } from '@contexts/ScheduleContext';
+import { UserProvider } from '@contexts/UserContext';
+import { AuthProvider } from '@features/auth/hooks/useAuth';
+import { RoleProvider } from '@features/auth/hooks/useRole';
 
 // Utilities
-import { measurePageLoad } from '@lib/utils/performance';
 import { lazyWithRetry } from '@lib/utils/lazyWithRetry';
+import { measurePageLoad } from '@lib/utils/performance';
+import React, { Suspense, useEffect } from 'react';
+import { createHashRouter, RouterProvider } from 'react-router-dom';
 
 // Lazy load pages with automatic retry on chunk loading failure
 const Dashboard = lazyWithRetry(() => import('@pages/Dashboard'));
@@ -46,7 +45,6 @@ const OfflinePage = lazyWithRetry(() => import('@pages/OfflinePage'));
 const AdminDashboard = lazyWithRetry(() => import('@features/admin/AdminDashboard'));
 // Auth redirect page for role-based routing
 const AuthRedirect = lazyWithRetry(() => import('@pages/AuthRedirect'));
-
 
 // Loading fallback component
 const PageLoader = React.memo(() => (
@@ -129,7 +127,7 @@ const router = createHashRouter([
           <Suspense fallback={<PageLoader />}>
             <Dashboard />
           </Suspense>
-        )
+        ),
       },
       {
         path: 'grades',
@@ -137,7 +135,7 @@ const router = createHashRouter([
           <Suspense fallback={<PageLoader />}>
             <Grades />
           </Suspense>
-        )
+        ),
       },
       {
         path: 'schedule',
@@ -145,7 +143,7 @@ const router = createHashRouter([
           <Suspense fallback={<PageLoader />}>
             <Schedule />
           </Suspense>
-        )
+        ),
       },
       {
         path: 'directory',
@@ -153,7 +151,7 @@ const router = createHashRouter([
           <Suspense fallback={<PageLoader />}>
             <Directory />
           </Suspense>
-        )
+        ),
       },
       {
         path: 'campus-map',
@@ -161,7 +159,7 @@ const router = createHashRouter([
           <Suspense fallback={<PageLoader />}>
             <CampusMap />
           </Suspense>
-        )
+        ),
       },
       {
         path: 'college-forms',
@@ -169,7 +167,7 @@ const router = createHashRouter([
           <Suspense fallback={<PageLoader />}>
             <CollegeForms />
           </Suspense>
-        )
+        ),
       },
       {
         path: 'academic-calendar',
@@ -177,7 +175,7 @@ const router = createHashRouter([
           <Suspense fallback={<PageLoader />}>
             <AcademicCalendar />
           </Suspense>
-        )
+        ),
       },
       {
         path: 'profile',
@@ -185,7 +183,7 @@ const router = createHashRouter([
           <Suspense fallback={<PageLoader />}>
             <Profile />
           </Suspense>
-        )
+        ),
       },
       {
         path: 'privacy',
@@ -193,7 +191,7 @@ const router = createHashRouter([
           <Suspense fallback={<PageLoader />}>
             <PrivacyPolicy />
           </Suspense>
-        )
+        ),
       },
       {
         path: 'terms',
@@ -201,7 +199,7 @@ const router = createHashRouter([
           <Suspense fallback={<PageLoader />}>
             <TermsOfService />
           </Suspense>
-        )
+        ),
       },
 
       {
@@ -210,7 +208,7 @@ const router = createHashRouter([
           <Suspense fallback={<PageLoader />}>
             <NotFound />
           </Suspense>
-        )
+        ),
       },
     ],
   },

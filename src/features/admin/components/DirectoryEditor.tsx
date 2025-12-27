@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
-import { AdminConfig, AdminDirectoryEntry } from '../types';
 import { Plus, Search, Trash2, Edit2, Phone, Mail, Building, Upload } from 'lucide-react';
-import DirectoryUploader from './DirectoryUploader';
+import React, { useState, useMemo } from 'react';
+
+import { AdminConfig, AdminDirectoryEntry } from '../types';
 import { AdminHeader, UsersIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
+import DirectoryUploader from './DirectoryUploader';
 
 interface Props {
   config: AdminConfig;
@@ -41,13 +42,13 @@ const DirectoryEditor: React.FC<Props> = ({
 
   // Get unique departments
   const departments = useMemo(() => {
-    const depts = new Set((config.directory || []).map(e => e.department));
+    const depts = new Set((config.directory || []).map((e) => e.department));
     return Array.from(depts).sort();
   }, [config.directory]);
 
   // Filter entries
   const filteredEntries = useMemo(() => {
-    return (config.directory || []).filter(entry => {
+    return (config.directory || []).filter((entry) => {
       const matchesSearch =
         entry.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         entry.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -94,9 +95,9 @@ const DirectoryEditor: React.FC<Props> = ({
   return (
     <AdminPageLayout>
       {/* Header */}
-      <AdminHeader 
-        icon={<UsersIcon />} 
-        title="Faculty & Staff Directory" 
+      <AdminHeader
+        icon={<UsersIcon />}
+        title="Faculty & Staff Directory"
         subtitle="Manage faculty, staff, and department contacts"
       >
         <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -104,8 +105,12 @@ const DirectoryEditor: React.FC<Props> = ({
           {(searchQuery || filterDepartment !== 'all') && filteredEntries.length > 0 && (
             <button
               onClick={() => {
-                if (confirm(`Are you sure you want to delete all ${filteredEntries.length} filtered entries? This action cannot be undone.`)) {
-                  deleteDirectoryEntriesByIds(filteredEntries.map(e => e.id));
+                if (
+                  confirm(
+                    `Are you sure you want to delete all ${filteredEntries.length} filtered entries? This action cannot be undone.`
+                  )
+                ) {
+                  deleteDirectoryEntriesByIds(filteredEntries.map((e) => e.id));
                 }
               }}
               className="admin-btn bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-4"
@@ -118,7 +123,11 @@ const DirectoryEditor: React.FC<Props> = ({
           {(config.directory?.length || 0) > 0 && (
             <button
               onClick={() => {
-                if (confirm(`Are you sure you want to delete ALL ${config.directory?.length || 0} faculty entries? This action cannot be undone.`)) {
+                if (
+                  confirm(
+                    `Are you sure you want to delete ALL ${config.directory?.length || 0} faculty entries? This action cannot be undone.`
+                  )
+                ) {
                   clearAllDirectoryEntries();
                 }
               }}
@@ -128,15 +137,15 @@ const DirectoryEditor: React.FC<Props> = ({
               Clear All ({config.directory?.length || 0})
             </button>
           )}
-          <button 
-            onClick={() => setShowUploader(true)} 
+          <button
+            onClick={() => setShowUploader(true)}
             className="admin-btn admin-btn-secondary text-xs sm:text-sm px-3 sm:px-4"
           >
             <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
             Upload Excel
           </button>
-          <button 
-            onClick={() => setShowAddModal(true)} 
+          <button
+            onClick={() => setShowAddModal(true)}
             className="admin-btn admin-btn-primary text-xs sm:text-sm px-3 sm:px-4"
           >
             <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -146,7 +155,6 @@ const DirectoryEditor: React.FC<Props> = ({
       </AdminHeader>
 
       {/* Stats */}
-
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -158,7 +166,7 @@ const DirectoryEditor: React.FC<Props> = ({
             style={{ paddingLeft: '48px' }}
             placeholder="Search by name, email, or designation..."
             value={searchQuery}
-            onChange={e => {
+            onChange={(e) => {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
@@ -167,15 +175,15 @@ const DirectoryEditor: React.FC<Props> = ({
         <select
           className="admin-select w-full sm:w-auto sm:min-w-[200px]"
           value={filterDepartment}
-          onChange={e => {
+          onChange={(e) => {
             setFilterDepartment(e.target.value);
             setCurrentPage(1);
           }}
         >
           <option value="all">All Departments ({config.directory?.length || 0})</option>
-          {departments.map(dept => (
+          {departments.map((dept) => (
             <option key={dept} value={dept}>
-              {dept} ({(config.directory || []).filter(e => e.department === dept).length})
+              {dept} ({(config.directory || []).filter((e) => e.department === dept).length})
             </option>
           ))}
         </select>
@@ -195,7 +203,7 @@ const DirectoryEditor: React.FC<Props> = ({
               </tr>
             </thead>
             <tbody>
-              {paginatedEntries.map(entry => (
+              {paginatedEntries.map((entry) => (
                 <tr key={entry.id}>
                   <td>
                     <div className="flex items-center gap-3">
@@ -266,14 +274,14 @@ const DirectoryEditor: React.FC<Props> = ({
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
               >
                 Previous
               </button>
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
               >
@@ -286,7 +294,7 @@ const DirectoryEditor: React.FC<Props> = ({
 
       {/* Directory Cards - Mobile */}
       <div className="space-y-3 md:hidden">
-        {paginatedEntries.map(entry => (
+        {paginatedEntries.map((entry) => (
           <div key={entry.id} className="admin-card p-4">
             {/* Header with avatar, name and actions */}
             <div className="flex items-start justify-between gap-3 mb-3">
@@ -314,7 +322,7 @@ const DirectoryEditor: React.FC<Props> = ({
                 </button>
               </div>
             </div>
-            
+
             {/* Department badge */}
             <div className="mb-3">
               <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
@@ -322,7 +330,7 @@ const DirectoryEditor: React.FC<Props> = ({
                 {entry.department}
               </span>
             </div>
-            
+
             {/* Contact info */}
             <div className="space-y-1">
               {entry.email && (
@@ -359,14 +367,14 @@ const DirectoryEditor: React.FC<Props> = ({
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="admin-btn admin-btn-secondary text-sm disabled:opacity-40 flex-1 justify-center"
               >
                 Previous
               </button>
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="admin-btn admin-btn-secondary text-sm disabled:opacity-40 flex-1 justify-center"
               >
@@ -380,7 +388,7 @@ const DirectoryEditor: React.FC<Props> = ({
       {/* Add Modal */}
       {showAddModal && (
         <div className="admin-modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="admin-modal max-w-lg" onClick={e => e.stopPropagation()}>
+          <div className="admin-modal max-w-lg" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">Add Directory Entry</h3>
             <div className="space-y-4">
               <div>
@@ -390,7 +398,7 @@ const DirectoryEditor: React.FC<Props> = ({
                   className="admin-input"
                   placeholder="Full name..."
                   value={newEntry.name}
-                  onChange={e => setNewEntry({ ...newEntry, name: e.target.value })}
+                  onChange={(e) => setNewEntry({ ...newEntry, name: e.target.value })}
                 />
               </div>
               <div>
@@ -400,25 +408,25 @@ const DirectoryEditor: React.FC<Props> = ({
                   className="admin-input"
                   placeholder="e.g., Computer Science and Engineering"
                   value={newEntry.department}
-                  onChange={e => setNewEntry({ ...newEntry, department: e.target.value })}
+                  onChange={(e) => setNewEntry({ ...newEntry, department: e.target.value })}
                   list="departments-list"
                 />
                 <datalist id="departments-list">
-                  {departments.map(dept => (
+                  {departments.map((dept) => (
                     <option key={dept} value={dept} />
                   ))}
                 </datalist>
               </div>
               <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
                 <div>
-                   <label className="admin-label">Designation</label>
-                   <input
-                     type="text"
-                     className="admin-input"
-                     placeholder="e.g., Professor"
-                     value={newEntry.designation}
-                     onChange={e => setNewEntry({ ...newEntry, designation: e.target.value })}
-                   />
+                  <label className="admin-label">Designation</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="e.g., Professor"
+                    value={newEntry.designation}
+                    onChange={(e) => setNewEntry({ ...newEntry, designation: e.target.value })}
+                  />
                 </div>
                 <div>
                   <label className="admin-label">Phone</label>
@@ -427,7 +435,7 @@ const DirectoryEditor: React.FC<Props> = ({
                     className="admin-input"
                     placeholder="+91-XXX-XXX-XXXX"
                     value={newEntry.phone}
-                    onChange={e => setNewEntry({ ...newEntry, phone: e.target.value })}
+                    onChange={(e) => setNewEntry({ ...newEntry, phone: e.target.value })}
                   />
                 </div>
               </div>
@@ -438,11 +446,14 @@ const DirectoryEditor: React.FC<Props> = ({
                   className="admin-input"
                   placeholder="email@example.com"
                   value={newEntry.email}
-                  onChange={e => setNewEntry({ ...newEntry, email: e.target.value })}
+                  onChange={(e) => setNewEntry({ ...newEntry, email: e.target.value })}
                 />
               </div>
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setShowAddModal(false)} className="admin-btn admin-btn-secondary flex-1">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="admin-btn admin-btn-secondary flex-1"
+                >
                   Cancel
                 </button>
                 <button onClick={handleAddEntry} className="admin-btn admin-btn-primary flex-1">
@@ -457,7 +468,7 @@ const DirectoryEditor: React.FC<Props> = ({
       {/* Edit Modal */}
       {editingEntry && (
         <div className="admin-modal-overlay" onClick={() => setEditingEntry(null)}>
-          <div className="admin-modal max-w-lg" onClick={e => e.stopPropagation()}>
+          <div className="admin-modal max-w-lg" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">Edit Directory Entry</h3>
             <div className="space-y-4">
               <div>
@@ -466,7 +477,7 @@ const DirectoryEditor: React.FC<Props> = ({
                   type="text"
                   className="admin-input"
                   value={editingEntry.name}
-                  onChange={e => setEditingEntry({ ...editingEntry, name: e.target.value })}
+                  onChange={(e) => setEditingEntry({ ...editingEntry, name: e.target.value })}
                 />
               </div>
               <div>
@@ -475,11 +486,11 @@ const DirectoryEditor: React.FC<Props> = ({
                   type="text"
                   className="admin-input"
                   value={editingEntry.department}
-                  onChange={e => setEditingEntry({ ...editingEntry, department: e.target.value })}
+                  onChange={(e) => setEditingEntry({ ...editingEntry, department: e.target.value })}
                   list="departments-list-edit"
                 />
                 <datalist id="departments-list-edit">
-                  {departments.map(dept => (
+                  {departments.map((dept) => (
                     <option key={dept} value={dept} />
                   ))}
                 </datalist>
@@ -491,17 +502,19 @@ const DirectoryEditor: React.FC<Props> = ({
                     type="text"
                     className="admin-input"
                     value={editingEntry.designation}
-                    onChange={e => setEditingEntry({ ...editingEntry, designation: e.target.value })}
+                    onChange={(e) =>
+                      setEditingEntry({ ...editingEntry, designation: e.target.value })
+                    }
                   />
                 </div>
                 <div>
-                   <label className="admin-label">Phone</label>
-                   <input
-                     type="text"
-                     className="admin-input"
-                     value={editingEntry.phone}
-                     onChange={e => setEditingEntry({ ...editingEntry, phone: e.target.value })}
-                   />
+                  <label className="admin-label">Phone</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={editingEntry.phone}
+                    onChange={(e) => setEditingEntry({ ...editingEntry, phone: e.target.value })}
+                  />
                 </div>
               </div>
               <div>
@@ -510,11 +523,14 @@ const DirectoryEditor: React.FC<Props> = ({
                   type="email"
                   className="admin-input"
                   value={editingEntry.email}
-                  onChange={e => setEditingEntry({ ...editingEntry, email: e.target.value })}
+                  onChange={(e) => setEditingEntry({ ...editingEntry, email: e.target.value })}
                 />
               </div>
               <div className="flex gap-3 mt-6">
-                <button onClick={() => setEditingEntry(null)} className="admin-btn admin-btn-secondary flex-1">
+                <button
+                  onClick={() => setEditingEntry(null)}
+                  className="admin-btn admin-btn-secondary flex-1"
+                >
                   Cancel
                 </button>
                 <button onClick={handleUpdateEntry} className="admin-btn admin-btn-primary flex-1">

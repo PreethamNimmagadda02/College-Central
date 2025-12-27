@@ -1,7 +1,8 @@
+import { setupGlobalErrorTracking } from '@lib/utils/errorTracking';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+
 import App from './App';
-import { setupGlobalErrorTracking } from '@lib/utils/errorTracking';
 
 // Setup global error tracking
 if (import.meta.env.PROD) {
@@ -10,12 +11,16 @@ if (import.meta.env.PROD) {
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
         // Check for updates every 60 minutes
-        setInterval(() => {
-          registration.update();
-        }, 60 * 1000 * 1000);
+        setInterval(
+          () => {
+            registration.update();
+          },
+          60 * 1000 * 1000
+        );
 
         // Listen for updates
         registration.addEventListener('updatefound', () => {
@@ -31,7 +36,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
           }
         });
       })
-      .catch(err => {
+      .catch((err) => {
         // Ignore security errors in development
         if (err.name !== 'SecurityError') {
           console.error('ServiceWorker registration failed: ', err);
@@ -55,7 +60,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+  throw new Error('Could not find root element to mount to');
 }
 
 const root = ReactDOM.createRoot(rootElement);

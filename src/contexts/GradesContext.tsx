@@ -1,11 +1,21 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useCallback,
+} from 'react';
+
 import { Semester } from '@/types';
+
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { db } from '@lib/firebase';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/storage';
-import { logActivity } from '@services/activityService';
 import { getGoogleGenAI } from '@lib/utils/lazyImports';
+import { logActivity } from '@services/activityService';
 
 /**
  * GradesContext handles academic grade data with intelligent retake logic:
@@ -42,7 +52,7 @@ const fileToBase64 = (file: File): Promise<string> => {
         reject(new Error('Unexpected FileReader result type.'));
       }
     };
-    reader.onerror = error => reject(error);
+    reader.onerror = (error) => reject(error);
     reader.readAsDataURL(file);
   });
 };
@@ -108,18 +118,21 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
   }, [currentUser]);
 
-  const setGradesData = useCallback(async (data: GradesData | null) => {
-    if (currentUser) {
-      try {
-        const userDocRef = db.collection('users').doc(currentUser.uid);
-        await userDocRef.update({ gradesData: data });
-      } catch (error) {
-        console.error('Error updating grades data:', error);
-        setError('Failed to save grades data. Please try again.');
-        throw error;
+  const setGradesData = useCallback(
+    async (data: GradesData | null) => {
+      if (currentUser) {
+        try {
+          const userDocRef = db.collection('users').doc(currentUser.uid);
+          await userDocRef.update({ gradesData: data });
+        } catch (error) {
+          console.error('Error updating grades data:', error);
+          setError('Failed to save grades data. Please try again.');
+          throw error;
+        }
       }
-    }
-  }, [currentUser]);
+    },
+    [currentUser]
+  );
 
   const selectFile = useCallback((file: File | null) => {
     if (file) {
@@ -142,7 +155,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const processGrades = useCallback(async () => {
     if (!selectedFile || !currentUser) {
-      setError("Please select a file first.");
+      setError('Please select a file first.');
       return;
     }
 
@@ -150,171 +163,202 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setError(null);
 
     try {
-        const storage = firebase.storage();
+      const storage = firebase.storage();
 
-        // Delete old grade sheet from storage if it exists
-        if (gradesData?.gradeSheetUrl) {
-            try {
-                const oldFileRef = storage.refFromURL(gradesData.gradeSheetUrl);
-                await oldFileRef.delete();
-            } catch (deleteError) {
-                // Continue even if deletion fails (file might already be deleted)
-            }
-        }
-
-        // Upload new file to Firebase Storage
-        const timestamp = Date.now();
-        const fileExtension = selectedFile.name.split('.').pop();
-        const storagePath = `gradeSheets/${currentUser.uid}/${timestamp}.${fileExtension}`;
-        const storageRef = storage.ref(storagePath);
-
-        await storageRef.put(selectedFile);
-        const gradeSheetUrl = await storageRef.getDownloadURL();
-
-        const base64Data = await fileToBase64(selectedFile);
-
-        let result: Omit<GradesData, 'gradeSheetUrl' | 'gradeSheetFileName'>;
-
-        // Try Gemini first
+      // Delete old grade sheet from storage if it exists
+      if (gradesData?.gradeSheetUrl) {
         try {
-            // Lazy load Google GenAI
-            const { GoogleGenAI, Type } = await getGoogleGenAI();
-            const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+          const oldFileRef = storage.refFromURL(gradesData.gradeSheetUrl);
+          await oldFileRef.delete();
+        } catch (deleteError) {
+          // Continue even if deletion fails (file might already be deleted)
+        }
+      }
 
-            const schema = {
-              type: Type.OBJECT,
-              properties: {
-                cgpa: { type: Type.NUMBER, description: 'The overall CGPA as shown on the grade sheet.' },
-                totalCredits: { type: Type.NUMBER, description: 'The total number of credits (will be recalculated based on latest passed courses).' },
-                semesters: {
-                  type: Type.ARRAY,
-                  description: 'An array of semesters, from latest to oldest.',
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      semester: { type: Type.NUMBER, description: 'The semester number (e.g., 4).' },
-                      sessionYear: { type: Type.STRING, description: 'The academic session year for the semester (e.g., "2023-2024").' },
-                      sessionType: { type: Type.STRING, description: 'The type of the semester session (e.g., "Monsoon", "Winter", "Summer").' },
-                      sgpa: { type: Type.NUMBER, description: 'The SGPA for this semester.' },
-                      grades: {
-                        type: Type.ARRAY,
-                        items: {
-                          type: Type.OBJECT,
-                          properties: {
-                            subjectCode: { type: Type.STRING, description: 'The course code (e.g., CSL201).' },
-                            subjectName: { type: Type.STRING, description: 'The full name of the course.' },
-                            credits: { type: Type.NUMBER, description: 'The number of credits for the course.' },
-                            grade: { type: Type.STRING, description: 'The letter grade received (e.g., A, B, EX).' },
-                          },
-                          required: ['subjectCode', 'subjectName', 'credits', 'grade'],
+      // Upload new file to Firebase Storage
+      const timestamp = Date.now();
+      const fileExtension = selectedFile.name.split('.').pop();
+      const storagePath = `gradeSheets/${currentUser.uid}/${timestamp}.${fileExtension}`;
+      const storageRef = storage.ref(storagePath);
+
+      await storageRef.put(selectedFile);
+      const gradeSheetUrl = await storageRef.getDownloadURL();
+
+      const base64Data = await fileToBase64(selectedFile);
+
+      let result: Omit<GradesData, 'gradeSheetUrl' | 'gradeSheetFileName'>;
+
+      // Try Gemini first
+      try {
+        // Lazy load Google GenAI
+        const { GoogleGenAI, Type } = await getGoogleGenAI();
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+
+        const schema = {
+          type: Type.OBJECT,
+          properties: {
+            cgpa: {
+              type: Type.NUMBER,
+              description: 'The overall CGPA as shown on the grade sheet.',
+            },
+            totalCredits: {
+              type: Type.NUMBER,
+              description:
+                'The total number of credits (will be recalculated based on latest passed courses).',
+            },
+            semesters: {
+              type: Type.ARRAY,
+              description: 'An array of semesters, from latest to oldest.',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  semester: { type: Type.NUMBER, description: 'The semester number (e.g., 4).' },
+                  sessionYear: {
+                    type: Type.STRING,
+                    description: 'The academic session year for the semester (e.g., "2023-2024").',
+                  },
+                  sessionType: {
+                    type: Type.STRING,
+                    description:
+                      'The type of the semester session (e.g., "Monsoon", "Winter", "Summer").',
+                  },
+                  sgpa: { type: Type.NUMBER, description: 'The SGPA for this semester.' },
+                  grades: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        subjectCode: {
+                          type: Type.STRING,
+                          description: 'The course code (e.g., CSL201).',
+                        },
+                        subjectName: {
+                          type: Type.STRING,
+                          description: 'The full name of the course.',
+                        },
+                        credits: {
+                          type: Type.NUMBER,
+                          description: 'The number of credits for the course.',
+                        },
+                        grade: {
+                          type: Type.STRING,
+                          description: 'The letter grade received (e.g., A, B, EX).',
                         },
                       },
+                      required: ['subjectCode', 'subjectName', 'credits', 'grade'],
                     },
-                    required: ['semester', 'sessionYear', 'sessionType', 'sgpa', 'grades'],
                   },
                 },
+                required: ['semester', 'sessionYear', 'sessionType', 'sgpa', 'grades'],
               },
-              required: ['cgpa', 'totalCredits', 'semesters'],
-            };
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: {
-                    parts: [
-                        { text: "Please analyze this document (image or PDF) of a student's grade sheet. Extract the academic performance data and format it according to the provided JSON schema. The data should include the overall CGPA as shown on the grade sheet, and a list of all semesters, starting from the most recent one. For each semester, provide the semester number, the academic session year (e.g., '2023-2024'), the session type (Monsoon, Winter, or Summer), the SGPA, and a list of all subjects with their code, name, credits, and the grade obtained. IMPORTANT: Include ALL course instances, including retakes - if a student took the same course multiple times, include each instance in its respective semester. Ensure all fields in the schema are populated accurately." },
-                        { inlineData: { mimeType: selectedFile.type, data: base64Data } }
-                    ]
-                },
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: schema,
-                }
-            });
-
-            interface AIResponse {
-                text?: string | (() => string);
-            }
-            const rawText = (response as AIResponse)?.text;
-            const text = typeof rawText === 'string' ? rawText : (typeof rawText === 'function' ? rawText() : '');
-            if (!text) {
-                throw new Error('AI response was empty or invalid.');
-            }
-            result = JSON.parse(text.trim());
-
-        } catch (geminiError) {
-            // Re-throw with a user-friendly message
-            console.error('Gemini API error:', geminiError);
-            throw new Error('Failed to process grade sheet. Please ensure the Gemini API is configured correctly and try again.');
-        }
-
-        // Get latest grades for each course (handles retakes)
-        interface CourseData {
-            grade: { subjectCode: string; credits: number; grade: string };
-            semester: number;
-        }
-        const courseMap: { [subjectCode: string]: CourseData } = {};
-        result.semesters.forEach((sem) => {
-            sem.grades.forEach((grade) => {
-                const existing = courseMap[grade.subjectCode];
-                // If course doesn't exist or current semester is later, update it
-                if (!existing || sem.semester > existing.semester) {
-                    courseMap[grade.subjectCode] = {
-                        grade: grade,
-                        semester: sem.semester
-                    };
-                }
-            });
-        });
-
-        // Recalculate totalCredits using only latest grades
-        // Credits for F grades should only be counted when the student clears them
-        let totalPassedCredits = 0;
-
-        Object.values(courseMap).forEach((courseData) => {
-            const grade = courseData.grade;
-            // Only add credits if grade is not 'F'
-            if (grade.grade !== 'F') {
-                totalPassedCredits += grade.credits || 0;
-            }
-        });
-
-        result.totalCredits = totalPassedCredits;
-        // Keep the CGPA as extracted from the grade sheet (don't recalculate)
-
-        // Add grade sheet URL and filename to result
-        const finalResult: GradesData = {
-            ...result,
-            gradeSheetUrl,
-            gradeSheetFileName: selectedFile.name
+            },
+          },
+          required: ['cgpa', 'totalCredits', 'semesters'],
         };
 
-        await setGradesData(finalResult);
-        await logActivity(currentUser.uid, {
-            type: 'grades',
-            title: 'Grades Processed',
-            description: 'Successfully processed and updated your grade sheet using Gemini AI.',
-            icon: '📊',
-            link: '/grades'
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: {
+            parts: [
+              {
+                text: "Please analyze this document (image or PDF) of a student's grade sheet. Extract the academic performance data and format it according to the provided JSON schema. The data should include the overall CGPA as shown on the grade sheet, and a list of all semesters, starting from the most recent one. For each semester, provide the semester number, the academic session year (e.g., '2023-2024'), the session type (Monsoon, Winter, or Summer), the SGPA, and a list of all subjects with their code, name, credits, and the grade obtained. IMPORTANT: Include ALL course instances, including retakes - if a student took the same course multiple times, include each instance in its respective semester. Ensure all fields in the schema are populated accurately.",
+              },
+              { inlineData: { mimeType: selectedFile.type, data: base64Data } },
+            ],
+          },
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: schema,
+          },
         });
-        selectFile(null); // Clear file selection on success
 
+        interface AIResponse {
+          text?: string | (() => string);
+        }
+        const rawText = (response as AIResponse)?.text;
+        const text =
+          typeof rawText === 'string' ? rawText : typeof rawText === 'function' ? rawText() : '';
+        if (!text) {
+          throw new Error('AI response was empty or invalid.');
+        }
+        result = JSON.parse(text.trim());
+      } catch (geminiError) {
+        // Re-throw with a user-friendly message
+        console.error('Gemini API error:', geminiError);
+        throw new Error(
+          'Failed to process grade sheet. Please ensure the Gemini API is configured correctly and try again.'
+        );
+      }
+
+      // Get latest grades for each course (handles retakes)
+      interface CourseData {
+        grade: { subjectCode: string; credits: number; grade: string };
+        semester: number;
+      }
+      const courseMap: { [subjectCode: string]: CourseData } = {};
+      result.semesters.forEach((sem) => {
+        sem.grades.forEach((grade) => {
+          const existing = courseMap[grade.subjectCode];
+          // If course doesn't exist or current semester is later, update it
+          if (!existing || sem.semester > existing.semester) {
+            courseMap[grade.subjectCode] = {
+              grade: grade,
+              semester: sem.semester,
+            };
+          }
+        });
+      });
+
+      // Recalculate totalCredits using only latest grades
+      // Credits for F grades should only be counted when the student clears them
+      let totalPassedCredits = 0;
+
+      Object.values(courseMap).forEach((courseData) => {
+        const grade = courseData.grade;
+        // Only add credits if grade is not 'F'
+        if (grade.grade !== 'F') {
+          totalPassedCredits += grade.credits || 0;
+        }
+      });
+
+      result.totalCredits = totalPassedCredits;
+      // Keep the CGPA as extracted from the grade sheet (don't recalculate)
+
+      // Add grade sheet URL and filename to result
+      const finalResult: GradesData = {
+        ...result,
+        gradeSheetUrl,
+        gradeSheetFileName: selectedFile.name,
+      };
+
+      await setGradesData(finalResult);
+      await logActivity(currentUser.uid, {
+        type: 'grades',
+        title: 'Grades Processed',
+        description: 'Successfully processed and updated your grade sheet using Gemini AI.',
+        icon: '📊',
+        link: '/grades',
+      });
+      selectFile(null); // Clear file selection on success
     } catch (e) {
-        console.error("Error processing grade sheet:", e);
-        setError("Failed to process the grade sheet. The file might be unclear or in an unsupported format. Please try again.");
+      console.error('Error processing grade sheet:', e);
+      setError(
+        'Failed to process the grade sheet. The file might be unclear or in an unsupported format. Please try again.'
+      );
     } finally {
-        setIsProcessing(false);
+      setIsProcessing(false);
     }
   }, [selectedFile, currentUser, gradesData, setGradesData, selectFile]);
 
   const resetGradesState = useCallback(async () => {
     if (currentUser) {
-        await logActivity(currentUser.uid, {
-            type: 'grades',
-            title: 'Grades Data Cleared',
-            description: 'Your academic performance data has been cleared.',
-            icon: '🔄',
-            link: '/grades'
-        });
+      await logActivity(currentUser.uid, {
+        type: 'grades',
+        title: 'Grades Data Cleared',
+        description: 'Your academic performance data has been cleared.',
+        icon: '🔄',
+        link: '/grades',
+      });
     }
     await setGradesData(null);
     selectFile(null);
@@ -332,16 +376,23 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       imagePreview,
       selectFile,
       processGrades,
-      resetGradesState
+      resetGradesState,
     }),
-    [gradesData, loading, isProcessing, error, selectedFile, imagePreview, setGradesData, selectFile, processGrades, resetGradesState]
+    [
+      gradesData,
+      loading,
+      isProcessing,
+      error,
+      selectedFile,
+      imagePreview,
+      setGradesData,
+      selectFile,
+      processGrades,
+      resetGradesState,
+    ]
   );
 
-  return (
-    <GradesContext.Provider value={contextValue}>
-      {children}
-    </GradesContext.Provider>
-  );
+  return <GradesContext.Provider value={contextValue}>{children}</GradesContext.Provider>;
 };
 
 export const useGrades = () => {

@@ -1,7 +1,7 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
 import { LogoIcon } from '@components/icons/SidebarIcons';
 import { useAppConfig } from '@contexts/AppConfigContext';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -76,8 +76,18 @@ const Footer: React.FC = () => {
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 group-hover:bg-blue-500 group-hover:shadow-lg group-hover:shadow-blue-500/50 transition-all"></span>
                   Documentation
-                  <svg className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  <svg
+                    className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
                   </svg>
                 </a>
                 <a
@@ -88,11 +98,20 @@ const Footer: React.FC = () => {
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 group-hover:bg-blue-500 group-hover:shadow-lg group-hover:shadow-blue-500/50 transition-all"></span>
                   Feedback Form
-                  <svg className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  <svg
+                    className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
                   </svg>
                 </a>
-
               </nav>
             </div>
 
@@ -135,9 +154,24 @@ const Footer: React.FC = () => {
                   aria-label="Gmail"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-red-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <svg className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:rotate-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="4" width="20" height="16" rx="2" className="group-hover:fill-white/10 transition-all duration-300"/>
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  <svg
+                    className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:rotate-6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    viewBox="0 0 24 24"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect
+                      x="2"
+                      y="4"
+                      width="20"
+                      height="16"
+                      rx="2"
+                      className="group-hover:fill-white/10 transition-all duration-300"
+                    />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                   </svg>
                 </a>
               </div>
@@ -157,7 +191,11 @@ const Footer: React.FC = () => {
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-slate-500 dark:text-slate-400 text-center md:text-left font-medium">
-              © {currentYear} <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold">College Central</span>. All rights reserved.
+              © {currentYear}{' '}
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold">
+                College Central
+              </span>
+              . All rights reserved.
             </p>
             <div className="flex items-center gap-3 text-xs">
               <Link

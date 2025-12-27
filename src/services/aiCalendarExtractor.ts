@@ -31,19 +31,13 @@ export async function extractCalendarEventsWithAI(
   onProgress?: (progress: ExtractionProgress) => void
 ): Promise<AIExtractionResult> {
   try {
-    const result = await extractWithWorkflow(
-      pdfText,
-      calendarExtractionConfig,
-      onProgress
-    );
+    const result = await extractWithWorkflow(pdfText, calendarExtractionConfig, onProgress);
 
     if (!result.success && result.data.length === 0) {
       return {
         success: false,
         events: [],
-        error: result.errors.length > 0 
-          ? result.errors.join('; ') 
-          : 'Failed to extract events',
+        error: result.errors.length > 0 ? result.errors.join('; ') : 'Failed to extract events',
       };
     }
 

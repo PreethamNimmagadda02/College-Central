@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import { X, Download, Smartphone, Share } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -39,7 +39,7 @@ export const InstallPrompt: React.FC = () => {
       const dismissedDate = new Date(dismissed);
       const now = new Date();
       const daysSinceDismissal = (now.getTime() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
-      
+
       // Show again after 7 days
       if (daysSinceDismissal < 7) {
         return;
@@ -142,7 +142,9 @@ export const InstallPrompt: React.FC = () => {
             {/* Installation Steps */}
             <div className="space-y-3 mb-4">
               <div className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">1</div>
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                  1
+                </div>
                 <div>
                   <span className="font-medium">Tap the Share button</span>
                   <div className="flex items-center gap-1 mt-1 text-slate-500 dark:text-slate-400">
@@ -152,24 +154,34 @@ export const InstallPrompt: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">2</div>
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                  2
+                </div>
                 <div>
                   <span className="font-medium">Select "Add to Home Screen"</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Scroll down if you don't see it</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Scroll down if you don't see it
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">3</div>
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                  3
+                </div>
                 <div>
                   <span className="font-medium">Tap "Add"</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">The app icon will appear on your home screen</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    The app icon will appear on your home screen
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Benefits */}
             <div className="space-y-2 mb-4 pt-3 border-t border-slate-200 dark:border-slate-700">
-              <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Benefits</p>
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                Benefits
+              </p>
               <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
                 <span>Works offline</span>
@@ -224,7 +236,8 @@ export const InstallPrompt: React.FC = () => {
         {/* Content */}
         <div className="p-4">
           <p className="text-slate-700 dark:text-slate-300 text-sm mb-4">
-            Install College Central for quick access, offline support, and a native app experience on your device.
+            Install College Central for quick access, offline support, and a native app experience
+            on your device.
           </p>
 
           <div className="space-y-2 mb-4">

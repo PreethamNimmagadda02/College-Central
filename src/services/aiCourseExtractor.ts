@@ -31,19 +31,13 @@ export async function extractCoursesWithAI(
   onProgress?: (progress: ExtractionProgress) => void
 ): Promise<CourseExtractionResult> {
   try {
-    const result = await extractWithWorkflow(
-      pdfText,
-      courseExtractionConfig,
-      onProgress
-    );
+    const result = await extractWithWorkflow(pdfText, courseExtractionConfig, onProgress);
 
     if (!result.success && result.data.length === 0) {
       return {
         success: false,
         courses: [],
-        error: result.errors.length > 0 
-          ? result.errors.join('; ') 
-          : 'Failed to extract courses',
+        error: result.errors.length > 0 ? result.errors.join('; ') : 'Failed to extract courses',
       };
     }
 

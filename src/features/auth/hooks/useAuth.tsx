@@ -5,8 +5,8 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { auth } from '@lib/firebase';
-import { logActivity } from '@services/activityService';
 import { ALLOWED_EMAIL_DOMAIN, HOSTED_DOMAIN } from '@lib/utils/constants';
+import { logActivity } from '@services/activityService';
 
 type User = firebase.User;
 
@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         icon: '🎉',
       });
     } catch (error) {
-      console.error("Registration failed:", error);
+      console.error('Registration failed:', error);
       throw error;
     }
   };
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Restrict to iitism.ac.in domain
       provider.setCustomParameters({
         prompt: 'select_account',
-        hd: HOSTED_DOMAIN // Hosted domain parameter for Google Workspace
+        hd: HOSTED_DOMAIN, // Hosted domain parameter for Google Workspace
       });
       const userCredential = await auth.signInWithPopup(provider);
 
@@ -93,7 +93,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (!email || !email.endsWith(ALLOWED_EMAIL_DOMAIN)) {
         // Sign out the user immediately
         await auth.signOut();
-        throw new Error(`INVALID_DOMAIN: Only ${ALLOWED_EMAIL_DOMAIN} email addresses are allowed.`);
+        throw new Error(
+          `INVALID_DOMAIN: Only ${ALLOWED_EMAIL_DOMAIN} email addresses are allowed.`
+        );
       }
 
       if (!userCredential.user) {
@@ -107,7 +109,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         icon: '🔑',
       });
     } catch (error) {
-      console.error("Google login failed:", error);
+      console.error('Google login failed:', error);
       throw error;
     }
   };
@@ -116,7 +118,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await auth.sendPasswordResetEmail(email);
     } catch (error) {
-      console.error("Password reset failed:", error);
+      console.error('Password reset failed:', error);
       throw error;
     }
   };
@@ -127,28 +129,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (currentUser) {
         // ✅ 2. Log the sign-out activity WHILE the user is still authenticated.
         await logActivity(currentUser.uid, {
-            type: 'logout',
-            title: 'Signed Out',
-            description: 'Successfully signed out of your account.',
-            icon: '👋',
+          type: 'logout',
+          title: 'Signed Out',
+          description: 'Successfully signed out of your account.',
+          icon: '👋',
         });
       }
       // ✅ 3. Now, perform the sign-out.
       await auth.signOut();
     } catch (error) {
-        console.error("Logout process failed:", error);
-        // Fallback: If any part of the process fails (like the database write),
-        // ensure the user is still signed out as a final action.
-        if (auth.currentUser) {
-            await auth.signOut();
-        }
-        // Re-throw the error so the UI can be notified if needed.
-        throw error;
+      console.error('Logout process failed:', error);
+      // Fallback: If any part of the process fails (like the database write),
+      // ensure the user is still signed out as a final action.
+      if (auth.currentUser) {
+        await auth.signOut();
+      }
+      // Re-throw the error so the UI can be notified if needed.
+      throw error;
     }
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, isAuthenticated: !!currentUser, login, register, loginWithGoogle, resetPassword, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        currentUser,
+        isAuthenticated: !!currentUser,
+        login,
+        register,
+        loginWithGoogle,
+        resetPassword,
+        logout,
+        loading,
+      }}
+    >
       {/* Always render children to let the UI handle the loading state */}
       {children}
     </AuthContext.Provider>

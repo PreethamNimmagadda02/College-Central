@@ -1,9 +1,20 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, Loader2, CheckCircle, AlertCircle, HelpCircle, Bug, Lightbulb, FileQuestion, Mail } from 'lucide-react';
-import { useUser } from '@contexts/UserContext';
 import { useAppConfig } from '@contexts/AppConfigContext';
+import { useUser } from '@contexts/UserContext';
 import emailjs from '@emailjs/browser';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  MessageSquare,
+  Send,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  HelpCircle,
+  Bug,
+  Lightbulb,
+  FileQuestion,
+  Mail,
+} from 'lucide-react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 
 // Types
 interface FormState {
@@ -40,7 +51,7 @@ const FloatingInput: React.FC<FloatingInputProps> = ({
   label,
   icon: Icon,
   error,
-  required
+  required,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const hasValue = value.length > 0;
@@ -48,9 +59,15 @@ const FloatingInput: React.FC<FloatingInputProps> = ({
   return (
     <div className="relative group">
       <div className="relative">
-        <Icon className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${
-          isFocused ? 'text-primary dark:text-secondary' : error ? 'text-red-500' : 'text-slate-400'
-        }`} />
+        <Icon
+          className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${
+            isFocused
+              ? 'text-primary dark:text-secondary'
+              : error
+                ? 'text-red-500'
+                : 'text-slate-400'
+          }`}
+        />
         <input
           id={id}
           name={name}
@@ -61,8 +78,8 @@ const FloatingInput: React.FC<FloatingInputProps> = ({
           onBlur={() => setIsFocused(false)}
           required={required}
           className={`w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border-2 rounded-xl outline-none transition-all duration-300 text-slate-900 dark:text-white placeholder-transparent peer ${
-            error 
-              ? 'border-red-500 focus:border-red-500' 
+            error
+              ? 'border-red-500 focus:border-red-500'
               : 'border-slate-200 dark:border-slate-700 focus:border-primary dark:focus:border-secondary'
           }`}
           placeholder={label}
@@ -74,7 +91,11 @@ const FloatingInput: React.FC<FloatingInputProps> = ({
               ? '-top-2.5 text-xs px-2 bg-white dark:bg-dark-card rounded'
               : 'top-1/2 -translate-y-1/2 text-sm'
           } ${
-            isFocused ? 'text-primary dark:text-secondary' : error ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'
+            isFocused
+              ? 'text-primary dark:text-secondary'
+              : error
+                ? 'text-red-500'
+                : 'text-slate-500 dark:text-slate-400'
           }`}
         >
           {label} {required && <span className="text-red-500">*</span>}
@@ -121,7 +142,7 @@ const FloatingTextarea: React.FC<FloatingTextareaProps> = ({
   error,
   required,
   maxLength = 1000,
-  rows = 4
+  rows = 4,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const hasValue = value.length > 0;
@@ -129,9 +150,15 @@ const FloatingTextarea: React.FC<FloatingTextareaProps> = ({
   return (
     <div className="relative group">
       <div className="relative">
-        <Icon className={`absolute left-4 top-4 w-5 h-5 transition-colors duration-300 ${
-          isFocused ? 'text-primary dark:text-secondary' : error ? 'text-red-500' : 'text-slate-400'
-        }`} />
+        <Icon
+          className={`absolute left-4 top-4 w-5 h-5 transition-colors duration-300 ${
+            isFocused
+              ? 'text-primary dark:text-secondary'
+              : error
+                ? 'text-red-500'
+                : 'text-slate-400'
+          }`}
+        />
         <textarea
           id={id}
           name={name}
@@ -143,8 +170,8 @@ const FloatingTextarea: React.FC<FloatingTextareaProps> = ({
           maxLength={maxLength}
           rows={rows}
           className={`w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border-2 rounded-xl outline-none transition-all duration-300 text-slate-900 dark:text-white placeholder-transparent resize-none ${
-            error 
-              ? 'border-red-500 focus:border-red-500' 
+            error
+              ? 'border-red-500 focus:border-red-500'
               : 'border-slate-200 dark:border-slate-700 focus:border-primary dark:focus:border-secondary'
           }`}
           placeholder={label}
@@ -156,7 +183,11 @@ const FloatingTextarea: React.FC<FloatingTextareaProps> = ({
               ? 'top-0 -translate-y-1/2 text-xs px-2 bg-white dark:bg-dark-card rounded'
               : 'top-4 text-sm'
           } ${
-            isFocused ? 'text-primary dark:text-secondary' : error ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'
+            isFocused
+              ? 'text-primary dark:text-secondary'
+              : error
+                ? 'text-red-500'
+                : 'text-slate-500 dark:text-slate-400'
           }`}
         >
           {label} {required && <span className="text-red-500">*</span>}
@@ -176,9 +207,11 @@ const FloatingTextarea: React.FC<FloatingTextareaProps> = ({
             </motion.p>
           )}
         </AnimatePresence>
-        <span className={`text-xs ml-auto transition-colors ${
-          value.length > maxLength * 0.9 ? 'text-amber-500' : 'text-slate-400'
-        }`}>
+        <span
+          className={`text-xs ml-auto transition-colors ${
+            value.length > maxLength * 0.9 ? 'text-amber-500' : 'text-slate-400'
+          }`}
+        >
           {value.length}/{maxLength}
         </span>
       </div>
@@ -195,9 +228,19 @@ interface CategoryOption {
 }
 
 const categories: CategoryOption[] = [
-  { value: 'general', label: 'General Inquiry', icon: HelpCircle, color: 'from-blue-500 to-blue-600' },
+  {
+    value: 'general',
+    label: 'General Inquiry',
+    icon: HelpCircle,
+    color: 'from-blue-500 to-blue-600',
+  },
   { value: 'bug', label: 'Report a Bug', icon: Bug, color: 'from-red-500 to-red-600' },
-  { value: 'feature', label: 'Feature Request', icon: Lightbulb, color: 'from-amber-500 to-amber-600' },
+  {
+    value: 'feature',
+    label: 'Feature Request',
+    icon: Lightbulb,
+    color: 'from-amber-500 to-amber-600',
+  },
   { value: 'other', label: 'Other', icon: FileQuestion, color: 'from-purple-500 to-purple-600' },
 ];
 
@@ -208,7 +251,7 @@ const Support: React.FC = () => {
   const [formState, setFormState] = useState<FormState>({
     category: '',
     subject: '',
-    message: ''
+    message: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -216,7 +259,7 @@ const Support: React.FC = () => {
 
   // Get email domain from config
   const emailDomain = config?.collegeInfo?.email?.domain || 'college.edu';
-  
+
   // Get user's name and email
   const userName = user?.name || user?.fullName || '';
   const userEmail = user?.email || `${user?.admissionNumber?.toLowerCase()}@${emailDomain}` || '';
@@ -224,7 +267,7 @@ const Support: React.FC = () => {
   // Calculate form completion percentage
   const formCompletion = useMemo(() => {
     const fields = ['category', 'subject', 'message'];
-    const filledFields = fields.filter(field => formState[field as keyof FormState].length > 0);
+    const filledFields = fields.filter((field) => formState[field as keyof FormState].length > 0);
     return (filledFields.length / fields.length) * 100;
   }, [formState]);
 
@@ -254,31 +297,31 @@ const Support: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormState(prev => ({ ...prev, [name]: value }));
+    setFormState((prev) => ({ ...prev, [name]: value }));
     // Clear error when user starts typing
     if (errors[name as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormState(prev => ({ ...prev, [name]: value }));
+    setFormState((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   const handleCategorySelect = (category: string) => {
-    setFormState(prev => ({ ...prev, category }));
+    setFormState((prev) => ({ ...prev, category }));
     if (errors.category) {
-      setErrors(prev => ({ ...prev, category: undefined }));
+      setErrors((prev) => ({ ...prev, category: undefined }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsSubmitting(true);
@@ -294,7 +337,9 @@ const Support: React.FC = () => {
       if (!serviceId || !templateId || !publicKey) {
         // Fallback to mailto if EmailJS is not configured
         console.warn('EmailJS not configured, falling back to mailto');
-        const subject = encodeURIComponent(`[${formState.category.toUpperCase()}] ${formState.subject}`);
+        const subject = encodeURIComponent(
+          `[${formState.category.toUpperCase()}] ${formState.subject}`
+        );
         const body = encodeURIComponent(
           `Name: ${userName}\nEmail: ${userEmail}\nAdmission No: ${user?.admissionNumber || 'N/A'}\nCategory: ${formState.category}\n\nMessage:\n${formState.message}`
         );
@@ -316,15 +361,15 @@ const Support: React.FC = () => {
 
       // Send email using EmailJS
       await emailjs.send(serviceId, templateId, templateParams, publicKey);
-      
+
       setSubmitStatus('success');
-      
+
       // Reset form after success
       setTimeout(() => {
         setFormState({
           category: '',
           subject: '',
-          message: ''
+          message: '',
         });
         setSubmitStatus('idle');
       }, 3000);
@@ -353,7 +398,8 @@ const Support: React.FC = () => {
             How Can We Help?
           </h1>
           <p className="text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-            Have a question, found a bug, or want to suggest a feature? We'd love to hear from you. Fill out the form below and we'll get back to you soon.
+            Have a question, found a bug, or want to suggest a feature? We'd love to hear from you.
+            Fill out the form below and we'll get back to you soon.
           </p>
         </motion.div>
 
@@ -361,15 +407,15 @@ const Support: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 50, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, type: "spring", stiffness: 50 }}
+          transition={{ duration: 0.6, type: 'spring', stiffness: 50 }}
           className="relative group"
         >
           {/* Animated gradient border for form */}
           <motion.div
             className="absolute -inset-[2px] bg-gradient-to-r from-primary via-secondary to-primary rounded-3xl opacity-30 group-hover:opacity-60 blur-sm transition-opacity duration-500"
-            animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-            style={{ backgroundSize: "200% 200%" }}
+            animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+            style={{ backgroundSize: '200% 200%' }}
           />
 
           <form
@@ -380,15 +426,19 @@ const Support: React.FC = () => {
             {/* Form progress indicator */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Form completion</span>
-                <span className="text-xs text-primary dark:text-secondary font-mono font-semibold">{Math.round(formCompletion)}%</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Form completion
+                </span>
+                <span className="text-xs text-primary dark:text-secondary font-mono font-semibold">
+                  {Math.round(formCompletion)}%
+                </span>
               </div>
               <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${formCompletion}%` }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
                 />
               </div>
             </div>
@@ -416,12 +466,18 @@ const Support: React.FC = () => {
                             : 'border-slate-200 dark:border-slate-700 hover:border-primary/50 dark:hover:border-secondary/50 bg-slate-50 dark:bg-slate-800/50'
                         }`}
                       >
-                        <div className={`p-2 rounded-lg mb-2 w-fit mx-auto bg-gradient-to-br ${cat.color}`}>
+                        <div
+                          className={`p-2 rounded-lg mb-2 w-fit mx-auto bg-gradient-to-br ${cat.color}`}
+                        >
                           <IconComponent className="w-5 h-5 text-white" />
                         </div>
-                        <span className={`text-xs font-medium ${
-                          isSelected ? 'text-primary dark:text-secondary' : 'text-slate-600 dark:text-slate-400'
-                        }`}>
+                        <span
+                          className={`text-xs font-medium ${
+                            isSelected
+                              ? 'text-primary dark:text-secondary'
+                              : 'text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
                           {cat.label}
                         </span>
                         {isSelected && (
@@ -475,11 +531,13 @@ const Support: React.FC = () => {
                       <CheckCircle className="w-3 h-3 text-white" />
                     </div>
                   </div>
-                  
+
                   {/* User Details */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Submitting as</p>
-                    <h3 className="font-semibold text-slate-900 dark:text-white truncate">{userName}</h3>
+                    <h3 className="font-semibold text-slate-900 dark:text-white truncate">
+                      {userName}
+                    </h3>
                     <div className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400">
                       <Mail className="w-3.5 h-3.5" />
                       <span className="truncate">{userEmail}</span>
@@ -518,17 +576,17 @@ const Support: React.FC = () => {
               <motion.button
                 type="submit"
                 disabled={isSubmitting || Object.keys(errors).length > 0}
-                whileHover={{ scale: 1.02, boxShadow: "0 20px 40px -10px rgba(59, 130, 246, 0.4)" }}
+                whileHover={{ scale: 1.02, boxShadow: '0 20px 40px -10px rgba(59, 130, 246, 0.4)' }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-bold transition-all flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden relative shadow-lg hover:shadow-xl"
               >
                 {/* Animated shine effect */}
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full"
-                  animate={{ x: ["0%", "200%"] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear", repeatDelay: 3 }}
+                  animate={{ x: ['0%', '200%'] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear', repeatDelay: 3 }}
                 />
-                
+
                 <AnimatePresence mode="wait">
                   {isSubmitting ? (
                     <motion.div
@@ -572,7 +630,10 @@ const Support: React.FC = () => {
                       className="flex items-center gap-2 relative z-10"
                     >
                       <span>Send Message</span>
-                      <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
+                      <Send
+                        size={18}
+                        className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300"
+                      />
                     </motion.div>
                   )}
                 </AnimatePresence>

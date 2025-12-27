@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { useRef } from 'react';
-import Sidebar from '@components/layout/Sidebar';
-import Header from '@components/layout/Header';
 import Footer from '@components/layout/Footer';
+import Header from '@components/layout/Header';
+import Sidebar from '@components/layout/Sidebar';
 import { useAppConfig } from '@contexts/AppConfigContext';
-
+import React, { useState, useEffect } from 'react';
+import { useRef } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -19,12 +18,12 @@ const Layout: React.FC = () => {
   useEffect(() => {
     const collegeName = config?.collegeInfo?.name?.short || '';
     const fullCollegeName = config?.collegeInfo?.name?.full || collegeName;
-    
+
     // Update document title
-    document.title = collegeName 
-      ? `College Central - ${collegeName}` 
+    document.title = collegeName
+      ? `College Central - ${collegeName}`
       : 'College Central - Student Portal';
-    
+
     // Update meta tags dynamically
     const updateMetaTag = (selector: string, content: string) => {
       const element = document.querySelector(selector);
@@ -32,29 +31,27 @@ const Layout: React.FC = () => {
         element.setAttribute('content', content);
       }
     };
-    
-    const titleContent = collegeName 
-      ? `College Central - ${collegeName} Student Portal` 
+
+    const titleContent = collegeName
+      ? `College Central - ${collegeName} Student Portal`
       : 'College Central - Student Portal';
-    
+
     const descriptionContent = fullCollegeName
       ? `Comprehensive student portal for ${fullCollegeName} - Manage grades, schedules, campus navigation, and academic resources.`
       : 'Comprehensive student portal - Manage grades, schedules, campus navigation, and academic resources.';
-    
+
     // Update Open Graph tags
     updateMetaTag('meta[property="og:title"]', titleContent);
     updateMetaTag('meta[property="og:description"]', descriptionContent);
-    
+
     // Update Twitter tags
     updateMetaTag('meta[property="twitter:title"]', titleContent);
     updateMetaTag('meta[property="twitter:description"]', descriptionContent);
-    
+
     // Update standard meta tags
     updateMetaTag('meta[name="title"]', titleContent);
     updateMetaTag('meta[name="description"]', descriptionContent);
-    
   }, [config?.collegeInfo?.name]);
-
 
   // Initialize sidebar state from localStorage on mount
   useEffect(() => {
@@ -79,26 +76,24 @@ const Layout: React.FC = () => {
     }
   }, [pathname]);
 
-
-
   return (
     <div className="flex h-screen overflow-hidden bg-light-bg dark:bg-dark-bg">
-
       <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         sidebarCollapsed={sidebarCollapsed}
-
         onHoverChange={setSidebarHovering}
       />
 
-      <div 
+      <div
         ref={scrollContainerRef}
         className="relative flex-1 flex flex-col pt-16 overflow-y-auto overflow-x-hidden"
       >
-        <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${sidebarCollapsed ? (sidebarHovering ? 'lg:pl-64' : 'lg:pl-0') : 'lg:pl-64'}`}>
+        <div
+          className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${sidebarCollapsed ? (sidebarHovering ? 'lg:pl-64' : 'lg:pl-0') : 'lg:pl-64'}`}
+        >
           <main className="flex-1">
             <div className="px-3 sm:px-6 lg:px-8 py-6 sm:py-8 w-full max-w-9xl mx-auto">
               <Outlet />

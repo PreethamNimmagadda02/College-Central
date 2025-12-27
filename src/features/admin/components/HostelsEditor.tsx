@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import { AdminConfig } from '../types';
 import { AdminHeader, HomeIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
@@ -18,7 +19,12 @@ const PlusIcon = () => (
 
 const TrashIcon = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+    />
   </svg>
 );
 
@@ -54,10 +60,10 @@ const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, delet
 
   return (
     <AdminPageLayout>
-      <AdminHeader 
-        icon={<HomeIcon />} 
-        title="Hostels" 
-        subtitle="Manage available hostel options for students" 
+      <AdminHeader
+        icon={<HomeIcon />}
+        title="Hostels"
+        subtitle="Manage available hostel options for students"
       />
 
       {/* Add New Hostel */}
@@ -69,10 +75,13 @@ const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, delet
             className="admin-input flex-1"
             placeholder="Enter hostel name..."
             value={newHostel}
-            onChange={e => setNewHostel(e.target.value)}
-            onKeyPress={e => e.key === 'Enter' && handleAddHostel()}
+            onChange={(e) => setNewHostel(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleAddHostel()}
           />
-          <button onClick={handleAddHostel} className="admin-btn admin-btn-primary w-full sm:w-auto justify-center">
+          <button
+            onClick={handleAddHostel}
+            className="admin-btn admin-btn-primary w-full sm:w-auto justify-center"
+          >
             <PlusIcon />
             Add Hostel
           </button>
@@ -94,15 +103,21 @@ const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, delet
                     type="text"
                     className="admin-input"
                     value={editValue}
-                    onChange={e => setEditValue(e.target.value)}
-                    onKeyPress={e => e.key === 'Enter' && handleSaveEdit()}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSaveEdit()}
                     autoFocus
                   />
                   <div className="flex gap-2">
-                    <button onClick={handleSaveEdit} className="admin-btn admin-btn-success text-xs sm:text-sm flex-1 justify-center">
+                    <button
+                      onClick={handleSaveEdit}
+                      className="admin-btn admin-btn-success text-xs sm:text-sm flex-1 justify-center"
+                    >
                       Save
                     </button>
-                    <button onClick={handleCancelEdit} className="admin-btn admin-btn-secondary text-xs sm:text-sm flex-1 justify-center">
+                    <button
+                      onClick={handleCancelEdit}
+                      className="admin-btn admin-btn-secondary text-xs sm:text-sm flex-1 justify-center"
+                    >
                       Cancel
                     </button>
                   </div>

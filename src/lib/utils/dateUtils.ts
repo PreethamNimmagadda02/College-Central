@@ -96,7 +96,11 @@ export const parseDateString = (dateString: string): Date => {
 /**
  * Calculate progress percentage between two dates
  */
-export const calculateDateProgress = (startDate: Date, endDate: Date, currentDate: Date = new Date()): number => {
+export const calculateDateProgress = (
+  startDate: Date,
+  endDate: Date,
+  currentDate: Date = new Date()
+): number => {
   if (startDate > endDate) return 0;
 
   const totalMs = endDate.getTime() - startDate.getTime();
@@ -138,7 +142,10 @@ export const formatDateRange = (startDateString: string, endDateString?: string 
   const year = endDate.getFullYear();
 
   // Same month and year
-  if (startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear()) {
+  if (
+    startDate.getMonth() === endDate.getMonth() &&
+    startDate.getFullYear() === endDate.getFullYear()
+  ) {
     return `${startMonth} ${startDay} - ${endDay}, ${year}`;
   }
 

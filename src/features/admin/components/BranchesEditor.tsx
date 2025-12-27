@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import { AdminConfig } from '../types';
 import { AdminHeader, AcademicCapIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
@@ -19,7 +20,12 @@ const PlusIcon = () => (
 
 const TrashIcon = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+    />
   </svg>
 );
 
@@ -29,7 +35,13 @@ const GripIcon = () => (
   </svg>
 );
 
-const BranchesEditor: React.FC<Props> = ({ config, addBranch, updateBranch, deleteBranch, reorderBranches }) => {
+const BranchesEditor: React.FC<Props> = ({
+  config,
+  addBranch,
+  updateBranch,
+  deleteBranch,
+  reorderBranches,
+}) => {
   const [newBranch, setNewBranch] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -82,16 +94,16 @@ const BranchesEditor: React.FC<Props> = ({ config, addBranch, updateBranch, dele
     setDraggedIndex(null);
   };
 
-  const filteredBranches = (config.branches || []).filter(branch =>
+  const filteredBranches = (config.branches || []).filter((branch) =>
     branch.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <AdminPageLayout>
-      <AdminHeader 
-        icon={<AcademicCapIcon />} 
-        title="Branches / Departments" 
-        subtitle="Manage available academic branches for students" 
+      <AdminHeader
+        icon={<AcademicCapIcon />}
+        title="Branches / Departments"
+        subtitle="Manage available academic branches for students"
       />
 
       {/* Add New Branch */}
@@ -103,10 +115,13 @@ const BranchesEditor: React.FC<Props> = ({ config, addBranch, updateBranch, dele
             className="admin-input flex-1"
             placeholder="Enter branch name..."
             value={newBranch}
-            onChange={e => setNewBranch(e.target.value)}
-            onKeyPress={e => e.key === 'Enter' && handleAddBranch()}
+            onChange={(e) => setNewBranch(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleAddBranch()}
           />
-          <button onClick={handleAddBranch} className="admin-btn admin-btn-primary w-full sm:w-auto justify-center">
+          <button
+            onClick={handleAddBranch}
+            className="admin-btn admin-btn-primary w-full sm:w-auto justify-center"
+          >
             <PlusIcon />
             Add Branch
           </button>
@@ -115,8 +130,18 @@ const BranchesEditor: React.FC<Props> = ({ config, addBranch, updateBranch, dele
 
       {/* Search */}
       <div className="admin-search flex-1 max-w-2xl">
-        <svg className="admin-search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <svg
+          className="admin-search-icon w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
         </svg>
         <input
           type="text"
@@ -124,7 +149,7 @@ const BranchesEditor: React.FC<Props> = ({ config, addBranch, updateBranch, dele
           style={{ paddingLeft: '48px' }}
           placeholder="Search branches..."
           value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 
@@ -134,7 +159,9 @@ const BranchesEditor: React.FC<Props> = ({ config, addBranch, updateBranch, dele
           <h3 className="text-base sm:text-lg font-semibold text-white">
             All Branches ({config.branches?.length || 0})
           </h3>
-          <span className="text-indigo-400 text-xs sm:text-sm hidden sm:inline">Drag to reorder</span>
+          <span className="text-indigo-400 text-xs sm:text-sm hidden sm:inline">
+            Drag to reorder
+          </span>
         </div>
 
         <div className="space-y-2 sm:space-y-3">
@@ -145,7 +172,7 @@ const BranchesEditor: React.FC<Props> = ({ config, addBranch, updateBranch, dele
                 key={actualIndex}
                 draggable={!searchQuery}
                 onDragStart={() => handleDragStart(actualIndex)}
-                onDragOver={e => handleDragOver(e, actualIndex)}
+                onDragOver={(e) => handleDragOver(e, actualIndex)}
                 onDragEnd={handleDragEnd}
                 className={`admin-list-item flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 ${
                   draggedIndex === actualIndex ? 'opacity-50' : ''
@@ -158,29 +185,39 @@ const BranchesEditor: React.FC<Props> = ({ config, addBranch, updateBranch, dele
                       <GripIcon />
                     </span>
                   )}
-                  <span className="text-indigo-400 text-xs sm:text-sm w-6 sm:w-8 flex-shrink-0">#{actualIndex + 1}</span>
-                  
+                  <span className="text-indigo-400 text-xs sm:text-sm w-6 sm:w-8 flex-shrink-0">
+                    #{actualIndex + 1}
+                  </span>
+
                   {editingIndex === actualIndex ? (
                     <input
                       type="text"
                       className="admin-input flex-1 min-w-0"
                       value={editValue}
-                      onChange={e => setEditValue(e.target.value)}
-                      onKeyPress={e => e.key === 'Enter' && handleSaveEdit()}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSaveEdit()}
                       autoFocus
                     />
                   ) : (
-                    <span className="flex-1 text-white text-sm sm:text-base break-words min-w-0">{branch}</span>
+                    <span className="flex-1 text-white text-sm sm:text-base break-words min-w-0">
+                      {branch}
+                    </span>
                   )}
                 </div>
-                
+
                 {/* Action buttons */}
                 {editingIndex === actualIndex ? (
                   <div className="flex gap-2 sm:gap-3 ml-auto sm:ml-0">
-                    <button onClick={handleSaveEdit} className="admin-btn admin-btn-success text-xs sm:text-sm flex-1 sm:flex-none justify-center">
+                    <button
+                      onClick={handleSaveEdit}
+                      className="admin-btn admin-btn-success text-xs sm:text-sm flex-1 sm:flex-none justify-center"
+                    >
                       Save
                     </button>
-                    <button onClick={handleCancelEdit} className="admin-btn admin-btn-secondary text-xs sm:text-sm flex-1 sm:flex-none justify-center">
+                    <button
+                      onClick={handleCancelEdit}
+                      className="admin-btn admin-btn-secondary text-xs sm:text-sm flex-1 sm:flex-none justify-center"
+                    >
                       Cancel
                     </button>
                   </div>

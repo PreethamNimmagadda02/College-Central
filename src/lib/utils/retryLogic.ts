@@ -34,7 +34,7 @@ export async function retryWithBackoff<T>(
       );
 
       // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      await new Promise((resolve) => setTimeout(resolve, backoffDelay));
     }
   }
 
@@ -114,7 +114,7 @@ export async function retryOnlyIfRetryable<T>(
         lastError.message
       );
 
-      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      await new Promise((resolve) => setTimeout(resolve, backoffDelay));
     }
   }
 

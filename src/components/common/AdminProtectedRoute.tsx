@@ -1,10 +1,10 @@
 // components/AdminProtectedRoute.tsx
 // Route guard for admin-only pages
 
-import React, { ReactNode, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { useRole } from '@features/auth/hooks/useRole';
+import React, { ReactNode, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface AdminProtectedRouteProps {
   children: ReactNode;

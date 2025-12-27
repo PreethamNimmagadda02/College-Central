@@ -1,6 +1,6 @@
 /**
  * College Information Configuration
- * 
+ *
  * This file contains college-specific information that administrators can customize.
  * Only college/institution information should be stored here.
  */
@@ -37,5 +37,5 @@ export const COLLEGE_INFO = {
 export const getAppTitle = () => `College Central - ${COLLEGE_INFO.name.short} Student Portal`;
 
 // Helper function to get email validation message
-export const getEmailValidationMessage = () => 
+export const getEmailValidationMessage = () =>
   `Only ${COLLEGE_INFO.name.abbreviation} email addresses (${COLLEGE_INFO.email.allowedDomain}) are allowed. Please use your institutional email.`;

@@ -1,8 +1,20 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useCallback,
+} from 'react';
+
 import { AcademicCalendarData, CalendarEvent } from '@/types';
+
 import { PRELOADED_CALENDAR_DATA } from '@config/academicCalendar';
 import { useAuth } from '@features/auth/hooks/useAuth';
+
 import { useAppConfig } from './AppConfigContext';
+
 import { db } from '@lib/firebase';
 // FIX: Updated Firebase imports for v9 compatibility.
 import firebase from 'firebase/compat/app';
@@ -28,7 +40,7 @@ const adjustCalendarDatesToCurrentYear = (data: AcademicCalendarData): AcademicC
   const currentYear = new Date().getFullYear();
   const originalStartYear = new Date(data.semesterStartDate).getFullYear();
 
-  const adjustedEvents = data.events.map(event => {
+  const adjustedEvents = data.events.map((event) => {
     const originalEventDate = new Date(`${event.date}T12:00:00Z`); // Use midday UTC to avoid timezone shifts
     const originalEventYear = originalEventDate.getUTCFullYear();
     const yearOffset = originalEventYear - originalStartYear;
@@ -49,7 +61,7 @@ const adjustCalendarDatesToCurrentYear = (data: AcademicCalendarData): AcademicC
       adjustedEndDate.setUTCFullYear(currentYear + endYearOffset);
       newEndDateString = adjustedEndDate.toISOString().slice(0, 10);
     }
-    
+
     const adjustedEvent: CalendarEvent = {
       ...event,
       date: newStartDateString,
@@ -65,7 +77,7 @@ const adjustCalendarDatesToCurrentYear = (data: AcademicCalendarData): AcademicC
 
   const adjustedStartDate = new Date(`${data.semesterStartDate}T12:00:00Z`);
   adjustedStartDate.setUTCFullYear(currentYear);
-  
+
   const adjustedEndDate = new Date(`${data.semesterEndDate}T12:00:00Z`);
   const originalEndYear = adjustedEndDate.getUTCFullYear();
   const endYearOffset = originalEndYear - originalStartYear;
@@ -91,7 +103,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   const getEventKey = useCallback((event: CalendarEvent): string => {
     return `${event.date}-${event.description}`;
   }, []);
- 
+
   // Load user's custom events from Firebase
   useEffect(() => {
     if (!currentUser) {
@@ -102,11 +114,11 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     const q = db.collection('userEvents').where('userId', '==', currentUser.uid);
 
     const unsubscribe = q.onSnapshot((snapshot: firebase.firestore.QuerySnapshot) => {
-      const events = snapshot.docs.map(doc => {
+      const events = snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           ...data,
-          id: doc.id
+          id: doc.id,
         } as CalendarEvent;
       });
       setUserEvents(events);
@@ -144,65 +156,68 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [currentUser]);
 
   // Toggle reminder preference for an event
-  const toggleReminderPreference = useCallback(async (eventKey: string) => {
-    if (!currentUser) throw new Error('User must be logged in');
+  const toggleReminderPreference = useCallback(
+    async (eventKey: string) => {
+      if (!currentUser) throw new Error('User must be logged in');
 
-    // Store previous state before updating
-    const previousPreferences = [...reminderPreferences];
-    const newPreferences = reminderPreferences.includes(eventKey)
-      ? reminderPreferences.filter(key => key !== eventKey)
-      : [...reminderPreferences, eventKey];
+      // Store previous state before updating
+      const previousPreferences = [...reminderPreferences];
+      const newPreferences = reminderPreferences.includes(eventKey)
+        ? reminderPreferences.filter((key) => key !== eventKey)
+        : [...reminderPreferences, eventKey];
 
-    const isAdding = newPreferences.length > reminderPreferences.length;
-    const eventDescription = eventKey.split('-').slice(1).join('-');
+      const isAdding = newPreferences.length > reminderPreferences.length;
+      const eventDescription = eventKey.split('-').slice(1).join('-');
 
-    // Optimistically update UI
-    setReminderPreferences(newPreferences);
+      // Optimistically update UI
+      setReminderPreferences(newPreferences);
 
-    try {
-      const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
-      await prefDocRef.set({
-        userId: currentUser.uid,
-        reminderEventKeys: newPreferences
-      });
-      await logActivity(currentUser.uid, {
-        type: 'reminder',
-        title: isAdding ? 'Reminder Set' : 'Reminder Removed',
-        description: `For event: "${eventDescription}"`,
-        icon: isAdding ? '🔔' : '🔕',
-        link: '/academic-calendar'
-      });
-    } catch (error) {
-      console.error('Error updating reminder preferences:', error);
-      // Revert to previous state on error
-      setReminderPreferences(previousPreferences);
-    }
-  }, [currentUser, reminderPreferences]);
+      try {
+        const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
+        await prefDocRef.set({
+          userId: currentUser.uid,
+          reminderEventKeys: newPreferences,
+        });
+        await logActivity(currentUser.uid, {
+          type: 'reminder',
+          title: isAdding ? 'Reminder Set' : 'Reminder Removed',
+          description: `For event: "${eventDescription}"`,
+          icon: isAdding ? '🔔' : '🔕',
+          link: '/academic-calendar',
+        });
+      } catch (error) {
+        console.error('Error updating reminder preferences:', error);
+        // Revert to previous state on error
+        setReminderPreferences(previousPreferences);
+      }
+    },
+    [currentUser, reminderPreferences]
+  );
 
   // Merge config calendar data (from database) with user events and adjust dates
   useEffect(() => {
     setLoading(true);
 
     // Use calendar data from database config if available, otherwise fallback to preloaded
-    const baseCalendarData = config?.calendar && config.calendar.events?.length > 0
-      ? {
-          semesterStartDate: config.calendar.semesterStartDate,
-          semesterEndDate: config.calendar.semesterEndDate,
-          events: config.calendar.events.map(e => ({
-            ...e,
-            type: e.type as CalendarEvent['type']
-          }))
-        }
-      : PRELOADED_CALENDAR_DATA;
+    const baseCalendarData =
+      config?.calendar && config.calendar.events?.length > 0
+        ? {
+            semesterStartDate: config.calendar.semesterStartDate,
+            semesterEndDate: config.calendar.semesterEndDate,
+            events: config.calendar.events.map((e) => ({
+              ...e,
+              type: e.type as CalendarEvent['type'],
+            })),
+          }
+        : PRELOADED_CALENDAR_DATA;
 
     // Adjust preloaded/config data to the current year
     const adjustedPreloadedData = adjustCalendarDatesToCurrentYear(baseCalendarData);
 
     // Combine adjusted preloaded events with user events (user events are assumed to be for current year)
-    const mergedEvents = [
-      ...adjustedPreloadedData.events,
-      ...userEvents
-    ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const mergedEvents = [...adjustedPreloadedData.events, ...userEvents].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
 
     // Determine the current semester based on today's date
     const today = new Date();
@@ -210,8 +225,14 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     // Define semester boundaries based on events
     // We look for "Start of Semester" and "End-Semester Exams"
-    const semesterStarts = mergedEvents.filter(e => e.type === 'Start of Semester').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const semesterEnds = mergedEvents.filter(e => e.type === 'End-Semester Exams').sort((a, b) => new Date(a.endDate || a.date).getTime() - new Date(b.endDate || b.date).getTime());
+    const semesterStarts = mergedEvents
+      .filter((e) => e.type === 'Start of Semester')
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const semesterEnds = mergedEvents
+      .filter((e) => e.type === 'End-Semester Exams')
+      .sort(
+        (a, b) => new Date(a.endDate || a.date).getTime() - new Date(b.endDate || b.date).getTime()
+      );
 
     let currentSemesterStart = adjustedPreloadedData.semesterStartDate;
     let currentSemesterEnd = adjustedPreloadedData.semesterEndDate;
@@ -219,53 +240,57 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     // Logic to find the active or next semester
     // 1. Try to find a semester we are currently in
     let foundActiveSemester = false;
-    
-    for (let i = 0; i < semesterStarts.length; i++) {
-        const startEvent = semesterStarts[i];
-        if (!startEvent) continue;
 
-        // Find the corresponding end event (the next one after this start)
-        const endEvent = semesterEnds.find(e => new Date(e.endDate || e.date) > new Date(startEvent.date));
-        
-        if (endEvent) {
-            const startDate = new Date(startEvent.date);
-            const endDate = new Date(endEvent.endDate || endEvent.date);
-            
-            // If today is within this range, pick it
-            if (today >= startDate && today <= endDate) {
-                currentSemesterStart = startEvent.date;
-                currentSemesterEnd = endEvent.endDate || endEvent.date;
-                foundActiveSemester = true;
-                break;
-            }
+    for (let i = 0; i < semesterStarts.length; i++) {
+      const startEvent = semesterStarts[i];
+      if (!startEvent) continue;
+
+      // Find the corresponding end event (the next one after this start)
+      const endEvent = semesterEnds.find(
+        (e) => new Date(e.endDate || e.date) > new Date(startEvent.date)
+      );
+
+      if (endEvent) {
+        const startDate = new Date(startEvent.date);
+        const endDate = new Date(endEvent.endDate || endEvent.date);
+
+        // If today is within this range, pick it
+        if (today >= startDate && today <= endDate) {
+          currentSemesterStart = startEvent.date;
+          currentSemesterEnd = endEvent.endDate || endEvent.date;
+          foundActiveSemester = true;
+          break;
         }
+      }
     }
 
     // 2. If not in an active semester, find the NEXT semester
     if (!foundActiveSemester) {
-        for (let i = 0; i < semesterStarts.length; i++) {
-            const startEvent = semesterStarts[i];
-            if (!startEvent) continue;
+      for (let i = 0; i < semesterStarts.length; i++) {
+        const startEvent = semesterStarts[i];
+        if (!startEvent) continue;
 
-            const startDate = new Date(startEvent.date);
-            
-            if (today < startDate) {
-                // This is the next upcoming semester
-                // Check if we are within 7 days of the start date
-                const diffTime = startDate.getTime() - today.getTime();
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const startDate = new Date(startEvent.date);
 
-                if (diffDays <= 7) {
-                    const endEvent = semesterEnds.find(e => new Date(e.endDate || e.date) > new Date(startEvent.date));
-                    if (endEvent) {
-                        currentSemesterStart = startEvent.date;
-                        currentSemesterEnd = endEvent.endDate || endEvent.date;
-                        foundActiveSemester = true;
-                        break;
-                    }
-                }
+        if (today < startDate) {
+          // This is the next upcoming semester
+          // Check if we are within 7 days of the start date
+          const diffTime = startDate.getTime() - today.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays <= 7) {
+            const endEvent = semesterEnds.find(
+              (e) => new Date(e.endDate || e.date) > new Date(startEvent.date)
+            );
+            if (endEvent) {
+              currentSemesterStart = startEvent.date;
+              currentSemesterEnd = endEvent.endDate || endEvent.date;
+              foundActiveSemester = true;
+              break;
             }
+          }
         }
+      }
     }
 
     const lastSemesterEnd = semesterEnds.length > 0 ? semesterEnds[semesterEnds.length - 1] : null;
@@ -278,7 +303,9 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       semesterName: config?.calendar?.semesterName || undefined, // Propagate admin-configured semester name
       events: mergedEvents,
       academicYearStartDate: firstSemesterStart ? firstSemesterStart.date : currentSemesterStart,
-      academicYearEndDate: lastSemesterEnd ? (lastSemesterEnd.endDate || lastSemesterEnd.date) : currentSemesterEnd
+      academicYearEndDate: lastSemesterEnd
+        ? lastSemesterEnd.endDate || lastSemesterEnd.date
+        : currentSemesterEnd,
     });
 
     setLoading(false);
@@ -287,36 +314,36 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   // Cleanup reminders for past events automatically
   const cleanupPastEventReminders = useCallback(async () => {
     if (!currentUser || !calendarData) return;
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     // Filter out reminder preferences for events that have passed
-    const updatedPreferences = reminderPreferences.filter(eventKey => {
+    const updatedPreferences = reminderPreferences.filter((eventKey) => {
       // Find the event in calendarData that matches this key
-      const event = calendarData.events.find(e => getEventKey(e) === eventKey);
-      
+      const event = calendarData.events.find((e) => getEventKey(e) === eventKey);
+
       if (!event) {
         return false; // Remove if event doesn't exist
       }
-      
+
       // Get the end date of the event
       const eventEndDate = new Date(event.endDate || event.date);
       eventEndDate.setHours(0, 0, 0, 0);
-      
+
       // Keep the reminder if the event hasn't ended yet
       return eventEndDate >= today;
     });
-    
+
     // If there are reminders to remove, update the backend
     if (updatedPreferences.length < reminderPreferences.length) {
       setReminderPreferences(updatedPreferences);
-      
+
       try {
         const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
         await prefDocRef.set({
           userId: currentUser.uid,
-          reminderEventKeys: updatedPreferences
+          reminderEventKeys: updatedPreferences,
         });
       } catch (error) {
         console.error('Error cleaning up past event reminders:', error);
@@ -327,100 +354,107 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   // Run reminder cleanup when calendar data or reminders change
   useEffect(() => {
     if (!currentUser || !calendarData) return;
-    
+
     // Run cleanup immediately
     cleanupPastEventReminders();
-    
+
     // Run cleanup once per day (24 hours)
     const intervalId = setInterval(cleanupPastEventReminders, 24 * 60 * 60 * 1000);
-    
+
     return () => clearInterval(intervalId);
   }, [currentUser, calendarData]); // Removed cleanupPastEventReminders from deps to avoid infinite loop
 
-
   // Add user event to Firebase
-  const addUserEvent = useCallback(async (event: CalendarEvent) => {
-    if (!currentUser) throw new Error('User must be logged in');
+  const addUserEvent = useCallback(
+    async (event: CalendarEvent) => {
+      if (!currentUser) throw new Error('User must be logged in');
 
-    const eventData = {
-      ...event,
-      userId: currentUser.uid,
-      createdAt: new Date().toISOString()
-    };
-    
-    await db.collection('userEvents').add(eventData);
+      const eventData = {
+        ...event,
+        userId: currentUser.uid,
+        createdAt: new Date().toISOString(),
+      };
 
-    await logActivity(currentUser.uid, {
+      await db.collection('userEvents').add(eventData);
+
+      await logActivity(currentUser.uid, {
         type: 'event',
         title: 'Event Added',
         description: `Added "${event.description}" to calendar.`,
         icon: '📅',
-        link: '/academic-calendar'
-    });
-  }, [currentUser]);
+        link: '/academic-calendar',
+      });
+    },
+    [currentUser]
+  );
 
   // Update user event in Firebase
-  const updateUserEvent = useCallback(async (eventId: string, event: CalendarEvent) => {
-    if (!currentUser) throw new Error('User must be logged in');
+  const updateUserEvent = useCallback(
+    async (eventId: string, event: CalendarEvent) => {
+      if (!currentUser) throw new Error('User must be logged in');
 
-    const eventRef = db.collection('userEvents').doc(eventId);
-    const oldEventSnap = await eventRef.get();
-    const oldEvent = oldEventSnap.data() as CalendarEvent;
+      const eventRef = db.collection('userEvents').doc(eventId);
+      const oldEventSnap = await eventRef.get();
+      const oldEvent = oldEventSnap.data() as CalendarEvent;
 
-    await eventRef.update({
-      ...event,
-      updatedAt: new Date().toISOString()
-    });
-
-    // Check if only reminder was toggled
-    const reminderToggled = oldEvent.remindMe !== event.remindMe;
-    const onlyReminderChanged = reminderToggled &&
-      oldEvent.date === event.date &&
-      oldEvent.description === event.description &&
-      oldEvent.type === event.type;
-
-    // Sync reminder preference with remindMe flag
-    if (reminderToggled) {
-      const eventKey = getEventKey(event);
-      const hasPreference = reminderPreferences.includes(eventKey);
-
-      // If remindMe is true but preference doesn't exist, add it
-      if (event.remindMe && !hasPreference) {
-        await toggleReminderPreference(eventKey);
-      }
-      // If remindMe is false but preference exists, remove it
-      else if (!event.remindMe && hasPreference) {
-        await toggleReminderPreference(eventKey);
-      }
-    }
-
-    if (onlyReminderChanged) {
-      await logActivity(currentUser.uid, {
-        type: 'reminder',
-        title: event.remindMe ? 'Reminder Set' : 'Reminder Removed',
-        description: `For event: "${event.description}"`,
-        icon: event.remindMe ? '🔔' : '🔕',
-        link: '/academic-calendar'
+      await eventRef.update({
+        ...event,
+        updatedAt: new Date().toISOString(),
       });
-    } else {
-      await logActivity(currentUser.uid, {
-        type: 'event',
-        title: 'Event Updated',
-        description: `Updated event: "${event.description}"`,
-        icon: '✏️',
-        link: '/academic-calendar'
-      });
-    }
-  }, [currentUser, reminderPreferences, getEventKey, toggleReminderPreference]); 
+
+      // Check if only reminder was toggled
+      const reminderToggled = oldEvent.remindMe !== event.remindMe;
+      const onlyReminderChanged =
+        reminderToggled &&
+        oldEvent.date === event.date &&
+        oldEvent.description === event.description &&
+        oldEvent.type === event.type;
+
+      // Sync reminder preference with remindMe flag
+      if (reminderToggled) {
+        const eventKey = getEventKey(event);
+        const hasPreference = reminderPreferences.includes(eventKey);
+
+        // If remindMe is true but preference doesn't exist, add it
+        if (event.remindMe && !hasPreference) {
+          await toggleReminderPreference(eventKey);
+        }
+        // If remindMe is false but preference exists, remove it
+        else if (!event.remindMe && hasPreference) {
+          await toggleReminderPreference(eventKey);
+        }
+      }
+
+      if (onlyReminderChanged) {
+        await logActivity(currentUser.uid, {
+          type: 'reminder',
+          title: event.remindMe ? 'Reminder Set' : 'Reminder Removed',
+          description: `For event: "${event.description}"`,
+          icon: event.remindMe ? '🔔' : '🔕',
+          link: '/academic-calendar',
+        });
+      } else {
+        await logActivity(currentUser.uid, {
+          type: 'event',
+          title: 'Event Updated',
+          description: `Updated event: "${event.description}"`,
+          icon: '✏️',
+          link: '/academic-calendar',
+        });
+      }
+    },
+    [currentUser, reminderPreferences, getEventKey, toggleReminderPreference]
+  );
 
   // Delete user event from Firebase
-  const deleteUserEvent = useCallback(async (eventId: string) => {
-    if (!currentUser) throw new Error('User must be logged in');
+  const deleteUserEvent = useCallback(
+    async (eventId: string) => {
+      if (!currentUser) throw new Error('User must be logged in');
 
-    const eventRef = db.collection('userEvents').doc(eventId);
-    const eventSnap = await eventRef.get();
+      const eventRef = db.collection('userEvents').doc(eventId);
+      const eventSnap = await eventRef.get();
 
-    if (eventSnap.exists) {
+      if (eventSnap.exists) {
         const eventData = eventSnap.data() as CalendarEvent;
 
         // Delete the event from Firebase
@@ -429,32 +463,34 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         // Remove reminder preference if it exists
         const eventKey = getEventKey(eventData);
         if (reminderPreferences.includes(eventKey)) {
-            const newPreferences = reminderPreferences.filter(key => key !== eventKey);
-            setReminderPreferences(newPreferences);
+          const newPreferences = reminderPreferences.filter((key) => key !== eventKey);
+          setReminderPreferences(newPreferences);
 
-            try {
-                const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
-                await prefDocRef.set({
-                    userId: currentUser.uid,
-                    reminderEventKeys: newPreferences
-                });
-            } catch (error) {
-                console.error('Error removing reminder preference:', error);
-            }
+          try {
+            const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
+            await prefDocRef.set({
+              userId: currentUser.uid,
+              reminderEventKeys: newPreferences,
+            });
+          } catch (error) {
+            console.error('Error removing reminder preference:', error);
+          }
         }
 
         await logActivity(currentUser.uid, {
-            type: 'event',
-            title: 'Event Deleted',
-            description: `Deleted event: "${eventData.description}"${reminderPreferences.includes(eventKey) ? ' and its reminder' : ''}`,
-            icon: '🗑️',
-            link: '/academic-calendar'
+          type: 'event',
+          title: 'Event Deleted',
+          description: `Deleted event: "${eventData.description}"${reminderPreferences.includes(eventKey) ? ' and its reminder' : ''}`,
+          icon: '🗑️',
+          link: '/academic-calendar',
         });
-    } else {
+      } else {
         // Fallback if the event doesn't exist for some reason
         await eventRef.delete();
-    }
-  }, [currentUser, reminderPreferences, getEventKey]);
+      }
+    },
+    [currentUser, reminderPreferences, getEventKey]
+  );
 
   const contextValue = useMemo(
     () => ({
@@ -466,16 +502,22 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       deleteUserEvent,
       reminderPreferences,
       toggleReminderPreference,
-      getEventKey
+      getEventKey,
     }),
-    [calendarData, setCalendarData, loading, addUserEvent, updateUserEvent, deleteUserEvent, reminderPreferences, toggleReminderPreference, getEventKey]
+    [
+      calendarData,
+      setCalendarData,
+      loading,
+      addUserEvent,
+      updateUserEvent,
+      deleteUserEvent,
+      reminderPreferences,
+      toggleReminderPreference,
+      getEventKey,
+    ]
   );
 
-  return (
-    <CalendarContext.Provider value={contextValue}>
-      {children}
-    </CalendarContext.Provider>
-  );
+  return <CalendarContext.Provider value={contextValue}>{children}</CalendarContext.Provider>;
 };
 
 export const useCalendar = () => {

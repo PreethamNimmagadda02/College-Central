@@ -112,15 +112,15 @@ export interface AdminStudentEntry {
 
 export interface AdminGradeDefinition {
   id: string;
-  grade: string;        // e.g., 'A+', 'A', 'B+', etc.
-  points: number;       // e.g., 10, 9, 8, etc.
+  grade: string; // e.g., 'A+', 'A', 'B+', etc.
+  points: number; // e.g., 10, 9, 8, etc.
   minPercentage?: number; // Optional: minimum percentage for this grade
-  color: string;        // Tailwind color class for display
+  color: string; // Tailwind color class for display
 }
 
 export interface AdminConfig {
   collegeInfo: AdminCollegeInfo;
-  adminEmails: string[];  // List of admin email addresses
+  adminEmails: string[]; // List of admin email addresses
   appConstants: AdminAppConstants;
   branches: string[];
   hostels: string[];
@@ -136,14 +136,14 @@ export interface AdminConfig {
   gradingScale: AdminGradeDefinition[];
 }
 
-export type AdminTab = 
-  | 'college-info' 
-  | 'branches' 
-  | 'hostels' 
-  | 'quick-links' 
-  | 'quotes' 
-  | 'forms' 
-  | 'calendar' 
+export type AdminTab =
+  | 'college-info'
+  | 'branches'
+  | 'hostels'
+  | 'quick-links'
+  | 'quotes'
+  | 'forms'
+  | 'calendar'
   | 'directory'
   | 'courses'
   | 'students'
@@ -152,4 +152,3 @@ export type AdminTab =
   | 'analytics'
   | 'support'
   | 'export';
-

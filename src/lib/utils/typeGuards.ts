@@ -17,12 +17,7 @@ export function isDefined<T>(value: T | null | undefined): value is T {
 export function isValidUser(user: Partial<User> | null | undefined): user is User {
   if (!user) return false;
 
-  return !!(
-    user.id &&
-    user.name &&
-    user.admissionNumber &&
-    user.email
-  );
+  return !!(user.id && user.name && user.admissionNumber && user.email);
 }
 
 /**

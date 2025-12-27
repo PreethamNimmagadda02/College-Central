@@ -21,8 +21,18 @@ const calendarSchema: ExtractionSchema = {
   description: 'Events from an academic calendar including holidays, exams, and semester dates',
   fields: [
     { name: 'date', type: 'date', description: 'Start date in YYYY-MM-DD format', required: true },
-    { name: 'endDate', type: 'date', description: 'End date in YYYY-MM-DD format (for multi-day events only)', required: false },
-    { name: 'description', type: 'string', description: 'Event name/title WITHOUT any dates', required: true },
+    {
+      name: 'endDate',
+      type: 'date',
+      description: 'End date in YYYY-MM-DD format (for multi-day events only)',
+      required: false,
+    },
+    {
+      name: 'description',
+      type: 'string',
+      description: 'Event name/title WITHOUT any dates',
+      required: true,
+    },
     { name: 'type', type: 'string', description: 'Event type classification', required: true },
   ],
   examples: `[
@@ -75,12 +85,18 @@ EVENT NAMING:
 };
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-const VALID_TYPES = ['Start of Semester', 'Mid-Semester Exams', 'End-Semester Exams', 'Holiday', 'Other'];
+const VALID_TYPES = [
+  'Start of Semester',
+  'Mid-Semester Exams',
+  'End-Semester Exams',
+  'Holiday',
+  'Other',
+];
 
 function isCalendarEvent(item: unknown): item is CalendarEventData {
   if (typeof item !== 'object' || item === null) return false;
   const obj = item as Record<string, unknown>;
-  
+
   return (
     typeof obj.date === 'string' &&
     DATE_REGEX.test(obj.date) &&
@@ -92,27 +108,28 @@ function isCalendarEvent(item: unknown): item is CalendarEventData {
 
 function normalizeCalendarEvent(item: CalendarEventData): CalendarEventData {
   let description = item.description.trim();
-  
+
   // Extract the holiday name from "on account of X" pattern
   const onAccountMatch = description.match(/on account of\s+(.+)/i);
   if (onAccountMatch && onAccountMatch[1]) {
     description = onAccountMatch[1].trim();
   }
-  
+
   // Remove "(Tentative)" or "(Confirmed)" suffixes but keep the main name
   description = description
     .replace(/\s*\(tentative\)/gi, '')
     .replace(/\s*\(confirmed\)/gi, '')
     .trim();
-  
+
   // Strip dates from description
   description = stripDatesFromDescription(description);
-  
+
   return {
     date: item.date,
-    endDate: item.endDate && DATE_REGEX.test(item.endDate) && item.endDate !== item.date 
-      ? item.endDate 
-      : undefined,
+    endDate:
+      item.endDate && DATE_REGEX.test(item.endDate) && item.endDate !== item.date
+        ? item.endDate
+        : undefined,
     description,
     type: VALID_TYPES.includes(item.type) ? item.type : 'Other',
   };
@@ -122,19 +139,27 @@ function normalizeCalendarEvent(item: CalendarEventData): CalendarEventData {
  * Remove date patterns from description text
  */
 function stripDatesFromDescription(desc: string): string {
-  return desc
-    // Remove patterns like "21 July, 2025" or "21st July 2025"
-    .replace(/\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December),?\s+\d{4}/gi, '')
-    // Remove patterns like "21-07-2025" or "21/07/2025"
-    .replace(/\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/g, '')
-    // Remove patterns like "2025-07-21"
-    .replace(/\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/g, '')
-    // Remove date ranges like "16 - 21 September"
-    .replace(/\d{1,2}\s*[-–]\s*\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)/gi, '')
-    // Clean up extra spaces and punctuation
-    .replace(/^[\s,:-]+|[\s,:-]+$/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return (
+    desc
+      // Remove patterns like "21 July, 2025" or "21st July 2025"
+      .replace(
+        /\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December),?\s+\d{4}/gi,
+        ''
+      )
+      // Remove patterns like "21-07-2025" or "21/07/2025"
+      .replace(/\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/g, '')
+      // Remove patterns like "2025-07-21"
+      .replace(/\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/g, '')
+      // Remove date ranges like "16 - 21 September"
+      .replace(
+        /\d{1,2}\s*[-–]\s*\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)/gi,
+        ''
+      )
+      // Clean up extra spaces and punctuation
+      .replace(/^[\s,:-]+|[\s,:-]+$/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
 }
 
 function getCalendarEventKey(item: CalendarEventData): string {
@@ -153,7 +178,7 @@ function getCalendarEventKey(item: CalendarEventData): string {
     .replace(/[^\w\s]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
-  
+
   // Use just the start date for comparison (same date = likely same event)
   return `${item.date}|${normDesc}`;
 }
@@ -184,9 +209,24 @@ const facultySchema: ExtractionSchema = {
   name: 'Faculty Directory Entries',
   description: 'Faculty and staff information from a directory',
   fields: [
-    { name: 'name', type: 'string', description: 'Full name of the faculty/staff member', required: true },
-    { name: 'department', type: 'string', description: 'Department or office name', required: true },
-    { name: 'designation', type: 'string', description: 'Job title or designation', required: true },
+    {
+      name: 'name',
+      type: 'string',
+      description: 'Full name of the faculty/staff member',
+      required: true,
+    },
+    {
+      name: 'department',
+      type: 'string',
+      description: 'Department or office name',
+      required: true,
+    },
+    {
+      name: 'designation',
+      type: 'string',
+      description: 'Job title or designation',
+      required: true,
+    },
     { name: 'email', type: 'string', description: 'Email address', required: false },
     { name: 'phone', type: 'string', description: 'Phone number or extension', required: false },
   ],
@@ -199,7 +239,7 @@ const facultySchema: ExtractionSchema = {
 function isFacultyData(item: unknown): item is FacultyData {
   if (typeof item !== 'object' || item === null) return false;
   const obj = item as Record<string, unknown>;
-  
+
   return (
     typeof obj.name === 'string' &&
     obj.name.length > 0 &&
@@ -251,7 +291,12 @@ const studentSchema: ExtractionSchema = {
   description: 'Student information from a directory or list',
   fields: [
     { name: 'name', type: 'string', description: 'Full name of the student', required: true },
-    { name: 'rollNumber', type: 'string', description: 'Roll number or admission number', required: true },
+    {
+      name: 'rollNumber',
+      type: 'string',
+      description: 'Roll number or admission number',
+      required: true,
+    },
     { name: 'branch', type: 'string', description: 'Branch or program name', required: true },
     { name: 'year', type: 'number', description: 'Current year of study (1-5)', required: false },
     { name: 'email', type: 'string', description: 'Email address', required: false },
@@ -265,7 +310,7 @@ const studentSchema: ExtractionSchema = {
 function isStudentData(item: unknown): item is StudentData {
   if (typeof item !== 'object' || item === null) return false;
   const obj = item as Record<string, unknown>;
-  
+
   return (
     typeof obj.name === 'string' &&
     obj.name.length > 0 &&
@@ -306,24 +351,49 @@ export const studentExtractionConfig: ExtractionConfig<StudentData> = {
 export interface CourseData {
   code: string;
   name: string;
-  ltp?: string;           // L-T-P format (e.g., "3-1-0")
+  ltp?: string; // L-T-P format (e.g., "3-1-0")
   credits: number;
-  courseType?: string;    // CBCS or NEP
+  courseType?: string; // CBCS or NEP
   instructor?: string;
-  slots?: string[];       // Time slots like ["Mon 9:00-10:00 LH1", "Wed 10:00-11:00 LH2"]
+  slots?: string[]; // Time slots like ["Mon 9:00-10:00 LH1", "Wed 10:00-11:00 LH2"]
 }
 
 const courseSchema: ExtractionSchema = {
   name: 'Course Information',
   description: 'Course details from a course list, timetable, or syllabus',
   fields: [
-    { name: 'code', type: 'string', description: 'Course code (e.g., CS101, MEC301)', required: true },
+    {
+      name: 'code',
+      type: 'string',
+      description: 'Course code (e.g., CS101, MEC301)',
+      required: true,
+    },
     { name: 'name', type: 'string', description: 'Course name/title', required: true },
-    { name: 'ltp', type: 'string', description: 'Lecture-Tutorial-Practical format (e.g., "3-1-0", "3-0-2")', required: false },
-    { name: 'credits', type: 'number', description: 'Number of credits (typically 1-12)', required: false },
-    { name: 'courseType', type: 'string', description: 'Type of course: CBCS or NEP', required: false },
+    {
+      name: 'ltp',
+      type: 'string',
+      description: 'Lecture-Tutorial-Practical format (e.g., "3-1-0", "3-0-2")',
+      required: false,
+    },
+    {
+      name: 'credits',
+      type: 'number',
+      description: 'Number of credits (typically 1-12)',
+      required: false,
+    },
+    {
+      name: 'courseType',
+      type: 'string',
+      description: 'Type of course: CBCS or NEP',
+      required: false,
+    },
     { name: 'instructor', type: 'string', description: 'Instructor/Faculty name', required: false },
-    { name: 'slots', type: 'string', description: 'Time slots with day, time, and venue (array)', required: false },
+    {
+      name: 'slots',
+      type: 'string',
+      description: 'Time slots with day, time, and venue (array)',
+      required: false,
+    },
   ],
   examples: `[
   {"code": "CSC301", "name": "Data Structures", "ltp": "3-1-0", "credits": 9, "courseType": "CBCS", "instructor": "Dr. Amit Kumar", "slots": ["Mon 10:00-11:00 LH1", "Wed 10:00-11:00 LH1", "Fri 11:00-12:00 LH2"]},
@@ -347,7 +417,7 @@ COMMON PATTERNS:
 function isCourseData(item: unknown): item is CourseData {
   if (typeof item !== 'object' || item === null) return false;
   const obj = item as Record<string, unknown>;
-  
+
   return (
     typeof obj.code === 'string' &&
     obj.code.length > 0 &&
@@ -358,28 +428,28 @@ function isCourseData(item: unknown): item is CourseData {
 
 function normalizeCourseData(item: CourseData): CourseData {
   const code = item.code.trim().toUpperCase();
-  
+
   // Normalize LTP format
   let ltp = item.ltp?.trim() || undefined;
   if (ltp && !ltp.match(/^\d+-\d+-\d+$/)) {
     // Try to fix common formats like "3 1 0" or "3,1,0"
     ltp = ltp.replace(/[,\s]+/g, '-');
   }
-  
+
   // Determine courseType from course code prefix
   // If code starts with 'N', it's NEP, otherwise CBCS
   const courseType: 'CBCS' | 'NEP' = code.startsWith('N') ? 'NEP' : 'CBCS';
-  
+
   // Calculate credits from LTP if not provided or 0
   let credits = typeof item.credits === 'number' && item.credits > 0 ? item.credits : 0;
-  
+
   if (credits === 0 && ltp) {
     const ltpMatch = ltp.match(/^(\d+)-(\d+)-(\d+)$/);
     if (ltpMatch && ltpMatch[1] && ltpMatch[2] && ltpMatch[3]) {
       const L = parseInt(ltpMatch[1], 10);
       const T = parseInt(ltpMatch[2], 10);
       const P = parseInt(ltpMatch[3], 10);
-      
+
       if (courseType === 'CBCS') {
         // CBCS: 3*L + 2*T + P
         credits = 3 * L + 2 * T + P;
@@ -389,16 +459,19 @@ function normalizeCourseData(item: CourseData): CourseData {
       }
     }
   }
-  
+
   // Normalize slots
   let slots: string[] | undefined = item.slots;
   if (Array.isArray(slots)) {
     slots = slots.map((s: unknown) => String(s).trim()).filter((s: string) => s.length > 0);
   } else if (typeof item.slots === 'string') {
     // Convert semicolon-separated string to array
-    slots = (item.slots as string).split(/[;,]/).map((s: string) => s.trim()).filter((s: string) => s.length > 0);
+    slots = (item.slots as string)
+      .split(/[;,]/)
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
   }
-  
+
   return {
     code,
     name: item.name.trim(),

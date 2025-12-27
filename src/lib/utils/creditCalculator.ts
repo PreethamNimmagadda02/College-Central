@@ -12,7 +12,7 @@ export const calculateCreditsFromLTP = (
     return 0;
   }
 
-  const parts = ltp.split('-').map(p => parseInt(p.trim()) || 0);
+  const parts = ltp.split('-').map((p) => parseInt(p.trim()) || 0);
 
   if (parts.length !== 3) {
     return 0;
@@ -22,10 +22,10 @@ export const calculateCreditsFromLTP = (
 
   if (courseOption === 'NEP') {
     // NEP: Credits = L + T + P
-    return L + T + (0.5*P);
+    return L + T + 0.5 * P;
   } else {
     // CBCS: Credits = 3*L + 2*T + 1*P
-    return (3 * L) + (2 * T) + P;
+    return 3 * L + 2 * T + P;
   }
 };
 

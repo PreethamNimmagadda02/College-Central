@@ -3,7 +3,7 @@ import { useRouteError, isRouteErrorResponse, Link } from 'react-router-dom';
 
 const ErrorBoundary: React.FC = () => {
   const error = useRouteError();
-  
+
   if (isRouteErrorResponse(error)) {
     if (error.status === 404) {
       return (
@@ -20,12 +20,7 @@ const ErrorBoundary: React.FC = () => {
               to="/"
               className="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors duration-200"
             >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -43,9 +38,7 @@ const ErrorBoundary: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-light-bg dark:bg-dark-bg">
         <div className="text-center px-4">
-          <h1 className="text-6xl font-bold text-red-600 dark:text-red-400">
-            {error.status}
-          </h1>
+          <h1 className="text-6xl font-bold text-red-600 dark:text-red-400">{error.status}</h1>
           <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mt-4">
             {error.statusText}
           </h2>

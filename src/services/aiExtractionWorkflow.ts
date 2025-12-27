@@ -66,46 +66,46 @@ export interface ExtractionResult<T> {
  */
 function smartChunk(text: string, maxSize: number, overlap: number): string[] {
   const chunks: string[] = [];
-  
+
   if (!text || text.length === 0) {
     return [];
   }
-  
+
   if (text.length <= maxSize) {
     return [text];
   }
 
   let start = 0;
   const minAdvance = Math.max(100, maxSize - overlap); // Minimum characters to advance each iteration
-  
+
   while (start < text.length) {
     let end = Math.min(start + maxSize, text.length);
-    
+
     // If not at the end, try to find a natural break point
     if (end < text.length) {
       // Look for paragraph breaks, then sentences, then spaces
       const breakPoints = ['\n\n', '\n', '. ', ', ', ' '];
       const searchStart = start + minAdvance; // Don't go too far back
-      
+
       for (const breakPoint of breakPoints) {
         const lastBreak = text.lastIndexOf(breakPoint, end);
-        
+
         if (lastBreak > searchStart) {
           end = lastBreak + breakPoint.length;
           break;
         }
       }
     }
-    
+
     const chunkText = text.slice(start, end).trim();
     if (chunkText.length > 0) {
       chunks.push(chunkText);
     }
-    
+
     // Always advance by at least minAdvance to prevent infinite loop
     const nextStart = end - overlap;
     start = Math.max(nextStart, start + minAdvance);
-    
+
     // If we're near the end, just finish
     if (text.length - start < minAdvance) {
       const remainingText = text.slice(start).trim();
@@ -158,7 +158,7 @@ EXTRACTION RULES:
 - Count the number of date ranges in the text - you should have that many events
 
 For each item, extract these fields:
-${schema.fields.map(f => `- ${f.name} (${f.type}${f.required ? ', required' : ''}): ${f.description}`).join('\n')}
+${schema.fields.map((f) => `- ${f.name} (${f.type}${f.required ? ', required' : ''}): ${f.description}`).join('\n')}
 
 ${schema.classificationRules ? `CLASSIFICATION RULES:\n${schema.classificationRules}\n` : ''}
 
@@ -177,7 +177,7 @@ ${chunk}`;
     });
 
     let responseText = response.text?.trim() || '';
-    
+
     // Remove markdown code blocks if present
     if (responseText.startsWith('```json')) {
       responseText = responseText.slice(7);
@@ -193,7 +193,7 @@ ${chunk}`;
     responseText = repairTruncatedJSON(responseText);
 
     const items = JSON.parse(responseText);
-    
+
     if (!Array.isArray(items)) {
       return { items: [], error: 'Response is not an array' };
     }
@@ -298,14 +298,8 @@ export async function extractWithWorkflow<T>(
     for (let attempt = 0; attempt < config.maxRetries; attempt++) {
       const chunkText = chunks[i];
       if (!chunkText) continue;
-      
-      const result = await extractFromChunk(
-        chunkText,
-        i,
-        totalChunks,
-        config.schema,
-        apiKey
-      );
+
+      const result = await extractFromChunk(chunkText, i, totalChunks, config.schema, apiKey);
 
       if (!result.error && result.items.length >= 0) {
         allItems.push(...result.items);
@@ -316,10 +310,10 @@ export async function extractWithWorkflow<T>(
 
       lastError = result.error;
       console.warn(`[Extraction] Chunk ${i + 1} attempt ${attempt + 1} failed: ${lastError}`);
-      
+
       // Wait before retry
       if (attempt < config.maxRetries - 1) {
-        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
       }
     }
 
@@ -356,7 +350,7 @@ export async function extractWithWorkflow<T>(
   // Deduplicate
   const seenKeys = new Set<string>();
   const uniqueItems: T[] = [];
-  
+
   for (const item of validItems) {
     const key = config.getDedupeKey(item);
     if (!seenKeys.has(key)) {

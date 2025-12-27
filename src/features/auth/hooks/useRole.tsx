@@ -1,11 +1,12 @@
 // hooks/useRole.tsx
 // Role management hook for determining user access level
 
-import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import { useAuth } from './useAuth';
-import { useUser } from '@contexts/UserContext';
 import { useAppConfig } from '@contexts/AppConfigContext';
+import { useUser } from '@contexts/UserContext';
 import { db } from '@lib/firebase';
+import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+
+import { useAuth } from './useAuth';
 
 interface RoleContextType {
   role: 'user' | 'admin';
@@ -38,17 +39,15 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       const userEmail = currentUser.email?.toLowerCase();
-      
+
       // Check if user's email is in the adminEmails list
       const adminEmails = appConfig?.adminEmails || [];
-      const isEmailAdmin = adminEmails.some(
-        (email: string) => email.toLowerCase() === userEmail
-      );
+      const isEmailAdmin = adminEmails.some((email: string) => email.toLowerCase() === userEmail);
 
       if (isEmailAdmin) {
         // User is an admin based on email list
         setRole('admin');
-        
+
         // Update user's role in Firestore if not already admin
         if (user && user.role !== 'admin') {
           try {
@@ -60,7 +59,7 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else {
         // Regular user
         setRole('user');
-        
+
         // Ensure role is 'user' in Firestore if it was previously admin but email was removed
         if (user && user.role === 'admin') {
           try {
@@ -86,11 +85,7 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     [role, isLoading]
   );
 
-  return (
-    <RoleContext.Provider value={contextValue}>
-      {children}
-    </RoleContext.Provider>
-  );
+  return <RoleContext.Provider value={contextValue}>{children}</RoleContext.Provider>;
 };
 
 export const useRole = () => {

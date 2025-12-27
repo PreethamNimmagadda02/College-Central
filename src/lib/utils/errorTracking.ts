@@ -17,10 +17,7 @@ export interface ErrorInfo {
  * @param error - Error object or message
  * @param context - Additional context about the error
  */
-export async function logError(
-  error: Error | string,
-  context?: Partial<ErrorInfo>
-): Promise<void> {
+export async function logError(error: Error | string, context?: Partial<ErrorInfo>): Promise<void> {
   try {
     const analytics = await getAnalytics();
     if (!analytics) {

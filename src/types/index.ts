@@ -2,7 +2,7 @@
 export interface User {
   id: string;
   name: string;
-  role: 'user' | 'admin';  // User role for access control
+  role: 'user' | 'admin'; // User role for access control
   admissionNumber: string;
   branch: string;
   hostel: string;
@@ -64,7 +64,7 @@ export interface TimeTableCourse {
   slots: {
     day: string;
     startTime: string;
-    endTime:string;
+    endTime: string;
     venue: string;
   }[];
 }
@@ -92,7 +92,9 @@ export interface Announcement {
   sourceUrl?: string;
 }
 
-export type NewsItem = (CampusEvent & { type: 'event' }) | (Announcement & { type: 'announcement' });
+export type NewsItem =
+  | (CampusEvent & { type: 'event' })
+  | (Announcement & { type: 'announcement' });
 
 export interface DirectoryEntry {
   id: string;
@@ -113,31 +115,36 @@ export interface StudentDirectoryEntry {
 }
 
 // New types for Academic Calendar
-export type CalendarEventType = 'Start of Semester' | 'Mid-Semester Exams' | 'End-Semester Exams' | 'Holiday' | 'Other';
+export type CalendarEventType =
+  | 'Start of Semester'
+  | 'Mid-Semester Exams'
+  | 'End-Semester Exams'
+  | 'Holiday'
+  | 'Other';
 
 export interface CalendarEvent {
-    date: string; // YYYY-MM-DD
-    endDate?: string; // YYYY-MM-DD
-    description: string;
-    type: CalendarEventType;
-    remindMe?: boolean; // User wants to be reminded about this event
-    userId?: string; // User who created this event (for user-created events)
-    id?: string; // Unique identifier for the event
+  date: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
+  description: string;
+  type: CalendarEventType;
+  remindMe?: boolean; // User wants to be reminded about this event
+  userId?: string; // User who created this event (for user-created events)
+  id?: string; // Unique identifier for the event
 }
 
 export interface AcademicCalendarData {
-    semesterStartDate: string; // YYYY-MM-DD
-    semesterEndDate: string; // YYYY-MM-DD
-    semesterName?: string; // Name of the ongoing semester (e.g., "Monsoon 2025-26")
-    academicYearStartDate?: string; // YYYY-MM-DD
-    academicYearEndDate?: string; // YYYY-MM-DD
-    events: CalendarEvent[];
+  semesterStartDate: string; // YYYY-MM-DD
+  semesterEndDate: string; // YYYY-MM-DD
+  semesterName?: string; // Name of the ongoing semester (e.g., "Monsoon 2025-26")
+  academicYearStartDate?: string; // YYYY-MM-DD
+  academicYearEndDate?: string; // YYYY-MM-DD
+  events: CalendarEvent[];
 }
 
 // User's reminder preferences for events
 export interface UserReminderPreferences {
-    userId: string;
-    reminderEventKeys: string[]; // Array of event keys (date + description) that user wants reminders for
+  userId: string;
+  reminderEventKeys: string[]; // Array of event keys (date + description) that user wants reminders for
 }
 
 // FIX: Added LostFoundStatus enum and LostFoundItem interface to resolve missing type errors.
@@ -159,7 +166,12 @@ export interface LostFoundItem {
 }
 
 // Campus Map types
-export type CampusLocationCategory = 'academic' | 'residential' | 'facilities' | 'dining' | 'administration';
+export type CampusLocationCategory =
+  | 'academic'
+  | 'residential'
+  | 'facilities'
+  | 'dining'
+  | 'administration';
 
 export interface CampusLocation {
   id: string;
@@ -169,7 +181,7 @@ export interface CampusLocation {
     lat: number;
     lng: number;
   };
-  description: string; 
+  description: string;
   icon: string;
   details?: {
     address?: string;
@@ -191,31 +203,31 @@ export interface QuickRoute {
 
 // College Forms
 export interface Form {
-    title: string;
-    formNumber: string;
-    downloadLink: string;
-    submitTo: string;
-    category?: 'general' | 'ug' | 'pg' | 'phd';
+  title: string;
+  formNumber: string;
+  downloadLink: string;
+  submitTo: string;
+  category?: 'general' | 'ug' | 'pg' | 'phd';
 }
 
 export interface UserFormsData {
-    favorites: string[]; // array of formNumbers
-    recentDownloads: Array<{
-        formNumber: string;
-        title: string;
-        timestamp: number;
-    }>;
+  favorites: string[]; // array of formNumbers
+  recentDownloads: Array<{
+    formNumber: string;
+    title: string;
+    timestamp: number;
+  }>;
 }
 
 // Quick Links type
 export interface QuickLink {
-    id: string;
-    name: string;
-    href: string;
-    isExternal?: boolean;
-    color?: string;
-    isCustom?: boolean;
-    icon?: string;
+  id: string;
+  name: string;
+  href: string;
+  isExternal?: boolean;
+  color?: string;
+  isCustom?: boolean;
+  icon?: string;
 }
 
 // Activity Log type
@@ -231,20 +243,20 @@ export type ActivityType =
   | 'map';
 
 export interface ActivityItem {
-    id: string;
-    type: ActivityType;
-    title: string;
-    description: string;
-    timestamp: { seconds: number; nanoseconds: number }; // Firestore Timestamp shape
-    icon: string;
-    link?: string;
+  id: string;
+  type: ActivityType;
+  title: string;
+  description: string;
+  timestamp: { seconds: number; nanoseconds: number }; // Firestore Timestamp shape
+  icon: string;
+  link?: string;
 }
 
 // Social Links
 export interface SocialLinks {
-    github?: string;
-    linkedin?: string;
-    instagram?: string;
-    twitter?: string;
-    website?: string;
+  github?: string;
+  linkedin?: string;
+  instagram?: string;
+  twitter?: string;
+  website?: string;
 }

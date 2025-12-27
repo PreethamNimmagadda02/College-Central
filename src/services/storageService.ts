@@ -19,9 +19,9 @@ export const uploadHeroImage = async (
   const timestamp = Date.now();
   const fileName = `hero-${timestamp}-${file.name}`;
   const storageRef = storage.ref(`${HERO_IMAGES_PATH}/${fileName}`);
-  
+
   const uploadTask = storageRef.put(file);
-  
+
   return new Promise((resolve, reject) => {
     uploadTask.on(
       'state_changed',

@@ -12,12 +12,12 @@
  * @module components/Header
  */
 
+import { SunIcon, MoonIcon, LogoIcon } from '@components/icons/SidebarIcons';
+import { useAppConfig } from '@contexts/AppConfigContext';
+import { useUser } from '@contexts/UserContext';
+import { useRole } from '@features/auth/hooks/useRole';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useUser } from '@contexts/UserContext';
-import { useAppConfig } from '@contexts/AppConfigContext';
-import { useRole } from '@features/auth/hooks/useRole';
-import { SunIcon, MoonIcon, LogoIcon } from '@components/icons/SidebarIcons';
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -41,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
   React.useEffect(() => {
     const root = document.documentElement;
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-    
+
     if (isDark) {
       root.classList.add('dark');
       localStorage.setItem('theme', 'dark');
@@ -92,10 +92,28 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
               <span className="sr-only">Open sidebar</span>
-              <svg className="w-6 h-6 fill-current transition-transform duration-200 group-hover:scale-110" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <rect x="4" y="5" width="16" height="2" rx="1" className="transition-transform duration-200 origin-center group-hover:translate-x-0.5" />
+              <svg
+                className="w-6 h-6 fill-current transition-transform duration-200 group-hover:scale-110"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  x="4"
+                  y="5"
+                  width="16"
+                  height="2"
+                  rx="1"
+                  className="transition-transform duration-200 origin-center group-hover:translate-x-0.5"
+                />
                 <rect x="4" y="11" width="16" height="2" rx="1" />
-                <rect x="4" y="17" width="16" height="2" rx="1" className="transition-transform duration-200 origin-center group-hover:translate-x-0.5" />
+                <rect
+                  x="4"
+                  y="17"
+                  width="16"
+                  height="2"
+                  rx="1"
+                  className="transition-transform duration-200 origin-center group-hover:translate-x-0.5"
+                />
               </svg>
             </button>
 
@@ -134,9 +152,24 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
                 className="flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 border border-purple-500/20 hover:border-purple-500/40 text-purple-600 dark:text-purple-400 transition-all duration-300 group hover:shadow-md hover:scale-105"
                 title="Switch to Admin Panel"
               >
-                <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg
+                  className="w-4 h-4 transition-transform duration-300 group-hover:rotate-12"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
                 <span className="hidden sm:inline text-sm font-semibold">Admin Dashboard</span>
               </Link>
@@ -159,8 +192,18 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
                     {user.courseOption || 'CBCS'}
                   </span>
                 </div>
-                <svg className="w-4 h-4 text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-all duration-300 group-hover:rotate-180 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                <svg
+                  className="w-4 h-4 text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-all duration-300 group-hover:rotate-180 relative z-10"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                  />
                 </svg>
               </button>
             )}
@@ -173,8 +216,12 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-blue-500/10 dark:to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative w-full h-full flex items-center justify-center">
-                <SunIcon className={`absolute inset-0 w-full h-full text-amber-500 group-hover:text-amber-400 transition-all duration-500 ease-in-out transform ${isDark ? 'opacity-0 rotate-180 scale-0' : 'opacity-100 rotate-0 scale-100 group-hover:rotate-12'}`} />
-                <MoonIcon className={`absolute inset-0 w-full h-full text-blue-400 group-hover:text-blue-300 transition-all duration-500 ease-in-out transform ${isDark ? 'opacity-100 rotate-0 scale-100 group-hover:-rotate-12' : 'opacity-0 -rotate-180 scale-0'}`} />
+                <SunIcon
+                  className={`absolute inset-0 w-full h-full text-amber-500 group-hover:text-amber-400 transition-all duration-500 ease-in-out transform ${isDark ? 'opacity-0 rotate-180 scale-0' : 'opacity-100 rotate-0 scale-100 group-hover:rotate-12'}`}
+                />
+                <MoonIcon
+                  className={`absolute inset-0 w-full h-full text-blue-400 group-hover:text-blue-300 transition-all duration-500 ease-in-out transform ${isDark ? 'opacity-100 rotate-0 scale-100 group-hover:-rotate-12' : 'opacity-0 -rotate-180 scale-0'}`}
+                />
               </div>
             </button>
 

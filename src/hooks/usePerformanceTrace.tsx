@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
 import { createTrace } from '@lib/utils/performance';
+import { useEffect, useRef } from 'react';
 
 /**
  * Custom hook to measure component render performance

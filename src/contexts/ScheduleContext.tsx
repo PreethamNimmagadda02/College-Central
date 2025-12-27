@@ -1,7 +1,16 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
-import { ClassSchedule } from '@/types';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { db } from '@lib/firebase';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useCallback,
+} from 'react';
+
+import { ClassSchedule } from '@/types';
 
 interface ScheduleContextType {
   scheduleData: ClassSchedule[] | null;
@@ -56,31 +65,30 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
   }, [currentUser]);
 
-  const setScheduleData = useCallback(async (data: ClassSchedule[] | null) => {
-    if (currentUser) {
-      try {
-        const userDocRef = db.collection('users').doc(currentUser.uid);
-        await userDocRef.update({ scheduleData: data });
-        setError(null);
-      } catch (err) {
-        console.error('Error updating schedule data:', err);
-        const error = err instanceof Error ? err : new Error('Failed to update schedule data');
-        setError(error);
-        throw error;
+  const setScheduleData = useCallback(
+    async (data: ClassSchedule[] | null) => {
+      if (currentUser) {
+        try {
+          const userDocRef = db.collection('users').doc(currentUser.uid);
+          await userDocRef.update({ scheduleData: data });
+          setError(null);
+        } catch (err) {
+          console.error('Error updating schedule data:', err);
+          const error = err instanceof Error ? err : new Error('Failed to update schedule data');
+          setError(error);
+          throw error;
+        }
       }
-    }
-  }, [currentUser]);
+    },
+    [currentUser]
+  );
 
   const contextValue = useMemo(
     () => ({ scheduleData, setScheduleData, loading, error }),
     [scheduleData, setScheduleData, loading, error]
   );
 
-  return (
-    <ScheduleContext.Provider value={contextValue}>
-      {children}
-    </ScheduleContext.Provider>
-  );
+  return <ScheduleContext.Provider value={contextValue}>{children}</ScheduleContext.Provider>;
 };
 
 export const useSchedule = () => {

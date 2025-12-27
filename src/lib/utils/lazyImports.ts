@@ -19,8 +19,6 @@ export async function getGoogleGenAI() {
   return { GoogleGenAI, Type };
 }
 
-
-
 /**
  * Lazy load image compression only when needed
  */

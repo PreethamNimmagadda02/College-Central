@@ -7,13 +7,13 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     name: 'Administrative Block',
     category: 'administration',
     coordinates: { lat: 23.814165609301444, lng: 86.44237945447941 },
-    description: 'Central administrative hub with Director\'s office and administrative departments',
+    description: "Central administrative hub with Director's office and administrative departments",
     icon: '🏛️',
     details: {
       address: 'Main Campus, IIT (ISM) Dhanbad',
       openingHours: '9:00 AM - 5:00 PM',
-      facilities: ['Director Office', 'Registrar Office', 'Administrative Departments']
-    }
+      facilities: ['Director Office', 'Registrar Office', 'Administrative Departments'],
+    },
   },
   {
     id: 'loc-2',
@@ -24,8 +24,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🏛️',
     details: {
       openingHours: '9:00 AM - 5:00 PM',
-      facilities: ['Classrooms', 'Labs', 'Conference Rooms']
-    }
+      facilities: ['Classrooms', 'Labs', 'Conference Rooms'],
+    },
   },
   {
     id: 'loc-3',
@@ -37,8 +37,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     details: {
       openingHours: '24/7',
       capacity: 500,
-      facilities: ['Reading Halls', 'Digital Library', 'Research Section', 'Study Rooms']
-    }
+      facilities: ['Reading Halls', 'Digital Library', 'Research Section', 'Study Rooms'],
+    },
   },
   {
     id: 'loc-4',
@@ -49,8 +49,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🎓',
     details: {
       capacity: 1000,
-      facilities: ['Lecture Halls', 'Seminar Rooms', 'Audio-Visual Equipment']
-    }
+      facilities: ['Lecture Halls', 'Seminar Rooms', 'Audio-Visual Equipment'],
+    },
   },
   {
     id: 'loc-5',
@@ -60,8 +60,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     description: 'Department of Mining Engineering with specialized labs',
     icon: '⛏️',
     details: {
-      facilities: ['Mining Labs', 'Research Centers', 'Faculty Offices']
-    }
+      facilities: ['Mining Labs', 'Research Centers', 'Faculty Offices'],
+    },
   },
   {
     id: 'loc-6',
@@ -71,8 +71,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     description: 'Department of Petroleum Engineering',
     icon: '🛢️',
     details: {
-      facilities: ['Petroleum Labs', 'Research Facilities']
-    }
+      facilities: ['Petroleum Labs', 'Research Facilities'],
+    },
   },
   {
     id: 'loc-7',
@@ -82,8 +82,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     description: 'CSE Department with modern labs and facilities',
     icon: '💾',
     details: {
-      facilities: ['Programming Labs', 'AI/ML Labs', 'Research Labs']
-    }
+      facilities: ['Programming Labs', 'AI/ML Labs', 'Research Labs'],
+    },
   },
   {
     id: 'loc-32',
@@ -168,8 +168,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🏠',
     details: {
       capacity: 400,
-      facilities: ['Common Room', 'Mess', 'Gym', 'Reading Room']
-    }
+      facilities: ['Common Room', 'Mess', 'Gym', 'Reading Room'],
+    },
   },
   {
     id: 'loc-9',
@@ -180,8 +180,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🏠',
     details: {
       capacity: 450,
-      facilities: ['Common Room', 'Mess', 'Sports Room', 'Study Area']
-    }
+      facilities: ['Common Room', 'Mess', 'Sports Room', 'Study Area'],
+    },
   },
   {
     id: 'loc-10',
@@ -192,8 +192,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🏠',
     details: {
       capacity: 400,
-      facilities: ['Common Room', 'Mess', 'Indoor Games', 'Library']
-    }
+      facilities: ['Common Room', 'Mess', 'Indoor Games', 'Library'],
+    },
   },
   {
     id: 'loc-11',
@@ -204,8 +204,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🏠',
     details: {
       capacity: 350,
-      facilities: ['Common Room', 'Mess', 'Recreation Room']
-    }
+      facilities: ['Common Room', 'Mess', 'Recreation Room'],
+    },
   },
   {
     id: 'loc-12',
@@ -216,8 +216,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🏠',
     details: {
       capacity: 380,
-      facilities: ['Common Room', 'Mess', 'Gym']
-    }
+      facilities: ['Common Room', 'Mess', 'Gym'],
+    },
   },
   {
     id: 'loc-28',
@@ -226,7 +226,7 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     coordinates: { lat: 23.819021720998393, lng: 86.43626368291831 },
     description: "Boys' hostel complex.",
     icon: '🏠',
-    details: { facilities: ['Common Room', 'Mess', 'Reading Room'] }
+    details: { facilities: ['Common Room', 'Mess', 'Reading Room'] },
   },
   {
     id: 'loc-29',
@@ -235,7 +235,7 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     coordinates: { lat: 23.819412395098297, lng: 86.43688593948976 },
     description: "Boys' hostel known for its community events.",
     icon: '🏠',
-    details: { facilities: ['Common Room', 'Mess', 'Sports facilities'] }
+    details: { facilities: ['Common Room', 'Mess', 'Sports facilities'] },
   },
   {
     id: 'loc-30',
@@ -244,7 +244,7 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     coordinates: { lat: 23.81366696462716, lng: 86.44496499743238 },
     description: 'Accommodation for international students and guests.',
     icon: '🏨',
-    details: { facilities: ['Guest Rooms', 'Dining Hall'] }
+    details: { facilities: ['Guest Rooms', 'Dining Hall'] },
   },
   {
     id: 'loc-31',
@@ -265,8 +265,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🏠',
     details: {
       capacity: 300,
-      facilities: ['Common Room', 'Mess', 'Reading Room', 'Recreation Area']
-    }
+      facilities: ['Common Room', 'Mess', 'Reading Room', 'Recreation Area'],
+    },
   },
   {
     id: 'loc-14',
@@ -277,8 +277,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🏠',
     details: {
       capacity: 250,
-      facilities: ['Common Room', 'Mess', 'Study Room', 'Gym']
-    }
+      facilities: ['Common Room', 'Mess', 'Study Room', 'Gym'],
+    },
   },
   {
     id: 'loc-15',
@@ -288,8 +288,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     description: 'Residential area for faculty members',
     icon: '🏘️',
     details: {
-      facilities: ['Houses', 'Parks', 'Community Center']
-    }
+      facilities: ['Houses', 'Parks', 'Community Center'],
+    },
   },
 
   // Facilities
@@ -302,8 +302,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🎯',
     details: {
       openingHours: '8:00 AM - 10:00 PM',
-      facilities: ['Club Rooms', 'Event Halls', 'Music Room', 'Dance Studio', 'Art Room']
-    }
+      facilities: ['Club Rooms', 'Event Halls', 'Music Room', 'Dance Studio', 'Art Room'],
+    },
   },
   {
     id: 'loc-17',
@@ -315,8 +315,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     details: {
       openingHours: '24/7',
       contact: '0326-223-5435',
-      facilities: ['Emergency Care', 'OPD', 'Pharmacy', 'Ambulance Service']
-    }
+      facilities: ['Emergency Care', 'OPD', 'Pharmacy', 'Ambulance Service'],
+    },
   },
   {
     id: 'loc-18',
@@ -327,20 +327,27 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '⚽',
     details: {
       openingHours: '6:00 AM - 9:00 PM',
-      facilities: ['Cricket Ground', 'Football Field', 'Basketball Courts', 'Badminton Courts', 'Gym', 'Swimming Pool']
-    }
+      facilities: [
+        'Cricket Ground',
+        'Football Field',
+        'Basketball Courts',
+        'Badminton Courts',
+        'Gym',
+        'Swimming Pool',
+      ],
+    },
   },
   {
     id: 'loc-19',
     name: 'Penman Auditorium',
     category: 'facilities',
-    coordinates: { lat: 23.814945323310198, lng: 86.44121915155911},
+    coordinates: { lat: 23.814945323310198, lng: 86.44121915155911 },
     description: 'Main auditorium for cultural events, fests, and convocations',
     icon: '🎭',
     details: {
       capacity: 800,
-      facilities: ['Main Stage', 'Audio-Visual Equipment', 'Green Rooms', 'Air Conditioning']
-    }
+      facilities: ['Main Stage', 'Audio-Visual Equipment', 'Green Rooms', 'Air Conditioning'],
+    },
   },
   {
     id: 'loc-20',
@@ -351,8 +358,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🛍️',
     details: {
       openingHours: '8:00 AM - 10:00 PM',
-      facilities: ['Stationery Shops', 'Xerox Center', 'General Stores', 'Salons']
-    }
+      facilities: ['Stationery Shops', 'Xerox Center', 'General Stores', 'Salons'],
+    },
   },
   {
     id: 'loc-21',
@@ -362,8 +369,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     description: 'Guest house for visitors and parents',
     icon: '🏨',
     details: {
-      facilities: ['Rooms', 'Dining', 'Conference Hall']
-    }
+      facilities: ['Rooms', 'Dining', 'Conference Hall'],
+    },
   },
   {
     id: 'loc-22',
@@ -374,8 +381,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '📮',
     details: {
       openingHours: '10:00 AM - 5:00 PM (Mon-Sat)',
-      facilities: ['Mail Services', 'Banking Services']
-    }
+      facilities: ['Mail Services', 'Banking Services'],
+    },
   },
   {
     id: 'loc-36',
@@ -409,8 +416,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     description: 'Sports ground for various outdoor activities.',
     icon: '🏟️',
     details: {
-      facilities: ['Sports Ground', 'Track']
-    }
+      facilities: ['Sports Ground', 'Track'],
+    },
   },
   {
     id: 'loc-45',
@@ -485,7 +492,6 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🔬',
   },
 
-
   // Dining
   {
     id: 'loc-23',
@@ -496,8 +502,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🍽️',
     details: {
       openingHours: '8:00 AM - 10:00 PM',
-      facilities: ['AC Dining', 'Multiple Cuisines', 'Snacks Corner']
-    }
+      facilities: ['AC Dining', 'Multiple Cuisines', 'Snacks Corner'],
+    },
   },
   {
     id: 'loc-24',
@@ -508,8 +514,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '☕',
     details: {
       openingHours: '9:00 AM - 8:00 PM',
-      facilities: ['Tea/Coffee', 'Snacks', 'Fast Food']
-    }
+      facilities: ['Tea/Coffee', 'Snacks', 'Fast Food'],
+    },
   },
   {
     id: 'loc-25',
@@ -520,8 +526,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🍔',
     details: {
       openingHours: '11:00 AM - 10:00 PM',
-      facilities: ['Multiple Stalls', 'Fast Food', 'Regional Cuisine']
-    }
+      facilities: ['Multiple Stalls', 'Fast Food', 'Regional Cuisine'],
+    },
   },
   {
     id: 'loc-26',
@@ -532,8 +538,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🍱',
     details: {
       openingHours: 'Breakfast: 7-9 AM, Lunch: 12-2 PM, Dinner: 7-10 PM',
-      facilities: ['Mess Halls', 'Meal Plans']
-    }
+      facilities: ['Mess Halls', 'Meal Plans'],
+    },
   },
   {
     id: 'loc-27',
@@ -544,8 +550,8 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     icon: '🌙',
     details: {
       openingHours: '10:00 PM - 2:00 AM',
-      facilities: ['Snacks', 'Tea/Coffee', 'Maggi Point']
-    }
+      facilities: ['Snacks', 'Tea/Coffee', 'Maggi Point'],
+    },
   },
   {
     id: 'loc-52',
@@ -568,11 +574,11 @@ export const CAMPUS_LOCATIONS: CampusLocation[] = [
     name: "Office of Dean's Student Welfare (DSW)",
     category: 'administration',
     coordinates: { lat: 23.817085615774094, lng: 86.43766197506451 },
-    description: "Office responsible for student welfare and support services.",
+    description: 'Office responsible for student welfare and support services.',
     icon: '🏢',
     details: {
       openingHours: '9:00 AM - 5:00 PM',
-    }
+    },
   },
 ];
 
@@ -583,7 +589,7 @@ export const CAMPUS_QUICK_ROUTES: QuickRoute[] = [
     to: 'Central Library',
     time: '4 min walk',
     distance: '300m',
-    steps: ['Exit Main Building', 'Walk on Academic Road', 'Central Library on right']
+    steps: ['Exit Main Building', 'Walk on Academic Road', 'Central Library on right'],
   },
   {
     id: 'route-2',
@@ -591,7 +597,7 @@ export const CAMPUS_QUICK_ROUTES: QuickRoute[] = [
     to: 'New Lecture Hall Complex (NLHC)',
     time: '4 min walk',
     distance: '270m',
-    steps: ['Exit hostel', 'Walk towards academic area', 'NLHC ahead']
+    steps: ['Exit hostel', 'Walk towards academic area', 'NLHC ahead'],
   },
   {
     id: 'route-3',
@@ -599,7 +605,7 @@ export const CAMPUS_QUICK_ROUTES: QuickRoute[] = [
     to: 'Computer Science & Engineering Department',
     time: '9 min walk',
     distance: '650m',
-    steps: ['Exit Library', 'Walk on Academic Road', 'CSE Department on right']
+    steps: ['Exit Library', 'Walk on Academic Road', 'CSE Department on right'],
   },
   {
     id: 'route-4',
@@ -607,7 +613,7 @@ export const CAMPUS_QUICK_ROUTES: QuickRoute[] = [
     to: 'Lower Ground',
     time: '15 min walk',
     distance: '1100m',
-    steps: ['Exit SAC', 'Walk towards sports area', 'Lower Ground ahead']
+    steps: ['Exit SAC', 'Walk towards sports area', 'Lower Ground ahead'],
   },
   {
     id: 'route-5',
@@ -615,6 +621,6 @@ export const CAMPUS_QUICK_ROUTES: QuickRoute[] = [
     to: 'Barista',
     time: '5 min walk',
     distance: '350m',
-    steps: ['Exit Main Building', 'Walk towards dining area', 'Barista on left']
+    steps: ['Exit Main Building', 'Walk towards dining area', 'Barista on left'],
   },
 ];

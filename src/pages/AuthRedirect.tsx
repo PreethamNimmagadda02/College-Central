@@ -1,10 +1,10 @@
 // pages/AuthRedirect.tsx
 // Post-login redirect page that routes users based on their role
 
+import { useAuth } from '@features/auth/hooks/useAuth';
+import { useRole } from '@features/auth/hooks/useRole';
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRole } from '@features/auth/hooks/useRole';
-import { useAuth } from '@features/auth/hooks/useAuth';
 
 const AuthRedirect: React.FC = () => {
   const { isAdmin, isLoading: roleLoading } = useRole();

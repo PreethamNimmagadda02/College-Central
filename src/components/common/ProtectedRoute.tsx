@@ -1,6 +1,6 @@
+import { useAuth } from '@features/auth/hooks/useAuth';
 import React, { ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@features/auth/hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: ReactNode;

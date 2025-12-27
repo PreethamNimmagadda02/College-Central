@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
-import { AdminConfig, AdminStudentEntry } from '../types';
 import { Plus, Search, Upload, Trash2, Edit, X } from 'lucide-react';
-import StudentUploader from './StudentUploader';
+import React, { useState, useMemo } from 'react';
+
+import { AdminConfig, AdminStudentEntry } from '../types';
 import { AdminHeader, UserGroupIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
+import StudentUploader from './StudentUploader';
 
 interface Props {
   config: AdminConfig;
@@ -43,12 +44,12 @@ const StudentDirectoryEditor: React.FC<Props> = ({
   const { branches, years } = useMemo(() => {
     const branchSet = new Set<string>();
     const yearSet = new Set<string>();
-    
-    config.students.forEach(student => {
+
+    config.students.forEach((student) => {
       branchSet.add(student.branch);
       yearSet.add(getYear(student.admNo));
     });
-    
+
     return {
       branches: Array.from(branchSet).sort(),
       years: Array.from(yearSet).sort(),
@@ -57,14 +58,14 @@ const StudentDirectoryEditor: React.FC<Props> = ({
 
   // Filter students
   const filteredStudents = useMemo(() => {
-    return config.students.filter(student => {
-      const matchesSearch = 
+    return config.students.filter((student) => {
+      const matchesSearch =
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.admNo.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesBranch = branchFilter === 'All' || student.branch === branchFilter;
       const matchesYear = yearFilter === 'All' || getYear(student.admNo) === yearFilter;
-      
+
       return matchesSearch && matchesBranch && matchesYear;
     });
   }, [config.students, searchTerm, branchFilter, yearFilter]);
@@ -76,13 +77,11 @@ const StudentDirectoryEditor: React.FC<Props> = ({
     currentPage * itemsPerPage
   );
 
-
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
-    
+
     const studentData = {
       admNo: formData.get('admNo') as string,
       name: formData.get('name') as string,
@@ -102,31 +101,40 @@ const StudentDirectoryEditor: React.FC<Props> = ({
   return (
     <AdminPageLayout>
       {/* Header */}
-      <AdminHeader 
-        icon={<UserGroupIcon />} 
-        title="Student Directory" 
+      <AdminHeader
+        icon={<UserGroupIcon />}
+        title="Student Directory"
         subtitle="Manage student records and information"
       >
         <div className="flex flex-wrap gap-2 sm:gap-3">
           {/* Delete Filtered - only show when filters are active */}
-          {(searchTerm || branchFilter !== 'All' || yearFilter !== 'All') && filteredStudents.length > 0 && (
-            <button
-              onClick={() => {
-                if (confirm(`Are you sure you want to delete all ${filteredStudents.length} filtered students? This action cannot be undone.`)) {
-                  deleteStudentsByIds(filteredStudents.map(s => s.id));
-                }
-              }}
-              className="admin-btn bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-4"
-            >
-              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-              Delete {filteredStudents.length}
-            </button>
-          )}
+          {(searchTerm || branchFilter !== 'All' || yearFilter !== 'All') &&
+            filteredStudents.length > 0 && (
+              <button
+                onClick={() => {
+                  if (
+                    confirm(
+                      `Are you sure you want to delete all ${filteredStudents.length} filtered students? This action cannot be undone.`
+                    )
+                  ) {
+                    deleteStudentsByIds(filteredStudents.map((s) => s.id));
+                  }
+                }}
+                className="admin-btn bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-4"
+              >
+                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                Delete {filteredStudents.length}
+              </button>
+            )}
           {/* Clear All Students */}
           {config.students.length > 0 && (
             <button
               onClick={() => {
-                if (confirm(`Are you sure you want to delete ALL ${config.students.length} students? This action cannot be undone.`)) {
+                if (
+                  confirm(
+                    `Are you sure you want to delete ALL ${config.students.length} students? This action cannot be undone.`
+                  )
+                ) {
                   clearAllStudents();
                 }
               }}
@@ -155,7 +163,6 @@ const StudentDirectoryEditor: React.FC<Props> = ({
 
       {/* Stats */}
 
-
       {/* Filters */}
       <div className="flex flex-col gap-3">
         {/* Search Bar - Always full width */}
@@ -165,35 +172,44 @@ const StudentDirectoryEditor: React.FC<Props> = ({
             type="text"
             placeholder="Search by name or admission number..."
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="admin-input"
             style={{ paddingLeft: '48px' }}
           />
         </div>
-        
+
         {/* Filter Dropdowns - Stack on mobile, row on larger */}
         <div className="flex flex-col xs:flex-row gap-2 sm:gap-3">
           <select
             value={yearFilter}
-            onChange={(e) => { setYearFilter(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => {
+              setYearFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="admin-select w-full xs:flex-1 sm:w-auto sm:min-w-[180px]"
           >
             <option value="All">All Years</option>
-            {years.map(year => (
+            {years.map((year) => (
               <option key={year} value={year}>
-                {year} ({config.students.filter(s => getYear(s.admNo) === year).length})
+                {year} ({config.students.filter((s) => getYear(s.admNo) === year).length})
               </option>
             ))}
           </select>
           <select
             value={branchFilter}
-            onChange={(e) => { setBranchFilter(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => {
+              setBranchFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="admin-select w-full xs:w-[140px] sm:w-auto sm:min-w-[140px]"
           >
             <option value="All">All Branches ({config.students.length})</option>
-            {branches.map(branch => (
+            {branches.map((branch) => (
               <option key={branch} value={branch}>
-                {branch} ({config.students.filter(s => s.branch === branch).length})
+                {branch} ({config.students.filter((s) => s.branch === branch).length})
               </option>
             ))}
           </select>
@@ -214,7 +230,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
               </tr>
             </thead>
             <tbody>
-              {paginatedStudents.map(student => (
+              {paginatedStudents.map((student) => (
                 <tr key={student.id}>
                   <td className="font-mono text-cyan-400">{student.admNo}</td>
                   <td>{student.name}</td>
@@ -223,7 +239,10 @@ const StudentDirectoryEditor: React.FC<Props> = ({
                   <td>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => { setEditingStudent(student); setShowAddModal(true); }}
+                        onClick={() => {
+                          setEditingStudent(student);
+                          setShowAddModal(true);
+                        }}
                         className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
                       >
                         <Edit className="w-4 h-4" />
@@ -246,7 +265,9 @@ const StudentDirectoryEditor: React.FC<Props> = ({
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-blue-500/10">
             <div className="text-sm text-slate-400">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length.toLocaleString()}
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+              {Math.min(currentPage * itemsPerPage, filteredStudents.length)} of{' '}
+              {filteredStudents.length.toLocaleString()}
             </div>
             <div className="flex gap-2">
               <button
@@ -257,7 +278,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
                 First
               </button>
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
               >
@@ -267,7 +288,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
                 Page {currentPage} of {totalPages}
               </span>
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
               >
@@ -287,7 +308,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
 
       {/* Student Cards - Mobile */}
       <div className="space-y-3 md:hidden">
-        {paginatedStudents.map(student => (
+        {paginatedStudents.map((student) => (
           <div key={student.id} className="admin-card p-4">
             {/* Header with admission number and actions */}
             <div className="flex items-start justify-between gap-3 mb-2">
@@ -297,7 +318,10 @@ const StudentDirectoryEditor: React.FC<Props> = ({
               </div>
               <div className="flex gap-1 flex-shrink-0">
                 <button
-                  onClick={() => { setEditingStudent(student); setShowAddModal(true); }}
+                  onClick={() => {
+                    setEditingStudent(student);
+                    setShowAddModal(true);
+                  }}
                   className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
                 >
                   <Edit className="w-4 h-4" />
@@ -310,10 +334,10 @@ const StudentDirectoryEditor: React.FC<Props> = ({
                 </button>
               </div>
             </div>
-            
+
             {/* Name */}
             <h4 className="font-medium text-white text-sm mb-2 break-words">{student.name}</h4>
-            
+
             {/* Branch */}
             <p className="text-slate-400 text-xs truncate">{student.branch}</p>
           </div>
@@ -325,18 +349,19 @@ const StudentDirectoryEditor: React.FC<Props> = ({
         <div className="admin-card md:hidden">
           <div className="flex flex-col gap-3">
             <div className="text-xs text-slate-400 text-center">
-              Page {currentPage} of {totalPages} ({filteredStudents.length.toLocaleString()} students)
+              Page {currentPage} of {totalPages} ({filteredStudents.length.toLocaleString()}{' '}
+              students)
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="admin-btn admin-btn-secondary text-sm disabled:opacity-40 flex-1 justify-center"
               >
                 Previous
               </button>
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="admin-btn admin-btn-secondary text-sm disabled:opacity-40 flex-1 justify-center"
               >
@@ -349,14 +374,23 @@ const StudentDirectoryEditor: React.FC<Props> = ({
 
       {/* Add/Edit Modal */}
       {showAddModal && (
-        <div className="admin-modal-overlay" onClick={() => { setShowAddModal(false); setEditingStudent(null); }}>
-          <div className="admin-modal max-w-md" onClick={e => e.stopPropagation()}>
+        <div
+          className="admin-modal-overlay"
+          onClick={() => {
+            setShowAddModal(false);
+            setEditingStudent(null);
+          }}
+        >
+          <div className="admin-modal max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h3 className="admin-modal-title">
                 {editingStudent ? 'Edit Student' : 'Add Student'}
               </h3>
-              <button 
-                onClick={() => { setShowAddModal(false); setEditingStudent(null); }}
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  setEditingStudent(null);
+                }}
                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -394,15 +428,14 @@ const StudentDirectoryEditor: React.FC<Props> = ({
                   className="admin-select"
                 >
                   <option value="">Select Branch</option>
-                  {branches.map(branch => (
-                    <option key={branch} value={branch}>{branch}</option>
+                  {branches.map((branch) => (
+                    <option key={branch} value={branch}>
+                      {branch}
+                    </option>
                   ))}
                 </select>
               </div>
-              <button
-                type="submit"
-                className="w-full admin-btn admin-btn-primary py-3"
-              >
+              <button type="submit" className="w-full admin-btn admin-btn-primary py-3">
                 {editingStudent ? 'Update Student' : 'Add Student'}
               </button>
             </form>

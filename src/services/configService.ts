@@ -1,7 +1,7 @@
 // Firestore service for app configuration management
 // Each config section is stored in a separate document within the appConfig collection
-import { db } from '@lib/firebase';
 import { AdminConfig } from '@features/admin/types';
+import { db } from '@lib/firebase';
 
 const CONFIG_COLLECTION = 'appConfig';
 
@@ -28,7 +28,7 @@ const CONFIG_DOCS = {
 const ARRAY_CONFIG_KEYS = [
   'adminEmails',
   'branches',
-  'hostels', 
+  'hostels',
   'quotes',
   'quickLinks',
   'forms',
@@ -48,7 +48,7 @@ const sanitizeForFirestore = (obj: any): any => {
     return null;
   }
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeForFirestore(item));
+    return obj.map((item) => sanitizeForFirestore(item));
   }
   if (typeof obj === 'object') {
     const sanitized: any = {};
@@ -62,8 +62,6 @@ const sanitizeForFirestore = (obj: any): any => {
   return obj;
 };
 
-
-
 /**
  * Get the entire app configuration from Firestore
  * Fetches all config documents and combines them
@@ -72,24 +70,24 @@ export const getConfig = async (): Promise<AdminConfig | null> => {
   try {
     const collectionRef = db.collection(CONFIG_COLLECTION);
     const snapshot = await collectionRef.get();
-    
+
     if (snapshot.empty) {
       return null;
     }
-    
+
     const config: Partial<AdminConfig> = {};
     const validDocIds = Object.values(CONFIG_DOCS);
-    
-    snapshot.forEach(doc => {
+
+    snapshot.forEach((doc) => {
       const docId = doc.id;
-      
+
       // Skip invalid document IDs
       if (!validDocIds.includes(docId as any)) {
         return;
       }
-      
+
       const data = doc.data();
-      
+
       // For array-based configs, extract from { items: [...] }
       if (ARRAY_CONFIG_KEYS.includes(docId as any)) {
         (config as any)[docId] = data.items || [];
@@ -97,7 +95,7 @@ export const getConfig = async (): Promise<AdminConfig | null> => {
         (config as any)[docId] = data;
       }
     });
-    
+
     return config as AdminConfig;
   } catch (error) {
     console.error('Error fetching config from Firestore:', error);
@@ -113,13 +111,13 @@ export const updateConfig = async (config: AdminConfig): Promise<boolean> => {
   try {
     const batch = db.batch();
     const collectionRef = db.collection(CONFIG_COLLECTION);
-    
+
     // Write each section to its own document
     Object.entries(CONFIG_DOCS).forEach(([key, docId]) => {
       const docRef = collectionRef.doc(docId);
       const data = config[key as keyof AdminConfig];
       const sanitizedData = sanitizeForFirestore(data);
-      
+
       // For array-based configs, wrap in { items: [...] }
       if (ARRAY_CONFIG_KEYS.includes(key as any)) {
         batch.set(docRef, { items: sanitizedData }, { merge: true });
@@ -128,7 +126,7 @@ export const updateConfig = async (config: AdminConfig): Promise<boolean> => {
         batch.set(docRef, sanitizedData);
       }
     });
-    
+
     await batch.commit();
     return true;
   } catch (error) {
@@ -148,7 +146,7 @@ export const updateConfigSection = async <K extends keyof AdminConfig>(
     const docId = CONFIG_DOCS[section];
     const docRef = db.collection(CONFIG_COLLECTION).doc(docId);
     const sanitizedData = sanitizeForFirestore(data);
-    
+
     // For array-based configs, wrap in { items: [...] }
     if (ARRAY_CONFIG_KEYS.includes(section as any)) {
       await docRef.set({ items: sanitizedData }, { merge: true });
@@ -156,7 +154,7 @@ export const updateConfigSection = async <K extends keyof AdminConfig>(
       // For object configs, replace entirely to ensure nested values sync
       await docRef.set(sanitizedData as any);
     }
-    
+
     return true;
   } catch (error) {
     console.error(`Error updating config section ${section}:`, error);
@@ -169,31 +167,29 @@ export const updateConfigSection = async <K extends keyof AdminConfig>(
  * Listens to all documents in the collection and combines them
  * @returns Unsubscribe function
  */
-export const subscribeToConfig = (
-  callback: (config: AdminConfig | null) => void
-): (() => void) => {
+export const subscribeToConfig = (callback: (config: AdminConfig | null) => void): (() => void) => {
   const collectionRef = db.collection(CONFIG_COLLECTION);
-  
+
   const unsubscribe = collectionRef.onSnapshot(
     (snapshot) => {
       if (snapshot.empty) {
         callback(null);
         return;
       }
-      
+
       const config: Partial<AdminConfig> = {};
       const validDocIds = Object.values(CONFIG_DOCS);
-      
-      snapshot.forEach(doc => {
+
+      snapshot.forEach((doc) => {
         const docId = doc.id;
-        
+
         // Skip invalid document IDs
         if (!validDocIds.includes(docId as any)) {
           return;
         }
-        
+
         const data = doc.data();
-        
+
         // For array-based configs, extract from { items: [...] }
         if (ARRAY_CONFIG_KEYS.includes(docId as any)) {
           (config as any)[docId] = data.items || [];
@@ -201,7 +197,7 @@ export const subscribeToConfig = (
           (config as any)[docId] = data;
         }
       });
-      
+
       // Only call callback if we have config data
       if (Object.keys(config).length > 0) {
         callback(config as AdminConfig);
@@ -214,7 +210,7 @@ export const subscribeToConfig = (
       callback(null);
     }
   );
-  
+
   return unsubscribe;
 };
 
@@ -227,25 +223,25 @@ export const initializeConfig = async (defaultConfig: AdminConfig): Promise<bool
   try {
     const collectionRef = db.collection(CONFIG_COLLECTION);
     const snapshot = await collectionRef.get();
-    
+
     // Get existing document IDs
-    const existingDocIds = new Set(snapshot.docs.map(doc => doc.id));
-    
+    const existingDocIds = new Set(snapshot.docs.map((doc) => doc.id));
+
     // Find missing sections
     const missingEntries = Object.entries(CONFIG_DOCS).filter(
       ([, docId]) => !existingDocIds.has(docId)
     );
-    
+
     if (missingEntries.length === 0) {
       return true;
     }
-    
+
     const batch = db.batch();
-    
+
     missingEntries.forEach(([key, docId]) => {
       const docRef = collectionRef.doc(docId);
       const data = defaultConfig[key as keyof AdminConfig];
-      
+
       // For array-based configs, wrap in { items: [...] }
       if (ARRAY_CONFIG_KEYS.includes(key as any)) {
         batch.set(docRef, { items: data });
@@ -253,13 +249,12 @@ export const initializeConfig = async (defaultConfig: AdminConfig): Promise<bool
         batch.set(docRef, data);
       }
     });
-    
+
     await batch.commit();
-    
+
     return true;
   } catch (error) {
     console.error('Error initializing config in Firestore:', error);
     return false;
   }
 };
-

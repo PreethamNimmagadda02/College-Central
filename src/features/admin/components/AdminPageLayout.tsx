@@ -18,22 +18,17 @@ const maxWidthClasses = {
 
 /**
  * AdminPageLayout - Wraps admin editor pages with consistent layout structure
- * 
+ *
  * Provides:
  * - Consistent max-width container
  * - Proper vertical spacing between sections
  * - Fade-in animation
  * - Responsive design
  */
-const AdminPageLayout: React.FC<AdminPageLayoutProps> = ({ 
-  children, 
-  maxWidth = '6xl' 
-}) => {
+const AdminPageLayout: React.FC<AdminPageLayoutProps> = ({ children, maxWidth = '6xl' }) => {
   return (
     <div className={`${maxWidthClasses[maxWidth]} mx-auto`}>
-      <div className="space-y-6 sm:space-y-8">
-        {children}
-      </div>
+      <div className="space-y-6 sm:space-y-8">{children}</div>
     </div>
   );
 };

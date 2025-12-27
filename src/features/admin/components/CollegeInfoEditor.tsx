@@ -1,6 +1,13 @@
+import {
+  uploadHeroImage,
+  deleteHeroImage,
+  isValidImageFile,
+  isValidFileSize,
+  MAX_HERO_IMAGE_SIZE,
+} from '@services/storageService';
 import React, { useState, useEffect, useRef } from 'react';
+
 import { AdminConfig } from '../types';
-import { uploadHeroImage, deleteHeroImage, isValidImageFile, isValidFileSize, MAX_HERO_IMAGE_SIZE } from '@services/storageService';
 import { AdminHeader, BuildingIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 
@@ -16,7 +23,7 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Local state for editing (only saved on explicit save)
   const [localCollegeInfo, setLocalCollegeInfo] = useState(config.collegeInfo);
   const [localAppConstants, setLocalAppConstants] = useState(config.appConstants);
@@ -35,10 +42,10 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
       // Save all changes at once
       updateCollegeInfo(localCollegeInfo);
       updateAppConstants(localAppConstants);
-      
+
       // Wait a bit for the save to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       setIsEditing(false);
     } catch (error) {
       console.error('Error saving:', error);
@@ -65,10 +72,14 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
   return (
     <AdminPageLayout>
       {/* Header with Edit/Save/Cancel buttons */}
-      <AdminHeader 
-        icon={<BuildingIcon />} 
-        title="College Information" 
-        subtitle={isEditing ? 'Make your changes and click Save to apply them' : 'Click Edit to modify college information'}
+      <AdminHeader
+        icon={<BuildingIcon />}
+        title="College Information"
+        subtitle={
+          isEditing
+            ? 'Make your changes and click Save to apply them'
+            : 'Click Edit to modify college information'
+        }
       >
         <div className="flex items-center gap-3">
           {isEditing ? (
@@ -88,15 +99,31 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
                 {isSaving ? (
                   <>
                     <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                     Saving...
                   </>
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                     Save Changes
                   </>
@@ -109,7 +136,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
               className="admin-btn admin-btn-primary flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
               </svg>
               Edit
             </button>
@@ -128,10 +160,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
               disabled={!isEditing}
               className={`admin-input ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={collegeInfo.name.full}
-              onChange={e => setLocalCollegeInfo(prev => ({
-                ...prev,
-                name: { ...prev.name, full: e.target.value }
-              }))}
+              onChange={(e) =>
+                setLocalCollegeInfo((prev) => ({
+                  ...prev,
+                  name: { ...prev.name, full: e.target.value },
+                }))
+              }
             />
           </div>
           <div>
@@ -141,10 +175,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
               disabled={!isEditing}
               className={`admin-input ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={collegeInfo.name.short}
-              onChange={e => setLocalCollegeInfo(prev => ({
-                ...prev,
-                name: { ...prev.name, short: e.target.value }
-              }))}
+              onChange={(e) =>
+                setLocalCollegeInfo((prev) => ({
+                  ...prev,
+                  name: { ...prev.name, short: e.target.value },
+                }))
+              }
             />
           </div>
           <div>
@@ -154,10 +190,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
               disabled={!isEditing}
               className={`admin-input ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={collegeInfo.name.abbreviation}
-              onChange={e => setLocalCollegeInfo(prev => ({
-                ...prev,
-                name: { ...prev.name, abbreviation: e.target.value }
-              }))}
+              onChange={(e) =>
+                setLocalCollegeInfo((prev) => ({
+                  ...prev,
+                  name: { ...prev.name, abbreviation: e.target.value },
+                }))
+              }
             />
           </div>
         </div>
@@ -174,10 +212,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
               disabled={!isEditing}
               className={`admin-input ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={collegeInfo.email.domain}
-              onChange={e => setLocalCollegeInfo(prev => ({
-                ...prev,
-                email: { ...prev.email, domain: e.target.value }
-              }))}
+              onChange={(e) =>
+                setLocalCollegeInfo((prev) => ({
+                  ...prev,
+                  email: { ...prev.email, domain: e.target.value },
+                }))
+              }
             />
           </div>
           <div>
@@ -187,10 +227,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
               disabled={!isEditing}
               className={`admin-input ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={collegeInfo.email.allowedDomain}
-              onChange={e => setLocalCollegeInfo(prev => ({
-                ...prev,
-                email: { ...prev.email, allowedDomain: e.target.value }
-              }))}
+              onChange={(e) =>
+                setLocalCollegeInfo((prev) => ({
+                  ...prev,
+                  email: { ...prev.email, allowedDomain: e.target.value },
+                }))
+              }
               placeholder="@example.edu"
             />
           </div>
@@ -208,10 +250,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
               disabled={!isEditing}
               className={`admin-input ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={collegeInfo.website.url}
-              onChange={e => setLocalCollegeInfo(prev => ({
-                ...prev,
-                website: { ...prev.website, url: e.target.value }
-              }))}
+              onChange={(e) =>
+                setLocalCollegeInfo((prev) => ({
+                  ...prev,
+                  website: { ...prev.website, url: e.target.value },
+                }))
+              }
             />
           </div>
           <div>
@@ -221,10 +265,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
               disabled={!isEditing}
               className={`admin-input ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={collegeInfo.website.name}
-              onChange={e => setLocalCollegeInfo(prev => ({
-                ...prev,
-                website: { ...prev.website, name: e.target.value }
-              }))}
+              onChange={(e) =>
+                setLocalCollegeInfo((prev) => ({
+                  ...prev,
+                  website: { ...prev.website, name: e.target.value },
+                }))
+              }
             />
           </div>
         </div>
@@ -241,10 +287,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
               disabled={!isEditing}
               className={`admin-input ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={collegeInfo.location.city}
-              onChange={e => setLocalCollegeInfo(prev => ({
-                ...prev,
-                location: { ...prev.location, city: e.target.value }
-              }))}
+              onChange={(e) =>
+                setLocalCollegeInfo((prev) => ({
+                  ...prev,
+                  location: { ...prev.location, city: e.target.value },
+                }))
+              }
             />
           </div>
           <div>
@@ -254,10 +302,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
               disabled={!isEditing}
               className={`admin-input ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={collegeInfo.location.state}
-              onChange={e => setLocalCollegeInfo(prev => ({
-                ...prev,
-                location: { ...prev.location, state: e.target.value }
-              }))}
+              onChange={(e) =>
+                setLocalCollegeInfo((prev) => ({
+                  ...prev,
+                  location: { ...prev.location, state: e.target.value },
+                }))
+              }
             />
           </div>
           <div>
@@ -267,10 +317,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
               disabled={!isEditing}
               className={`admin-input ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
               value={collegeInfo.location.country}
-              onChange={e => setLocalCollegeInfo(prev => ({
-                ...prev,
-                location: { ...prev.location, country: e.target.value }
-              }))}
+              onChange={(e) =>
+                setLocalCollegeInfo((prev) => ({
+                  ...prev,
+                  location: { ...prev.location, country: e.target.value },
+                }))
+              }
             />
           </div>
         </div>
@@ -279,8 +331,10 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
       {/* Hero Image Section */}
       <div className={`admin-card ${isEditing ? 'border-blue-500/40' : ''}`}>
         <h3 className="text-lg font-semibold text-white mb-4">Login Page Hero Image</h3>
-        <p className="text-sm text-slate-400 mb-4">This image is displayed as the background on the login page.</p>
-        
+        <p className="text-sm text-slate-400 mb-4">
+          This image is displayed as the background on the login page.
+        </p>
+
         {/* Current Image Preview */}
         <div className="mb-4">
           <label className="admin-label mb-2">Current Image</label>
@@ -316,19 +370,23 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
                 setUploadError(null);
 
                 if (!isValidImageFile(file)) {
-                  setUploadError('Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.');
+                  setUploadError(
+                    'Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.'
+                  );
                   return;
                 }
 
                 if (!isValidFileSize(file)) {
-                  setUploadError(`File too large. Maximum size is ${MAX_HERO_IMAGE_SIZE / (1024 * 1024)}MB.`);
+                  setUploadError(
+                    `File too large. Maximum size is ${MAX_HERO_IMAGE_SIZE / (1024 * 1024)}MB.`
+                  );
                   return;
                 }
 
                 try {
                   setUploadProgress(0);
                   const url = await uploadHeroImage(file, setUploadProgress);
-                  setLocalCollegeInfo(prev => ({ ...prev, heroImageUrl: url }));
+                  setLocalCollegeInfo((prev) => ({ ...prev, heroImageUrl: url }));
                   setUploadProgress(null);
                 } catch (error) {
                   console.error('Upload failed:', error);
@@ -353,15 +411,32 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
                 {uploadProgress !== null ? (
                   <>
                     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                     Uploading... {uploadProgress}%
                   </>
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
                     </svg>
                     Upload New Image
                   </>
@@ -372,23 +447,32 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
                 <button
                   type="button"
                   onClick={async () => {
-                    if (window.confirm('Are you sure you want to remove the custom hero image? The default image will be used.')) {
+                    if (
+                      window.confirm(
+                        'Are you sure you want to remove the custom hero image? The default image will be used.'
+                      )
+                    ) {
                       try {
                         if (collegeInfo.heroImageUrl) {
                           await deleteHeroImage(collegeInfo.heroImageUrl);
                         }
-                        setLocalCollegeInfo(prev => ({ ...prev, heroImageUrl: undefined }));
+                        setLocalCollegeInfo((prev) => ({ ...prev, heroImageUrl: undefined }));
                       } catch (error) {
                         console.error('Failed to delete image:', error);
                         // Still remove from config even if storage delete fails
-                        setLocalCollegeInfo(prev => ({ ...prev, heroImageUrl: undefined }));
+                        setLocalCollegeInfo((prev) => ({ ...prev, heroImageUrl: undefined }));
                       }
                     }
                   }}
                   className="admin-btn admin-btn-danger flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                   </svg>
                   Remove Custom Image
                 </button>
@@ -398,7 +482,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
             {uploadError && (
               <div className="text-red-400 text-sm flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 {uploadError}
               </div>
@@ -414,8 +503,6 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
       {/* App Constants Section */}
       <div className={`admin-card ${isEditing ? 'border-blue-500/40' : ''}`}>
         <h3 className="text-lg font-semibold text-white mb-4">App Constants</h3>
-        
-
 
         {/* Greeting Times */}
         <div className="mb-6">
@@ -430,10 +517,15 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
                 disabled={!isEditing}
                 className={`admin-input text-sm ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
                 value={appConstants.greetingTimes.morningEnd}
-                onChange={e => setLocalAppConstants(prev => ({
-                  ...prev,
-                  greetingTimes: { ...prev.greetingTimes, morningEnd: parseInt(e.target.value) || 12 }
-                }))}
+                onChange={(e) =>
+                  setLocalAppConstants((prev) => ({
+                    ...prev,
+                    greetingTimes: {
+                      ...prev.greetingTimes,
+                      morningEnd: parseInt(e.target.value) || 12,
+                    },
+                  }))
+                }
               />
             </div>
             <div>
@@ -445,10 +537,15 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
                 disabled={!isEditing}
                 className={`admin-input text-sm ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
                 value={appConstants.greetingTimes.afternoonEnd}
-                onChange={e => setLocalAppConstants(prev => ({
-                  ...prev,
-                  greetingTimes: { ...prev.greetingTimes, afternoonEnd: parseInt(e.target.value) || 17 }
-                }))}
+                onChange={(e) =>
+                  setLocalAppConstants((prev) => ({
+                    ...prev,
+                    greetingTimes: {
+                      ...prev.greetingTimes,
+                      afternoonEnd: parseInt(e.target.value) || 17,
+                    },
+                  }))
+                }
               />
             </div>
           </div>
@@ -466,10 +563,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
                 disabled={!isEditing}
                 className={`admin-input text-sm ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
                 value={appConstants.weather.lat}
-                onChange={e => setLocalAppConstants(prev => ({
-                  ...prev,
-                  weather: { ...prev.weather, lat: parseFloat(e.target.value) || 0 }
-                }))}
+                onChange={(e) =>
+                  setLocalAppConstants((prev) => ({
+                    ...prev,
+                    weather: { ...prev.weather, lat: parseFloat(e.target.value) || 0 },
+                  }))
+                }
               />
             </div>
             <div>
@@ -480,10 +579,12 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
                 disabled={!isEditing}
                 className={`admin-input text-sm ${!isEditing ? 'opacity-70 cursor-not-allowed' : ''}`}
                 value={appConstants.weather.lon}
-                onChange={e => setLocalAppConstants(prev => ({
-                  ...prev,
-                  weather: { ...prev.weather, lon: parseFloat(e.target.value) || 0 }
-                }))}
+                onChange={(e) =>
+                  setLocalAppConstants((prev) => ({
+                    ...prev,
+                    weather: { ...prev.weather, lon: parseFloat(e.target.value) || 0 },
+                  }))
+                }
               />
             </div>
           </div>

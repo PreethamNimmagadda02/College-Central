@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import { AdminConfig, AdminQuickLink } from '../types';
 import { AdminHeader, LinkIcon as HeaderLinkIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
@@ -47,17 +48,32 @@ const PlusIcon = () => (
 
 const TrashIcon = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+    />
   </svg>
 );
 
 const LinkIcon = () => (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+    />
   </svg>
 );
 
-const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLink, deleteQuickLink }) => {
+const QuickLinksEditor: React.FC<Props> = ({
+  config,
+  addQuickLink,
+  updateQuickLink,
+  deleteQuickLink,
+}) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingLink, setEditingLink] = useState<AdminQuickLink | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,7 +102,9 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
     if (editingLink && editingLink.name.trim() && editingLink.href.trim()) {
       updateQuickLink(editingLink.id, {
         name: editingLink.name.trim(),
-        href: editingLink.href.startsWith('http') ? editingLink.href : `https://${editingLink.href}`,
+        href: editingLink.href.startsWith('http')
+          ? editingLink.href
+          : `https://${editingLink.href}`,
         color: editingLink.color,
         icon: editingLink.icon,
       });
@@ -95,23 +113,27 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
   };
 
   const getIconEmoji = (iconValue: string) => {
-    return ICON_OPTIONS.find(opt => opt.value === iconValue)?.label.split(' ')[0] || '🌐';
+    return ICON_OPTIONS.find((opt) => opt.value === iconValue)?.label.split(' ')[0] || '🌐';
   };
 
   // Filter links based on search query
-  const filteredLinks = (config.quickLinks || []).filter(link =>
-    link.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    link.href.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredLinks = (config.quickLinks || []).filter(
+    (link) =>
+      link.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      link.href.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <AdminPageLayout>
-      <AdminHeader 
-        icon={<HeaderLinkIcon />} 
-        title="Quick Links" 
+      <AdminHeader
+        icon={<HeaderLinkIcon />}
+        title="Quick Links"
         subtitle="Default institutional links shown on the dashboard"
       >
-        <button onClick={() => setShowAddModal(true)} className="admin-btn admin-btn-primary text-xs sm:text-sm">
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="admin-btn admin-btn-primary text-xs sm:text-sm"
+        >
           <PlusIcon />
           Add Link
         </button>
@@ -119,8 +141,18 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
 
       {/* Search */}
       <div className="admin-search">
-        <svg className="admin-search-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <svg
+          className="admin-search-icon w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
         </svg>
         <input
           type="text"
@@ -128,20 +160,22 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
           style={{ paddingLeft: '48px' }}
           placeholder="Search links..."
           value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 
       {/* Links Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {filteredLinks.map(link => (
+        {filteredLinks.map((link) => (
           <div key={link.id} className="admin-card">
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">
                 {getIconEmoji(link.icon)}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-white font-medium text-sm sm:text-base truncate">{link.name}</h4>
+                <h4 className="text-white font-medium text-sm sm:text-base truncate">
+                  {link.name}
+                </h4>
                 <a
                   href={link.href}
                   target="_blank"
@@ -152,9 +186,11 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
                   <span className="truncate">{link.href}</span>
                 </a>
                 <div className="flex items-center gap-2 mt-2">
-                  <span className={`w-3 h-3 rounded-full ${COLOR_OPTIONS.find(c => c.value === link.color)?.class || 'bg-blue-500'}`}></span>
+                  <span
+                    className={`w-3 h-3 rounded-full ${COLOR_OPTIONS.find((c) => c.value === link.color)?.class || 'bg-blue-500'}`}
+                  ></span>
                   <span className="text-indigo-400 text-xs">
-                    {COLOR_OPTIONS.find(c => c.value === link.color)?.label || 'Blue'}
+                    {COLOR_OPTIONS.find((c) => c.value === link.color)?.label || 'Blue'}
                   </span>
                 </div>
               </div>
@@ -178,7 +214,9 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
 
         {filteredLinks.length === 0 && (
           <div className="col-span-full text-center py-8 sm:py-12 text-indigo-400 text-sm sm:text-base admin-card">
-            {searchQuery ? 'No links match your search' : 'No quick links added. Click "Add Link" to create one.'}
+            {searchQuery
+              ? 'No links match your search'
+              : 'No quick links added. Click "Add Link" to create one.'}
           </div>
         )}
       </div>
@@ -186,7 +224,7 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
       {/* Add Modal */}
       {showAddModal && (
         <div className="admin-modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">Add Quick Link</h3>
             <div className="space-y-4">
               <div>
@@ -196,7 +234,7 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
                   className="admin-input"
                   placeholder="e.g., MIS Portal"
                   value={newLink.name}
-                  onChange={e => setNewLink({ ...newLink, name: e.target.value })}
+                  onChange={(e) => setNewLink({ ...newLink, name: e.target.value })}
                 />
               </div>
               <div>
@@ -206,7 +244,7 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
                   className="admin-input"
                   placeholder="https://example.com"
                   value={newLink.href}
-                  onChange={e => setNewLink({ ...newLink, href: e.target.value })}
+                  onChange={(e) => setNewLink({ ...newLink, href: e.target.value })}
                 />
               </div>
               <div>
@@ -214,22 +252,26 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
                 <select
                   className="admin-select"
                   value={newLink.icon}
-                  onChange={e => setNewLink({ ...newLink, icon: e.target.value })}
+                  onChange={(e) => setNewLink({ ...newLink, icon: e.target.value })}
                 >
-                  {ICON_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  {ICON_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="admin-label">Color</label>
                 <div className="flex flex-wrap gap-2">
-                  {COLOR_OPTIONS.map(color => (
+                  {COLOR_OPTIONS.map((color) => (
                     <button
                       key={color.value}
                       onClick={() => setNewLink({ ...newLink, color: color.value })}
                       className={`w-8 h-8 rounded-full ${color.class} ${
-                        newLink.color === color.value ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900' : ''
+                        newLink.color === color.value
+                          ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900'
+                          : ''
                       }`}
                       title={color.label}
                     />
@@ -240,7 +282,10 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
                 <button onClick={handleAddLink} className="admin-btn admin-btn-primary flex-1">
                   Add Link
                 </button>
-                <button onClick={() => setShowAddModal(false)} className="admin-btn admin-btn-secondary flex-1">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="admin-btn admin-btn-secondary flex-1"
+                >
                   Cancel
                 </button>
               </div>
@@ -252,7 +297,7 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
       {/* Edit Modal */}
       {editingLink && (
         <div className="admin-modal-overlay" onClick={() => setEditingLink(null)}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
             <h3 className="admin-modal-title">Edit Quick Link</h3>
             <div className="space-y-4">
               <div>
@@ -261,7 +306,7 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
                   type="text"
                   className="admin-input"
                   value={editingLink.name}
-                  onChange={e => setEditingLink({ ...editingLink, name: e.target.value })}
+                  onChange={(e) => setEditingLink({ ...editingLink, name: e.target.value })}
                 />
               </div>
               <div>
@@ -270,7 +315,7 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
                   type="url"
                   className="admin-input"
                   value={editingLink.href}
-                  onChange={e => setEditingLink({ ...editingLink, href: e.target.value })}
+                  onChange={(e) => setEditingLink({ ...editingLink, href: e.target.value })}
                 />
               </div>
               <div>
@@ -278,22 +323,26 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
                 <select
                   className="admin-select"
                   value={editingLink.icon}
-                  onChange={e => setEditingLink({ ...editingLink, icon: e.target.value })}
+                  onChange={(e) => setEditingLink({ ...editingLink, icon: e.target.value })}
                 >
-                  {ICON_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  {ICON_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="admin-label">Color</label>
                 <div className="flex flex-wrap gap-2">
-                  {COLOR_OPTIONS.map(color => (
+                  {COLOR_OPTIONS.map((color) => (
                     <button
                       key={color.value}
                       onClick={() => setEditingLink({ ...editingLink, color: color.value })}
                       className={`w-8 h-8 rounded-full ${color.class} ${
-                        editingLink.color === color.value ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900' : ''
+                        editingLink.color === color.value
+                          ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900'
+                          : ''
                       }`}
                       title={color.label}
                     />
@@ -304,7 +353,10 @@ const QuickLinksEditor: React.FC<Props> = ({ config, addQuickLink, updateQuickLi
                 <button onClick={handleUpdateLink} className="admin-btn admin-btn-success flex-1">
                   Save Changes
                 </button>
-                <button onClick={() => setEditingLink(null)} className="admin-btn admin-btn-secondary flex-1">
+                <button
+                  onClick={() => setEditingLink(null)}
+                  className="admin-btn admin-btn-secondary flex-1"
+                >
                   Cancel
                 </button>
               </div>

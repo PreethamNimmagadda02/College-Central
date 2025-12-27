@@ -1,5 +1,5 @@
-import React from 'react';
 import { WifiOff, RefreshCw, Home, Calendar, BookOpen, GraduationCap } from 'lucide-react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const OfflinePage: React.FC = () => {
@@ -33,7 +33,8 @@ export const OfflinePage: React.FC = () => {
 
           {/* Description */}
           <p className="text-lg text-slate-600 dark:text-slate-300 mb-8">
-            It looks like you've lost your internet connection. Don't worry, some features are still available offline!
+            It looks like you've lost your internet connection. Don't worry, some features are still
+            available offline!
           </p>
 
           {/* Retry Button */}
@@ -78,7 +79,8 @@ export const OfflinePage: React.FC = () => {
         {/* Help Text */}
         <div className="mt-6 text-center">
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            💡 <strong>Tip:</strong> Once you're back online, refresh the page to access all features.
+            💡 <strong>Tip:</strong> Once you're back online, refresh the page to access all
+            features.
           </p>
         </div>
       </div>
