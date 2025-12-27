@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Send, Loader2, CheckCircle, AlertCircle, HelpCircle, Bug, Lightbulb, FileQuestion, Mail } from 'lucide-react';
 import { useUser } from '@contexts/UserContext';
+import { useAppConfig } from '@contexts/AppConfigContext';
 import emailjs from '@emailjs/browser';
 
 // Types
@@ -202,6 +203,7 @@ const categories: CategoryOption[] = [
 
 const Support: React.FC = () => {
   const { user } = useUser();
+  const { config } = useAppConfig();
   const formRef = useRef<HTMLFormElement>(null);
   const [formState, setFormState] = useState<FormState>({
     category: '',
@@ -212,9 +214,12 @@ const Support: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+  // Get email domain from config
+  const emailDomain = config?.collegeInfo?.email?.domain || 'college.edu';
+  
   // Get user's name and email
   const userName = user?.name || user?.fullName || '';
-  const userEmail = user?.email || `${user?.admissionNumber?.toLowerCase()}@iitism.ac.in` || '';
+  const userEmail = user?.email || `${user?.admissionNumber?.toLowerCase()}@${emailDomain}` || '';
 
   // Calculate form completion percentage
   const formCompletion = useMemo(() => {

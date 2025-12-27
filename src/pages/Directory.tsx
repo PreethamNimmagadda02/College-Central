@@ -428,11 +428,11 @@ const Directory = () => {
                             </div>
                           )}
                           <a
-                            href={`mailto:${student.admNo.toLowerCase()}@iitism.ac.in`}
+                            href={`mailto:${student.admNo.toLowerCase()}@${config?.collegeInfo?.email?.domain || 'college.edu'}`}
                             className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link"
                           >
                             <Mail className="w-4 h-4 flex-shrink-0" />
-                            <span className="group-hover/link:underline truncate">{student.admNo.toLowerCase()}@iitism.ac.in</span>
+                            <span className="group-hover/link:underline truncate">{student.admNo.toLowerCase()}@{config?.collegeInfo?.email?.domain || 'college.edu'}</span>
                           </a>
                         </div>
                       </div>
@@ -577,12 +577,12 @@ const Directory = () => {
                         <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{student.branch}</td>
                         <td className="px-6 py-4">
                           <a
-                            href={`mailto:${student.admNo.toLowerCase()}@iitism.ac.in`}
+                            href={`mailto:${student.admNo.toLowerCase()}@${config?.collegeInfo?.email?.domain || 'college.edu'}`}
                             className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group"
                           >
                             <Mail className="w-4 h-4" />
                             <span className="group-hover:underline">
-                              {student.admNo.toLowerCase()}@iitism.ac.in
+                              {student.admNo.toLowerCase()}@{config?.collegeInfo?.email?.domain || 'college.edu'}
                             </span>
                           </a>
                         </td>

@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import Sidebar from '@components/layout/Sidebar';
 import Header from '@components/layout/Header';
 import Footer from '@components/layout/Footer';
+import { useAppConfig } from '@contexts/AppConfigContext';
 
 
 const Layout: React.FC = () => {
@@ -12,6 +13,47 @@ const Layout: React.FC = () => {
   const [sidebarHovering, setSidebarHovering] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
+  const { config } = useAppConfig();
+
+  // Dynamically update document title and meta tags based on college config
+  useEffect(() => {
+    const collegeName = config?.collegeInfo?.name?.short || '';
+    const fullCollegeName = config?.collegeInfo?.name?.full || collegeName;
+    
+    // Update document title
+    document.title = collegeName 
+      ? `College Central - ${collegeName}` 
+      : 'College Central - Student Portal';
+    
+    // Update meta tags dynamically
+    const updateMetaTag = (selector: string, content: string) => {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.setAttribute('content', content);
+      }
+    };
+    
+    const titleContent = collegeName 
+      ? `College Central - ${collegeName} Student Portal` 
+      : 'College Central - Student Portal';
+    
+    const descriptionContent = fullCollegeName
+      ? `Comprehensive student portal for ${fullCollegeName} - Manage grades, schedules, campus navigation, and academic resources.`
+      : 'Comprehensive student portal - Manage grades, schedules, campus navigation, and academic resources.';
+    
+    // Update Open Graph tags
+    updateMetaTag('meta[property="og:title"]', titleContent);
+    updateMetaTag('meta[property="og:description"]', descriptionContent);
+    
+    // Update Twitter tags
+    updateMetaTag('meta[property="twitter:title"]', titleContent);
+    updateMetaTag('meta[property="twitter:description"]', descriptionContent);
+    
+    // Update standard meta tags
+    updateMetaTag('meta[name="title"]', titleContent);
+    updateMetaTag('meta[name="description"]', descriptionContent);
+    
+  }, [config?.collegeInfo?.name]);
 
 
   // Initialize sidebar state from localStorage on mount
