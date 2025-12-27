@@ -3090,12 +3090,13 @@ const Grades: React.FC = () => {
 
   // Auto-hide drop success animation
   useEffect(() => {
-    if (dropSuccess) {
-      const timer = setTimeout(() => {
-        setDropSuccess(false);
-      }, 1500);
-      return () => clearTimeout(timer);
+    if (!dropSuccess) {
+      return;
     }
+    const timer = setTimeout(() => {
+      setDropSuccess(false);
+    }, 1500);
+    return () => clearTimeout(timer);
   }, [dropSuccess]);
 
   const cgpaStatus = useMemo(() => {
