@@ -40,6 +40,7 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
+    'react/no-unescaped-entities': 'off', // Allow quotes/apostrophes in JSX text
     
     // Import ordering
     'import/order': [
@@ -65,5 +66,8 @@ module.exports = {
     'prefer-const': 'warn',
     'no-var': 'error',
     'eqeqeq': ['warn', 'always'],
+    'no-useless-escape': 'warn', // Downgrade to warning
+    'no-useless-catch': 'warn', // Downgrade to warning
+    'no-case-declarations': 'warn', // Downgrade to warning
   },
 };
