@@ -19,160 +19,131 @@ const PrivacyPolicy: React.FC = () => {
                         Back
                     </button>
                     <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2">Privacy Policy</h1>
-                    <p className="text-slate-600 dark:text-slate-400">Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                    <p className="text-slate-600 dark:text-slate-400">
+                        <strong>Last Updated:</strong> December 27, 2025
+                    </p>
                 </div>
 
                 {/* Content */}
                 <div className="bg-white dark:bg-dark-card rounded-2xl shadow-xl p-8 space-y-8">
-                    {/* Introduction */}
+                    {/* 1. Introduction */}
                     <section>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Introduction</h2>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">1. Introduction</h2>
                         <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                            College Central ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our web application designed for students of IIT (ISM) Dhanbad.
+                            College Central ("we," "us," or "our") provides a Progressive Web Application (PWA) designed to help students and faculty manage academic life. This Privacy Policy explains how we collect, use, and protect your information within our multi-tenant platform.
                         </p>
                     </section>
 
-                    {/* Information We Collect */}
+                    {/* 2. Information We Collect */}
                     <section>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Information We Collect</h2>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">2. Information We Collect</h2>
+                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-4">
+                            Because College Central uses Google OAuth for authentication, we minimize the amount of sensitive personal data stored on our servers.
+                        </p>
 
-                        <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-3 mt-4">Personal Information</h3>
+                        <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-3 mt-4">A. Information from Google Account</h3>
                         <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
-                            We collect information that you voluntarily provide when using College Central:
+                            When you sign in using your institutional Google account, we collect:
                         </p>
                         <ul className="list-disc list-inside space-y-2 text-slate-700 dark:text-slate-300 ml-4">
-                            <li>Name and email address (via Google OAuth authentication)</li>
-                            <li>Student information (admission number, branch, hostel, phone number)</li>
-                            <li>Academic records (grades, CGPA, semester information) when you upload your grade sheet</li>
-                            <li>Class schedules and timetable information</li>
-                            <li>Profile picture (optional)</li>
-                            <li>Academic calendar events and reminders</li>
+                            <li><strong>Basic Profile Information:</strong> Name, email address, and profile picture URL.</li>
                         </ul>
 
-                        <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-3 mt-4">Usage Data</h3>
+                        <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-3 mt-6">B. User-Provided Academic Data</h3>
                         <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
-                            We automatically collect certain information when you use our application:
+                            To provide the app's core functionality, we store data you voluntarily input:
                         </p>
                         <ul className="list-disc list-inside space-y-2 text-slate-700 dark:text-slate-300 ml-4">
-                            <li>Activity logs (page visits, feature usage)</li>
-                            <li>Device information and browser type</li>
-                            <li>Performance metrics for improving app functionality</li>
+                            <li><strong>Academic Records:</strong> Subject names, grades, credits, attendance records, and semester details.</li>
+                            <li><strong>Schedules:</strong> Timetable entries, subjects, room numbers, and faculty names.</li>
+                            <li><strong>Personalization:</strong> Branch, admission number, and course options.</li>
                         </ul>
-                    </section>
 
-                    {/* How We Use Your Information */}
-                    <section>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">How We Use Your Information</h2>
-                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
-                            We use the collected information for the following purposes:
-                        </p>
+                        <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-3 mt-6">C. Automatically Collected Data</h3>
                         <ul className="list-disc list-inside space-y-2 text-slate-700 dark:text-slate-300 ml-4">
-                            <li>To provide and maintain the College Central service</li>
-                            <li>To authenticate and verify your identity</li>
-                            <li>To display your academic information (grades, schedules, calendar)</li>
-                            <li>To provide personalized features like CGPA forecasting and weather recommendations</li>
-                            <li>To send you reminders for academic events (if enabled)</li>
-                            <li>To improve and optimize our application</li>
-                            <li>To analyze usage patterns and enhance user experience</li>
+                            <li><strong>Activity Logs:</strong> We maintain an audit trail of actions such as logins, grade updates, and profile changes to provide a "Recent Activity" feed.</li>
+                            <li><strong>Performance Metrics:</strong> We use Firebase Performance Monitoring and Google Analytics to collect anonymous technical data like page load times and feature usage.</li>
                         </ul>
                     </section>
 
-                    {/* Data Storage and Security */}
+                    {/* 3. How We Use Your Information */}
                     <section>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Data Storage and Security</h2>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">3. How We Use Your Information</h2>
                         <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
-                            Your data is stored securely using Firebase services:
+                            We use the collected data strictly to provide and improve the College Central experience:
                         </p>
                         <ul className="list-disc list-inside space-y-2 text-slate-700 dark:text-slate-300 ml-4">
-                            <li><strong>Firebase Authentication:</strong> Handles secure user authentication via Google OAuth</li>
-                            <li><strong>Cloud Firestore:</strong> Stores user profiles, grades, schedules, and calendar data with encryption at rest and in transit</li>
-                            <li><strong>Firebase Storage:</strong> Securely stores profile pictures</li>
-                            <li>All data transmission is encrypted using HTTPS/TLS protocols</li>
-                            <li>We implement industry-standard security measures to protect your information</li>
+                            <li><strong>Calculations:</strong> Calculating SGPA/CGPA and tracking attendance.</li>
+                            <li><strong>Organization:</strong> Displaying your personalized class schedule and academic calendar.</li>
+                            <li><strong>AI Features:</strong> Providing weather-based recommendations and intelligent campus insights via Google Gemini AI.</li>
+                            <li><strong>Security:</strong> Ensuring only authorized users from specific institutional domains can access the platform.</li>
                         </ul>
                     </section>
 
-                    {/* AI and Third-Party Services */}
+                    {/* 4. Data Storage and Security */}
                     <section>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">AI and Third-Party Services</h2>
-                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
-                            College Central uses third-party services to enhance functionality:
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">4. Data Storage and Security</h2>
+
+                        <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-3">A. Data Isolation (Multi-Tenancy)</h3>
+                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-4">
+                            Your data is stored in a tenant-specific Firebase project. This means your information is logically and physically isolated from users of other colleges.
                         </p>
+
+                        <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-3 mt-4">B. Security Measures</h3>
                         <ul className="list-disc list-inside space-y-2 text-slate-700 dark:text-slate-300 ml-4">
-                            <li><strong>Google Gemini AI:</strong> Used for grade sheet extraction and weather-based recommendations. Your data is processed according to Google's privacy policies.</li>
-                            <li><strong>Open-Meteo API:</strong> Provides weather information. No personal data is shared with this service.</li>
-                            <li>We do not sell your personal information to third parties</li>
+                            <li><strong>Encryption:</strong> All data is transmitted over HTTPS.</li>
+                            <li><strong>Access Control:</strong> We use Firestore Security Rules to ensure that you are the only person who can read or write your personal academic data.</li>
+                            <li><strong>Authentication:</strong> We do not store passwords. Authentication is handled entirely through Google's secure OAuth 2.0 system.</li>
                         </ul>
                     </section>
 
-                    {/* Data Retention */}
+                    {/* 5. Third-Party Services */}
                     <section>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Data Retention</h2>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">5. Third-Party Services</h2>
+                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+                            We integrate with the following providers to deliver our services:
+                        </p>
+                        <ul className="list-disc list-inside space-y-2 text-slate-700 dark:text-slate-300 ml-4">
+                            <li><strong>Google Firebase:</strong> For database hosting (Firestore), authentication, and file storage.</li>
+                            <li><strong>Google Gemini AI:</strong> For intelligent recommendations.</li>
+                            <li><strong>EmailJS:</strong> For handling support and communication.</li>
+                        </ul>
+                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed mt-4 font-medium">
+                            We do not sell your personal information to third parties.
+                        </p>
+                    </section>
+
+                    {/* 6. Your Rights and Data Control */}
+                    <section>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">6. Your Rights and Data Control</h2>
+                        <ul className="list-disc list-inside space-y-2 text-slate-700 dark:text-slate-300 ml-4">
+                            <li><strong>Access and Update:</strong> You can update your academic records and profile information directly within the app.</li>
+                            <li><strong>Data Export:</strong> The platform provides a feature to export your activity history and academic data.</li>
+                            <li><strong>Data Deletion:</strong> Since data is user-scoped, you may request the deletion of your account and associated subcollections.</li>
+                        </ul>
+                    </section>
+
+                    {/* 7. Changes to This Policy */}
+                    <section>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">7. Changes to This Policy</h2>
                         <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                            We retain your personal information for as long as your account is active or as needed to provide you services. You can delete your account and associated data at any time through the profile settings. Upon account deletion, we will remove your personal information within 30 days, except where we are legally required to retain certain data.
+                            We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date.
                         </p>
                     </section>
 
-                    {/* Your Rights */}
+                    {/* 8. Contact Us */}
                     <section>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Your Rights</h2>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">8. Contact Us</h2>
                         <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
-                            You have the following rights regarding your personal data:
-                        </p>
-                        <ul className="list-disc list-inside space-y-2 text-slate-700 dark:text-slate-300 ml-4">
-                            <li><strong>Access:</strong> View and download your data through your profile</li>
-                            <li><strong>Correction:</strong> Update or correct your information at any time</li>
-                            <li><strong>Data Portability:</strong> Export your data in a machine-readable format</li>
-                            <li><strong>Withdrawal of Consent:</strong> Opt-out of optional features at any time</li>
-                        </ul>
-                    </section>
-
-                    {/* Cookies and Local Storage */}
-                    <section>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Cookies and Local Storage</h2>
-                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                            College Central uses browser local storage and session storage to enhance your experience. This includes storing authentication tokens, user preferences (like theme settings), and cached data for offline functionality. We use service workers to enable offline access to the application.
-                        </p>
-                    </section>
-
-                    {/* Children's Privacy */}
-                    <section>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Children's Privacy</h2>
-                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                            College Central is intended for college students and does not knowingly collect information from individuals under 18 years of age. If you believe we have collected information from someone under 18, please contact us.
-                        </p>
-                    </section>
-
-                    {/* Changes to Privacy Policy */}
-                    <section>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Changes to This Privacy Policy</h2>
-                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                            We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date. You are advised to review this Privacy Policy periodically for any changes.
-                        </p>
-                    </section>
-
-                    {/* Contact */}
-                    <section>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Contact Us</h2>
-                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
-                            If you have any questions about this Privacy Policy or our data practices, please contact us:
+                            If you have questions regarding this Privacy Policy or your data, please contact the College Central Development Team via the "Support" section in your app.
                         </p>
                         <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
                             <p className="text-slate-700 dark:text-slate-300">
-                                Email: <a href="mailto:support@collegecentral.live" className="text-primary hover:text-primary-dark">collegecentral01@gmail.com</a>
-                            </p>
-                            <p className="text-slate-700 dark:text-slate-300 mt-2">
-                                For IIT (ISM) Dhanbad students
+                                Email: <a href="mailto:collegecentral01@gmail.com" className="text-primary hover:text-primary-dark">collegecentral01@gmail.com</a>
                             </p>
                         </div>
                     </section>
 
-                    {/* Disclaimer */}
-                    <section className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                            <strong>Disclaimer:</strong> College Central is an independent student project and is not officially affiliated with or endorsed by IIT (ISM) Dhanbad. This application is created by students, for students, to enhance campus life.
-                        </p>
-                    </section>
                 </div>
             </div>
         </div>

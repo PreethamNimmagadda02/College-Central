@@ -2,7 +2,7 @@
 
 # 🎓 College Central
 
-### Your Complete Academic Companion for IIT(ISM) Dhanbad
+### Your Complete Academic Companion
 
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -10,9 +10,11 @@
 [![Vite](https://img.shields.io/badge/Vite-6.2-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-**A Progressive Web Application for IIT(ISM) Dhanbad students to manage academics, navigate campus, and stay connected.**
+**A Progressive Web Application for college students to manage academics, navigate campus, and stay connected.**
 
-[Architecture](./docs/ARCHITECTURE.md)
+**Multi-tenant architecture** - Deploy to multiple colleges with separate Firebase projects.
+
+[Architecture](./docs/ARCHITECTURE.md) • [Onboarding](./docs/COLLEGE_ONBOARDING.md)
 
 </div>
 
@@ -130,7 +132,7 @@ service cloud.firestore {
 2. Add to `.env.local`: `VITE_GEMINI_API_KEY=your_api_key`
 
 ### Domain Restriction
-App restricted to `@iitism.ac.in` emails. Modify in `src/features/auth/hooks/useAuth.tsx` if needed.
+App restricted to configured email domain (e.g., `@iitism.ac.in`). Set via `VITE_ALLOWED_EMAIL_DOMAIN` environment variable.
 
 ---
 
@@ -185,6 +187,24 @@ firebase login                   # Login to Firebase
 firebase init                    # Initialize (if needed)
 firebase deploy                  # Deploy
 ```
+
+### Multi-Tenant Deployment
+
+For deploying to multiple colleges with separate Firebase projects:
+
+```bash
+# Deploy single college (via GitHub Actions)
+Actions → "Deploy to College" → Run workflow → Select college
+
+# Deploy all colleges (via GitHub Actions, requires confirmation)
+Actions → "Deploy to All Colleges" → Run workflow → Type "deploy-all"
+```
+
+**Adding a new college:**
+1. Create Firebase project (see [COLLEGE_ONBOARDING.md](./docs/COLLEGE_ONBOARDING.md))
+2. Create `colleges/<college-id>/.env.production.template`
+3. Add GitHub secrets: `<COLLEGE>_FIREBASE_*`, `<COLLEGE>_GEMINI_API_KEY`
+4. Update workflow files to include new college in options
 
 ---
 

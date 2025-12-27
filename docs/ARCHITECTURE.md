@@ -22,19 +22,24 @@
 18. [Development Workflow](#18-development-workflow)
 19. [Type System](#19-type-system-typescript)
 20. [AI Integration](#20-ai-integration-google-gemini)
+21. [Monitoring & Analytics](#21-monitoring--analytics)
+22. [Best Practices & Conventions](#22-best-practices--conventions)
+23. [Troubleshooting Guide](#23-troubleshooting-guide)
+24. [Multi-Tenant Architecture](#24-multi-tenant-architecture)
 
 ---
 
 ## 1. System Overview
 
-**College Central** is a Progressive Web Application (PWA) designed for IIT(ISM) Dhanbad students to manage their academic life, campus navigation, events, and resources. Built with modern web technologies and serverless architecture.
+**College Central** is a Progressive Web Application (PWA) designed for college students to manage their academic life, campus navigation, events, and resources. Built with modern web technologies, serverless architecture, and **multi-tenant deployment** support.
 
 ### Key Characteristics
 - **Type**: Single Page Application (SPA)
-- **Target Users**: IIT(ISM) Dhanbad students and faculty
+- **Target Users**: College students and faculty (institution-specific)
 - **Platform**: Web (Desktop & Mobile), PWA
 - **Architecture**: Client-side rendering with serverless backend
 - **Deployment**: Firebase Hosting with CDN
+- **Multi-Tenant**: Per-college Firebase projects with shared codebase
 
 ---
 
@@ -1428,10 +1433,11 @@ firebase deploy --only functions
 firebase hosting:channel:deploy preview
 ```
 
-### 12.4 CI/CD Pipeline (Optional)
+### 12.4 CI/CD Pipeline
 
+**Legacy Single-Tenant Deployment:**
 ```yaml
-# .github/workflows/deploy.yml
+# .github/workflows/firebase-deploy.yml
 name: Deploy to Firebase
 on:
   push:
@@ -1441,8 +1447,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
       - run: npm ci
       - run: npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
@@ -1451,12 +1457,31 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
 ```
 
+### 12.5 Multi-Tenant Deployment
+
+For deploying to multiple colleges with separate Firebase projects:
+
+**Deploy Single College:**
+```bash
+# Via GitHub Actions UI
+Actions → "Deploy to College" → Run workflow → Select college
+```
+
+**Deploy All Colleges:**
+```bash
+# Via GitHub Actions UI (requires confirmation)
+Actions → "Deploy to All Colleges" → Run workflow → Type "deploy-all"
+```
+
+See [Section 24: Multi-Tenant Architecture](#24-multi-tenant-architecture) for detailed CI/CD workflow documentation.
+
 ---
 
 ## 13. Environment Configuration
 
 ### 13.1 Environment Variables
 
+**Local Development (`.env`):**
 ```bash
 # .env (NOT committed to git)
 VITE_FIREBASE_API_KEY=your_api_key
@@ -1467,7 +1492,19 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=sender_id
 VITE_FIREBASE_APP_ID=app_id
 VITE_FIREBASE_MEASUREMENT_ID=G-measurement_id
 VITE_GEMINI_API_KEY=your_gemini_api_key
+
+# Tenant-specific
+VITE_ALLOWED_EMAIL_DOMAIN=@iitism.ac.in
+VITE_HOSTED_DOMAIN=iitism.ac.in
+
+# Shared services
+VITE_EMAILJS_SERVICE_ID=your_emailjs_service_id
+VITE_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
+VITE_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
 ```
+
+**Production (Multi-Tenant):**
+Per-tenant production environment files are stored in `colleges/<college>/.env.production.template` with secret placeholders that are replaced during CI/CD deployment. See [Section 24: Multi-Tenant Architecture](#24-multi-tenant-architecture) for details.
 
 ### 13.2 Configuration Files
 
@@ -1959,6 +1996,175 @@ firebase.setLogLevel('debug');
 // Enable React DevTools
 // Install React DevTools browser extension
 ```
+
+---
+
+## 24. Multi-Tenant Architecture
+
+College Central supports **multi-tenant deployment** where each college has its own isolated Firebase project while sharing the same codebase.
+
+### 24.1 Tenant Isolation Model
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    College Central Codebase                      │
+│                    (Single GitHub Repository)                    │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+           ┌────────────────┼────────────────┐
+           │                │                │
+    ┌──────▼───────┐ ┌──────▼───────┐ ┌──────▼───────┐
+    │  IIT(ISM)    │ │  College B   │ │  College C   │
+    │  Firebase    │ │  Firebase    │ │  Firebase    │
+    │  Project     │ │  Project     │ │  Project     │
+    └──────────────┘ └──────────────┘ └──────────────┘
+         │                │                │
+         ▼                ▼                ▼
+    ┌──────────┐    ┌──────────┐    ┌──────────┐
+    │Firestore │    │Firestore │    │Firestore │
+    │Auth      │    │Auth      │    │Auth      │
+    │Storage   │    │Storage   │    │Storage   │
+    │Hosting   │    │Hosting   │    │Hosting   │
+    └──────────┘    └──────────┘    └──────────┘
+```
+
+**Key Isolation Principles:**
+- Each college has its **own Firebase project** (complete data isolation)
+- Email domain restriction per tenant (e.g., `@iitism.ac.in`)
+- Separate Firestore databases (no cross-tenant data leakage)
+- Independent hosting with custom domains possible
+- Shared codebase, tenant-specific configuration
+
+### 24.2 Directory Structure
+
+```
+College Central/
+├── colleges/                      # Per-tenant configurations
+│   ├── iitism/                    # IIT(ISM) Dhanbad
+│   │   └── .env.production.template
+│   ├── template/                  # Template for new colleges
+│   │   └── .env.production
+│   └── <new-college>/             # Add new colleges here
+│       └── .env.production.template
+├── .github/workflows/
+│   ├── deploy-college.yml         # Deploy single college
+│   └── deploy-all-colleges.yml    # Deploy all colleges
+└── .env.example                   # Local development template
+```
+
+### 24.3 Environment Configuration Pattern
+
+**Per-Tenant Configuration (`colleges/<college>/.env.production.template`):**
+```bash
+# Non-secret values (hardcoded)
+VITE_FIREBASE_AUTH_DOMAIN=<project-id>.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=<project-id>
+VITE_FIREBASE_STORAGE_BUCKET=<project-id>.firebasestorage.app
+
+# Secret placeholders (replaced during CI/CD)
+VITE_FIREBASE_API_KEY=${COLLEGEID_FIREBASE_API_KEY}
+VITE_FIREBASE_MESSAGING_SENDER_ID=${COLLEGEID_MESSAGING_SENDER_ID}
+VITE_FIREBASE_APP_ID=${COLLEGEID_APP_ID}
+VITE_FIREBASE_MEASUREMENT_ID=${COLLEGEID_MEASUREMENT_ID}
+VITE_GEMINI_API_KEY=${COLLEGEID_GEMINI_API_KEY}
+
+# College-specific
+VITE_ALLOWED_EMAIL_DOMAIN=@example.edu
+VITE_HOSTED_DOMAIN=example.edu
+```
+
+**Shared Services (injected during deployment):**
+```bash
+# EmailJS - shared across all tenants
+VITE_EMAILJS_SERVICE_ID=<shared>
+VITE_EMAILJS_TEMPLATE_ID=<shared>
+VITE_EMAILJS_PUBLIC_KEY=<shared>
+```
+
+### 24.4 GitHub Secrets Naming Convention
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| **Per-Tenant Firebase** | `<COLLEGE>_FIREBASE_API_KEY` | `IITISM_FIREBASE_API_KEY` |
+| **Per-Tenant Firebase** | `<COLLEGE>_MESSAGING_SENDER_ID` | `IITISM_MESSAGING_SENDER_ID` |
+| **Per-Tenant Firebase** | `<COLLEGE>_APP_ID` | `IITISM_APP_ID` |
+| **Per-Tenant Firebase** | `<COLLEGE>_MEASUREMENT_ID` | `IITISM_MEASUREMENT_ID` |
+| **Per-Tenant Gemini** | `<COLLEGE>_GEMINI_API_KEY` | `IITISM_GEMINI_API_KEY` |
+| **Per-Tenant Service Account** | `<COLLEGE>_FIREBASE_SERVICE_ACCOUNT` | `IITISM_FIREBASE_SERVICE_ACCOUNT` |
+| **Per-Tenant Project ID** | `<COLLEGE>_PROJECT_ID` | `IITISM_PROJECT_ID` |
+| **Shared EmailJS** | `VITE_EMAILJS_*` | `VITE_EMAILJS_SERVICE_ID` |
+
+### 24.5 CI/CD Workflows
+
+#### Deploy Single College (`deploy-college.yml`)
+```yaml
+on:
+  workflow_dispatch:
+    inputs:
+      college:
+        description: 'College to deploy'
+        type: choice
+        options:
+          - iitism
+          # Add new colleges here
+```
+
+**Workflow Steps:**
+1. Checkout code
+2. Load `colleges/<college>/.env.production.template`
+3. Inject per-tenant secrets via `sed` replacement
+4. Inject shared EmailJS secrets
+5. Build application
+6. Deploy to college's Firebase project
+
+#### Deploy All Colleges (`deploy-all-colleges.yml`)
+- Requires confirmation (`'deploy-all'`)
+- Uses matrix strategy with `fail-fast: false`
+- Continues deployment to other colleges if one fails
+- Generates summary report
+
+### 24.6 Adding a New College
+
+1. **Create Firebase Project**
+   - Follow steps in `docs/COLLEGE_ONBOARDING.md`
+   - Enable Authentication (Google), Firestore, Storage, Hosting
+
+2. **Create College Directory**
+   ```bash
+   mkdir colleges/<college-id>
+   cp colleges/template/.env.production colleges/<college-id>/.env.production.template
+   # Edit with college-specific values
+   ```
+
+3. **Add GitHub Secrets**
+   - `<COLLEGE>_FIREBASE_API_KEY`
+   - `<COLLEGE>_MESSAGING_SENDER_ID`
+   - `<COLLEGE>_APP_ID`
+   - `<COLLEGE>_MEASUREMENT_ID`
+   - `<COLLEGE>_GEMINI_API_KEY`
+   - `<COLLEGE>_FIREBASE_SERVICE_ACCOUNT` (JSON)
+   - `<COLLEGE>_PROJECT_ID`
+
+4. **Update Workflow Files**
+   ```yaml
+   # In deploy-college.yml and deploy-all-colleges.yml
+   options:
+     - iitism
+     - <new-college>  # Add here
+   ```
+
+5. **Deploy**
+   - Go to Actions → "Deploy to College" → Run workflow
+   - Select the new college
+
+### 24.7 Benefits of This Architecture
+
+✅ **Complete Data Isolation**: Each college has separate Firestore database
+✅ **Security**: No cross-tenant data access possible
+✅ **Flexibility**: Custom domains, branding per college
+✅ **Scalability**: Add new colleges without affecting existing ones
+✅ **Maintainability**: Single codebase, unified feature updates
+✅ **Cost Control**: Each Firebase project has its own billing
 
 ---
 
