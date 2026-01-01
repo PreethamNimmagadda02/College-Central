@@ -502,7 +502,7 @@ const Schedule: React.FC = () => {
     const startY = 28;
     const numDays = daysWithContent.length;
     const dayColumnWidth = (pageWidth - 20 - timeColWidth) / numDays;
-    const cellHeight = 18;
+    const cellHeight = 24; // Increased from 18 to accommodate longer course names
     const headerHeight = 8;
 
     // Get all unique time slots from schedule and sort them
@@ -599,7 +599,7 @@ const Schedule: React.FC = () => {
         // Fill cell if it has content
         if (items.length > 0) {
           items.forEach((item, itemIndex) => {
-            const contentY = currentY + 3 + itemIndex * (cellHeight / Math.max(items.length, 1));
+            const contentY = currentY + 2 + itemIndex * (cellHeight / Math.max(items.length, 1));
 
             // Background color for custom tasks
             if (item.isCustomTask) {
@@ -607,36 +607,46 @@ const Schedule: React.FC = () => {
               doc.rect(x + 0.5, currentY + 0.5, dayColumnWidth - 1, cellHeight - 1, 'F');
             }
 
+            const maxTextWidth = dayColumnWidth - 3;
+            let textY = contentY + 2.5;
+
             // Course code
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(7);
             doc.setTextColor(0, 0, 0);
-            doc.text(item.courseCode, x + 1.5, contentY + 2, { maxWidth: dayColumnWidth - 3 });
+            doc.text(item.courseCode, x + 1.5, textY, { maxWidth: maxTextWidth });
+            textY += 3;
 
-            // Course name
+            // Course name - use splitTextToSize to handle wrapping
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(6.5);
-            doc.text(item.courseName, x + 1.5, contentY + 5, { maxWidth: dayColumnWidth - 3 });
+            doc.setFontSize(6);
+            const courseNameLines = doc.splitTextToSize(item.courseName, maxTextWidth);
+            // Only show first 2 lines to prevent overflow
+            const linesToShow = courseNameLines.slice(0, 2);
+            doc.text(linesToShow, x + 1.5, textY);
+            textY += linesToShow.length * 2.5 + 0.5;
 
             // Time range
-            doc.setFontSize(6);
+            doc.setFontSize(5.5);
             doc.setTextColor(52, 73, 94);
             doc.text(
               `${formatTime(item.startTime)} - ${formatTime(item.endTime)}`,
               x + 1.5,
-              contentY + 8
+              textY
             );
+            textY += 2.5;
 
             // Location
-            doc.setFontSize(6);
+            doc.setFontSize(5.5);
             doc.setTextColor(0, 0, 0);
-            doc.text(item.location, x + 1.5, contentY + 11, { maxWidth: dayColumnWidth - 3 });
+            doc.text(item.location, x + 1.5, textY, { maxWidth: maxTextWidth });
+            textY += 2.5;
 
-            // Instructor
-            if (item.instructor && item.instructor !== '-') {
-              doc.setFontSize(6);
-              doc.setTextColor(0, 0, 0);
-              doc.text(item.instructor, x + 1.5, contentY + 14, { maxWidth: dayColumnWidth - 3 });
+            // Instructor - only if there's space left
+            if (item.instructor && item.instructor !== '-' && textY < contentY + cellHeight - 2) {
+              doc.setFontSize(5.5);
+              doc.setTextColor(100, 100, 100);
+              doc.text(item.instructor, x + 1.5, textY, { maxWidth: maxTextWidth });
             }
           });
         }
