@@ -198,21 +198,26 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     setLoading(true);
 
-    // Use calendar data from database config if available, otherwise fallback to preloaded
-    const baseCalendarData =
-      config?.calendar && config.calendar.events?.length > 0
-        ? {
-            semesterStartDate: config.calendar.semesterStartDate,
-            semesterEndDate: config.calendar.semesterEndDate,
-            events: config.calendar.events.map((e) => ({
-              ...e,
-              type: e.type as CalendarEvent['type'],
-            })),
-          }
-        : PRELOADED_CALENDAR_DATA;
+    // Check if we have admin-configured calendar data in the database
+    const hasAdminConfiguredData = config?.calendar && config.calendar.events?.length > 0;
 
-    // Adjust preloaded/config data to the current year
-    const adjustedPreloadedData = adjustCalendarDatesToCurrentYear(baseCalendarData);
+    // Use calendar data from database config if available, otherwise fallback to preloaded
+    const baseCalendarData = hasAdminConfiguredData
+      ? {
+          semesterStartDate: config.calendar.semesterStartDate,
+          semesterEndDate: config.calendar.semesterEndDate,
+          events: config.calendar.events.map((e) => ({
+            ...e,
+            type: e.type as CalendarEvent['type'],
+          })),
+        }
+      : PRELOADED_CALENDAR_DATA;
+
+    // Only adjust dates for preloaded/fallback data, NOT for admin-configured data
+    // Admin-configured data should be used as-is to match the admin panel
+    const adjustedPreloadedData = hasAdminConfiguredData
+      ? baseCalendarData
+      : adjustCalendarDatesToCurrentYear(baseCalendarData);
 
     // Combine adjusted preloaded events with user events (user events are assumed to be for current year)
     const mergedEvents = [...adjustedPreloadedData.events, ...userEvents].sort(
