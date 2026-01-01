@@ -233,10 +233,10 @@ describe('helpers - debounce', () => {
   it('delays function execution', () => {
     const mockFn = vi.fn();
     const debouncedFn = debounce(mockFn, 100);
-    
+
     debouncedFn();
     expect(mockFn).not.toHaveBeenCalled();
-    
+
     vi.advanceTimersByTime(100);
     expect(mockFn).toHaveBeenCalledTimes(1);
   });
@@ -244,11 +244,11 @@ describe('helpers - debounce', () => {
   it('only calls function once for multiple rapid calls', () => {
     const mockFn = vi.fn();
     const debouncedFn = debounce(mockFn, 100);
-    
+
     debouncedFn();
     debouncedFn();
     debouncedFn();
-    
+
     vi.advanceTimersByTime(100);
     expect(mockFn).toHaveBeenCalledTimes(1);
   });
@@ -256,21 +256,21 @@ describe('helpers - debounce', () => {
   it('passes arguments to the debounced function', () => {
     const mockFn = vi.fn();
     const debouncedFn = debounce(mockFn, 100);
-    
+
     debouncedFn('arg1', 'arg2');
     vi.advanceTimersByTime(100);
-    
+
     expect(mockFn).toHaveBeenCalledWith('arg1', 'arg2');
   });
 
   it('uses the last call arguments when called multiple times', () => {
     const mockFn = vi.fn();
     const debouncedFn = debounce(mockFn, 100);
-    
+
     debouncedFn('first');
     debouncedFn('second');
     debouncedFn('third');
-    
+
     vi.advanceTimersByTime(100);
     expect(mockFn).toHaveBeenCalledWith('third');
   });
