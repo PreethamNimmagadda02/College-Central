@@ -927,23 +927,47 @@ const Dashboard: React.FC = () => {
       (e) =>
         e.type === 'Start of Semester' ||
         e.description.toLowerCase().includes('semester start') ||
+        e.description.toLowerCase().includes('commencement of') ||
         e.description.toLowerCase().includes('semester end')
     );
 
     if (semesterEvent) {
-      // Extract personal tasks to show even during semester events
-      const personalTasks = (scheduleData || [])
-        .filter((c) => c.isCustomTask && c.day.toLowerCase() === displayWeekday.toLowerCase())
-        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+      const desc = semesterEvent.description.toLowerCase();
+      const isSemesterStart =
+        semesterEvent.type === 'Start of Semester' ||
+        desc.includes('semester start') ||
+        desc.includes('commencement of');
 
-      return {
-        ...defaultState,
-        title: 'Semester Event 📚',
-        classes: personalTasks,
-        isHoliday: true,
-        holidayDescription: `${semesterEvent.description} - Check with your department for schedule changes.`,
-        infoMessage: specialEventMessage,
-      };
+      if (isSemesterStart) {
+        // Semester start is NOT a day off - classes begin! Show regular schedule with info message
+        const classesForDay = (scheduleData || [])
+          .filter((c) => c.day.toLowerCase() === displayWeekday.toLowerCase())
+          .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+        return {
+          ...defaultState,
+          title: isToday ? "Today's Schedule" : 'Schedule',
+          classes: classesForDay,
+          isHoliday: false,
+          infoMessage: specialEventMessage
+            ? `${specialEventMessage}\n📚 ${semesterEvent.description}`
+            : `📚 ${semesterEvent.description}`,
+        };
+      } else {
+        // Semester end - show personal tasks only
+        const personalTasks = (scheduleData || [])
+          .filter((c) => c.isCustomTask && c.day.toLowerCase() === displayWeekday.toLowerCase())
+          .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+        return {
+          ...defaultState,
+          title: 'Semester Event 📚',
+          classes: personalTasks,
+          isHoliday: true,
+          holidayDescription: `${semesterEvent.description} - Check with your department for schedule changes.`,
+          infoMessage: specialEventMessage,
+        };
+      }
     }
 
     // Check for timetable changes or special scheduling
