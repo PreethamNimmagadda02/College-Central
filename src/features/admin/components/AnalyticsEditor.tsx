@@ -881,7 +881,10 @@ const AnalyticsEditor: React.FC = () => {
                 }
               }
               // Branch filter - use case-insensitive comparison to match chart grouping
-              if (branchFilter !== 'all' && user.branch.toLowerCase() !== branchFilter.toLowerCase()) {
+              if (
+                branchFilter !== 'all' &&
+                user.branch.toLowerCase() !== branchFilter.toLowerCase()
+              ) {
                 return false;
               }
               // Year filter
