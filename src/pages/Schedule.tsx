@@ -116,13 +116,13 @@ const Schedule: React.FC = () => {
     // Generate what the schedule should look like based on current timetable data
     let needsUpdate = false;
     const updatedCourses: ClassSchedule[] = [];
-    
+
     // Build a set of valid slot IDs from timetable to detect removed slots
     const validSlotIds = new Set<string>();
 
     scheduledCourseCodes.forEach((courseCode) => {
       const timetableCourse = timetableData.find((c) => c.courseCode === courseCode);
-      
+
       if (!timetableCourse) {
         // Course no longer exists in timetable - keep existing entries as-is
         courseEntries
