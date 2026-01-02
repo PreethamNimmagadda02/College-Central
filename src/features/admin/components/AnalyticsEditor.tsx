@@ -69,6 +69,16 @@ const CHART_COLORS = [
   '#e879f9', // fuchsia
 ];
 
+// Helper function to convert text to Title Case for uniform display
+const toTitleCase = (str: string): string => {
+  if (!str) return str;
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 // Icons
 const UsersIcon = () => (
   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -216,8 +226,9 @@ const AnalyticsEditor: React.FC = () => {
           usersWithSocialLinks++;
         }
 
-        // Branch
-        branchCounts[user.branch] = (branchCounts[user.branch] || 0) + 1;
+        // Branch - normalize to Title Case for uniform display
+        const normalizedBranch = toTitleCase(user.branch);
+        branchCounts[normalizedBranch] = (branchCounts[normalizedBranch] || 0) + 1;
 
         // Admission Year - extract from email prefix (e.g., 23JE0653 → 2023)
         if (user.email) {
@@ -869,8 +880,8 @@ const AnalyticsEditor: React.FC = () => {
                   return false;
                 }
               }
-              // Branch filter
-              if (branchFilter !== 'all' && user.branch !== branchFilter) {
+              // Branch filter - use case-insensitive comparison to match chart grouping
+              if (branchFilter !== 'all' && user.branch.toLowerCase() !== branchFilter.toLowerCase()) {
                 return false;
               }
               // Year filter
