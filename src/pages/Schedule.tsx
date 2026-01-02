@@ -496,21 +496,28 @@ const Schedule: React.FC = () => {
       doc.text(`${user.name} - ${user.admissionNumber}`, pageWidth / 2, 19, { align: 'center' });
     }
 
-    // Grid setup - with time column on left
-    const timeColWidth = 20;
-    const startX = 10 + timeColWidth;
-    const startY = 28;
-    const numDays = daysWithContent.length;
-    const dayColumnWidth = (pageWidth - 20 - timeColWidth) / numDays;
-    const cellHeight = 24; // Increased from 18 to accommodate longer course names
-    const headerHeight = 8;
-
     // Get all unique time slots from schedule and sort them
     const allTimeSlots = new Set<string>();
     scheduleData.forEach((item) => {
       allTimeSlots.add(item.startTime);
     });
     const sortedTimes = Array.from(allTimeSlots).sort();
+
+    // Grid setup - with time column on left
+    const timeColWidth = 18;
+    const startX = 8 + timeColWidth;
+    const startY = 25;
+    const numDays = daysWithContent.length;
+    const dayColumnWidth = (pageWidth - 16 - timeColWidth) / numDays;
+    const headerHeight = 7;
+    
+    // Calculate cell height dynamically to fit all time slots on one page
+    const legendHeight = 12; // Space for legend at bottom
+    const bottomMargin = 8;
+    const availableHeight = pageHeight - startY - headerHeight - legendHeight - bottomMargin;
+    const numTimeSlots = sortedTimes.length;
+    // Calculate cell height, with a minimum of 12mm and maximum of 22mm
+    const cellHeight = Math.max(12, Math.min(22, availableHeight / numTimeSlots));
 
     // Draw header row (days)
     doc.setFillColor(41, 128, 185); // Blue
@@ -520,8 +527,8 @@ const Schedule: React.FC = () => {
 
     // Empty cell for time column header
     doc.setFillColor(52, 73, 94); // Dark blue-grey
-    doc.rect(10, startY, timeColWidth, headerHeight, 'F');
-    doc.text('Time', 10 + timeColWidth / 2, startY + 5.5, { align: 'center' });
+    doc.rect(8, startY, timeColWidth, headerHeight, 'F');
+    doc.text('Time', 8 + timeColWidth / 2, startY + 4.5, { align: 'center' });
 
     // Day headers
     daysWithContent.forEach((day, index) => {
@@ -529,7 +536,7 @@ const Schedule: React.FC = () => {
       doc.setFillColor(41, 128, 185);
       doc.setTextColor(255, 255, 255);
       doc.rect(x, startY, dayColumnWidth, headerHeight, 'F');
-      doc.text(day, x + dayColumnWidth / 2, startY + 5.5, { align: 'center' });
+      doc.text(day, x + dayColumnWidth / 2, startY + 4.5, { align: 'center' });
     });
 
     // Group schedule by day and time
@@ -550,39 +557,22 @@ const Schedule: React.FC = () => {
 
     let currentY = startY + headerHeight;
 
-    // Draw rows for each time slot
+    // Calculate dynamic font sizes based on cell height
+    const baseFontScale = Math.min(1, cellHeight / 16);
+    const codeFont = Math.max(5.5, 7 * baseFontScale);
+    const nameFont = Math.max(4.5, 5.5 * baseFontScale);
+    const detailFont = Math.max(4, 5 * baseFontScale);
+    const lineSpacing = Math.max(2, 2.5 * baseFontScale);
+
+    // Draw rows for each time slot (no page breaks - fits on one page)
     sortedTimes.forEach((time) => {
-      // Check if we need a new page
-      if (currentY + cellHeight > pageHeight - 15) {
-        doc.addPage('l');
-        currentY = 15;
-
-        // Redraw headers
-        doc.setFillColor(52, 73, 94);
-        doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
-        doc.rect(10, currentY, timeColWidth, headerHeight, 'F');
-        doc.text('Time', 10 + timeColWidth / 2, currentY + 5.5, { align: 'center' });
-
-        daysWithContent.forEach((day, index) => {
-          const x = startX + index * dayColumnWidth;
-          doc.setFillColor(41, 128, 185);
-          doc.setTextColor(255, 255, 255);
-          doc.rect(x, currentY, dayColumnWidth, headerHeight, 'F');
-          doc.text(day, x + dayColumnWidth / 2, currentY + 5.5, { align: 'center' });
-        });
-
-        currentY += headerHeight;
-      }
-
       // Time column
       doc.setFillColor(236, 240, 241); // Light grey
       doc.setTextColor(0, 0, 0);
-      doc.rect(10, currentY, timeColWidth, cellHeight, 'FD');
+      doc.rect(8, currentY, timeColWidth, cellHeight, 'FD');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.text(formatTime(time), 10 + timeColWidth / 2, currentY + cellHeight / 2 + 1, {
+      doc.setFontSize(Math.max(6, 8 * baseFontScale));
+      doc.text(formatTime(time), 8 + timeColWidth / 2, currentY + cellHeight / 2 + 1, {
         align: 'center',
       });
 
@@ -599,7 +589,8 @@ const Schedule: React.FC = () => {
         // Fill cell if it has content
         if (items.length > 0) {
           items.forEach((item, itemIndex) => {
-            const contentY = currentY + 2 + itemIndex * (cellHeight / Math.max(items.length, 1));
+            const itemHeight = cellHeight / Math.max(items.length, 1);
+            const contentY = currentY + 1 + itemIndex * itemHeight;
 
             // Background color for custom tasks
             if (item.isCustomTask) {
@@ -607,46 +598,57 @@ const Schedule: React.FC = () => {
               doc.rect(x + 0.5, currentY + 0.5, dayColumnWidth - 1, cellHeight - 1, 'F');
             }
 
-            const maxTextWidth = dayColumnWidth - 3;
-            let textY = contentY + 2.5;
+            const maxTextWidth = dayColumnWidth - 2;
+            let textY = contentY + lineSpacing;
+            const maxY = contentY + itemHeight - 1;
 
             // Course code
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7);
+            doc.setFontSize(codeFont);
             doc.setTextColor(0, 0, 0);
-            doc.text(item.courseCode, x + 1.5, textY, { maxWidth: maxTextWidth });
-            textY += 3;
+            doc.text(item.courseCode, x + 1, textY, { maxWidth: maxTextWidth });
+            textY += lineSpacing + 0.5;
 
-            // Course name - use splitTextToSize to handle wrapping
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(6);
-            const courseNameLines = doc.splitTextToSize(item.courseName, maxTextWidth);
-            // Only show first 2 lines to prevent overflow
-            const linesToShow = courseNameLines.slice(0, 2);
-            doc.text(linesToShow, x + 1.5, textY);
-            textY += linesToShow.length * 2.5 + 0.5;
+            if (textY < maxY) {
+              // Course name - truncate to fit
+              doc.setFont('helvetica', 'normal');
+              doc.setFontSize(nameFont);
+              const courseNameLines = doc.splitTextToSize(item.courseName, maxTextWidth);
+              // Show only as many lines as will fit
+              const maxLines = Math.max(1, Math.floor((maxY - textY) / lineSpacing) - 2);
+              const linesToShow = courseNameLines.slice(0, maxLines);
+              if (linesToShow.length > 0) {
+                doc.text(linesToShow, x + 1, textY);
+                textY += linesToShow.length * lineSpacing;
+              }
+            }
 
-            // Time range
-            doc.setFontSize(5.5);
-            doc.setTextColor(52, 73, 94);
-            doc.text(
-              `${formatTime(item.startTime)} - ${formatTime(item.endTime)}`,
-              x + 1.5,
-              textY
-            );
-            textY += 2.5;
+            if (textY < maxY) {
+              // Time range
+              doc.setFontSize(detailFont);
+              doc.setTextColor(52, 73, 94);
+              doc.text(
+                `${formatTime(item.startTime)} - ${formatTime(item.endTime)}`,
+                x + 1,
+                textY
+              );
+              textY += lineSpacing;
+            }
 
-            // Location
-            doc.setFontSize(5.5);
-            doc.setTextColor(0, 0, 0);
-            doc.text(item.location, x + 1.5, textY, { maxWidth: maxTextWidth });
-            textY += 2.5;
+            if (textY < maxY) {
+              // Location
+              doc.setFontSize(detailFont);
+              doc.setTextColor(0, 0, 0);
+              const locationText = doc.splitTextToSize(item.location, maxTextWidth)[0] || item.location;
+              doc.text(locationText, x + 1, textY);
+              textY += lineSpacing;
+            }
 
             // Instructor - only if there's space left
-            if (item.instructor && item.instructor !== '-' && textY < contentY + cellHeight - 2) {
-              doc.setFontSize(5.5);
+            if (item.instructor && item.instructor !== '-' && item.instructor !== 'TBA' && textY < maxY) {
+              doc.setFontSize(detailFont);
               doc.setTextColor(100, 100, 100);
-              doc.text(item.instructor, x + 1.5, textY, { maxWidth: maxTextWidth });
+              doc.text(item.instructor, x + 1, textY, { maxWidth: maxTextWidth });
             }
           });
         }
