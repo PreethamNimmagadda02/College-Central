@@ -585,8 +585,18 @@ const CoursesEditor: React.FC<Props> = ({
                             }}
                             className="admin-select text-sm py-2 col-span-1 xs:col-span-2"
                           >
-                            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((d) => (
-                              <option key={d} value={d}>{d}</option>
+                            {[
+                              'Monday',
+                              'Tuesday',
+                              'Wednesday',
+                              'Thursday',
+                              'Friday',
+                              'Saturday',
+                              'Sunday',
+                            ].map((d) => (
+                              <option key={d} value={d}>
+                                {d}
+                              </option>
                             ))}
                           </select>
                           <input
@@ -594,7 +604,9 @@ const CoursesEditor: React.FC<Props> = ({
                             value={slot.startTime}
                             onChange={(e) => {
                               setEditingSlots((prev) =>
-                                prev.map((s, i) => (i === idx ? { ...s, startTime: e.target.value } : s))
+                                prev.map((s, i) =>
+                                  i === idx ? { ...s, startTime: e.target.value } : s
+                                )
                               );
                             }}
                             className="admin-input text-sm py-2"
@@ -604,7 +616,9 @@ const CoursesEditor: React.FC<Props> = ({
                             value={slot.endTime}
                             onChange={(e) => {
                               setEditingSlots((prev) =>
-                                prev.map((s, i) => (i === idx ? { ...s, endTime: e.target.value } : s))
+                                prev.map((s, i) =>
+                                  i === idx ? { ...s, endTime: e.target.value } : s
+                                )
                               );
                             }}
                             className="admin-input text-sm py-2"
@@ -615,7 +629,9 @@ const CoursesEditor: React.FC<Props> = ({
                             value={slot.venue}
                             onChange={(e) => {
                               setEditingSlots((prev) =>
-                                prev.map((s, i) => (i === idx ? { ...s, venue: e.target.value } : s))
+                                prev.map((s, i) =>
+                                  i === idx ? { ...s, venue: e.target.value } : s
+                                )
                               );
                             }}
                             className="admin-input text-sm py-2 col-span-1 xs:col-span-2"
@@ -651,7 +667,9 @@ const CoursesEditor: React.FC<Props> = ({
                             </button>
                             <button
                               type="button"
-                              onClick={() => setEditingSlots((prev) => prev.filter((_, i) => i !== idx))}
+                              onClick={() =>
+                                setEditingSlots((prev) => prev.filter((_, i) => i !== idx))
+                              }
                               className="text-red-400 hover:text-red-300 p-1 hover:bg-red-500/20 rounded transition-colors"
                               title="Remove slot"
                             >
