@@ -510,7 +510,7 @@ const Schedule: React.FC = () => {
     const numDays = daysWithContent.length;
     const dayColumnWidth = (pageWidth - 16 - timeColWidth) / numDays;
     const headerHeight = 7;
-    
+
     // Calculate cell height dynamically to fit all time slots on one page
     const legendHeight = 12; // Space for legend at bottom
     const bottomMargin = 8;
@@ -627,11 +627,7 @@ const Schedule: React.FC = () => {
               // Time range
               doc.setFontSize(detailFont);
               doc.setTextColor(52, 73, 94);
-              doc.text(
-                `${formatTime(item.startTime)} - ${formatTime(item.endTime)}`,
-                x + 1,
-                textY
-              );
+              doc.text(`${formatTime(item.startTime)} - ${formatTime(item.endTime)}`, x + 1, textY);
               textY += lineSpacing;
             }
 
@@ -639,13 +635,19 @@ const Schedule: React.FC = () => {
               // Location
               doc.setFontSize(detailFont);
               doc.setTextColor(0, 0, 0);
-              const locationText = doc.splitTextToSize(item.location, maxTextWidth)[0] || item.location;
+              const locationText =
+                doc.splitTextToSize(item.location, maxTextWidth)[0] || item.location;
               doc.text(locationText, x + 1, textY);
               textY += lineSpacing;
             }
 
             // Instructor - only if there's space left
-            if (item.instructor && item.instructor !== '-' && item.instructor !== 'TBA' && textY < maxY) {
+            if (
+              item.instructor &&
+              item.instructor !== '-' &&
+              item.instructor !== 'TBA' &&
+              textY < maxY
+            ) {
               doc.setFontSize(detailFont);
               doc.setTextColor(100, 100, 100);
               doc.text(item.instructor, x + 1, textY, { maxWidth: maxTextWidth });
