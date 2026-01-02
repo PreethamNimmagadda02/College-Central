@@ -92,6 +92,115 @@ const Schedule: React.FC = () => {
   // Get all courses for fallback matching (both CBCS and NEP)
   const allCoursesData = useMemo(() => config?.courses || [], [config?.courses]);
 
+  // Sync schedule with admin timetable changes
+  // This effect updates user's schedule when admin modifies course data (venue, times, etc.)
+  // while preserving user-specific modifications like instructor names
+  // It also removes slots that admin has deleted from the timetable
+  useEffect(() => {
+    if (!scheduleData || scheduleData.length === 0 || !timetableData.length || scheduleLoading) {
+      return;
+    }
+
+    // Get only the course entries (not custom tasks)
+    const courseEntries = scheduleData.filter((item) => !item.isCustomTask);
+    const customTasks = scheduleData.filter((item) => item.isCustomTask);
+
+    if (courseEntries.length === 0) return;
+
+    // Build a map of current schedule by slotId for quick lookup
+    const scheduleMap = new Map(courseEntries.map((item) => [item.slotId, item]));
+
+    // Get unique course codes from current schedule
+    const scheduledCourseCodes = [...new Set(courseEntries.map((item) => item.courseCode))];
+
+    // Generate what the schedule should look like based on current timetable data
+    let needsUpdate = false;
+    const updatedCourses: ClassSchedule[] = [];
+    
+    // Build a set of valid slot IDs from timetable to detect removed slots
+    const validSlotIds = new Set<string>();
+
+    scheduledCourseCodes.forEach((courseCode) => {
+      const timetableCourse = timetableData.find((c) => c.courseCode === courseCode);
+      
+      if (!timetableCourse) {
+        // Course no longer exists in timetable - keep existing entries as-is
+        courseEntries
+          .filter((item) => item.courseCode === courseCode)
+          .forEach((item) => {
+            updatedCourses.push(item);
+            validSlotIds.add(item.slotId);
+          });
+        return;
+      }
+
+      // Get existing instructor for this course (user might have customized it)
+      const existingInstructor = courseEntries.find(
+        (item) => item.courseCode === courseCode && item.instructor !== 'TBA'
+      )?.instructor;
+
+      // Generate updated slots from timetable
+      timetableCourse.slots.forEach((slot, index) => {
+        const slotId = `${courseCode}-${slot.day}-${slot.startTime}-${index}`;
+        validSlotIds.add(slotId);
+        const existingSlot = scheduleMap.get(slotId);
+
+        if (existingSlot) {
+          // Check if timetable data has changed
+          const hasChanges =
+            existingSlot.startTime !== slot.startTime ||
+            existingSlot.endTime !== slot.endTime ||
+            existingSlot.day !== slot.day ||
+            existingSlot.location !== slot.venue ||
+            existingSlot.courseName !== timetableCourse.courseName;
+
+          if (hasChanges) {
+            needsUpdate = true;
+            updatedCourses.push({
+              ...existingSlot,
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+              day: slot.day as ClassSchedule['day'],
+              location: slot.venue,
+              courseName: timetableCourse.courseName,
+            });
+          } else {
+            updatedCourses.push(existingSlot);
+          }
+        } else {
+          // New slot from admin - add it with preserved instructor if available
+          needsUpdate = true;
+          updatedCourses.push({
+            slotId,
+            day: slot.day as ClassSchedule['day'],
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            courseName: timetableCourse.courseName,
+            courseCode: timetableCourse.courseCode,
+            instructor: existingInstructor || 'TBA',
+            location: slot.venue,
+          });
+        }
+      });
+    });
+
+    // Check if any slots were removed by admin (exist in schedule but not in timetable)
+    const removedSlots = courseEntries.filter((item) => {
+      const timetableCourse = timetableData.find((c) => c.courseCode === item.courseCode);
+      // Only check for removal if the course exists in timetable
+      if (!timetableCourse) return false;
+      return !validSlotIds.has(item.slotId);
+    });
+
+    if (removedSlots.length > 0) {
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
+      setScheduleData([...updatedCourses, ...customTasks]);
+    }
+  }, [timetableData, scheduleLoading]);
+
   const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
