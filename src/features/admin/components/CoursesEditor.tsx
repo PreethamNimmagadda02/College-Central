@@ -64,6 +64,7 @@ const CoursesEditor: React.FC<Props> = ({
     endTime: '',
     venue: '',
   });
+  const [editingSlotIndex, setEditingSlotIndex] = useState<number | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -568,24 +569,97 @@ const CoursesEditor: React.FC<Props> = ({
                   {editingSlots.map((slot, idx) => (
                     <div
                       key={idx}
-                      className="flex flex-wrap items-center gap-2 p-3 bg-slate-800/50 rounded-lg border border-blue-500/20"
+                      className={`p-3 bg-slate-800/50 rounded-lg border ${
+                        editingSlotIndex === idx ? 'border-emerald-500/50' : 'border-blue-500/20'
+                      }`}
                     >
-                      <div className="w-24 text-sm font-medium text-blue-400">{slot.day}</div>
-                      <div className="text-sm text-slate-300">
-                        {slot.startTime} - {slot.endTime}
-                      </div>
-                      {slot.venue && (
-                        <div className="text-xs bg-slate-700 text-slate-400 px-2 py-0.5 rounded">
-                          {slot.venue}
+                      {editingSlotIndex === idx ? (
+                        // Editing mode
+                        <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
+                          <select
+                            value={slot.day}
+                            onChange={(e) => {
+                              setEditingSlots((prev) =>
+                                prev.map((s, i) => (i === idx ? { ...s, day: e.target.value } : s))
+                              );
+                            }}
+                            className="admin-select text-sm py-2 col-span-1 xs:col-span-2"
+                          >
+                            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((d) => (
+                              <option key={d} value={d}>{d}</option>
+                            ))}
+                          </select>
+                          <input
+                            type="time"
+                            value={slot.startTime}
+                            onChange={(e) => {
+                              setEditingSlots((prev) =>
+                                prev.map((s, i) => (i === idx ? { ...s, startTime: e.target.value } : s))
+                              );
+                            }}
+                            className="admin-input text-sm py-2"
+                          />
+                          <input
+                            type="time"
+                            value={slot.endTime}
+                            onChange={(e) => {
+                              setEditingSlots((prev) =>
+                                prev.map((s, i) => (i === idx ? { ...s, endTime: e.target.value } : s))
+                              );
+                            }}
+                            className="admin-input text-sm py-2"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Venue (optional)"
+                            value={slot.venue}
+                            onChange={(e) => {
+                              setEditingSlots((prev) =>
+                                prev.map((s, i) => (i === idx ? { ...s, venue: e.target.value } : s))
+                              );
+                            }}
+                            className="admin-input text-sm py-2 col-span-1 xs:col-span-2"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setEditingSlotIndex(null)}
+                            className="col-span-1 xs:col-span-2 admin-btn bg-emerald-600 hover:bg-emerald-700 text-white text-sm py-2"
+                          >
+                            Done Editing
+                          </button>
+                        </div>
+                      ) : (
+                        // Display mode
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="w-24 text-sm font-medium text-blue-400">{slot.day}</div>
+                          <div className="text-sm text-slate-300">
+                            {slot.startTime} - {slot.endTime}
+                          </div>
+                          {slot.venue && (
+                            <div className="text-xs bg-slate-700 text-slate-400 px-2 py-0.5 rounded">
+                              {slot.venue}
+                            </div>
+                          )}
+                          <div className="ml-auto flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setEditingSlotIndex(idx)}
+                              className="text-blue-400 hover:text-blue-300 p-1 hover:bg-blue-500/20 rounded transition-colors"
+                              title="Edit slot"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingSlots((prev) => prev.filter((_, i) => i !== idx))}
+                              className="text-red-400 hover:text-red-300 p-1 hover:bg-red-500/20 rounded transition-colors"
+                              title="Remove slot"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => setEditingSlots((prev) => prev.filter((_, i) => i !== idx))}
-                        className="ml-auto text-red-400 hover:text-red-300 p-1 hover:bg-red-500/20 rounded transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
                     </div>
                   ))}
                   {editingSlots.length === 0 && (
