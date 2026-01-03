@@ -87,7 +87,7 @@ const AdminFooter: React.FC = () => {
                   className="group text-xs sm:text-sm text-slate-400 hover:text-purple-400 transition-all duration-200 hover:translate-x-1 inline-flex items-center gap-2"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-purple-500 group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></span>
-                  College Settings
+                  College Information
                 </Link>
                 <Link
                   to="/admin/directory"
