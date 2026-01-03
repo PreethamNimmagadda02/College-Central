@@ -410,11 +410,7 @@ const AnalyticsEditor: React.FC = () => {
     setSelectedFilter({ title: `${option} Users`, users: filtered });
   };
 
-  const filterByHostel = (hostel: string) => {
-    if (!stats) return;
-    const filtered = stats.allUsers.filter((u) => u.hostel === hostel);
-    setSelectedFilter({ title: `Users in ${hostel}`, users: filtered });
-  };
+
 
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
@@ -734,63 +730,87 @@ const AnalyticsEditor: React.FC = () => {
           )}
         </div>
 
-        {/* Hostel Distribution */}
+        {/* User Growth Over Time */}
         <div className="admin-card">
-          <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Users by Hostel</h3>
-          {stats.branchDistribution.length > 0 ? (
-            <div style={{ width: '100%', height: 280 }}>
-              <ResponsiveContainer width="100%" height="100%" debounce={50}>
-                <BarChart
-                  data={(() => {
-                    // Get hostel distribution from users
-                    const hostelCounts: Record<string, number> = {};
-                    stats.allUsers.forEach((user) => {
-                      if (user.hostel && user.hostel !== 'Unknown') {
-                        hostelCounts[user.hostel] = (hostelCounts[user.hostel] || 0) + 1;
-                      }
-                    });
-                    return Object.entries(hostelCounts)
-                      .map(([name, count]) => ({ name, count }))
-                      .sort((a, b) => b.count - a.count)
-                      .slice(0, 6);
-                  })()}
-                  layout="vertical"
-                >
-                  <XAxis type="number" stroke="#94a3b8" />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    stroke="#94a3b8"
-                    width={80}
-                    tick={{ fontSize: 11 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1e293b',
-                      border: '1px solid rgba(96, 165, 250, 0.3)',
-                      borderRadius: '12px',
-                      color: '#f8fafc',
-                    }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill="url(#hostelGradient)"
-                    radius={[0, 4, 4, 0]}
-                    cursor="pointer"
-                    onClick={(data) => data.name && filterByHostel(data.name)}
-                  />
-                  <defs>
-                    <linearGradient id="hostelGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#22d3ee" />
-                      <stop offset="100%" stopColor="#06b6d4" />
-                    </linearGradient>
-                  </defs>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="text-indigo-400 text-center py-8">No hostel data available</p>
-          )}
+          <h3 className="text-base sm:text-lg font-semibold text-white mb-4">User Growth (Last 30 Days)</h3>
+          {(() => {
+            // Generate data for last 30 days
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            
+            // Create a map of dates to signup counts
+            const signupsByDate: Record<string, number> = {};
+            
+            // Initialize all dates with 0
+            for (let i = 29; i >= 0; i--) {
+              const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+              const dateKey = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+              signupsByDate[dateKey] = 0;
+            }
+            
+            // Count signups per day
+            stats.allUsers.forEach((user) => {
+              if (user.createdAt) {
+                const createdDate = user.createdAt?.toDate ? user.createdAt.toDate() : new Date(user.createdAt.seconds * 1000);
+                if (createdDate >= thirtyDaysAgo && createdDate <= now) {
+                  const dateKey = createdDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  if (signupsByDate[dateKey] !== undefined) {
+                    signupsByDate[dateKey]++;
+                  }
+                }
+              }
+            });
+            
+            const growthData = Object.entries(signupsByDate).map(([date, count]) => ({
+              date,
+              signups: count,
+            }));
+            
+            const hasData = growthData.some(d => d.signups > 0);
+            
+            return hasData ? (
+              <div style={{ width: '100%', height: 280 }}>
+                <ResponsiveContainer width="100%" height="100%" debounce={50}>
+                  <BarChart data={growthData}>
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#94a3b8" 
+                      tick={{ fontSize: 9 }}
+                      interval="preserveStartEnd"
+                      tickFormatter={(value, index) => index % 5 === 0 ? value : ''}
+                    />
+                    <YAxis 
+                      stroke="#94a3b8" 
+                      allowDecimals={false}
+                      tick={{ fontSize: 11 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#1e293b',
+                        border: '1px solid rgba(96, 165, 250, 0.3)',
+                        borderRadius: '12px',
+                        color: '#f8fafc',
+                      }}
+                      formatter={(value) => value !== undefined ? [`${value} ${value === 1 ? 'signup' : 'signups'}`, 'New Users'] : ['0 signups', 'New Users']}
+                    />
+                    <Bar
+                      dataKey="signups"
+                      fill="url(#growthGradient)"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <defs>
+                      <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#22d3ee" />
+                        <stop offset="100%" stopColor="#0891b2" />
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-indigo-400 text-center py-8">No recent signups in the last 30 days</p>
+            );
+          })()} 
         </div>
       </div>
 
