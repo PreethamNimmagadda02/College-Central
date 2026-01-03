@@ -109,7 +109,7 @@ const useMousePosition = () => {
 const smartMetrics = [
   {
     label: 'Active Students',
-    value: 450,
+    value: 500,
     suffix: '+',
     icon: '🎓',
     description: 'Students using the app',
