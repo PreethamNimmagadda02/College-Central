@@ -1,6 +1,7 @@
 import Footer from '@components/layout/Footer';
 import Header from '@components/layout/Header';
 import Sidebar from '@components/layout/Sidebar';
+import SessionGuard from '@components/common/SessionGuard';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import React, { useState, useEffect } from 'react';
 import { useRef } from 'react';
@@ -77,32 +78,34 @@ const Layout: React.FC = () => {
   }, [pathname]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-light-bg dark:bg-dark-bg">
-      <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+    <SessionGuard>
+      <div className="flex h-screen overflow-hidden bg-light-bg dark:bg-dark-bg">
+        <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <Sidebar
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        sidebarCollapsed={sidebarCollapsed}
-        onHoverChange={setSidebarHovering}
-      />
+        <Sidebar
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          sidebarCollapsed={sidebarCollapsed}
+          onHoverChange={setSidebarHovering}
+        />
 
-      <div
-        ref={scrollContainerRef}
-        className="relative flex-1 flex flex-col pt-16 overflow-y-auto overflow-x-hidden"
-      >
         <div
-          className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${sidebarCollapsed ? (sidebarHovering ? 'lg:pl-64' : 'lg:pl-0') : 'lg:pl-64'}`}
+          ref={scrollContainerRef}
+          className="relative flex-1 flex flex-col pt-16 overflow-y-auto overflow-x-hidden"
         >
-          <main className="flex-1">
-            <div className="px-3 sm:px-6 lg:px-8 py-6 sm:py-8 w-full max-w-9xl mx-auto">
-              <Outlet />
-            </div>
-          </main>
-          <Footer />
+          <div
+            className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${sidebarCollapsed ? (sidebarHovering ? 'lg:pl-64' : 'lg:pl-0') : 'lg:pl-64'}`}
+          >
+            <main className="flex-1">
+              <div className="px-3 sm:px-6 lg:px-8 py-6 sm:py-8 w-full max-w-9xl mx-auto">
+                <Outlet />
+              </div>
+            </main>
+            <Footer />
+          </div>
         </div>
       </div>
-    </div>
+    </SessionGuard>
   );
 };
 

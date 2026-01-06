@@ -2,11 +2,54 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if user is an admin
+    // ============================================
+    // SECURITY HELPER FUNCTIONS
+    // ============================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user is an admin
     function isAdmin() {
-      return request.auth != null && 
+      return isAuthenticated() && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+
+    // Check if user is a super admin (from environment config)
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/appConfig/superAdmins) &&
+        request.auth.token.email in get(/databases/$(database)/documents/appConfig/superAdmins).data.emails;
+    }
+
+    // Validate that user is not trying to escalate their own privileges
+    function isValidUserUpdate() {
+      // Prevent users from modifying protected fields
+      let protectedFields = ['role', 'createdAt', 'id'];
+      let incomingData = request.resource.data.diff(resource.data).affectedKeys();
+      return !incomingData.hasAny(protectedFields.toSet());
+    }
+
+    // Validate data size to prevent abuse
+    function isValidDataSize() {
+      return request.resource.size() < 1048576; // 1MB max document size
+    }
+
+    // Validate string field length
+    function isValidStringLength(field, maxLength) {
+      return !field.matches('.*') || field.size() <= maxLength;
+    }
+
+    // Validate email format
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    // ============================================
+    // APP CONFIGURATION
+    // ============================================
 
     // App-wide configuration - readable by all (needed before login), writable by admins only
     match /appConfig/{docId} {
@@ -14,73 +57,167 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Users collection - users can read/write their own data
-    // Admins can read all users and delete any user
+    // Super admin configuration - only super admins can modify
+    match /appConfig/superAdmins {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
+
     match /users/{userId} {
-      // Allow any authenticated user to list/read users for analytics
-      allow read: if request.auth != null;
-      // Only allow writing to own document (role field auto-managed by useRole hook)
-      allow create, update: if request.auth != null && request.auth.uid == userId;
-      // Allow delete for admins only
+      // Allow any authenticated user to read users (for directory/analytics)
+      allow read: if isAuthenticated();
+      
+      // Create: Only allow creating own document with valid initial data
+      allow create: if isAuthenticated() 
+                    && request.auth.uid == userId
+                    && isValidDataSize()
+                    && request.resource.data.role == 'user' // Cannot self-assign admin
+                    && request.resource.data.email == request.auth.token.email;
+      
+      // Update: Only own document, with field-level restrictions
+      allow update: if isAuthenticated() 
+                    && request.auth.uid == userId
+                    && isValidDataSize()
+                    && isValidUserUpdate();
+      
+      // Admin can update any user's role
+      allow update: if isAdmin() && isValidDataSize();
+      
+      // Delete: Admins only
       allow delete: if isAdmin();
 
       // Subcollections under users - only accessible by the user themselves
+      match /activities/{activityId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+      
+      match /grades/{gradeId} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+      
       match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
     }
 
-    // Events collection - read for all authenticated users, write for admins
+    // ============================================
+    // ADMIN-MANAGED COLLECTIONS
+    // ============================================
+
+    // Events collection
     match /events/{eventId} {
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() && isValidDataSize();
+      allow update: if isAdmin() && isValidDataSize();
+      allow delete: if isAdmin();
     }
 
-    // Announcements collection - read for all authenticated users, write for admins
+    // Announcements collection
     match /announcements/{announcementId} {
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() && isValidDataSize();
+      allow update: if isAdmin() && isValidDataSize();
+      allow delete: if isAdmin();
     }
 
-    // News collection - read for all authenticated users, write for admins
+    // News collection
     match /news/{newsId} {
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() && isValidDataSize();
+      allow update: if isAdmin() && isValidDataSize();
+      allow delete: if isAdmin();
     }
 
-    // Faculty directory - read for all authenticated users, write for admins
+    // Faculty directory
     match /faculty/{facultyId} {
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() && isValidDataSize();
+      allow update: if isAdmin() && isValidDataSize();
+      allow delete: if isAdmin();
     }
 
-    // Student directory - read for all authenticated users, write for admins
+    // Student directory
     match /students/{studentId} {
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() && isValidDataSize();
+      allow update: if isAdmin() && isValidDataSize();
+      allow delete: if isAdmin();
     }
 
-    // Academic calendar - read for all authenticated users, write for admins
+    // Academic calendar
     match /academicCalendar/{calendarId} {
-      allow read: if request.auth != null; 
-      allow write: if isAdmin();
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() && isValidDataSize();
+      allow update: if isAdmin() && isValidDataSize();
+      allow delete: if isAdmin();
     }
+
+    // ============================================
+    // USER-OWNED COLLECTIONS
+    // ============================================
 
     // User forms data - users can only read/write their own data
     match /userForms/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isAuthenticated() 
+                    && request.auth.uid == userId
+                    && isValidDataSize();
+      allow update: if isAuthenticated() 
+                    && request.auth.uid == userId
+                    && isValidDataSize();
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
     }
 
     // User events - users can only read/write their own events
     match /userEvents/{eventId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() 
+                    && request.auth.uid == request.resource.data.userId
+                    && isValidDataSize();
+      allow update: if isAuthenticated() 
+                    && request.auth.uid == resource.data.userId
+                    && isValidDataSize();
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
     }
 
-    // User reminder preferences - users can only read/write their own preferences
+    // User reminder preferences
     match /userReminderPreferences/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isAuthenticated() 
+                    && request.auth.uid == userId
+                    && isValidDataSize();
+      allow update: if isAuthenticated() 
+                    && request.auth.uid == userId
+                    && isValidDataSize();
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ============================================
+    // AUDIT LOGGING (append-only for security)
+    // ============================================
+
+    match /auditLogs/{logId} {
+      // Anyone authenticated can create audit logs
+      allow create: if isAuthenticated() 
+                    && request.resource.data.userId == request.auth.uid
+                    && isValidDataSize();
+      // Only admins can read audit logs
+      allow read: if isAdmin();
+      // No updates or deletes allowed (immutable audit trail)
+      allow update, delete: if false;
+    }
+
+    // ============================================
+    // DEFAULT DENY
+    // ============================================
+
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
