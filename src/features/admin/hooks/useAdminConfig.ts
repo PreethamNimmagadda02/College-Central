@@ -499,19 +499,27 @@ export const useAdminConfig = () => {
         // Create a map of existing courses by code for easy lookup
         const existingCoursesMap = new Map(prev.courses.map((c) => [c.courseCode, c]));
 
-        // Process new courses
+        // Create a map of incoming courses by code
+        const incomingCoursesMap = new Map(courses.map((c) => [c.courseCode, c]));
+
+        // Update existing courses if they're in the import, otherwise keep them unchanged
+        const updatedExistingCourses = prev.courses.map((existingCourse) => {
+          const incomingCourse = incomingCoursesMap.get(existingCourse.courseCode);
+          if (incomingCourse) {
+            // Merge incoming data with existing course, preserving the ID
+            return { ...existingCourse, ...incomingCourse };
+          }
+          return existingCourse;
+        });
+
+        // Add new courses that don't exist yet
         const newCourses = courses
           .filter((c) => !existingCoursesMap.has(c.courseCode))
           .map((c, i) => ({ ...c, id: `course-${Date.now()}-${i}` }));
 
-        // Optional: Update existing courses if needed? For now, we'll just append new ones
-        // and keep existing ones to preserve IDs and potential edits.
-        // If we wanted to update, we'd need to merge.
-        // Given "don't delete", appending strictly new ones + keeping old is safest.
-
         return {
           ...prev,
-          courses: [...prev.courses, ...newCourses],
+          courses: [...updatedExistingCourses, ...newCourses],
         };
       });
     },

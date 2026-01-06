@@ -93,9 +93,9 @@ const Schedule: React.FC = () => {
   const allCoursesData = useMemo(() => config?.courses || [], [config?.courses]);
 
   // Sync schedule with admin timetable changes
-  // This effect updates user's schedule when admin modifies course data (venue, times, etc.)
-  // while preserving user-specific modifications like instructor names
-  // It also removes slots that admin has deleted from the timetable
+  // This effect updates user's schedule when admin modifies course data (course name)
+  // while PRESERVING user-specific modifications like instructor names, venue, day, and time
+  // It also handles slots that admin has added or deleted from the timetable
   useEffect(() => {
     if (!scheduleData || scheduleData.length === 0 || !timetableData.length || scheduleLoading) {
       return;
@@ -146,25 +146,19 @@ const Schedule: React.FC = () => {
         const existingSlot = scheduleMap.get(slotId);
 
         if (existingSlot) {
-          // Check if timetable data has changed
-          const hasChanges =
-            existingSlot.startTime !== slot.startTime ||
-            existingSlot.endTime !== slot.endTime ||
-            existingSlot.day !== slot.day ||
-            existingSlot.location !== slot.venue ||
-            existingSlot.courseName !== timetableCourse.courseName;
+          // ONLY sync admin-controlled fields (course name)
+          // PRESERVE user customizations (instructor, venue, day, time)
+          const courseNameChanged = existingSlot.courseName !== timetableCourse.courseName;
 
-          if (hasChanges) {
+          if (courseNameChanged) {
             needsUpdate = true;
             updatedCourses.push({
               ...existingSlot,
-              startTime: slot.startTime,
-              endTime: slot.endTime,
-              day: slot.day as ClassSchedule['day'],
-              location: slot.venue,
+              // Only update course name - preserve user's customizations
               courseName: timetableCourse.courseName,
             });
           } else {
+            // No admin changes, keep user's existing data as-is
             updatedCourses.push(existingSlot);
           }
         } else {
