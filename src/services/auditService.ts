@@ -84,7 +84,8 @@ export async function logSecurityEvent(
       userId: entry.userId || currentUser?.uid || 'anonymous',
       userEmail: entry.userEmail || currentUser?.email || undefined,
       userAgent: metadata.userAgent,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp() as unknown as firebase.firestore.Timestamp,
+      timestamp:
+        firebase.firestore.FieldValue.serverTimestamp() as unknown as firebase.firestore.Timestamp,
     };
 
     // Log to audit collection (non-blocking)
@@ -151,10 +152,7 @@ export function logLogout(userId: string, reason: 'manual' | 'session_expired' |
 /**
  * Log a profile update
  */
-export function logProfileUpdate(
-  userId: string,
-  updatedFields: string[]
-): void {
+export function logProfileUpdate(userId: string, updatedFields: string[]): void {
   logSecurityEvent({
     eventType: 'profile_update',
     severity: 'info',
@@ -224,10 +222,7 @@ export function logSuspiciousActivity(
 /**
  * Log rate limit exceeded
  */
-export function logRateLimitExceeded(
-  userId: string,
-  actionType: string
-): void {
+export function logRateLimitExceeded(userId: string, actionType: string): void {
   logSecurityEvent({
     eventType: 'rate_limit_exceeded',
     severity: 'warning',

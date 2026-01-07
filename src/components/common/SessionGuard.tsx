@@ -1,6 +1,6 @@
 /**
  * Session Guard Component
- * 
+ *
  * Wraps protected content to enforce session management.
  * Displays warning modal when session is about to expire.
  */

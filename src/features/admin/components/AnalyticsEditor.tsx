@@ -405,8 +405,6 @@ const AnalyticsEditor: React.FC = () => {
     setSelectedFilter({ title: `Users from ${year}`, users: filtered });
   };
 
-
-
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
     setDeleting(true);
@@ -728,7 +726,8 @@ const AnalyticsEditor: React.FC = () => {
           });
 
           // Create cumulative growth data
-          let cumulativeTotal = stats.totalUsers - Object.values(signupsByDate).reduce((a, b) => a + b, 0);
+          let cumulativeTotal =
+            stats.totalUsers - Object.values(signupsByDate).reduce((a, b) => a + b, 0);
           const growthData = Object.entries(signupsByDate).map(([date, count]) => {
             cumulativeTotal += count;
             return {
@@ -744,10 +743,7 @@ const AnalyticsEditor: React.FC = () => {
           return hasData ? (
             <div style={{ width: '100%', minHeight: 320 }}>
               <ResponsiveContainer width="100%" height={320}>
-                <LineChart 
-                  data={growthData}
-                  margin={{ top: 5, right: 30, left: 0, bottom: 25 }}
-                >
+                <LineChart data={growthData} margin={{ top: 5, right: 30, left: 0, bottom: 25 }}>
                   <defs>
                     <linearGradient id="growthLineGradient" x1="0" y1="0" x2="1" y2="0">
                       <stop offset="0%" stopColor="#22d3ee" />
@@ -759,9 +755,9 @@ const AnalyticsEditor: React.FC = () => {
                       <stop offset="100%" stopColor="#a78bfa" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid 
-                    strokeDasharray="3 3" 
-                    stroke="rgba(148, 163, 184, 0.15)" 
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(148, 163, 184, 0.15)"
                     vertical={false}
                   />
                   <XAxis
@@ -774,20 +770,20 @@ const AnalyticsEditor: React.FC = () => {
                     tickFormatter={(value, index) => (index % 5 === 0 ? value : '')}
                     dy={10}
                   />
-                  <YAxis 
+                  <YAxis
                     yAxisId="left"
-                    stroke="#475569" 
-                    allowDecimals={false} 
+                    stroke="#475569"
+                    allowDecimals={false}
                     tick={{ fontSize: 11, fill: '#22d3ee' }}
                     tickLine={{ stroke: '#475569' }}
                     axisLine={{ stroke: '#475569' }}
                     width={45}
                   />
-                  <YAxis 
+                  <YAxis
                     yAxisId="right"
                     orientation="right"
-                    stroke="#34d399" 
-                    allowDecimals={false} 
+                    stroke="#34d399"
+                    allowDecimals={false}
                     tick={{ fontSize: 11, fill: '#34d399' }}
                     tickLine={{ stroke: '#475569' }}
                     axisLine={{ stroke: '#475569' }}
@@ -808,7 +804,8 @@ const AnalyticsEditor: React.FC = () => {
                     formatter={(value, name) => {
                       const numValue = value ?? 0;
                       const strName = name ?? '';
-                      if (strName === 'total') return [`${Number(numValue).toLocaleString()} users`, 'Total Users'];
+                      if (strName === 'total')
+                        return [`${Number(numValue).toLocaleString()} users`, 'Total Users'];
                       return [`+${numValue} ${numValue === 1 ? 'signup' : 'signups'}`, 'New Today'];
                     }}
                     animationDuration={200}
@@ -831,12 +828,12 @@ const AnalyticsEditor: React.FC = () => {
                     stroke="#34d399"
                     strokeWidth={2}
                     dot={{ fill: '#34d399', strokeWidth: 0, r: 3 }}
-                    activeDot={{ 
-                      fill: '#10b981', 
-                      strokeWidth: 3, 
+                    activeDot={{
+                      fill: '#10b981',
+                      strokeWidth: 3,
                       stroke: 'rgba(52, 211, 153, 0.3)',
                       r: 6,
-                      style: { filter: 'drop-shadow(0 0 6px rgba(52, 211, 153, 0.5))' }
+                      style: { filter: 'drop-shadow(0 0 6px rgba(52, 211, 153, 0.5))' },
                     }}
                     animationDuration={1500}
                     animationEasing="ease-out"
@@ -848,12 +845,12 @@ const AnalyticsEditor: React.FC = () => {
                     stroke="#22d3ee"
                     strokeWidth={3}
                     dot={false}
-                    activeDot={{ 
-                      fill: '#22d3ee', 
-                      strokeWidth: 3, 
+                    activeDot={{
+                      fill: '#22d3ee',
+                      strokeWidth: 3,
                       stroke: 'rgba(34, 211, 238, 0.3)',
                       r: 8,
-                      style: { filter: 'drop-shadow(0 0 8px rgba(34, 211, 238, 0.5))' }
+                      style: { filter: 'drop-shadow(0 0 8px rgba(34, 211, 238, 0.5))' },
                     }}
                     animationDuration={2000}
                     animationEasing="ease-out"

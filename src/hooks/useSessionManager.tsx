@@ -1,6 +1,6 @@
 /**
  * Session Management Hook
- * 
+ *
  * Provides bank-grade session security with:
  * - Idle timeout (30 minutes default)
  * - Maximum session duration (8 hours default)
@@ -62,9 +62,9 @@ export function useSessionManager() {
   const updateActivity = useCallback(() => {
     const now = Date.now();
     sessionStorage.setItem(LAST_ACTIVITY_KEY, now.toString());
-    
+
     // Reset warning state if user becomes active
-    setSessionState(prev => ({
+    setSessionState((prev) => ({
       ...prev,
       showWarning: false,
     }));
@@ -77,33 +77,36 @@ export function useSessionManager() {
   }, []);
 
   // Logout user
-  const logout = useCallback(async (reason: 'idle' | 'max_session' | 'manual') => {
-    // Clear session data
-    sessionStorage.removeItem(SESSION_START_KEY);
-    sessionStorage.removeItem(LAST_ACTIVITY_KEY);
-    
-    // Clear timeouts
-    if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
-    if (logoutTimeoutRef.current) clearTimeout(logoutTimeoutRef.current);
-    if (checkIntervalRef.current) clearInterval(checkIntervalRef.current);
+  const logout = useCallback(
+    async (reason: 'idle' | 'max_session' | 'manual') => {
+      // Clear session data
+      sessionStorage.removeItem(SESSION_START_KEY);
+      sessionStorage.removeItem(LAST_ACTIVITY_KEY);
 
-    try {
-      await auth.signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+      // Clear timeouts
+      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+      if (logoutTimeoutRef.current) clearTimeout(logoutTimeoutRef.current);
+      if (checkIntervalRef.current) clearInterval(checkIntervalRef.current);
 
-    // Store logout reason for display on login page
-    sessionStorage.setItem('logout_reason', reason);
-    
-    // Redirect to login
-    navigate('/login', { replace: true });
-  }, [navigate]);
+      try {
+        await auth.signOut();
+      } catch (error) {
+        console.error('Error signing out:', error);
+      }
+
+      // Store logout reason for display on login page
+      sessionStorage.setItem('logout_reason', reason);
+
+      // Redirect to login
+      navigate('/login', { replace: true });
+    },
+    [navigate]
+  );
 
   // Extend session (user clicked "Stay logged in")
   const extendSession = useCallback(() => {
     updateActivity();
-    setSessionState(prev => ({
+    setSessionState((prev) => ({
       ...prev,
       showWarning: false,
     }));
@@ -137,7 +140,7 @@ export function useSessionManager() {
 
     // Show warning if less than WARNING_MS remaining
     if (timeUntilLogout <= WARNING_MS) {
-      setSessionState(prev => ({
+      setSessionState((prev) => ({
         ...prev,
         showWarning: true,
         remainingSeconds: Math.ceil(timeUntilLogout / 1000),
@@ -153,14 +156,7 @@ export function useSessionManager() {
     }
 
     // Activity events to track
-    const activityEvents = [
-      'mousedown',
-      'mousemove',
-      'keydown',
-      'scroll',
-      'touchstart',
-      'click',
-    ];
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
 
     // Throttle activity updates (max once per 30 seconds)
     let lastUpdate = 0;
@@ -173,7 +169,7 @@ export function useSessionManager() {
     };
 
     // Add event listeners
-    activityEvents.forEach(event => {
+    activityEvents.forEach((event) => {
       document.addEventListener(event, throttledUpdate, { passive: true });
     });
 
@@ -186,7 +182,7 @@ export function useSessionManager() {
 
     // Cleanup
     return () => {
-      activityEvents.forEach(event => {
+      activityEvents.forEach((event) => {
         document.removeEventListener(event, throttledUpdate);
       });
       if (checkIntervalRef.current) {
@@ -204,7 +200,7 @@ export function useSessionManager() {
 
 /**
  * Session Warning Modal Component
- * 
+ *
  * Display this when sessionState.showWarning is true
  */
 export function SessionWarningModal({
@@ -228,15 +224,18 @@ export function SessionWarningModal({
           <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
             <span className="text-xl">⚠️</span>
           </div>
-          <h2 id="session-warning-title" className="text-lg font-semibold text-slate-800 dark:text-white">
+          <h2
+            id="session-warning-title"
+            className="text-lg font-semibold text-slate-800 dark:text-white"
+          >
             Session Expiring
           </h2>
         </div>
-        
+
         <p className="text-slate-600 dark:text-slate-300 mb-4">
           Your session will expire in <strong>{remainingSeconds}</strong> seconds due to inactivity.
         </p>
-        
+
         <div className="flex gap-3">
           <button
             onClick={onExtend}
