@@ -33,7 +33,26 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
       setLoading(true);
       setError(null);
       const userDocRef = db.collection('users').doc(currentUser.uid);
+
+      // OPTIMIZATION: First load from Firestore cache for instant UI
+      userDocRef
+        .get({ source: 'cache' })
+        .then((docSnap) => {
+          if (docSnap.exists) {
+            const data = docSnap.data();
+            if (data?.scheduleData) {
+              setScheduleDataState(data.scheduleData as ClassSchedule[]);
+              setLoading(false); // Show cached data immediately
+            }
+          }
+        })
+        .catch(() => {
+          // Cache miss expected on first load
+        });
+
+      // Then subscribe for real-time updates
       unsubscribe = userDocRef.onSnapshot(
+        { includeMetadataChanges: false },
         (docSnap) => {
           if (docSnap.exists) {
             const data = docSnap.data();

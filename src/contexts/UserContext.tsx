@@ -108,8 +108,22 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         const userDocRef = db.collection('users').doc(authUser.uid); // Use compat API
 
+        // OPTIMIZATION: First load from Firestore cache for instant UI
+        userDocRef
+          .get({ source: 'cache' })
+          .then((snapshot) => {
+            if (snapshot.exists) {
+              setUser({ id: snapshot.id, ...snapshot.data() } as User);
+              setLoading(false); // Show cached data immediately
+            }
+          })
+          .catch(() => {
+            // Cache miss expected on first load
+          });
+
+        // Then subscribe for real-time updates
         unsubscribeFromFirestore = userDocRef.onSnapshot(
-          // Use compat API
+          { includeMetadataChanges: false }, // Reduce unnecessary triggers
           async (snapshot) => {
             try {
               if (snapshot.exists) {

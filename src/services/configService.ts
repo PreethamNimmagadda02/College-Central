@@ -2,6 +2,8 @@
 // Each config section is stored in a separate document within the appConfig collection
 import { AdminConfig } from '@features/admin/types';
 import { db } from '@lib/firebase';
+import firebase from 'firebase/compat/app';
+import { cache, CACHE_KEYS, CACHE_TTL } from '@lib/utils/cache';
 
 const CONFIG_COLLECTION = 'appConfig';
 
@@ -67,6 +69,12 @@ const sanitizeForFirestore = (obj: any): any => {
  * Fetches all config documents and combines them
  */
 export const getConfig = async (): Promise<AdminConfig | null> => {
+  // Check cache first to reduce Firestore reads
+  const cached = cache.get<AdminConfig>(CACHE_KEYS.APP_CONFIG);
+  if (cached) {
+    return cached;
+  }
+
   try {
     const collectionRef = db.collection(CONFIG_COLLECTION);
     const snapshot = await collectionRef.get();
@@ -96,6 +104,8 @@ export const getConfig = async (): Promise<AdminConfig | null> => {
       }
     });
 
+    // Cache the result for 5 minutes to reduce Firestore reads
+    cache.set(CACHE_KEYS.APP_CONFIG, config as AdminConfig, CACHE_TTL.CONFIG);
     return config as AdminConfig;
   } catch (error) {
     console.error('Error fetching config from Firestore:', error);
@@ -128,6 +138,8 @@ export const updateConfig = async (config: AdminConfig): Promise<boolean> => {
     });
 
     await batch.commit();
+    // Invalidate cache so next read gets fresh data
+    cache.invalidate(CACHE_KEYS.APP_CONFIG);
     return true;
   } catch (error) {
     console.error('Error updating config in Firestore:', error);
@@ -155,6 +167,8 @@ export const updateConfigSection = async <K extends keyof AdminConfig>(
       await docRef.set(sanitizedData as any);
     }
 
+    // Invalidate cache so next read gets fresh data
+    cache.invalidate(CACHE_KEYS.APP_CONFIG);
     return true;
   } catch (error) {
     console.error(`Error updating config section ${section}:`, error);
@@ -165,49 +179,65 @@ export const updateConfigSection = async <K extends keyof AdminConfig>(
 /**
  * Subscribe to real-time config updates
  * Listens to all documents in the collection and combines them
+ * OPTIMIZATION: First returns cached data instantly, then subscribes to updates
  * @returns Unsubscribe function
  */
 export const subscribeToConfig = (callback: (config: AdminConfig | null) => void): (() => void) => {
   const collectionRef = db.collection(CONFIG_COLLECTION);
 
-  const unsubscribe = collectionRef.onSnapshot(
-    (snapshot) => {
-      if (snapshot.empty) {
-        callback(null);
-        return;
-      }
+  // Helper to parse snapshot into config
+  const parseSnapshot = (snapshot: firebase.firestore.QuerySnapshot): AdminConfig | null => {
+    if (snapshot.empty) return null;
 
-      const config: Partial<AdminConfig> = {};
-      const validDocIds = Object.values(CONFIG_DOCS);
+    const config: Partial<AdminConfig> = {};
+    const validDocIds = Object.values(CONFIG_DOCS);
 
-      snapshot.forEach((doc) => {
-        const docId = doc.id;
+    snapshot.forEach((doc) => {
+      const docId = doc.id;
+      if (!validDocIds.includes(docId as any)) return;
 
-        // Skip invalid document IDs
-        if (!validDocIds.includes(docId as any)) {
-          return;
-        }
-
-        const data = doc.data();
-
-        // For array-based configs, extract from { items: [...] }
-        if (ARRAY_CONFIG_KEYS.includes(docId as any)) {
-          (config as any)[docId] = data.items || [];
-        } else {
-          (config as any)[docId] = data;
-        }
-      });
-
-      // Only call callback if we have config data
-      if (Object.keys(config).length > 0) {
-        callback(config as AdminConfig);
+      const data = doc.data();
+      if (ARRAY_CONFIG_KEYS.includes(docId as any)) {
+        (config as any)[docId] = data.items || [];
       } else {
-        callback(null);
+        (config as any)[docId] = data;
       }
+    });
+
+    return Object.keys(config).length > 0 ? (config as AdminConfig) : null;
+  };
+
+  // OPTIMIZATION: First, try to get data from cache immediately (non-blocking)
+  // This provides instant UI rendering while we wait for the network
+  collectionRef
+    .get({ source: 'cache' })
+    .then((cachedSnapshot) => {
+      const cachedConfig = parseSnapshot(cachedSnapshot);
+      if (cachedConfig) {
+        // Update memory cache and call callback immediately
+        cache.set(CACHE_KEYS.APP_CONFIG, cachedConfig, CACHE_TTL.CONFIG);
+        callback(cachedConfig);
+      }
+    })
+    .catch(() => {
+      // Cache miss is expected on first load, ignore
+    });
+
+  // Then subscribe to real-time updates (will also fire once initially)
+  const unsubscribe = collectionRef.onSnapshot(
+    { includeMetadataChanges: false }, // Reduce unnecessary triggers
+    (snapshot) => {
+      const config = parseSnapshot(snapshot);
+      if (config) {
+        cache.set(CACHE_KEYS.APP_CONFIG, config, CACHE_TTL.CONFIG);
+      }
+      callback(config);
     },
     (error) => {
       console.error('Error in config subscription:', error);
-      callback(null);
+      // On error, try to use cached data
+      const cached = cache.get<AdminConfig>(CACHE_KEYS.APP_CONFIG);
+      callback(cached);
     }
   );
 
