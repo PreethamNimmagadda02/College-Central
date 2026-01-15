@@ -16,6 +16,7 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/storage';
 import { getGoogleGenAI } from '@lib/utils/lazyImports';
 import { logActivity } from '@services/activityService';
+import useGradingScale from '@hooks/useGradingScale';
 
 /**
  * GradesContext handles academic grade data with intelligent retake logic:
@@ -74,6 +75,7 @@ const GradesContext = createContext<GradesContextType | undefined>(undefined);
 
 export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { currentUser } = useAuth();
+  const { gradePoints: adminGradePoints, gradeOptions } = useGradingScale();
   const [gradesData, setGradesDataState] = useState<GradesData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -280,30 +282,32 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           contents: {
             parts: [
               {
-                text: `Please analyze this document (image or PDF) of a student's grade sheet. Extract the academic performance data and format it according to the provided JSON schema.
+                text: `Analyze this grade sheet document and extract academic data with maximum precision.
 
-CRITICAL INSTRUCTIONS FOR ACCURATE GRADE READING:
-1. Read each grade character by character very carefully - grades are typically: A+, A, B+, B, C+, C, D, F, EX, I, W, P
-2. Do NOT confuse similar-looking grades:
-   - 'A' (excellent) vs 'B' (good) - look at the shape carefully
-   - 'C+' vs 'C' - check if there is a plus sign
-   - 'D' vs 'O' vs '0' - D is a letter grade
-3. The grade is usually in a dedicated "Grade" column, not the credit or points column
-4. If a grade looks unclear, look at the context (SGPA, credit points) to verify
+                        GRADE READING RULES (CRITICAL):
+                        - Valid grades: ${gradeOptions.join(', ')}, EX, I, W, P
+                        - 'A' has open triangular top, 'B' has two closed bumps on right
+                        - '+' is a small superscript character (check carefully for C+ vs C, B+ vs B)
+                        - 'D' has vertical left side, distinct from 'O' which is round
+                        - Read from the GRADE column only, not credits or grade points column
 
-DATA TO EXTRACT:
-- Overall CGPA: The cumulative GPA shown on the grade sheet
-- For each semester: semester number, academic session year (e.g., '2023-2024'), session type (Monsoon, Winter, or Summer), SGPA
-- For each course: subject code, subject name, credits, and the EXACT grade shown
+                        VALIDATION:
+                        - Verify each semester's grades produce the shown SGPA (grade points × credits / total credits)
+                        - Grade points: ${Object.entries(adminGradePoints).map(([g, p]) => `${g}=${p}`).join(', ')}
+                        - If calculated SGPA differs significantly from shown SGPA, re-check the grades
 
-IMPORTANT: Include ALL course instances, including retakes - if a student took the same course multiple times, include each instance in its respective semester.
+                        EXTRACT:
+                        - Overall CGPA exactly as shown
+                        - Each semester: number, session year (YYYY-YYYY), session type (Monsoon/Winter/Summer), SGPA
+                        - Each course: subject code, full name, credits (integer), exact grade letter(s)
 
-Double-check all extracted grades before finalizing the response.`,
+                        Include ALL instances including retakes. Double-check before finalizing.`,
               },
               { inlineData: { mimeType: selectedFile.type, data: base64Data } },
             ],
           },
           config: {
+            temperature: 0,
             responseMimeType: 'application/json',
             responseSchema: schema,
           },
@@ -319,6 +323,44 @@ Double-check all extracted grades before finalizing the response.`,
           throw new Error('AI response was empty or invalid.');
         }
         result = JSON.parse(text.trim());
+
+        // Post-processing: Normalize grades and validate using admin grading scale
+        const gradePointMap: { [key: string]: number } = {
+          ...adminGradePoints,
+          'EX': -1, 'I': -1, 'W': -1, 'P': -1 // Special grades excluded from calculation
+        };
+
+        // Normalize and validate each semester
+        result.semesters = result.semesters.map((sem: any) => {
+          // Normalize grades (trim whitespace, uppercase)
+          sem.grades = sem.grades.map((g: any) => ({
+            ...g,
+            grade: g.grade?.toString().trim().toUpperCase() || g.grade,
+            credits: g.credits // Keep credits as extracted (may be decimal)
+          }));
+
+          // Validate SGPA if we have enough data
+          const validGrades = sem.grades.filter((g: any) => {
+            const points = gradePointMap[g.grade];
+            return points !== undefined && points >= 0;
+          });
+          if (validGrades.length > 0) {
+            const totalCredits = validGrades.reduce((sum: number, g: any) => sum + g.credits, 0);
+            const totalPoints = validGrades.reduce((sum: number, g: any) => {
+              const points = gradePointMap[g.grade] ?? 0;
+              return sum + (points * g.credits);
+            }, 0);
+            const calculatedSGPA = totalCredits > 0 ? totalPoints / totalCredits : 0;
+
+            // Log warning if significant mismatch (helps debugging)
+            if (Math.abs(calculatedSGPA - sem.sgpa) > 0.5) {
+              console.warn(`Semester ${sem.semester}: Extracted SGPA ${sem.sgpa}, calculated ${calculatedSGPA.toFixed(2)}`);
+            }
+          }
+
+          return sem;
+        });
+
       } catch (geminiError) {
         // Re-throw with a user-friendly message
         console.error('Gemini API error:', geminiError);
