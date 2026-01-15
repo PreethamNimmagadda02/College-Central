@@ -280,7 +280,25 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           contents: {
             parts: [
               {
-                text: "Please analyze this document (image or PDF) of a student's grade sheet. Extract the academic performance data and format it according to the provided JSON schema. The data should include the overall CGPA as shown on the grade sheet, and a list of all semesters, starting from the most recent one. For each semester, provide the semester number, the academic session year (e.g., '2023-2024'), the session type (Monsoon, Winter, or Summer), the SGPA, and a list of all subjects with their code, name, credits, and the grade obtained. IMPORTANT: Include ALL course instances, including retakes - if a student took the same course multiple times, include each instance in its respective semester. Ensure all fields in the schema are populated accurately.",
+                text: `Please analyze this document (image or PDF) of a student's grade sheet. Extract the academic performance data and format it according to the provided JSON schema.
+
+CRITICAL INSTRUCTIONS FOR ACCURATE GRADE READING:
+1. Read each grade character by character very carefully - grades are typically: A+, A, B+, B, C+, C, D, F, EX, I, W, P
+2. Do NOT confuse similar-looking grades:
+   - 'A' (excellent) vs 'B' (good) - look at the shape carefully
+   - 'C+' vs 'C' - check if there is a plus sign
+   - 'D' vs 'O' vs '0' - D is a letter grade
+3. The grade is usually in a dedicated "Grade" column, not the credit or points column
+4. If a grade looks unclear, look at the context (SGPA, credit points) to verify
+
+DATA TO EXTRACT:
+- Overall CGPA: The cumulative GPA shown on the grade sheet
+- For each semester: semester number, academic session year (e.g., '2023-2024'), session type (Monsoon, Winter, or Summer), SGPA
+- For each course: subject code, subject name, credits, and the EXACT grade shown
+
+IMPORTANT: Include ALL course instances, including retakes - if a student took the same course multiple times, include each instance in its respective semester.
+
+Double-check all extracted grades before finalizing the response.`,
               },
               { inlineData: { mimeType: selectedFile.type, data: base64Data } },
             ],
