@@ -804,6 +804,126 @@ const Schedule: React.FC = () => {
     }
   };
 
+  // Export schedule as ICS (iCalendar) file for Google/Apple Calendar sync
+  const handleExportICS = () => {
+    if (!scheduleData || scheduleData.length === 0) return;
+
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+    // Calculate semester end date (approximate - 16 weeks from today)
+    const semesterEnd = new Date();
+    semesterEnd.setDate(semesterEnd.getDate() + 16 * 7); // 16 weeks
+
+    // Map day names to RRULE day abbreviations
+    const dayMap: { [key: string]: string } = {
+      'Monday': 'MO',
+      'Tuesday': 'TU',
+      'Wednesday': 'WE',
+      'Thursday': 'TH',
+      'Friday': 'FR',
+      'Saturday': 'SA',
+      'Sunday': 'SU',
+    };
+
+    // Get next occurrence of a specific day
+    const getNextDayDate = (dayName: string): Date => {
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const today = new Date();
+      const todayDay = today.getDay();
+      const targetDay = days.indexOf(dayName);
+      let daysUntil = targetDay - todayDay;
+      if (daysUntil < 0) daysUntil += 7;
+      if (daysUntil === 0) daysUntil = 7; // Next week if today
+      const nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + daysUntil);
+      return nextDate;
+    };
+
+    // Format date for iCalendar (YYYYMMDDTHHMMSS)
+    const formatICSDate = (date: Date, time: string): string => {
+      const [hours, minutes] = time.split(':').map(Number);
+      const d = new Date(date);
+      d.setHours(hours ?? 0, minutes ?? 0, 0, 0);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hour = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${year}${month}${day}T${hour}${min}00`;
+    };
+
+    // Format end date for RRULE UNTIL
+    const formatUntilDate = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}${month}${day}T235959Z`;
+    };
+
+    // Build iCalendar content
+    const events = scheduleData.map((item, index) => {
+      const eventDate = getNextDayDate(item.day);
+      const dtStart = formatICSDate(eventDate, item.startTime);
+      const dtEnd = formatICSDate(eventDate, item.endTime);
+      const rruleDay = dayMap[item.day] || 'MO';
+      const until = formatUntilDate(semesterEnd);
+
+      const summary = item.isCustomTask
+        ? item.courseName
+        : `${item.courseCode} - ${item.courseName}`;
+      const description = item.isCustomTask
+        ? `Custom Task\\n${item.location}`
+        : `Instructor: ${item.instructor || 'TBA'}\\nLocation: ${item.location}`;
+
+      return [
+        'BEGIN:VEVENT',
+        `UID:${item.slotId || index}@collegecentral`,
+        `DTSTAMP:${timestamp}`,
+        `DTSTART:${dtStart}`,
+        `DTEND:${dtEnd}`,
+        `RRULE:FREQ=WEEKLY;BYDAY=${rruleDay};UNTIL=${until}`,
+        `SUMMARY:${summary.replace(/,/g, '\\,')}`,
+        `DESCRIPTION:${description}`,
+        `LOCATION:${(item.location || '').replace(/,/g, '\\,')}`,
+        'END:VEVENT',
+      ].join('\r\n');
+    });
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//College Central//Schedule//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:Class Schedule',
+      ...events,
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    // Download the .ics file
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `class-schedule-${now.getFullYear()}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    // Log activity
+    if (currentUser) {
+      logActivity(currentUser.uid, {
+        type: 'schedule',
+        title: 'Schedule Synced to Calendar',
+        description: 'Weekly schedule exported as .ics file for calendar sync.',
+        icon: '📆',
+        link: '/schedule',
+      });
+    }
+  };
+
   // Validation function
   const validateForm = (): boolean => {
     const errors: { [key: string]: string } = {};
@@ -1628,11 +1748,10 @@ const Schedule: React.FC = () => {
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`flex-1 sm:flex-initial px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${
-                    viewMode === mode
-                      ? 'bg-white dark:bg-slate-600 text-primary shadow-sm'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                  }`}
+                  className={`flex-1 sm:flex-initial px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${viewMode === mode
+                    ? 'bg-white dark:bg-slate-600 text-primary shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    }`}
                 >
                   {mode.charAt(0).toUpperCase() + mode.slice(1)}
                 </button>
@@ -1682,6 +1801,24 @@ const Schedule: React.FC = () => {
               </svg>
               <span className="hidden xs:inline">Export PDF</span>
               <span className="xs:hidden">PDF</span>
+            </button>
+
+            <button
+              onClick={handleExportICS}
+              disabled={!scheduleData || scheduleData.length === 0}
+              className="flex-shrink-0 px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-medium text-xs sm:text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              title="Sync schedule to Google/Apple Calendar"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <span className="hidden xs:inline">Sync Calendar</span>
+              <span className="xs:hidden">📆</span>
             </button>
           </div>
         </div>
@@ -2268,11 +2405,10 @@ const Schedule: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setNewInstructor(e.target.value)
                     }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
-                      validationErrors.instructor
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                    } dark:bg-slate-700 transition-colors`}
+                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.instructor
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                      } dark:bg-slate-700 transition-colors`}
                     placeholder={
                       editingItem.isCustomTask
                         ? 'e.g., Study Group, Self, Club Name'
@@ -2369,11 +2505,10 @@ const Schedule: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setNewVenue(e.target.value)
                     }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
-                      validationErrors.venue
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                    } dark:bg-slate-700 transition-colors`}
+                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.venue
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                      } dark:bg-slate-700 transition-colors`}
                     placeholder="e.g., Room 101, Main Building"
                   />
                   {validationErrors.venue && (
@@ -2458,11 +2593,10 @@ const Schedule: React.FC = () => {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewStartTime(e.target.value)
                       }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
-                        validationErrors.time || validationErrors.startTime
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
+                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.startTime
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                        } dark:bg-slate-700 transition-colors`}
                     />
                     <span className="text-slate-500 dark:text-slate-400 font-medium">to</span>
                     <input
@@ -2471,35 +2605,34 @@ const Schedule: React.FC = () => {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewEndTime(e.target.value)
                       }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
-                        validationErrors.time || validationErrors.endTime
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
+                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.endTime
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                        } dark:bg-slate-700 transition-colors`}
                     />
                   </div>
                   {(validationErrors.time ||
                     validationErrors.startTime ||
                     validationErrors.endTime) && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      {validationErrors.time ||
-                        validationErrors.startTime ||
-                        validationErrors.endTime}
-                    </p>
-                  )}
+                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        {validationErrors.time ||
+                          validationErrors.startTime ||
+                          validationErrors.endTime}
+                      </p>
+                    )}
                 </div>
               </div>
 
@@ -2628,11 +2761,10 @@ const Schedule: React.FC = () => {
                   </button>
                   <button
                     onClick={handleUpdateClassDetails}
-                    className={`flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center ${
-                      editingItem.isCustomTask
-                        ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
-                        : 'bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white'
-                    }`}
+                    className={`flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center ${editingItem.isCustomTask
+                      ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
+                      : 'bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white'
+                      }`}
                   >
                     <svg
                       className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2"
@@ -2767,11 +2899,10 @@ const Schedule: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setCustomTaskName(e.target.value)
                     }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
-                      validationErrors.customTaskName
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                    } dark:bg-slate-700 transition-colors`}
+                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.customTaskName
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                      } dark:bg-slate-700 transition-colors`}
                     placeholder="e.g., Study Session, Gym, Club Meeting"
                   />
                   {validationErrors.customTaskName && (
@@ -2861,11 +2992,10 @@ const Schedule: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setNewVenue(e.target.value)
                     }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
-                      validationErrors.venue
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                    } dark:bg-slate-700 transition-colors`}
+                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.venue
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                      } dark:bg-slate-700 transition-colors`}
                     placeholder="e.g., Library, Gym, Room 101"
                   />
                   {validationErrors.venue && (
@@ -2983,11 +3113,10 @@ const Schedule: React.FC = () => {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewStartTime(e.target.value)
                       }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
-                        validationErrors.time || validationErrors.startTime
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
+                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.startTime
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                        } dark:bg-slate-700 transition-colors`}
                     />
                     <span className="text-slate-500 dark:text-slate-400 font-medium">to</span>
                     <input
@@ -2996,35 +3125,34 @@ const Schedule: React.FC = () => {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewEndTime(e.target.value)
                       }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
-                        validationErrors.time || validationErrors.endTime
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
+                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.endTime
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                        } dark:bg-slate-700 transition-colors`}
                     />
                   </div>
                   {(validationErrors.time ||
                     validationErrors.startTime ||
                     validationErrors.endTime) && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      {validationErrors.time ||
-                        validationErrors.startTime ||
-                        validationErrors.endTime}
-                    </p>
-                  )}
+                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        {validationErrors.time ||
+                          validationErrors.startTime ||
+                          validationErrors.endTime}
+                      </p>
+                    )}
                 </div>
               </div>
 

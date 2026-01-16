@@ -23,6 +23,20 @@ export interface User {
   socialLinks?: SocialLinks;
   createdAt?: any; // Firestore Timestamp
   lastSemesterReset?: string; // Date string of the last semester reset (YYYY-MM-DD)
+
+  // User Preferences synced to Firestore
+  gradeScenarios?: SavedScenario[];
+  pinnedEventKeys?: string[];
+  reminderPreferences?: string[]; // Already existed in CalendarContext, moving to User object for unity if needed, strictly speaking optional but good for types
+}
+
+export interface SavedScenario {
+  id: string;
+  name: string;
+  grades: { [courseCode: string]: string };
+  projectedSgpa: number;
+  projectedCgpa: number;
+  savedAt: string;
 }
 
 export interface Grade {

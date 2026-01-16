@@ -527,6 +527,74 @@ const Dashboard: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  // === Smart Countdown: Pinned Events (synced with Firestore) ===
+
+  // Use user.pinnedEventKeys from Firestore (via UserContext)
+  const pinnedEventKeys = useMemo(() => user?.pinnedEventKeys || [], [user?.pinnedEventKeys]);
+
+  const [countdownTick, setCountdownTick] = useState(0);
+
+  // Auto-unpin events that have passed or are ongoing (start date < today)
+  useEffect(() => {
+    if (!user || !pinnedEventKeys.length) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const validKeys = pinnedEventKeys.filter((key) => {
+      // Extract date from key (YYYY-MM-DD)
+      // Key format: YYYY-MM-DD-Description
+      const datePart = key.substring(0, 10);
+      const eventDate = new Date(datePart);
+      eventDate.setHours(0, 0, 0, 0);
+
+      // Keep only if event starts today or in the future
+      return eventDate >= today;
+    });
+
+    if (validKeys.length !== pinnedEventKeys.length) {
+      updateUser({ pinnedEventKeys: validKeys }).catch((err) => {
+        console.error('Failed to auto-unpin past events:', err);
+      });
+    }
+  }, [user, pinnedEventKeys, updateUser]);
+
+  // Live countdown timer - updates every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdownTick((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getPinnedEvents = useMemo(() => {
+    if (!calendarData) return [];
+    return pinnedEventKeys
+      .map((key) => calendarData.events.find((e) => getEventKey(e) === key))
+      .filter((e): e is CalendarEvent => e !== undefined)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [pinnedEventKeys, calendarData, getEventKey]);
+
+  const getCountdown = useCallback((dateStr: string) => {
+    // Use countdownTick to trigger recalculation
+    void countdownTick;
+    const eventDate = new Date(dateStr);
+    eventDate.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const diff = eventDate.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true };
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    return { days, hours, minutes, seconds, isPast: false };
+  }, [countdownTick]);
+
   // Date navigation handlers
   const handleResetToToday = useCallback(() => setSelectedDate(new Date()), []);
   const handlePreviousDay = useCallback(() => setSelectedDate((prev) => addDays(prev, -1)), []);
@@ -611,11 +679,11 @@ const Dashboard: React.FC = () => {
       const updatedLinks = quickLinks.map((l) =>
         l.id === editingLink.id
           ? {
-              ...editingLink,
-              href: editingLink.href.startsWith('http')
-                ? editingLink.href
-                : `https://${editingLink.href}`,
-            }
+            ...editingLink,
+            href: editingLink.href.startsWith('http')
+              ? editingLink.href
+              : `https://${editingLink.href}`,
+          }
           : l
       );
       saveQuickLinks(updatedLinks);
@@ -1489,22 +1557,104 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Stats Pills */}
-            <div className="flex flex-wrap gap-3">
-              <div className="group bg-gradient-to-br from-blue-50 to-blue-100 dark:from-slate-800 dark:to-slate-700 px-5 py-3 rounded-xl border border-blue-200 dark:border-slate-600 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105">
-                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Today</p>
-                <p className="text-sm font-bold text-slate-800 dark:text-white">
-                  {new Date().toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
+            {/* Right Header Content */}
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-end items-center gap-2 sm:gap-3 w-full sm:w-auto transition-all duration-300">
+              {/* Today Pill */}
+              <div className="group bg-white dark:bg-slate-800/50 backdrop-blur-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 flex flex-col justify-center min-w-[80px]">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-0.5">Today</p>
+                <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white whitespace-nowrap">
+                  {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                 </p>
               </div>
-              <div className="group bg-gradient-to-br from-purple-50 to-purple-100 dark:from-slate-800 dark:to-slate-700 px-5 py-3 rounded-xl border border-purple-200 dark:border-slate-600 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105">
-                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mb-1">Week</p>
-                <p className="text-sm font-bold text-slate-800 dark:text-white">#{currentWeek}</p>
+
+              {/* Week Pill */}
+              <div className="group bg-white dark:bg-slate-800/50 backdrop-blur-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 flex flex-col justify-center min-w-[80px]">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-0.5">Week</p>
+                <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white">#{currentWeek}</p>
               </div>
+
+              {/* Smart Countdown Pill - Visual Enhanced */}
+              {getPinnedEvents.length > 0 && (() => {
+                const sortedEvents = [...getPinnedEvents].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                const now = new Date();
+                const nextEvent = sortedEvents.find(e => new Date(e.date) > now) || sortedEvents[sortedEvents.length - 1];
+
+                if (!nextEvent) return null;
+
+                const countdown = getCountdown(nextEvent.date);
+                const urgencyPercent = countdown.isPast ? 100 : Math.min(100, Math.max(0, 100 - (countdown.days / 30) * 100));
+                const isUrgent = countdown.days <= 3 && !countdown.isPast;
+                const eventDate = new Date(nextEvent.date);
+                const isToday = eventDate.toDateString() === now.toDateString();
+                const isPast = countdown.isPast;
+
+                return (
+                  <Link
+                    to="/academic-calendar"
+                    className={`col-span-2 sm:col-span-1 w-full sm:w-auto group relative flex items-center justify-between sm:justify-start gap-3 pl-3 pr-4 py-2 sm:pr-5 sm:py-2.5 rounded-xl border shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 overflow-hidden ${isPast
+                      ? 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border-emerald-200 dark:border-emerald-700'
+                      : isUrgent
+                        ? 'bg-gradient-to-br from-rose-50 to-orange-50 dark:from-rose-900/30 dark:to-orange-900/30 border-rose-200 dark:border-rose-700'
+                        : 'bg-white dark:bg-slate-800/80 backdrop-blur-md border-slate-200 dark:border-slate-700'
+                      }`}
+                  >
+                    {/* Urgency Progress Ring */}
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10">
+                        <svg className="w-full h-full -rotate-90 transform group-hover:scale-110 transition-transform duration-300" viewBox="0 0 36 36">
+                          <path
+                            className={`${isUrgent ? 'text-rose-100 dark:text-rose-900/30' : 'text-slate-100 dark:text-slate-700'}`}
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          />
+                          <path
+                            className={`${isUrgent ? 'text-rose-500' : isPast ? 'text-emerald-500' : 'text-purple-500'}`}
+                            strokeDasharray={`${urgencyPercent}, 100`}
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center text-base sm:text-lg">
+                          {getEventEmoji(nextEvent)}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${isUrgent ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'
+                            }`}>
+                            {isPast ? (isToday ? 'Happening' : 'Completed') : 'Next Up'}
+                          </span>
+                          {isUrgent && !isPast && (
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                            </span>
+                          )}
+                        </div>
+
+                        <span className={`text-xs sm:text-sm font-bold truncate max-w-[120px] sm:max-w-[140px] ${isUrgent ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'
+                          }`}>
+                          {nextEvent.description}
+                        </span>
+                      </div>
+                    </div>
+
+                    {!isPast && (
+                      <div className={`flex items-baseline text-sm font-black ${isUrgent ? 'text-rose-500 dark:text-rose-400' : 'text-purple-600 dark:text-purple-400'
+                        }`}>
+                        <span>{countdown.days}d</span>
+                        <span className="text-[10px] ml-0.5 opacity-80 font-bold">{countdown.hours}h</span>
+                      </div>
+                    )}
+                  </Link>
+                );
+              })()}
             </div>
           </div>
 
@@ -1632,7 +1782,7 @@ const Dashboard: React.FC = () => {
                         0,
                         Math.floor(
                           (stableNow.getTime() - semesterStartDate.getTime()) /
-                            (1000 * 60 * 60 * 24)
+                          (1000 * 60 * 60 * 24)
                         )
                       )}
                     </p>
@@ -1756,6 +1906,8 @@ const Dashboard: React.FC = () => {
           </div>
         </Link>
       </div>
+
+
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 md:gap-6">
         {/* Left Column - 2/3 width */}
@@ -1942,13 +2094,12 @@ const Dashboard: React.FC = () => {
                                   }}
                                   className={`
                                                                         text-sm py-1.5 rounded transition-colors
-                                                                        ${
-                                                                          isSelected
-                                                                            ? 'bg-primary text-white font-bold'
-                                                                            : isToday
-                                                                              ? 'bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold'
-                                                                              : 'hover:bg-slate-100 dark:hover:bg-slate-700'
-                                                                        }
+                                                                        ${isSelected
+                                      ? 'bg-primary text-white font-bold'
+                                      : isToday
+                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold'
+                                        : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    }
                                                                     `}
                                 >
                                   {day}
@@ -2163,18 +2314,16 @@ const Dashboard: React.FC = () => {
                         return (
                           <li
                             key={c.slotId}
-                            className={`relative pl-8 transition-all duration-700 ease-out ${
-                              allClassesCompleted ? 'opacity-50' : isPast ? 'opacity-35' : ''
-                            }`}
+                            className={`relative pl-8 transition-all duration-700 ease-out ${allClassesCompleted ? 'opacity-50' : isPast ? 'opacity-35' : ''
+                              }`}
                           >
                             {/* Timeline segment for this class */}
                             {index < scheduleInfo.classes.length - 1 && (
                               <div
-                                className={`absolute left-2.5 w-0.5 transition-all duration-700 ease-out ${
-                                  allClassesCompleted || isPast
-                                    ? 'bg-emerald-500/80 dark:bg-emerald-400/80'
-                                    : 'bg-slate-300 dark:bg-slate-600'
-                                }`}
+                                className={`absolute left-2.5 w-0.5 transition-all duration-700 ease-out ${allClassesCompleted || isPast
+                                  ? 'bg-emerald-500/80 dark:bg-emerald-400/80'
+                                  : 'bg-slate-300 dark:bg-slate-600'
+                                  }`}
                                 style={{
                                   top: '1.25rem',
                                   height: 'calc(100% + 0.75rem)', // Extends to next item (space-y-3 = 0.75rem)
@@ -2183,15 +2332,14 @@ const Dashboard: React.FC = () => {
                             )}
 
                             <div
-                              className={`absolute left-0 top-2.5 h-5 w-5 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
-                                isCurrent
-                                  ? 'bg-primary ring-4 ring-primary/20 scale-110 shadow-md'
-                                  : isNext
-                                    ? 'bg-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-md'
-                                    : isPast || allClassesCompleted
-                                      ? 'bg-emerald-500/90 ring-4 ring-emerald-500/15 dark:bg-emerald-400/90 dark:ring-emerald-400/15'
-                                      : 'bg-slate-300 dark:bg-slate-600 ring-4 ring-slate-200 dark:ring-slate-700'
-                              }`}
+                              className={`absolute left-0 top-2.5 h-5 w-5 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${isCurrent
+                                ? 'bg-primary ring-4 ring-primary/20 scale-110 shadow-md'
+                                : isNext
+                                  ? 'bg-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-md'
+                                  : isPast || allClassesCompleted
+                                    ? 'bg-emerald-500/90 ring-4 ring-emerald-500/15 dark:bg-emerald-400/90 dark:ring-emerald-400/15'
+                                    : 'bg-slate-300 dark:bg-slate-600 ring-4 ring-slate-200 dark:ring-slate-700'
+                                }`}
                             >
                               {isPast || allClassesCompleted ? (
                                 <svg
@@ -2210,25 +2358,23 @@ const Dashboard: React.FC = () => {
                             </div>
 
                             <div
-                              className={`transition-all duration-500 ease-out ${
-                                isCurrent
-                                  ? 'bg-primary/5 border-l-2 border-primary pl-4 pr-3 py-3 rounded-r-lg'
-                                  : isNext
-                                    ? 'bg-amber-50 dark:bg-amber-900/10 border-l-2 border-amber-500 pl-4 pr-3 py-3 rounded-r-lg'
-                                    : 'py-2'
-                              }`}
+                              className={`transition-all duration-500 ease-out ${isCurrent
+                                ? 'bg-primary/5 border-l-2 border-primary pl-4 pr-3 py-3 rounded-r-lg'
+                                : isNext
+                                  ? 'bg-amber-50 dark:bg-amber-900/10 border-l-2 border-amber-500 pl-4 pr-3 py-3 rounded-r-lg'
+                                  : 'py-2'
+                                }`}
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
                                     <span
-                                      className={`text-xs font-semibold transition-colors duration-500 ${
-                                        isCurrent
-                                          ? 'text-primary'
-                                          : isPast || allClassesCompleted
-                                            ? 'text-emerald-600/80 dark:text-emerald-400/80'
-                                            : 'text-slate-500 dark:text-slate-400'
-                                      }`}
+                                      className={`text-xs font-semibold transition-colors duration-500 ${isCurrent
+                                        ? 'text-primary'
+                                        : isPast || allClassesCompleted
+                                          ? 'text-emerald-600/80 dark:text-emerald-400/80'
+                                          : 'text-slate-500 dark:text-slate-400'
+                                        }`}
                                     >
                                       {c.startTime} - {c.endTime}
                                     </span>
@@ -2244,20 +2390,18 @@ const Dashboard: React.FC = () => {
                                     )}
                                   </div>
                                   <p
-                                    className={`font-semibold text-sm mb-2 transition-all duration-500 ${
-                                      isPast || allClassesCompleted
-                                        ? 'text-slate-400 dark:text-slate-500'
-                                        : 'text-slate-900 dark:text-white'
-                                    }`}
+                                    className={`font-semibold text-sm mb-2 transition-all duration-500 ${isPast || allClassesCompleted
+                                      ? 'text-slate-400 dark:text-slate-500'
+                                      : 'text-slate-900 dark:text-white'
+                                      }`}
                                   >
                                     {c.courseName}
                                   </p>
                                   <div
-                                    className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs transition-colors duration-500 ${
-                                      isPast || allClassesCompleted
-                                        ? 'text-slate-400 dark:text-slate-600'
-                                        : 'text-slate-500 dark:text-slate-400'
-                                    }`}
+                                    className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs transition-colors duration-500 ${isPast || allClassesCompleted
+                                      ? 'text-slate-400 dark:text-slate-600'
+                                      : 'text-slate-500 dark:text-slate-400'
+                                      }`}
                                   >
                                     <span className="flex items-center gap-1">
                                       <InstructorIcon className="w-3.5 h-3.5" />
@@ -2268,9 +2412,8 @@ const Dashboard: React.FC = () => {
                                       {c.location}
                                     </span>
                                     <span
-                                      className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-500 ${
-                                        isPast || allClassesCompleted ? 'opacity-60' : ''
-                                      } ${getClassColor(c.courseCode, c.isCustomTask)}`}
+                                      className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-500 ${isPast || allClassesCompleted ? 'opacity-60' : ''
+                                        } ${getClassColor(c.courseCode, c.isCustomTask)}`}
                                     >
                                       {c.isCustomTask ? '✓ ' : ''}
                                       {c.courseCode}
@@ -2429,15 +2572,14 @@ const Dashboard: React.FC = () => {
                   return (
                     <div
                       key={event.id || index}
-                      className={`group flex items-center gap-3 p-3 rounded-lg border-l-4 ${
-                        isOngoing
-                          ? 'bg-green-50 dark:bg-green-900/20 border-green-500'
-                          : isUrgent
-                            ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
-                            : isWarning
-                              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-500'
-                              : 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
-                      }`}
+                      className={`group flex items-center gap-3 p-3 rounded-lg border-l-4 ${isOngoing
+                        ? 'bg-green-50 dark:bg-green-900/20 border-green-500'
+                        : isUrgent
+                          ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
+                          : isWarning
+                            ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-500'
+                            : 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
+                        }`}
                     >
                       {/* Dynamic Event Icon */}
                       <div className="flex-shrink-0">
@@ -2476,15 +2618,14 @@ const Dashboard: React.FC = () => {
                       <div className="flex items-center flex-shrink-0 ml-4">
                         <div className="text-right">
                           <p
-                            className={`text-sm font-semibold ${
-                              isOngoing
-                                ? 'text-green-600'
-                                : isUrgent
-                                  ? 'text-red-600'
-                                  : isWarning
-                                    ? 'text-amber-600'
-                                    : 'text-blue-600'
-                            }`}
+                            className={`text-sm font-semibold ${isOngoing
+                              ? 'text-green-600'
+                              : isUrgent
+                                ? 'text-red-600'
+                                : isWarning
+                                  ? 'text-amber-600'
+                                  : 'text-blue-600'
+                              }`}
                           >
                             {isOngoing
                               ? 'Ongoing'
@@ -2952,11 +3093,10 @@ const Dashboard: React.FC = () => {
                   }}
                   onFocus={() => setCitySearchOpen(true)}
                   placeholder="Search city..."
-                  className={`w-full pl-9 pr-9 py-2.5 text-xs font-bold backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md ${
-                    citySearchOpen
-                      ? 'bg-white dark:bg-slate-800 border-sky-300/40 dark:border-sky-600/40 text-sky-800 dark:text-sky-100 hover:border-sky-400/60 dark:hover:border-sky-500/60'
-                      : 'bg-transparent border-sky-300/30 dark:border-sky-600/30 text-sky-700 dark:text-sky-200 hover:border-sky-400/50 dark:hover:border-sky-500/50'
-                  }`}
+                  className={`w-full pl-9 pr-9 py-2.5 text-xs font-bold backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md ${citySearchOpen
+                    ? 'bg-white dark:bg-slate-800 border-sky-300/40 dark:border-sky-600/40 text-sky-800 dark:text-sky-100 hover:border-sky-400/60 dark:hover:border-sky-500/60'
+                    : 'bg-transparent border-sky-300/30 dark:border-sky-600/30 text-sky-700 dark:text-sky-200 hover:border-sky-400/50 dark:hover:border-sky-500/50'
+                    }`}
                 />
 
                 {/* Dropdown Arrow */}
@@ -2984,11 +3124,10 @@ const Dashboard: React.FC = () => {
                         <button
                           key={`${city.name}-${city.state}`}
                           onClick={() => handleCityChange(city)}
-                          className={`w-full text-left px-4 py-2.5 text-xs hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-colors ${
-                            selectedCity.name === city.name && selectedCity.state === city.state
-                              ? 'bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200 font-bold'
-                              : 'text-slate-700 dark:text-slate-300 font-medium'
-                          }`}
+                          className={`w-full text-left px-4 py-2.5 text-xs hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-colors ${selectedCity.name === city.name && selectedCity.state === city.state
+                            ? 'bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200 font-bold'
+                            : 'text-slate-700 dark:text-slate-300 font-medium'
+                            }`}
                         >
                           <span className="block">{city.name}</span>
                           <span className="text-[10px] text-slate-500 dark:text-slate-400">
@@ -3419,11 +3558,10 @@ const Dashboard: React.FC = () => {
                     <button
                       key={iconOption.icon}
                       onClick={() => setNewLink({ ...newLink, icon: iconOption.icon })}
-                      className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${
-                        newLink.icon === iconOption.icon
-                          ? 'border-primary bg-primary/10 shadow-md'
-                          : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
-                      }`}
+                      className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${newLink.icon === iconOption.icon
+                        ? 'border-primary bg-primary/10 shadow-md'
+                        : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
+                        }`}
                       title={iconOption.name}
                     >
                       <div className={`${newLink.color} text-2xl`}>{iconOption.component}</div>
@@ -3448,11 +3586,10 @@ const Dashboard: React.FC = () => {
                     <button
                       key={color.value}
                       onClick={() => setNewLink({ ...newLink, color: color.value })}
-                      className={`p-2 rounded-lg border-2 transition-all ${
-                        newLink.color === color.value
-                          ? 'border-primary bg-primary/10'
-                          : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
-                      }`}
+                      className={`p-2 rounded-lg border-2 transition-all ${newLink.color === color.value
+                        ? 'border-primary bg-primary/10'
+                        : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
+                        }`}
                     >
                       <div className={`${color.value} text-xl`}>{getIconByName(newLink.icon)}</div>
                     </button>
