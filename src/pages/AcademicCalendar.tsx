@@ -678,9 +678,9 @@ const AcademicCalendar: React.FC = () => {
                     </svg>
                   </button>
 
-                  <div className="relative z-10 flex items-center gap-5">
+                  <div className="relative z-10 flex items-center gap-3 sm:gap-5">
                     {/* Progress Ring Visual */}
-                    <div className="relative flex-shrink-0 w-20 h-20">
+                    <div className="relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20">
                       <svg className="w-full h-full -rotate-90 transform group-hover:rotate-12 transition-transform duration-500" viewBox="0 0 36 36">
                         <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
                         <circle
@@ -693,13 +693,13 @@ const AcademicCalendar: React.FC = () => {
                           className="transition-all duration-1000 ease-out"
                         />
                       </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-3xl drop-shadow-md">
+                      <span className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl drop-shadow-md">
                         {getEventTypeIcon(event)}
                       </span>
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-lg leading-tight mb-1 truncate pr-6">{event.description}</h4>
+                      <h4 className="font-bold text-base sm:text-lg leading-tight mb-1 truncate pr-6">{event.description}</h4>
                       <p className="text-white/90 text-xs mb-3 font-medium flex items-center gap-1">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         {formatDateWithMonthName(event.date)}
@@ -710,23 +710,23 @@ const AcademicCalendar: React.FC = () => {
                           <span className="text-sm font-bold">{isToday ? '✓ Event Started' : '✓ Event Concluded'}</span>
                         </div>
                       ) : (
-                        <div className="flex items-baseline gap-3">
+                        <div className="flex items-baseline gap-2 sm:gap-3">
                           <div className="text-center">
-                            <span className="text-3xl font-black leading-none drop-shadow-sm">{Math.max(0, countdown.days)}</span>
-                            <span className="block text-[10px] font-bold uppercase opacity-80 mt-0.5">Days</span>
+                            <span className="text-2xl sm:text-3xl font-black leading-none drop-shadow-sm">{Math.max(0, countdown.days)}</span>
+                            <span className="block text-[8px] sm:text-[10px] font-bold uppercase opacity-80 mt-0.5">Days</span>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1.5 sm:gap-2">
                             <div className="text-center">
-                              <span className="text-lg font-bold leading-none tabular-nums opacity-90">{countdown.hours}</span>
-                              <span className="block text-[9px] font-bold uppercase opacity-70">Hr</span>
+                              <span className="text-base sm:text-lg font-bold leading-none tabular-nums opacity-90">{countdown.hours}</span>
+                              <span className="block text-[8px] sm:text-[9px] font-bold uppercase opacity-70">Hr</span>
                             </div>
                             <div className="text-center">
-                              <span className="text-lg font-bold leading-none tabular-nums opacity-90">{countdown.minutes}</span>
-                              <span className="block text-[9px] font-bold uppercase opacity-70">Min</span>
+                              <span className="text-base sm:text-lg font-bold leading-none tabular-nums opacity-90">{countdown.minutes}</span>
+                              <span className="block text-[8px] sm:text-[9px] font-bold uppercase opacity-70">Min</span>
                             </div>
-                            <div className="text-center w-6">
-                              <span className="text-lg font-bold leading-none tabular-nums opacity-90">{countdown.seconds}</span>
-                              <span className="block text-[9px] font-bold uppercase opacity-70">Sec</span>
+                            <div className="text-center w-5 sm:w-6">
+                              <span className="text-base sm:text-lg font-bold leading-none tabular-nums opacity-90">{countdown.seconds}</span>
+                              <span className="block text-[8px] sm:text-[9px] font-bold uppercase opacity-70">Sec</span>
                             </div>
                           </div>
                         </div>
