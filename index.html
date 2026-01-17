@@ -1,125 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Primary Meta Tags -->
-    <title>College Central - Student Portal</title>
-    <meta name="title" content="College Central - Student Portal" />
-    <meta name="description" content="A comprehensive student hub providing access to grades, schedules, events, and more in a modern, user-friendly interface." />
-    <meta name="keywords" content="student portal, grades, schedule, campus map, academic calendar, college" />
-    <meta name="author" content="College Central" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://collegecentral.live/" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://collegecentral.live/" />
-    <meta property="og:title" content="College Central - Student Portal" />
-    <meta property="og:description" content="Comprehensive student portal - Manage grades, schedules, campus navigation, and academic resources." />
-    <meta property="og:image" content="https://collegecentral.live/logo.svg" />
+  <!-- Primary Meta Tags -->
+  <title>College Central - Student Portal</title>
+  <meta name="title" content="College Central - Student Portal" />
+  <meta name="description"
+    content="A comprehensive student hub providing access to grades, schedules, events, and more in a modern, user-friendly interface." />
+  <meta name="keywords" content="student portal, grades, schedule, campus map, academic calendar, college" />
+  <meta name="author" content="College Central" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://collegecentral.live/" />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://collegecentral.live/" />
-    <meta property="twitter:title" content="College Central - Student Portal" />
-    <meta property="twitter:description" content="Comprehensive student portal - Manage grades, schedules, campus navigation, and academic resources." />
-    <meta property="twitter:image" content="https://collegecentral.live/logo.svg" />
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://collegecentral.live/" />
+  <meta property="og:title" content="College Central - Student Portal" />
+  <meta property="og:description"
+    content="Comprehensive student portal - Manage grades, schedules, campus navigation, and academic resources." />
+  <meta property="og:image" content="https://collegecentral.live/logo.svg" />
 
-    <!-- Favicons -->
-    <link rel="icon" type="image/svg+xml" href="/logo.svg?v=2" />
-    <link rel="shortcut icon" type="image/svg+xml" href="/logo.svg?v=2" />
-    <link rel="icon" type="image/svg+xml" sizes="32x32" href="/logo.svg?v=2" />
-    <link rel="icon" type="image/svg+xml" sizes="16x16" href="/logo.svg?v=2" />
-    
-    <!-- Apple Touch Icon for iOS (PNG required for better display) -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://collegecentral.live/" />
+  <meta property="twitter:title" content="College Central - Student Portal" />
+  <meta property="twitter:description"
+    content="Comprehensive student portal - Manage grades, schedules, campus navigation, and academic resources." />
+  <meta property="twitter:image" content="https://collegecentral.live/logo.svg" />
 
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#ffffff" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="College Central" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          screens: {
-            'xs': '480px',
-            'sm': '640px',
-            'md': '768px',
-            'lg': '1024px',
-            'xl': '1280px',
-            '2xl': '1536px',
+  <!-- Favicons -->
+  <link rel="icon" type="image/svg+xml" href="/logo.svg?v=2" />
+  <link rel="shortcut icon" type="image/svg+xml" href="/logo.svg?v=2" />
+  <link rel="icon" type="image/svg+xml" sizes="32x32" href="/logo.svg?v=2" />
+  <link rel="icon" type="image/svg+xml" sizes="16x16" href="/logo.svg?v=2" />
+
+  <!-- Apple Touch Icon for iOS (PNG required for better display) -->
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="College Central" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        screens: {
+          'xs': '480px',
+          'sm': '640px',
+          'md': '768px',
+          'lg': '1024px',
+          'xl': '1280px',
+          '2xl': '1536px',
+        },
+        extend: {
+          colors: {
+            'ism-maroon': '#800000',
+            'ism-gold': '#FFD700',
+            'primary': '#3b82f6',        // A brighter, more modern blue
+            'primary-dark': '#2563eb',    // A coordinating darker blue for hovers
+            'secondary': '#06b6d4',      // A vibrant cyan for accents
+            'secondary-light': '#67e8f9',// Lighter cyan for dark mode text
+            'light-bg': '#f1f5f9',        // Slate 100
+            'dark-bg': '#0f172a',         // Slate 900
+            'dark-card': '#1e293b',       // Slate 800
+            'dark-text': '#e2e8f0',       // Soft, readable off-white
           },
-          extend: {
-            colors: {
-              'ism-maroon': '#800000',
-              'ism-gold': '#FFD700',
-              'primary': '#3b82f6',        // A brighter, more modern blue
-              'primary-dark': '#2563eb',    // A coordinating darker blue for hovers
-              'secondary': '#06b6d4',      // A vibrant cyan for accents
-              'secondary-light': '#67e8f9',// Lighter cyan for dark mode text
-              'light-bg': '#f1f5f9',        // Slate 100
-              'dark-bg': '#0f172a',         // Slate 900
-              'dark-card': '#1e293b',       // Slate 800
-              'dark-text': '#e2e8f0',       // Soft, readable off-white
+          animation: {
+            'blob': 'blob 7s infinite',
+            'shimmer': 'shimmer 2s linear infinite',
+            'fadeIn': 'fadeIn 0.3s ease-out forwards',
+            'gradient-shift': 'gradient-shift 3s ease infinite',
+            'spin-slow': 'spin-slow 8s linear infinite',
+          },
+          animationDelay: {
+            '2000': '2s',
+            '4000': '4s',
+          },
+          keyframes: {
+            blob: {
+              '0%': { transform: 'translate(0px, 0px) scale(1)' },
+              '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+              '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+              '100%': { transform: 'translate(0px, 0px) scale(1)' },
             },
-            animation: {
-              'blob': 'blob 7s infinite',
-              'shimmer': 'shimmer 2s linear infinite',
-              'fadeIn': 'fadeIn 0.3s ease-out forwards',
-              'gradient-shift': 'gradient-shift 3s ease infinite',
-              'spin-slow': 'spin-slow 8s linear infinite',
+            shimmer: {
+              '0%': { transform: 'translateX(-100%)' },
+              '100%': { transform: 'translateX(100%)' },
             },
-            animationDelay: {
-              '2000': '2s',
-              '4000': '4s',
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(-10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
             },
-            keyframes: {
-              blob: {
-                '0%': { transform: 'translate(0px, 0px) scale(1)' },
-                '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-                '100%': { transform: 'translate(0px, 0px) scale(1)' },
-              },
-              shimmer: {
-                '0%': { transform: 'translateX(-100%)' },
-                '100%': { transform: 'translateX(100%)' },
-              },
-              fadeIn: {
-                '0%': { opacity: '0', transform: 'translateY(-10px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
-              },
-              'gradient-shift': {
-                '0%, 100%': { backgroundPosition: '0% 50%' },
-                '50%': { backgroundPosition: '100% 50%' },
-              },
-              'spin-slow': {
-                '0%': { transform: 'rotate(0deg)' },
-                '100%': { transform: 'rotate(360deg)' },
-              },
+            'gradient-shift': {
+              '0%, 100%': { backgroundPosition: '0% 50%' },
+              '50%': { backgroundPosition: '100% 50%' },
+            },
+            'spin-slow': {
+              '0%': { transform: 'rotate(0deg)' },
+              '100%': { transform: 'rotate(360deg)' },
             },
           },
         },
-      }
-    </script>
+      },
+    }
+  </script>
 
-<script>
-  // Capacitor.js placeholder for web development
-  if (typeof window !== 'undefined' && !window.Capacitor) {
-    window.Capacitor = {
-      isNativePlatform: () => false,
-      getPlatform: () => 'web'
-    };
-  }
-</script>
+  <script>
+    // Capacitor.js placeholder for web development
+    if (typeof window !== 'undefined' && !window.Capacitor) {
+      window.Capacitor = {
+        isNativePlatform: () => false,
+        getPlatform: () => 'web'
+      };
+    }
+  </script>
 
-<!-- Structured Data (JSON-LD) for SEO -->
-<script type="application/ld+json">
+  <!-- Structured Data (JSON-LD) for SEO -->
+  <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
@@ -149,7 +153,7 @@
 }
 </script>
 
-<script type="application/ld+json">
+  <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "EducationalOrganization",
@@ -161,71 +165,90 @@
 }
 </script>
 </head>
-  <body class="bg-light-bg dark:bg-dark-bg text-slate-800 dark:text-dark-text">
-    <div id="root">
-      <style>
+
+<body class="bg-light-bg dark:bg-dark-bg text-slate-800 dark:text-dark-text">
+  <div id="app-splash">
+    <style>
+      .splash-screen {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+        z-index: 9999;
+        transition: opacity 0.5s ease-out;
+        pointer-events: none;
+        /* Allow clicks to pass through once fading starts */
+      }
+
+      @media (prefers-color-scheme: dark) {
         .splash-screen {
-          position: fixed;
-          inset: 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
-          z-index: 9999;
-          transition: opacity 0.5s ease-out;
+          background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
         }
+      }
 
-        @media (prefers-color-scheme: dark) {
-          .splash-screen {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-          }
-        }
+      .splash-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 24px;
+        animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
 
-        .splash-logo {
-          width: 80px;
-          height: 80px;
-          margin-bottom: 24px;
-          animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
+      .splash-text {
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #334155;
+        opacity: 0;
+        transform: translateY(10px);
+        animation: fade-up 0.8s ease-out forwards 0.3s;
+      }
 
+      @media (prefers-color-scheme: dark) {
         .splash-text {
-          font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: #334155;
-          opacity: 0;
-          transform: translateY(10px);
-          animation: fade-up 0.8s ease-out forwards 0.3s;
+          color: #e2e8f0;
+        }
+      }
+
+      @keyframes pulse-ring {
+        0% {
+          transform: scale(0.95);
+          opacity: 0.8;
         }
 
-        @media (prefers-color-scheme: dark) {
-          .splash-text {
-            color: #e2e8f0;
-          }
+        50% {
+          transform: scale(1.05);
+          opacity: 1;
         }
 
-        @keyframes pulse-ring {
-          0% { transform: scale(0.95); opacity: 0.8; }
-          50% { transform: scale(1.05); opacity: 1; }
-          100% { transform: scale(0.95); opacity: 0.8; }
+        100% {
+          transform: scale(0.95);
+          opacity: 0.8;
         }
+      }
 
-        @keyframes fade-up {
-          to { opacity: 1; transform: translateY(0); }
+      @keyframes fade-up {
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
-      </style>
-      <div class="splash-screen">
-        <img src="/logo.svg" alt="College Central" class="splash-logo" />
-        <div class="splash-text">College Central</div>
-      </div>
+      }
+    </style>
+    <div class="splash-screen">
+      <img src="/logo.svg" alt="College Central" class="splash-logo" />
+      <div class="splash-text">College Central</div>
     </div>
-    <noscript>
-      <div style="padding: 20px; text-align: center; font-family: sans-serif;">
-        <h1>College Central</h1>
-        <p>JavaScript is required to run this application. Please enable JavaScript in your browser settings.</p>
-      </div>
-    </noscript>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  </div>
+  <div id="root"></div>
+  <noscript>
+    <div style="padding: 20px; text-align: center; font-family: sans-serif;">
+      <h1>College Central</h1>
+      <p>JavaScript is required to run this application. Please enable JavaScript in your browser settings.</p>
+    </div>
+  </noscript>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

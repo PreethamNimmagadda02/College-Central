@@ -220,6 +220,15 @@ const App: React.FC = () => {
   useEffect(() => {
     // Measure initial app load performance
     measurePageLoad('app_initial_load');
+
+    // Fade out splash screen
+    const splash = document.getElementById('app-splash');
+    if (splash) {
+      splash.style.opacity = '0';
+      setTimeout(() => {
+        splash.style.display = 'none';
+      }, 500); // Match CSS transition duration
+    }
   }, []);
 
   return (
