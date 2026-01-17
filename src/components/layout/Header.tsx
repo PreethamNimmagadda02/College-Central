@@ -164,15 +164,15 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
             {/* Weather Indicator - Click to Open Modal */}
             <button
               onClick={() => setShowWeatherModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-500/10 to-blue-500/10 hover:from-sky-500/20 hover:to-blue-500/20 border border-sky-500/20 hover:border-sky-500/40 transition-all duration-300 group hover:shadow-md hover:scale-105"
+              className="flex items-center gap-2 px-2 py-2 sm:px-3 rounded-xl bg-gradient-to-r from-sky-500/10 to-blue-500/10 hover:from-sky-500/20 hover:to-blue-500/20 border border-sky-500/20 hover:border-sky-500/40 transition-all duration-300 group hover:shadow-md hover:scale-105"
               title={weather ? `${weather.desc} - Click for full details` : 'Loading weather...'}
             >
               {weatherLoading ? (
                 <span className="text-sm animate-pulse">⏳</span>
               ) : weather ? (
                 <>
-                  <span className="text-lg group-hover:scale-110 transition-transform">{weather.icon}</span>
-                  <span className="text-sm font-bold text-sky-700 dark:text-sky-300">{weather.temp}°</span>
+                  <span className="text-base leading-none sm:text-lg group-hover:scale-110 transition-transform">{weather.icon}</span>
+                  <span className="hidden sm:inline text-sm font-bold text-sky-700 dark:text-sky-300">{weather.temp}°</span>
                 </>
               ) : (
                 <span className="text-sm text-slate-500">--°</span>
