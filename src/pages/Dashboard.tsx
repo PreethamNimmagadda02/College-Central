@@ -46,8 +46,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ClassSchedule, CalendarEvent, QuickLink } from '@/types';
 
-import { getWeatherAdvice } from '@/data/weatherAdvice';
-import { cities, City } from '@/data/cities';
+
 
 // Helper function to get emoji for calendar event type
 const getEventEmoji = (event: CalendarEvent): string => {
@@ -233,101 +232,7 @@ const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
   return COURSE_COLORS[colorIndex];
 };
 
-interface WeatherData {
-  temp: string;
-  desc: string;
-  icon: string;
-}
 
-interface DetailedWeatherData extends WeatherData {
-  humidity: number;
-  windSpeed: number;
-  windDirection: number;
-  pressure: number;
-  feelsLike: number;
-  uvIndex: number;
-  visibility: number;
-  precipitation: number;
-  cloudCover: number;
-  dewPoint: number;
-  isDay: number;
-}
-
-// Helper function to interpret WMO weather codes from Open-Meteo
-const getWeatherInfoFromCode = (code: number, isDay: number): { desc: string; icon: string } => {
-  const is_day = isDay === 1;
-  switch (code) {
-    case 0:
-      return { desc: 'Clear sky', icon: is_day ? '☀️' : '🌙' };
-    case 1:
-      return { desc: 'Mainly clear', icon: is_day ? '🌤️' : '☁️' };
-    case 2:
-      return { desc: 'Partly cloudy', icon: is_day ? '⛅️' : '☁️' };
-    case 3:
-      return { desc: 'Overcast', icon: '☁️' };
-    case 45:
-    case 48:
-      return { desc: 'Fog', icon: '🌫️' };
-    case 51:
-    case 53:
-    case 55:
-      return { desc: 'Drizzle', icon: '🌦️' };
-    case 56:
-    case 57:
-      return { desc: 'Freezing Drizzle', icon: '🌨️' };
-    case 61:
-    case 63:
-    case 65:
-      return { desc: 'Rain', icon: '🌧️' };
-    case 66:
-    case 67:
-      return { desc: 'Freezing Rain', icon: '🌨️' };
-    case 71:
-    case 73:
-    case 75:
-      return { desc: 'Snow fall', icon: '❄️' };
-    case 77:
-      return { desc: 'Snow grains', icon: '❄️' };
-    case 80:
-    case 81:
-    case 82:
-      return { desc: 'Rain showers', icon: '🌧️' };
-    case 85:
-    case 86:
-      return { desc: 'Snow showers', icon: '🌨️' };
-    case 95:
-      return { desc: 'Thunderstorm', icon: '⛈️' };
-    case 96:
-    case 99:
-      return { desc: 'Thunderstorm with hail', icon: '⛈️' };
-    default:
-      return { desc: 'Cloudy', icon: '☁️' };
-  }
-};
-
-// Helper function to convert wind direction degrees to compass direction
-const getWindDirection = (degrees: number): string => {
-  const directions = [
-    'N',
-    'NNE',
-    'NE',
-    'ENE',
-    'E',
-    'ESE',
-    'SE',
-    'SSE',
-    'S',
-    'SSW',
-    'SW',
-    'WSW',
-    'W',
-    'WNW',
-    'NW',
-    'NNW',
-  ];
-  const index = Math.round(degrees / 22.5) % 16;
-  return directions[index] ?? 'N';
-};
 
 // Default quick links (stored data without icons)
 // Default quick links are now imported from collegeConfig
@@ -376,12 +281,7 @@ const getIconForLink = (link: QuickLink): React.ReactNode => {
 };
 
 // Default city used as fallback when cities array is unexpectedly empty
-const DEFAULT_CITY: City = cities[0] ?? {
-  name: 'Dhanbad',
-  state: 'Jharkhand',
-  lat: 23.79,
-  lon: 86.43,
-};
+
 
 const Dashboard: React.FC = () => {
   // Performance monitoring
@@ -389,50 +289,7 @@ const Dashboard: React.FC = () => {
 
   const { config: appConfig } = useAppConfig();
 
-  // Helper function to get default city from admin config
-  const getDefaultCityFromConfig = (): City => {
-    // Try to find city matching admin config location
-    if (appConfig?.collegeInfo?.location?.city) {
-      const adminCity = appConfig.collegeInfo.location.city.toLowerCase();
-      const adminState = appConfig.collegeInfo.location.state?.toLowerCase();
 
-      // Try to find exact match with city and state
-      const exactMatch = cities.find(
-        (c) =>
-          c.name.toLowerCase() === adminCity &&
-          (!adminState || c.state.toLowerCase() === adminState)
-      );
-      if (exactMatch) return exactMatch;
-
-      // Try to find partial match with just city name
-      const partialMatch = cities.find((c) => c.name.toLowerCase() === adminCity);
-      if (partialMatch) return partialMatch;
-    }
-
-    // Fallback to default city
-    return DEFAULT_CITY;
-  };
-
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [weatherLoading, setWeatherLoading] = useState(true);
-  const [weatherError, setWeatherError] = useState<string | null>(null);
-  const [detailedWeather, setDetailedWeather] = useState<DetailedWeatherData | null>(null);
-  const [showWeatherModal, setShowWeatherModal] = useState(false);
-  const [selectedCity, setSelectedCity] = useState<City>(() => {
-    const savedCity = localStorage.getItem('selectedCity');
-    if (savedCity) {
-      try {
-        return JSON.parse(savedCity);
-      } catch {
-        return DEFAULT_CITY; // Fallback to default if parsing fails
-      }
-    }
-    // No saved preference - will be updated with admin config city in useEffect
-    return DEFAULT_CITY;
-  });
-  const [citySearchOpen, setCitySearchOpen] = useState(false);
-  const [citySearchQuery, setCitySearchQuery] = useState('');
-  const cityDropdownRef = React.useRef<HTMLDivElement>(null);
   const { user, loading: userLoading, updateUser } = useUser();
   const { gradesData, loading: gradesLoading } = useGrades();
   const { scheduleData, loading: scheduleLoading } = useSchedule();
@@ -441,8 +298,6 @@ const Dashboard: React.FC = () => {
     loading: calendarLoading,
     reminderPreferences,
     getEventKey,
-    toggleReminderPreference,
-    updateUserEvent,
   } = useCalendar();
 
   // Get quotes from config
@@ -456,18 +311,7 @@ const Dashboard: React.FC = () => {
   }, [appConfig?.quotes]);
 
   // Update default city from admin config when config loads (only if user hasn't saved a preference)
-  useEffect(() => {
-    const savedCity = localStorage.getItem('selectedCity');
-    if (!savedCity && appConfig?.collegeInfo?.location?.city) {
-      const defaultCity = getDefaultCityFromConfig();
-      if (
-        defaultCity &&
-        (defaultCity.name !== selectedCity.name || defaultCity.state !== selectedCity.state)
-      ) {
-        setSelectedCity(defaultCity);
-      }
-    }
-  }, [appConfig?.collegeInfo?.location?.city, appConfig?.collegeInfo?.location?.state]);
+
 
   const upcomingEventsCount = useMemo(() => {
     if (!calendarData) return 0;
@@ -498,18 +342,7 @@ const Dashboard: React.FC = () => {
   }, [calendarData]);
 
   // AI Weather Recommendation State
-  const [recommendation, setRecommendation] = useState<string | null>(null);
-  const [recommendationLoading, setRecommendationLoading] = useState(false);
-  const [recommendationError, setRecommendationError] = useState<string | null>(null);
 
-  // Weather advice cache interface
-  interface WeatherAdviceCache {
-    advice: string;
-    temp: number;
-    weatherCode: number;
-    timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
-    timestamp: number;
-  }
 
   // Quick Links state management
   const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
@@ -527,37 +360,9 @@ const Dashboard: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // === Smart Countdown: Pinned Events (synced with Firestore) ===
-
-  // Use user.pinnedEventKeys from Firestore (via UserContext)
-  const pinnedEventKeys = useMemo(() => user?.pinnedEventKeys || [], [user?.pinnedEventKeys]);
+  // === Smart Countdown: Events with Reminders (synced with Calendar) ===
 
   const [countdownTick, setCountdownTick] = useState(0);
-
-  // Auto-unpin events that have passed or are ongoing (start date < today)
-  useEffect(() => {
-    if (!user || !pinnedEventKeys.length) return;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const validKeys = pinnedEventKeys.filter((key) => {
-      // Extract date from key (YYYY-MM-DD)
-      // Key format: YYYY-MM-DD-Description
-      const datePart = key.substring(0, 10);
-      const eventDate = new Date(datePart);
-      eventDate.setHours(0, 0, 0, 0);
-
-      // Keep only if event starts today or in the future
-      return eventDate >= today;
-    });
-
-    if (validKeys.length !== pinnedEventKeys.length) {
-      updateUser({ pinnedEventKeys: validKeys }).catch((err) => {
-        console.error('Failed to auto-unpin past events:', err);
-      });
-    }
-  }, [user, pinnedEventKeys, updateUser]);
 
   // Live countdown timer - updates every second
   useEffect(() => {
@@ -567,16 +372,25 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const getPinnedEvents = useMemo(() => {
+  // Get events with reminders enabled (automatically show countdown for these)
+  const getCountdownEvents = useMemo(() => {
     if (!calendarData) return [];
-    return pinnedEventKeys
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return reminderPreferences
       .map((key) => calendarData.events.find((e) => getEventKey(e) === key))
-      .filter((e): e is CalendarEvent => e !== undefined)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [pinnedEventKeys, calendarData, getEventKey]);
+      .filter((e): e is CalendarEvent => {
+        if (!e) return false;
+        const eventDate = new Date(e.date);
+        eventDate.setHours(0, 0, 0, 0);
+        return eventDate >= today;
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 3);
+  }, [reminderPreferences, calendarData, getEventKey]);
 
   const getCountdown = useCallback((dateStr: string) => {
-    // Use countdownTick to trigger recalculation
     void countdownTick;
     const eventDate = new Date(dateStr);
     eventDate.setHours(0, 0, 0, 0);
@@ -1186,219 +1000,18 @@ const Dashboard: React.FC = () => {
     };
   }, [calendarData, scheduleData, selectedDate]);
 
-  // Helper to determine time of day
-  const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return 'morning';
-    if (hour >= 12 && hour < 17) return 'afternoon';
-    if (hour >= 17 && hour < 21) return 'evening';
-    return 'night';
-  };
 
-  // Helper to check if cached advice is still valid
-  const getCachedAdvice = (temp: number, weatherCode: number): string | null => {
-    try {
-      const cached = localStorage.getItem('weatherAdviceCache');
-      if (!cached) return null;
 
-      const cacheData: WeatherAdviceCache = JSON.parse(cached);
-      const now = Date.now();
-      const cacheAge = now - cacheData.timestamp;
-      const threeHours = 1 * 60 * 60 * 1000; // 1 hours in milliseconds
 
-      // Cache is invalid if older than 3 hours
-      if (cacheAge > threeHours) {
-        localStorage.removeItem('weatherAdviceCache');
-        return null;
-      }
 
-      const currentTimeOfDay = getTimeOfDay();
-      const tempDiff = Math.abs(temp - cacheData.temp);
 
-      // Reuse cache if:
-      // 1. Same time of day
-      // 2. Temperature difference is less than 3°C
-      // 3. Same weather condition (code)
-      if (
-        cacheData.timeOfDay === currentTimeOfDay &&
-        tempDiff < 1 &&
-        cacheData.weatherCode === weatherCode
-      ) {
-        return cacheData.advice;
-      }
 
-      return null;
-    } catch (err) {
-      console.error('Cache read error:', err);
-      return null;
-    }
-  };
 
-  // Save advice to cache
-  const cacheAdvice = (advice: string, temp: number, weatherCode: number) => {
-    try {
-      const cacheData: WeatherAdviceCache = {
-        advice,
-        temp,
-        weatherCode,
-        timeOfDay: getTimeOfDay(),
-        timestamp: Date.now(),
-      };
-      localStorage.setItem('weatherAdviceCache', JSON.stringify(cacheData));
-    } catch (err) {
-      console.error('Cache write error:', err);
-    }
-  };
 
-  const fetchWeatherRecommendation = async (weatherData: WeatherData, weatherCode: number) => {
-    setRecommendationLoading(true);
-    setRecommendationError(null);
-    setRecommendation(null);
 
-    try {
-      const temp = parseFloat(weatherData.temp);
 
-      // Check cache first
-      const cachedAdvice = getCachedAdvice(temp, weatherCode);
-      if (cachedAdvice) {
-        setRecommendation(cachedAdvice);
-        setRecommendationLoading(false);
-        return;
-      }
 
-      // Get advice from pre-stored data
-      const advice = getWeatherAdvice(weatherCode, temp);
-      setRecommendation(advice);
 
-      // Cache the new advice
-      cacheAdvice(advice, temp, weatherCode);
-    } catch (err) {
-      console.error('Weather advice error:', err);
-      setRecommendationError("Couldn't get weather advices right now.");
-    } finally {
-      setRecommendationLoading(false);
-    }
-  };
-
-  const fetchWeather = async (city: City = selectedCity) => {
-    setWeatherError(null);
-    setWeatherLoading(true);
-    setRecommendation(null);
-    setRecommendationLoading(true);
-    setRecommendationError(null);
-
-    try {
-      const lat = city.lat;
-      const lon = city.lon;
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,apparent_temperature,precipitation,uv_index,cloud_cover,dew_point_2m&timezone=Asia/Kolkata`;
-
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Weather API failed with status: ${response.status}`);
-      }
-      const data = await response.json();
-
-      if (!data.current) {
-        throw new Error('Invalid weather data received.');
-      }
-
-      const {
-        temperature_2m,
-        weather_code,
-        is_day,
-        relative_humidity_2m,
-        wind_speed_10m,
-        wind_direction_10m,
-        surface_pressure,
-        apparent_temperature,
-        precipitation,
-        uv_index,
-        cloud_cover,
-        dew_point_2m,
-      } = data.current;
-      const { desc, icon } = getWeatherInfoFromCode(weather_code, is_day);
-
-      const weatherData: WeatherData = {
-        temp: temperature_2m.toFixed(0),
-        desc: desc,
-        icon: icon,
-      };
-      setWeather(weatherData);
-
-      // Store detailed weather data
-      const detailedData: DetailedWeatherData = {
-        ...weatherData,
-        humidity: relative_humidity_2m || 0,
-        windSpeed: wind_speed_10m || 0,
-        windDirection: wind_direction_10m || 0,
-        pressure: surface_pressure || 0,
-        feelsLike: apparent_temperature || parseFloat(weatherData.temp),
-        uvIndex: uv_index || 0,
-        visibility: 10, // Open-Meteo doesn't provide visibility in free tier
-        precipitation: precipitation || 0,
-        cloudCover: cloud_cover || 0,
-        dewPoint: dew_point_2m || 0,
-        isDay: is_day || 0,
-      };
-      setDetailedWeather(detailedData);
-
-      await fetchWeatherRecommendation(weatherData, weather_code);
-    } catch (err) {
-      setWeatherError('Could not load weather.');
-      setRecommendationError(null);
-      setRecommendationLoading(false);
-      console.error('Weather fetch error:', err);
-    } finally {
-      setWeatherLoading(false);
-    }
-  };
-
-  // Handle city selection change
-  const handleCityChange = (city: City) => {
-    setSelectedCity(city);
-    localStorage.setItem('selectedCity', JSON.stringify(city));
-    fetchWeather(city);
-    setCitySearchOpen(false);
-    setCitySearchQuery('');
-  };
-
-  // Filter cities based on search query
-  const filteredCities = useMemo(() => {
-    if (!citySearchQuery.trim()) return cities;
-    const query = citySearchQuery.toLowerCase();
-    return cities.filter(
-      (city) => city.name.toLowerCase().includes(query) || city.state.toLowerCase().includes(query)
-    );
-  }, [citySearchQuery]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
-        setCitySearchOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Weather data fetch on mount and when city changes
-  useEffect(() => {
-    fetchWeather();
-
-    // Auto-refresh weather every hour
-    const weatherRefreshInterval = setInterval(
-      () => {
-        fetchWeather();
-      },
-      60 * 60 * 1000
-    ); // 60 minutes (1 hour)
-
-    return () => {
-      clearInterval(weatherRefreshInterval);
-    };
-  }, [selectedCity]);
 
   // Start with a random quote, then change every 30 seconds
   const [motivationalQuote, setMotivationalQuote] = useState(() => getRandomItem(configQuotes));
@@ -1574,8 +1187,8 @@ const Dashboard: React.FC = () => {
               </div>
 
               {/* Smart Countdown Pill - Visual Enhanced */}
-              {getPinnedEvents.length > 0 && (() => {
-                const sortedEvents = [...getPinnedEvents].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              {getCountdownEvents.length > 0 && (() => {
+                const sortedEvents = [...getCountdownEvents].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
                 const now = new Date();
                 const nextEvent = sortedEvents.find(e => new Date(e.date) > now) || sortedEvents[sortedEvents.length - 1];
 
@@ -2444,257 +2057,12 @@ const Dashboard: React.FC = () => {
             )}
           </div>
 
-          {/* Upcoming Deadlines Widget - From Calendar Reminders */}
-          <div className="bg-white dark:bg-dark-card p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-xl font-semibold">Upcoming Reminders</h2>
-                {calendarData &&
-                  calendarData.events &&
-                  (() => {
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const count = calendarData.events.filter((event) => {
-                      const eventKey = getEventKey(event);
-                      const isUserCreatedWithReminder = event.remindMe === true && !!event.userId;
-                      const isPreloadedWithReminder =
-                        !event.userId && reminderPreferences.includes(eventKey);
-
-                      if (!isUserCreatedWithReminder && !isPreloadedWithReminder) return false;
-
-                      // Include ongoing and future events
-                      const eventStartDate = new Date(event.date);
-                      const eventEndDate = new Date(event.endDate || event.date);
-                      eventStartDate.setHours(0, 0, 0, 0);
-                      eventEndDate.setHours(0, 0, 0, 0);
-
-                      const isOngoing = eventStartDate < today && eventEndDate >= today;
-                      const daysUntil = Math.ceil(
-                        (eventStartDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-                      );
-
-                      return daysUntil >= 0 || isOngoing;
-                    }).length;
-                    return count > 0 ? (
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {count} {count === 1 ? 'reminder' : 'reminders'} active
-                      </p>
-                    ) : null;
-                  })()}
-              </div>
-              <Link
-                to="/academic-calendar"
-                className="text-sm text-primary hover:text-primary-dark"
-              >
-                View Calendar →
-              </Link>
-            </div>
-            <div className="space-y-3 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
-              {(() => {
-                if (!calendarData || !calendarData.events) {
-                  return (
-                    <div className="text-center py-8">
-                      <p className="text-slate-500 dark:text-slate-400 text-sm">
-                        Loading reminders...
-                      </p>
-                    </div>
-                  );
-                }
-
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                const reminderEvents = calendarData.events
-                  .filter((event: CalendarEvent) => {
-                    const eventKey = getEventKey(event);
-
-                    // Show if: user-created event with remindMe OR preloaded event in user's preferences
-                    const isUserCreatedWithReminder = event.remindMe === true && !!event.userId;
-                    const isPreloadedWithReminder =
-                      !event.userId && reminderPreferences.includes(eventKey);
-
-                    if (!isUserCreatedWithReminder && !isPreloadedWithReminder) return false;
-
-                    // Check if event is passed
-                    const eventStartDate = new Date(event.date);
-                    const eventEndDate = new Date(event.endDate || event.date);
-                    eventStartDate.setHours(0, 0, 0, 0);
-                    eventEndDate.setHours(0, 0, 0, 0);
-
-                    const isOngoing = eventStartDate < today && eventEndDate >= today;
-                    const daysUntil = Math.ceil(
-                      (eventStartDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-                    );
-
-                    // Only show if upcoming (daysUntil >= 0) OR ongoing
-                    return daysUntil >= 0 || isOngoing;
-                  })
-                  .sort(
-                    (a: CalendarEvent, b: CalendarEvent) =>
-                      new Date(a.date).getTime() - new Date(b.date).getTime()
-                  );
-
-                if (reminderEvents.length === 0) {
-                  return (
-                    <div className="text-center py-8">
-                      <p className="text-slate-500 dark:text-slate-400 text-sm">
-                        No upcoming reminders
-                      </p>
-                      <p className="text-xs text-slate-400 mt-2">
-                        Total events: {calendarData.events.length}
-                      </p>
-                      <Link
-                        to="/academic-calendar"
-                        className="text-sm text-primary hover:text-primary-dark mt-2 inline-block"
-                      >
-                        Add events with "Remind Me" →
-                      </Link>
-                    </div>
-                  );
-                }
-
-                return reminderEvents.map((event, index) => {
-                  const eventStartDate = new Date(event.date);
-                  const eventEndDate = new Date(event.endDate || event.date);
-                  const todayDate = new Date();
-                  eventStartDate.setHours(0, 0, 0, 0);
-                  eventEndDate.setHours(0, 0, 0, 0);
-                  todayDate.setHours(0, 0, 0, 0);
-
-                  const daysUntil = Math.ceil(
-                    (eventStartDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24)
-                  );
-                  const isOngoing = eventStartDate < todayDate && eventEndDate >= todayDate;
-                  const isUrgent = !isOngoing && daysUntil <= 2;
-                  const isWarning = !isOngoing && daysUntil > 2 && daysUntil <= 7;
-                  const isUserEvent = !!event.userId;
-
-                  return (
-                    <div
-                      key={event.id || index}
-                      className={`group flex items-center gap-3 p-3 rounded-lg border-l-4 ${isOngoing
-                        ? 'bg-green-50 dark:bg-green-900/20 border-green-500'
-                        : isUrgent
-                          ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
-                          : isWarning
-                            ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-500'
-                            : 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
-                        }`}
-                    >
-                      {/* Dynamic Event Icon */}
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 shadow-sm">
-                          <span className="text-2xl">{getEventEmoji(event)}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium truncate">{event.description}</p>
-                          {isUserEvent && (
-                            <span
-                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                              title="User-created event"
-                            >
-                              <svg
-                                className="w-3 h-3 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                />
-                              </svg>
-                              Personal
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">{event.type}</p>
-                      </div>
-                      <div className="flex items-center flex-shrink-0 ml-4">
-                        <div className="text-right">
-                          <p
-                            className={`text-sm font-semibold ${isOngoing
-                              ? 'text-green-600'
-                              : isUrgent
-                                ? 'text-red-600'
-                                : isWarning
-                                  ? 'text-amber-600'
-                                  : 'text-blue-600'
-                              }`}
-                          >
-                            {isOngoing
-                              ? 'Ongoing'
-                              : daysUntil === 0
-                                ? 'Today'
-                                : daysUntil === 1
-                                  ? 'Tomorrow'
-                                  : `In ${daysUntil} days`}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {new Date(event.date).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </p>
-                        </div>
-                        <button
-                          onClick={async () => {
-                            try {
-                              // For user-defined events, turn off remindMe flag and toggle preference
-                              if (event.userId && event.id) {
-                                await updateUserEvent(event.id, {
-                                  ...event,
-                                  remindMe: false,
-                                });
-                                // Also toggle the reminder preference for consistency
-                                const eventKey = getEventKey(event);
-                                if (reminderPreferences.includes(eventKey)) {
-                                  await toggleReminderPreference(eventKey);
-                                }
-                              } else {
-                                // For preloaded events, just toggle the reminder preference
-                                await toggleReminderPreference(getEventKey(event));
-                              }
-                            } catch (error) {
-                              console.error('Error removing reminder:', error);
-                              alert('Failed to remove reminder');
-                            }
-                          }}
-                          className="ml-2 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                          title="Remove reminder"
-                          aria-label="Remove reminder"
-                        >
-                          <svg
-                            className="w-5 h-5 text-slate-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                            ></path>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-          </div>
         </div>
 
         {/* Right Column - 1/3 width */}
         <div className="space-y-6">
+
+
           {/* Quick Links - Compact & Flexible */}
           <div className="bg-gradient-to-br from-white to-slate-50 dark:from-dark-card dark:to-slate-900/50 p-4 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 backdrop-blur-sm">
             <div className="flex justify-between items-center mb-3">
@@ -3020,463 +2388,9 @@ const Dashboard: React.FC = () => {
             )}
           </div>
 
-          {/* Weather Widget - Enhanced & Interactive */}
-          <div
-            onClick={() => weather && setShowWeatherModal(true)}
-            className="group bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/20 p-4 sm:p-6 rounded-2xl shadow-md border border-sky-200 dark:border-sky-700/50 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex-1">
-                <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
-                  <span className="text-sky-500 text-xl sm:text-2xl animate-pulse">🌤️</span>
-                  <span className="bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
-                    Weather
-                  </span>
-                </h3>
-                <p className="text-xs text-sky-600/60 dark:text-sky-400/60 mt-1 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
-                  Click for detailed weather info
-                </p>
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fetchWeather();
-                }}
-                disabled={weatherLoading}
-                className="p-2 rounded-lg hover:bg-sky-100 dark:hover:bg-sky-800/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group-hover:rotate-180"
-                title="Refresh weather"
-              >
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600 dark:text-sky-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* City Selector Dropdown with Search */}
-            <div
-              className="mb-3 relative"
-              ref={cityDropdownRef}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="relative group/dropdown">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 transition-transform group-hover/dropdown:scale-110 duration-200">
-                  <svg
-                    className="w-4 h-4 text-sky-600 dark:text-sky-400 group-hover/dropdown:text-sky-700 dark:group-hover/dropdown:text-sky-300 transition-colors drop-shadow-sm"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-
-                {/* Search Input */}
-                <input
-                  type="text"
-                  value={citySearchOpen ? citySearchQuery : selectedCity.name}
-                  onChange={(e) => {
-                    setCitySearchQuery(e.target.value);
-                    setCitySearchOpen(true);
-                  }}
-                  onFocus={() => setCitySearchOpen(true)}
-                  placeholder="Search city..."
-                  className={`w-full pl-9 pr-9 py-2.5 text-xs font-bold backdrop-blur-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-sky-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md ${citySearchOpen
-                    ? 'bg-white dark:bg-slate-800 border-sky-300/40 dark:border-sky-600/40 text-sky-800 dark:text-sky-100 hover:border-sky-400/60 dark:hover:border-sky-500/60'
-                    : 'bg-transparent border-sky-300/30 dark:border-sky-600/30 text-sky-700 dark:text-sky-200 hover:border-sky-400/50 dark:hover:border-sky-500/50'
-                    }`}
-                />
-
-                {/* Dropdown Arrow */}
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg
-                    className={`w-4 h-4 text-sky-600 dark:text-sky-400 transition-transform duration-200 ${citySearchOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 8l4 4 4-4"
-                    />
-                  </svg>
-                </div>
-
-                {/* Dropdown List */}
-                {citySearchOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-sky-200 dark:border-sky-700 rounded-lg shadow-xl max-h-60 overflow-y-auto z-50">
-                    {filteredCities.length > 0 ? (
-                      filteredCities.map((city) => (
-                        <button
-                          key={`${city.name}-${city.state}`}
-                          onClick={() => handleCityChange(city)}
-                          className={`w-full text-left px-4 py-2.5 text-xs hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-colors ${selectedCity.name === city.name && selectedCity.state === city.state
-                            ? 'bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200 font-bold'
-                            : 'text-slate-700 dark:text-slate-300 font-medium'
-                            }`}
-                        >
-                          <span className="block">{city.name}</span>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                            {city.state}
-                          </span>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
-                        No cities found
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-            {weatherLoading ? (
-              <div className="flex flex-col items-center justify-center h-32 space-y-3">
-                <div className="w-12 h-12 border-4 border-t-transparent border-sky-500 rounded-full animate-spin"></div>
-                <p className="text-xs text-sky-600 dark:text-sky-400 animate-pulse">
-                  Fetching weather...
-                </p>
-              </div>
-            ) : weatherError ? (
-              <div className="text-center py-6">
-                <p className="text-red-500 text-sm mb-3">⚠️ {weatherError}</p>
-                <button
-                  onClick={() => fetchWeather()}
-                  className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-sm transition-colors"
-                >
-                  Retry
-                </button>
-              </div>
-            ) : weather ? (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-baseline gap-2">
-                      <p className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-br from-sky-600 to-blue-600 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300">
-                        {weather.temp}°
-                      </p>
-                      <span className="text-2xl sm:text-3xl font-semibold text-sky-500/60">C</span>
-                    </div>
-                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-2 font-medium">
-                      {weather.desc}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fillRule="evenodd"
-                          d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      {selectedCity.name}, {selectedCity.state}
-                    </p>
-                  </div>
-                  <div className="text-6xl sm:text-7xl md:text-8xl drop-shadow-2xl group-hover:scale-110 transition-transform duration-300">
-                    {weather.icon}
-                  </div>
-                </div>
-
-                {/* Quick Student-Relevant Weather Info */}
-                {detailedWeather && (
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    <div className="bg-sky-100/50 dark:bg-sky-900/20 rounded-lg p-2 text-center">
-                      <p className="text-[10px] text-sky-600 dark:text-sky-400 font-medium">
-                        Feels Like
-                      </p>
-                      <p className="text-sm font-bold text-sky-800 dark:text-sky-200">
-                        {detailedWeather.feelsLike.toFixed(0)}°C
-                      </p>
-                    </div>
-                    <div className="bg-blue-100/50 dark:bg-blue-900/20 rounded-lg p-2 text-center">
-                      <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
-                        Humidity
-                      </p>
-                      <p className="text-sm font-bold text-blue-800 dark:text-blue-200">
-                        {detailedWeather.humidity}%
-                      </p>
-                    </div>
-                    <div className="bg-indigo-100/50 dark:bg-indigo-900/20 rounded-lg p-2 text-center">
-                      <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
-                        UV Index
-                      </p>
-                      <p className="text-sm font-bold text-indigo-800 dark:text-indigo-200">
-                        {detailedWeather.uvIndex.toFixed(0)}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-4 pt-4 border-t border-sky-300/50 dark:border-sky-700/50">
-                  {recommendationLoading ? (
-                    <div className="animate-pulse flex space-x-3">
-                      <div className="text-base font-medium text-sky-700 dark:text-sky-300">✨</div>
-                      <div className="flex-1 space-y-3 py-1">
-                        <div className="h-3 bg-sky-200/50 dark:bg-sky-700/50 rounded"></div>
-                        <div className="h-3 bg-sky-200/50 dark:bg-sky-700/50 rounded w-5/6"></div>
-                        <div className="h-3 bg-sky-200/50 dark:bg-sky-700/50 rounded w-4/6"></div>
-                      </div>
-                    </div>
-                  ) : recommendationError ? (
-                    <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-2">
-                      <span>⚠️</span> {recommendationError}
-                    </p>
-                  ) : (
-                    recommendation && (
-                      <div className="bg-sky-100/50 dark:bg-sky-900/30 rounded-xl p-3 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors">
-                        <h4 className="text-xs sm:text-sm font-semibold text-sky-800 dark:text-sky-200 mb-2 flex items-center gap-2">
-                          <span className="text-base">✨</span>
-                          <span>Weather Advice</span>
-                        </h4>
-                        <p className="text-xs sm:text-sm text-sky-700 dark:text-sky-300 whitespace-pre-line leading-relaxed">
-                          {recommendation}
-                        </p>
-                      </div>
-                    )
-                  )}
-                </div>
-              </>
-            ) : null}
-          </div>
         </div>
       </div>
 
-      {/* Weather Details Modal */}
-      {showWeatherModal && detailedWeather && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={() => setShowWeatherModal(false)}
-        >
-          <div
-            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/40 dark:to-blue-900/40 backdrop-blur-sm border-b border-sky-200 dark:border-sky-700 p-6 rounded-t-2xl">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-4">
-                  <div className="text-6xl drop-shadow-lg">{detailedWeather.icon}</div>
-                  <div>
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
-                      {detailedWeather.temp}°C
-                    </h2>
-                    <p className="text-slate-600 dark:text-slate-400 font-medium">
-                      {detailedWeather.desc}
-                    </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-500 flex items-center gap-1 mt-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fillRule="evenodd"
-                          d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      {selectedCity.name}, {selectedCity.state}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowWeatherModal(false)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              {/* Feels Like Temperature */}
-              <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 p-4 rounded-xl border border-orange-200 dark:border-orange-700/50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="text-3xl">🌡️</div>
-                    <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                        Feels Like
-                      </p>
-                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                        {detailedWeather.feelsLike.toFixed(1)}°C
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Weather Details Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* Humidity */}
-                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-700/50">
-                  <div className="flex items-center gap-3">
-                    <div className="text-3xl">💧</div>
-                    <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                        Humidity
-                      </p>
-                      <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                        {detailedWeather.humidity}%
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Wind Speed */}
-                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-700/50">
-                  <div className="flex items-center gap-3">
-                    <div className="text-3xl">💨</div>
-                    <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                        Wind Speed
-                      </p>
-                      <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                        {detailedWeather.windSpeed.toFixed(1)} km/h
-                      </p>
-                      <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
-                        {getWindDirection(detailedWeather.windDirection)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Pressure */}
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-700/50">
-                  <div className="flex items-center gap-3">
-                    <div className="text-3xl">🎚️</div>
-                    <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                        Pressure
-                      </p>
-                      <p className="text-xl font-bold text-purple-600 dark:text-purple-400">
-                        {detailedWeather.pressure.toFixed(0)} hPa
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* UV Index */}
-                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-4 rounded-xl border border-yellow-200 dark:border-yellow-700/50">
-                  <div className="flex items-center gap-3">
-                    <div className="text-3xl">☀️</div>
-                    <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                        UV Index
-                      </p>
-                      <p className="text-xl font-bold text-yellow-600 dark:text-yellow-400">
-                        {detailedWeather.uvIndex.toFixed(1)}
-                      </p>
-                      <p className="text-xs text-yellow-600/70 dark:text-yellow-400/70">
-                        {detailedWeather.uvIndex < 3
-                          ? 'Low'
-                          : detailedWeather.uvIndex < 6
-                            ? 'Moderate'
-                            : detailedWeather.uvIndex < 8
-                              ? 'High'
-                              : 'Very High'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Precipitation */}
-                <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 p-4 rounded-xl border border-indigo-200 dark:border-indigo-700/50">
-                  <div className="flex items-center gap-3">
-                    <div className="text-3xl">🌧️</div>
-                    <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                        Precipitation
-                      </p>
-                      <p className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
-                        {detailedWeather.precipitation.toFixed(1)} mm
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Visibility */}
-                <div className="bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900/20 dark:to-gray-900/20 p-4 rounded-xl border border-slate-200 dark:border-slate-700/50">
-                  <div className="flex items-center gap-3">
-                    <div className="text-3xl">👁️</div>
-                    <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                        Visibility
-                      </p>
-                      <p className="text-xl font-bold text-slate-600 dark:text-slate-400">
-                        {detailedWeather.visibility} km
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Recommendation in Modal */}
-              {recommendation && (
-                <div className="bg-sky-100/50 dark:bg-sky-900/30 rounded-xl p-4 border border-sky-200 dark:border-sky-700/50">
-                  <h4 className="text-sm font-semibold text-sky-800 dark:text-sky-200 mb-3 flex items-center gap-2">
-                    <span className="text-xl">✨</span>
-                    <span>Weather Advice</span>
-                  </h4>
-                  <p className="text-sm text-sky-700 dark:text-sky-300 whitespace-pre-line leading-relaxed">
-                    {recommendation}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-4 rounded-b-2xl flex justify-end gap-3">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fetchWeather();
-                }}
-                disabled={weatherLoading}
-                className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                <svg
-                  className={`w-4 h-4 ${weatherLoading ? 'animate-spin' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                Refresh
-              </button>
-              <button
-                onClick={() => setShowWeatherModal(false)}
-                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Add Link Modal */}
       {showAddModal && (

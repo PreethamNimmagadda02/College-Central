@@ -13,6 +13,8 @@ import { InstallPrompt } from '@components/common/InstallPrompt';
 import { OfflineIndicator } from '@components/common/OfflineIndicator';
 import { CalendarProvider } from '@contexts/CalendarContext';
 import { CampusMapProvider } from '@contexts/CampusMapContext';
+import { WeatherProvider } from '@contexts/WeatherContext';
+import WeatherModal from '@components/weather/WeatherModal';
 import { FormsProvider } from '@contexts/FormsContext';
 import { GradesProvider } from '@contexts/GradesContext';
 import { ScheduleProvider } from '@contexts/ScheduleContext';
@@ -230,9 +232,12 @@ const App: React.FC = () => {
                 <ScheduleProvider>
                   <CalendarProvider>
                     <FormsProvider>
-                      <CampusMapProvider>
-                        <RouterProvider router={router} />
-                      </CampusMapProvider>
+                      <WeatherProvider>
+                        <CampusMapProvider>
+                          <RouterProvider router={router} />
+                          <WeatherModal />
+                        </CampusMapProvider>
+                      </WeatherProvider>
                     </FormsProvider>
                   </CalendarProvider>
                 </ScheduleProvider>

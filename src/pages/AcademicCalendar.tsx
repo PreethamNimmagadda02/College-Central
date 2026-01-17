@@ -64,7 +64,7 @@ const getEventTypeColor = (type: CalendarEventType) => {
 };
 
 const AcademicCalendar: React.FC = () => {
-  const { user, updateUser } = useUser();
+  useUser(); // Component may still need user context for other features
   const {
     calendarData,
     loading: calendarLoading,
@@ -109,10 +109,7 @@ const AcademicCalendar: React.FC = () => {
     remindMe: false,
   });
 
-  // === Smart Countdown: Pinned Events Feature ===
-
-  // Use user.pinnedEventKeys from Firestore (via UserContext)
-  const pinnedEventKeys = useMemo(() => user?.pinnedEventKeys || [], [user?.pinnedEventKeys]);
+  // === Smart Countdown: Events with Reminders ===
 
   const [countdownTick, setCountdownTick] = useState(0);
 
@@ -124,31 +121,24 @@ const AcademicCalendar: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const togglePinEvent = useCallback(async (eventKey: string) => {
-    if (!user) return;
-
-    let newKeys = [...pinnedEventKeys];
-    if (newKeys.includes(eventKey)) {
-      newKeys = newKeys.filter((k) => k !== eventKey);
-    } else {
-      if (newKeys.length >= 3) return; // Max 3 pinned events
-      newKeys.push(eventKey);
-    }
-
-    try {
-      await updateUser({ pinnedEventKeys: newKeys });
-    } catch (error) {
-      console.error('Failed to update pinned events:', error);
-    }
-  }, [user, pinnedEventKeys, updateUser]);
-
-  const getPinnedEvents = useMemo(() => {
+  // Get events with reminders enabled (automatically show countdown for these)
+  const getCountdownEvents = useMemo(() => {
     if (!calendarData) return [];
-    return pinnedEventKeys
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return reminderPreferences
       .map((key) => calendarData.events.find((e) => getEventKey(e) === key))
-      .filter((e): e is CalendarEvent => e !== undefined)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [pinnedEventKeys, calendarData, getEventKey]);
+      .filter((e): e is CalendarEvent => {
+        if (!e) return false;
+        // Only show future events (not past)
+        const eventDate = new Date(e.date);
+        eventDate.setHours(0, 0, 0, 0);
+        return eventDate >= today;
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 3); // Limit to 3 countdown events
+  }, [reminderPreferences, calendarData, getEventKey]);
 
   const getCountdown = useCallback((dateStr: string) => {
     // Use countdownTick to trigger recalculation
@@ -401,6 +391,12 @@ const AcademicCalendar: React.FC = () => {
     const isCurrentlyReminded = reminderPreferences.includes(eventKey);
     const isUserEvent = !!event.userId && !!event.id;
 
+    // Check if trying to add a new reminder and already at max
+    if (!isCurrentlyReminded && reminderPreferences.length >= 3) {
+      alert('Maximum 3 reminders allowed. Please remove an existing reminder first.');
+      return;
+    }
+
     try {
       if (isUserEvent) {
         // For user-created events, update both remindMe flag and reminderPreferences
@@ -632,20 +628,20 @@ const AcademicCalendar: React.FC = () => {
         </div>
       </div>
 
-      {/* Pinned Countdowns Section */}
-      {getPinnedEvents.length > 0 && (
+      {/* Countdown Section - Shows events with reminders */}
+      {getCountdownEvents.length > 0 && (
         <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-md p-4 md:p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
           <h3 className="text-base md:text-lg font-semibold mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xl md:text-2xl">📌</span>
-              <span className="text-slate-800 dark:text-slate-100">Pinned Countdowns</span>
+              <span className="text-xl md:text-2xl">⏰</span>
+              <span className="text-slate-800 dark:text-slate-100">Your Countdowns</span>
             </div>
-            <span className="text-xs font-medium px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-              {getPinnedEvents.length}/3 pinned
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300">
+              {getCountdownEvents.length} reminder{getCountdownEvents.length !== 1 ? 's' : ''}
             </span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {getPinnedEvents.map((event) => {
+            {getCountdownEvents.map((event) => {
               const countdown = getCountdown(event.date);
               const eventKey = getEventKey(event);
               const isToday = new Date(event.date).toDateString() === new Date().toDateString();
@@ -672,10 +668,10 @@ const AcademicCalendar: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      togglePinEvent(eventKey);
+                      handleSetEventReminder(event);
                     }}
                     className="absolute top-3 right-3 p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors z-20 backdrop-blur-sm"
-                    title="Remove from pinned"
+                    title="Remove reminder"
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -790,32 +786,6 @@ const AcademicCalendar: React.FC = () => {
                     </div>
                   </div>
                   <div className="relative z-10 flex items-center gap-2 flex-shrink-0 ml-3">
-                    {/* Pin Button */}
-                    {(() => {
-                      if (daysUntil < 0) return null; // Don't allow pinning ongoing/past events
-                      const eventKey = getEventKey(event);
-                      const isPinned = pinnedEventKeys.includes(eventKey);
-                      return (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            togglePinEvent(eventKey);
-                          }}
-                          disabled={!isPinned && pinnedEventKeys.length >= 3}
-                          className={`p-1.5 rounded-full transition-all ${isPinned
-                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600'
-                            : pinnedEventKeys.length >= 3
-                              ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed opacity-50'
-                              : 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-amber-100 hover:text-amber-600'
-                            }`}
-                          title={isPinned ? 'Unpin from countdown' : pinnedEventKeys.length >= 3 ? 'Max 3 pinned events' : 'Pin to countdown'}
-                        >
-                          <svg className="w-4 h-4" fill={isPinned ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                          </svg>
-                        </button>
-                      );
-                    })()}
                     <div className="text-right">
                       {daysUntil < 0 ? (
                         <p className="text-sm md:text-lg font-bold text-green-600 dark:text-green-400">
@@ -1093,32 +1063,7 @@ const AcademicCalendar: React.FC = () => {
                                         </span>
                                       </div>
                                     )}
-                                    {/* Pin to Countdown button - for any future event */}
-                                    {daysUntil >= 0 && (() => {
-                                      const eventKey = getEventKey(event);
-                                      const isPinned = pinnedEventKeys.includes(eventKey);
-                                      return (
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            togglePinEvent(eventKey);
-                                          }}
-                                          disabled={!isPinned && pinnedEventKeys.length >= 3}
-                                          className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full transition-all ${isPinned
-                                            ? 'bg-amber-500 text-white shadow-md'
-                                            : pinnedEventKeys.length >= 3
-                                              ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
-                                              : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500 hover:text-white'
-                                            }`}
-                                          title={isPinned ? 'Unpin from countdown' : pinnedEventKeys.length >= 3 ? 'Max 3 pinned events' : 'Pin to countdown'}
-                                        >
-                                          <svg className="w-2.5 sm:w-3 h-2.5 sm:h-3" fill={isPinned ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                                          </svg>
-                                          <span className="hidden xs:inline">{isPinned ? 'Pinned' : 'Pin'}</span>
-                                        </button>
-                                      );
-                                    })()}
+
                                     {isUrgent && daysUntil >= 0 && (
                                       <span className="inline-flex items-center text-[10px] sm:text-xs font-bold bg-red-500 text-white px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-md">
                                         ⚠️ <span className="hidden xs:inline ml-1">URGENT</span>
@@ -2000,26 +1945,29 @@ const AcademicCalendar: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               {(() => {
-                const eventEndDate = selectedEvent.endDate || selectedEvent.date;
-                const isPast = getDaysUntil(eventEndDate) < 0;
+                const isStarted = getDaysUntil(selectedEvent.date) <= 0;
                 const hasReminder = reminderPreferences.includes(getEventKey(selectedEvent));
+                const atMaxReminders = !hasReminder && reminderPreferences.length >= 3;
+                const isDisabled = isStarted || atMaxReminders;
 
                 return (
                   <button
-                    onClick={() => !isPast && handleSetEventReminder(selectedEvent)}
-                    disabled={isPast}
-                    className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${isPast
+                    onClick={() => !isDisabled && handleSetEventReminder(selectedEvent)}
+                    disabled={isDisabled}
+                    className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${isDisabled
                       ? 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
                       : hasReminder
                         ? 'bg-purple-600 hover:bg-purple-700 text-white'
                         : 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300'
                       }`}
                     title={
-                      isPast
-                        ? 'Cannot set reminder for past events'
-                        : hasReminder
-                          ? 'Remove reminder'
-                          : 'Set reminder'
+                      isStarted
+                        ? 'Cannot set reminder for started and past events'
+                        : atMaxReminders
+                          ? 'Max 3 reminders reached'
+                          : hasReminder
+                            ? 'Remove reminder'
+                            : 'Set reminder'
                     }
                   >
                     <svg
@@ -2036,7 +1984,7 @@ const AcademicCalendar: React.FC = () => {
                       />
                     </svg>
                     <span className="text-sm">
-                      {hasReminder ? 'Reminder Set ✓' : 'Set Reminder'}
+                      {hasReminder ? 'Reminder Set ✓' : atMaxReminders ? 'Max Reached' : 'Set Reminder'}
                     </span>
                   </button>
                 );
