@@ -275,3 +275,19 @@ export interface SocialLinks {
   twitter?: string;
   website?: string;
 }
+
+// Extraction confidence tracking for gradesheet processing
+export interface LowConfidenceGrade {
+  semester: number;
+  subjectCode: string;
+  extractedGrade: string;
+  reason: string;
+}
+
+export interface ExtractionConfidence {
+  overall: number; // 0-1 confidence score
+  perSemester: { semester: number; confidence: number; sgpaMismatch?: number }[];
+  lowConfidenceGrades: LowConfidenceGrade[];
+  passCount: number; // Number of extraction passes performed
+  consensusReached: boolean; // True if all passes agreed
+}

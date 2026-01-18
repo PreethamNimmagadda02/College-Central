@@ -8,7 +8,7 @@ import React, {
   useCallback,
 } from 'react';
 
-import { Semester } from '@/types';
+import { Semester, ExtractionConfidence } from '@/types';
 
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { db } from '@lib/firebase';
@@ -26,6 +26,7 @@ import useGradingScale from '@hooks/useGradingScale';
  * - Recalculates totalCredits using only the latest grade for each course
  * - Only counts credits from passed courses (grade != 'F') in totalCredits
  * - Analytics and displays use only the most recent grade for each course
+ * - Multi-pass extraction with consensus voting for maximum accuracy
  */
 
 export interface GradesData {
@@ -35,6 +36,7 @@ export interface GradesData {
   earnedCredits: number; // Sum of credits from unique passed courses (grade != 'F')
   gradeSheetUrl?: string; // Firebase Storage URL for the uploaded grade sheet
   gradeSheetFileName?: string; // Original filename
+  extractionConfidence?: ExtractionConfidence; // Confidence metadata from extraction
 }
 
 // Helper function to convert a File object to a base64 string
@@ -208,103 +210,140 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
       const base64Data = await fileToBase64(selectedFile);
 
-      let result: Omit<GradesData, 'gradeSheetUrl' | 'gradeSheetFileName'>;
+      // Lazy load Google GenAI
+      const { GoogleGenAI, Type } = await getGoogleGenAI();
+      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
-      // Try Gemini first
-      try {
-        // Lazy load Google GenAI
-        const { GoogleGenAI, Type } = await getGoogleGenAI();
-        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-
-        const schema = {
-          type: Type.OBJECT,
-          properties: {
-            cgpa: {
-              type: Type.NUMBER,
-              description: 'The overall CGPA as shown on the grade sheet.',
-            },
-            totalCredits: {
-              type: Type.NUMBER,
-              description:
-                'The total number of credits (will be recalculated based on latest passed courses).',
-            },
-            semesters: {
-              type: Type.ARRAY,
-              description: 'An array of semesters, from latest to oldest.',
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  semester: { type: Type.NUMBER, description: 'The semester number (e.g., 4).' },
-                  sessionYear: {
-                    type: Type.STRING,
-                    description: 'The academic session year for the semester (e.g., "2023-2024").',
-                  },
-                  sessionType: {
-                    type: Type.STRING,
-                    description:
-                      'The type of the semester session (e.g., "Monsoon", "Winter", "Summer").',
-                  },
-                  sgpa: { type: Type.NUMBER, description: 'The SGPA for this semester.' },
-                  cgpa: { type: Type.NUMBER, description: 'The cumulative CGPA up to and including this semester, as shown on the grade sheet.' },
-                  grades: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        subjectCode: {
-                          type: Type.STRING,
-                          description: 'The course code (e.g., CSL201).',
-                        },
-                        subjectName: {
-                          type: Type.STRING,
-                          description: 'The full name of the course.',
-                        },
-                        credits: {
-                          type: Type.NUMBER,
-                          description: 'The number of credits for the course.',
-                        },
-                        grade: {
-                          type: Type.STRING,
-                          description: 'The letter grade received (e.g., A, B, EX).',
-                        },
-                      },
-                      required: ['subjectCode', 'subjectName', 'credits', 'grade'],
+      const schema = {
+        type: Type.OBJECT,
+        properties: {
+          cgpa: {
+            type: Type.NUMBER,
+            description: 'The overall CGPA as shown on the grade sheet.',
+          },
+          totalCredits: {
+            type: Type.NUMBER,
+            description: 'The total number of credits.',
+          },
+          semesters: {
+            type: Type.ARRAY,
+            description: 'An array of semesters, from latest to oldest.',
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                semester: { type: Type.NUMBER, description: 'The semester number.' },
+                sessionYear: { type: Type.STRING, description: 'Academic session year (YYYY-YYYY).' },
+                sessionType: { type: Type.STRING, description: 'Monsoon, Winter, or Summer.' },
+                sgpa: { type: Type.NUMBER, description: 'The SGPA for this semester.' },
+                cgpa: { type: Type.NUMBER, description: 'Cumulative CGPA up to this semester.' },
+                grades: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      subjectCode: { type: Type.STRING, description: 'Course code.' },
+                      subjectName: { type: Type.STRING, description: 'Full course name.' },
+                      credits: { type: Type.NUMBER, description: 'Course credits.' },
+                      grade: { type: Type.STRING, description: 'Letter grade (e.g., A, B+, EX).' },
                     },
+                    required: ['subjectCode', 'subjectName', 'credits', 'grade'],
                   },
                 },
-                required: ['semester', 'sessionYear', 'sessionType', 'sgpa', 'cgpa', 'grades'],
               },
+              required: ['semester', 'sessionYear', 'sessionType', 'sgpa', 'cgpa', 'grades'],
             },
           },
-          required: ['cgpa', 'totalCredits', 'semesters'],
-        };
+        },
+        required: ['cgpa', 'totalCredits', 'semesters'],
+      };
+
+      const gradePointMap: { [key: string]: number } = {
+        ...adminGradePoints,
+        'EX': -1, 'I': -1, 'W': -1, 'P': -1 // Special grades excluded from calculation
+      };
+
+      // Common OCR error corrections
+      const ocrCorrections: { [key: string]: string } = {
+        '0': 'O', 'o': 'O', // Zero to O (though O is typically not valid)
+        '8': 'B', // 8 misread as B
+        '4': 'A', // 4 misread as A
+        'AT': 'A+', 'A T': 'A+', 'A1': 'A+',
+        'BT': 'B+', 'B T': 'B+', 'B1': 'B+',
+        'CT': 'C+', 'C T': 'C+', 'C1': 'C+',
+      };
+
+      // Function to normalize a grade string
+      const normalizeGrade = (grade: string): string => {
+        let normalized = grade?.toString().trim().toUpperCase() || '';
+        // Apply OCR corrections
+        const correction = ocrCorrections[normalized];
+        if (correction) {
+          normalized = correction;
+        }
+        // Handle common patterns
+        normalized = normalized.replace(/\s+/g, ''); // Remove spaces
+        normalized = normalized.replace(/\+$/, '+'); // Ensure + is at end
+        return normalized;
+      };
+
+      // Function to calculate SGPA for a set of grades
+      const calculateSGPA = (grades: { grade: string; credits: number }[]): number => {
+        const validGrades = grades.filter(g => {
+          const points = gradePointMap[g.grade];
+          return points !== undefined && points >= 0;
+        });
+        if (validGrades.length === 0) return 0;
+        const totalCredits = validGrades.reduce((sum, g) => sum + g.credits, 0);
+        const totalPoints = validGrades.reduce((sum, g) => sum + (gradePointMap[g.grade] ?? 0) * g.credits, 0);
+        return totalCredits > 0 ? totalPoints / totalCredits : 0;
+      };
+
+      // Function to perform a single extraction pass
+      const performExtraction = async (passNumber: number): Promise<any> => {
+        const promptVariations = [
+          `Analyze this grade sheet and extract academic data with maximum precision.
+
+GRADE READING RULES (CRITICAL):
+- Valid grades: ${gradeOptions.join(', ')}, EX, I, W, P
+- 'A' has open triangular top, 'B' has two closed bumps on right
+- '+' is a small superscript character (check carefully for C+ vs C, B+ vs B)
+- 'D' has vertical left side, distinct from 'O' which is round
+- Read from the GRADE column only, not credits or grade points column
+
+VALIDATION:
+- Verify each semester's grades produce the shown SGPA (grade points × credits / total credits)
+- Grade points: ${Object.entries(adminGradePoints).map(([g, p]) => `${g}=${p}`).join(', ')}
+- If calculated SGPA differs from shown SGPA, re-check the grades
+
+EXTRACT:
+- Overall CGPA exactly as shown
+- Each semester: number, session year (YYYY-YYYY), session type (Monsoon/Winter/Summer), SGPA, CGPA
+- Each course: subject code, full name, credits (integer), exact grade letter(s)
+
+Include ALL instances including retakes. Double-check before finalizing.`,
+
+          `Extract all academic data from this grade sheet image with high accuracy.
+
+CRITICAL CHECKS:
+- Valid letter grades: ${gradeOptions.join(', ')}, EX, I, W, P
+- Distinguish carefully: A vs 4, B vs 8, O vs 0, D vs O
+- Look for '+' suffix carefully (A+ B+ C+ are different from A B C)
+- Read grades from the GRADE column, not from grade points column
+
+SELF-VALIDATION:
+- For each semester, verify: SGPA ≈ Σ(grade_points × credits) / Σ(credits)
+- Grade point values: ${Object.entries(adminGradePoints).map(([g, p]) => `${g}=${p}`).join(', ')}
+- If your calculation differs significantly from shown SGPA, re-examine the grades
+
+Extract ALL semesters with semester number, year, type, SGPA, CGPA, and all courses.
+Include retakes. Return exact values as shown on the document.`
+        ];
 
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
           contents: {
             parts: [
-              {
-                text: `Analyze this grade sheet document and extract academic data with maximum precision.
-
-                        GRADE READING RULES (CRITICAL):
-                        - Valid grades: ${gradeOptions.join(', ')}, EX, I, W, P
-                        - 'A' has open triangular top, 'B' has two closed bumps on right
-                        - '+' is a small superscript character (check carefully for C+ vs C, B+ vs B)
-                        - 'D' has vertical left side, distinct from 'O' which is round
-                        - Read from the GRADE column only, not credits or grade points column
-
-                        VALIDATION:
-                        - Verify each semester's grades produce the shown SGPA (grade points × credits / total credits)
-                        - Grade points: ${Object.entries(adminGradePoints).map(([g, p]) => `${g}=${p}`).join(', ')}
-                        - If calculated SGPA differs significantly from shown SGPA, re-check the grades
-
-                        EXTRACT:
-                        - Overall CGPA exactly as shown
-                        - Each semester: number, session year (YYYY-YYYY), session type (Monsoon/Winter/Summer), SGPA
-                        - Each course: subject code, full name, credits (integer), exact grade letter(s)
-
-                        Include ALL instances including retakes. Double-check before finalizing.`,
-              },
+              { text: promptVariations[passNumber % promptVariations.length] },
               { inlineData: { mimeType: selectedFile.type, data: base64Data } },
             ],
           },
@@ -315,116 +354,241 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           },
         });
 
-        interface AIResponse {
-          text?: string | (() => string);
-        }
+        interface AIResponse { text?: string | (() => string); }
         const rawText = (response as AIResponse)?.text;
-        const text =
-          typeof rawText === 'string' ? rawText : typeof rawText === 'function' ? rawText() : '';
-        if (!text) {
-          throw new Error('AI response was empty or invalid.');
+        const text = typeof rawText === 'string' ? rawText : typeof rawText === 'function' ? rawText() : '';
+        if (!text) throw new Error('AI response was empty');
+        return JSON.parse(text.trim());
+      };
+
+      // ===== MULTI-PASS EXTRACTION WITH CONSENSUS =====
+      const MAX_PASSES = 2;
+      const MAX_RETRIES = 2;
+      const SGPA_TOLERANCE = 0.15; // Stricter threshold
+
+      let allPasses: any[] = [];
+      let retryCount = 0;
+      let bestResult: any = null;
+      let consensusReached = false;
+      const lowConfidenceGrades: { semester: number; subjectCode: string; extractedGrade: string; reason: string }[] = [];
+      const semesterConfidences: { semester: number; confidence: number; sgpaMismatch?: number }[] = [];
+
+      // Perform multiple extraction passes
+      for (let pass = 0; pass < MAX_PASSES; pass++) {
+        try {
+          //console.log(`[Extraction] Pass ${pass + 1}/${MAX_PASSES}`);
+          const passResult = await performExtraction(pass);
+          allPasses.push(passResult);
+        } catch (passError) {
+          console.warn(`[Extraction] Pass ${pass + 1} failed:`, passError);
         }
-        result = JSON.parse(text.trim());
-
-        // Post-processing: Normalize grades and validate using admin grading scale
-        const gradePointMap: { [key: string]: number } = {
-          ...adminGradePoints,
-          'EX': -1, 'I': -1, 'W': -1, 'P': -1 // Special grades excluded from calculation
-        };
-
-        // Normalize and validate each semester
-        result.semesters = result.semesters.map((sem: any) => {
-          // Normalize grades (trim whitespace, uppercase)
-          sem.grades = sem.grades.map((g: any) => ({
-            ...g,
-            grade: g.grade?.toString().trim().toUpperCase() || g.grade,
-            credits: g.credits // Keep credits as extracted (may be decimal)
-          }));
-
-          // Validate SGPA if we have enough data
-          const validGrades = sem.grades.filter((g: any) => {
-            const points = gradePointMap[g.grade];
-            return points !== undefined && points >= 0;
-          });
-          if (validGrades.length > 0) {
-            const totalCredits = validGrades.reduce((sum: number, g: any) => sum + g.credits, 0);
-            const totalPoints = validGrades.reduce((sum: number, g: any) => {
-              const points = gradePointMap[g.grade] ?? 0;
-              return sum + (points * g.credits);
-            }, 0);
-            const calculatedSGPA = totalCredits > 0 ? totalPoints / totalCredits : 0;
-
-            // Log warning if significant mismatch (helps debugging)
-            if (Math.abs(calculatedSGPA - sem.sgpa) > 0.5) {
-              console.warn(`Semester ${sem.semester}: Extracted SGPA ${sem.sgpa}, calculated ${calculatedSGPA.toFixed(2)}`);
-            }
-          }
-
-          return sem;
-        });
-
-      } catch (geminiError) {
-        // Re-throw with a user-friendly message
-        console.error('Gemini API error:', geminiError);
-        throw new Error(
-          'Failed to process grade sheet. Please ensure the Gemini API is configured correctly and try again.'
-        );
       }
 
+      if (allPasses.length === 0) {
+        throw new Error('All extraction passes failed');
+      }
+
+      // Use first successful pass as base
+      bestResult = allPasses[0];
+
+      // ===== CONSENSUS VOTING FOR GRADES =====
+      if (allPasses.length > 1) {
+        bestResult.semesters = bestResult.semesters.map((sem: any, semIdx: number) => {
+          const otherSem = allPasses[1]?.semesters?.[semIdx];
+
+          sem.grades = sem.grades.map((grade: any, gradeIdx: number) => {
+            const grade1 = normalizeGrade(grade.grade);
+            const grade2 = otherSem?.grades?.[gradeIdx]?.grade
+              ? normalizeGrade(otherSem.grades[gradeIdx].grade)
+              : grade1;
+
+            // Check if passes agree
+            if (grade1 !== grade2) {
+              // Grades don't match - flag as low confidence
+              lowConfidenceGrades.push({
+                semester: sem.semester,
+                subjectCode: grade.subjectCode,
+                extractedGrade: grade1,
+                reason: `Passes disagree: "${grade1}" vs "${grade2}"`,
+              });
+              // Prefer the grade that's in the valid grade list
+              if (gradePointMap[grade1] !== undefined) {
+                return { ...grade, grade: grade1 };
+              } else if (gradePointMap[grade2] !== undefined) {
+                return { ...grade, grade: grade2 };
+              }
+            }
+            return { ...grade, grade: grade1 };
+          });
+          return sem;
+        });
+        consensusReached = lowConfidenceGrades.length === 0;
+      }
+
+      // ===== STRICTER VALIDATION WITH AUTO-RETRY =====
+      let needsRetry = false;
+
+      bestResult.semesters = bestResult.semesters.map((sem: any) => {
+        // Normalize all grades
+        sem.grades = sem.grades.map((g: any) => ({
+          ...g,
+          grade: normalizeGrade(g.grade),
+          credits: g.credits, // Keep credits as extracted
+        }));
+
+        // Validate against unknown grades
+        sem.grades.forEach((g: any) => {
+          if (gradePointMap[g.grade] === undefined && !['EX', 'I', 'W', 'P'].includes(g.grade)) {
+            lowConfidenceGrades.push({
+              semester: sem.semester,
+              subjectCode: g.subjectCode,
+              extractedGrade: g.grade,
+              reason: `Unknown grade "${g.grade}" - not in grading scale`,
+            });
+          }
+        });
+
+        // Calculate SGPA and compare
+        const calculatedSGPA = calculateSGPA(sem.grades);
+        const sgpaMismatch = Math.abs(calculatedSGPA - sem.sgpa);
+
+        semesterConfidences.push({
+          semester: sem.semester,
+          confidence: sgpaMismatch <= SGPA_TOLERANCE ? 1 : Math.max(0, 1 - sgpaMismatch),
+          sgpaMismatch: parseFloat(sgpaMismatch.toFixed(3)),
+        });
+
+        if (sgpaMismatch > SGPA_TOLERANCE) {
+          console.warn(`Semester ${sem.semester}: SGPA mismatch - extracted ${sem.sgpa}, calculated ${calculatedSGPA.toFixed(2)} (diff: ${sgpaMismatch.toFixed(2)})`);
+          needsRetry = true;
+
+          // Find which grades might be wrong by trying alternatives
+          sem.grades.forEach((g: any) => {
+            const currentPoints = gradePointMap[g.grade];
+            if (currentPoints !== undefined && currentPoints >= 0) {
+              // Check if changing this grade would help
+              const similarGrades = Object.keys(gradePointMap).filter(
+                grade => Math.abs((gradePointMap[grade] ?? 0) - currentPoints) === 1
+              );
+              if (similarGrades.length > 0) {
+                lowConfidenceGrades.push({
+                  semester: sem.semester,
+                  subjectCode: g.subjectCode,
+                  extractedGrade: g.grade,
+                  reason: `SGPA mismatch (${sgpaMismatch.toFixed(2)}) - verify grade`,
+                });
+              }
+            }
+          });
+        }
+
+        return sem;
+      });
+
+      // ===== AUTO-RETRY ON SIGNIFICANT MISMATCH =====
+      if (needsRetry && retryCount < MAX_RETRIES) {
+        retryCount++;
+        //console.log(`[Extraction] Retrying due to SGPA mismatch (attempt ${retryCount}/${MAX_RETRIES})`);
+        try {
+          const retryResult = await performExtraction(MAX_PASSES + retryCount);
+          // Check if retry has better SGPA matches
+          let retryBetter = true;
+          retryResult.semesters.forEach((sem: any, idx: number) => {
+            sem.grades = sem.grades.map((g: any) => ({
+              ...g,
+              grade: normalizeGrade(g.grade),
+              credits: g.credits,
+            }));
+            const retrySGPA = calculateSGPA(sem.grades);
+            const originalSGPA = calculateSGPA(bestResult.semesters[idx]?.grades || []);
+            const retryMismatch = Math.abs(retrySGPA - sem.sgpa);
+            const originalMismatch = Math.abs(originalSGPA - bestResult.semesters[idx]?.sgpa || 0);
+            if (retryMismatch > originalMismatch) {
+              retryBetter = false;
+            }
+          });
+          if (retryBetter) {
+            //console.log('[Extraction] Retry produced better results');
+            bestResult = retryResult;
+            // Recalculate confidences
+            semesterConfidences.length = 0;
+            bestResult.semesters.forEach((sem: any) => {
+              const calculatedSGPA = calculateSGPA(sem.grades);
+              const sgpaMismatch = Math.abs(calculatedSGPA - sem.sgpa);
+              semesterConfidences.push({
+                semester: sem.semester,
+                confidence: sgpaMismatch <= SGPA_TOLERANCE ? 1 : Math.max(0, 1 - sgpaMismatch),
+                sgpaMismatch: parseFloat(sgpaMismatch.toFixed(3)),
+              });
+            });
+          }
+        } catch (retryError) {
+          console.warn('[Extraction] Retry failed:', retryError);
+        }
+      }
+
+      // ===== CALCULATE OVERALL CONFIDENCE =====
+      const overallConfidence = semesterConfidences.length > 0
+        ? semesterConfidences.reduce((sum, s) => sum + s.confidence, 0) / semesterConfidences.length
+        : 1;
+
+      //console.log(`[Extraction] Complete - Overall confidence: ${(overallConfidence * 100).toFixed(1)}%`);
+      //console.log(`[Extraction] Low confidence grades: ${lowConfidenceGrades.length}`);
+
+      // ===== FINALIZE RESULT =====
       // Get latest grades for each course (handles retakes)
       interface CourseData {
         grade: { subjectCode: string; credits: number; grade: string };
         semester: number;
       }
       const courseMap: { [subjectCode: string]: CourseData } = {};
-      result.semesters.forEach((sem) => {
-        sem.grades.forEach((grade) => {
+      bestResult.semesters.forEach((sem: any) => {
+        sem.grades.forEach((grade: any) => {
           const existing = courseMap[grade.subjectCode];
-          // If course doesn't exist or current semester is later, update it
           if (!existing || sem.semester > existing.semester) {
-            courseMap[grade.subjectCode] = {
-              grade: grade,
-              semester: sem.semester,
-            };
+            courseMap[grade.subjectCode] = { grade, semester: sem.semester };
           }
         });
       });
 
-      // Calculate totalCredits (all unique courses) and earnedCredits (passed courses only)
+      // Calculate credits
       let totalCredits = 0;
       let earnedCredits = 0;
-
       Object.values(courseMap).forEach((courseData) => {
         const grade = courseData.grade;
         const credits = grade.credits || 0;
-        // Total credits includes all unique courses
         totalCredits += credits;
-        // Earned credits only includes passed courses (grade != 'F')
         if (grade.grade !== 'F') {
           earnedCredits += credits;
         }
       });
 
-      result.totalCredits = totalCredits;
-      result.earnedCredits = earnedCredits;
-      // Keep the CGPA as extracted from the grade sheet (don't recalculate)
+      bestResult.totalCredits = totalCredits;
+      bestResult.earnedCredits = earnedCredits;
 
-      // Add grade sheet URL and filename to result
-      const finalResult: GradesData = {
-        ...result,
+      // Add extraction metadata
+      const finalResult: GradesData & { extractionConfidence?: any } = {
+        ...bestResult,
         gradeSheetUrl,
         gradeSheetFileName: selectedFile.name,
+        extractionConfidence: {
+          overall: parseFloat(overallConfidence.toFixed(3)),
+          perSemester: semesterConfidences,
+          lowConfidenceGrades,
+          passCount: allPasses.length,
+          consensusReached,
+        },
       };
 
       await setGradesData(finalResult);
       await logActivity(currentUser.uid, {
         type: 'grades',
         title: 'Grades Processed',
-        description: 'Successfully processed and updated your grade sheet using Gemini AI.',
+        description: `Grade sheet processed with ${(overallConfidence * 100).toFixed(0)}% confidence.`,
         icon: '📊',
         link: '/grades',
       });
-      selectFile(null); // Clear file selection on success
+      selectFile(null);
     } catch (e) {
       console.error('Error processing grade sheet:', e);
       setError(
@@ -433,7 +597,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedFile, currentUser, gradesData, setGradesData, selectFile]);
+  }, [selectedFile, currentUser, gradesData, setGradesData, selectFile, adminGradePoints, gradeOptions]);
 
   const resetGradesState = useCallback(async () => {
     if (currentUser) {
