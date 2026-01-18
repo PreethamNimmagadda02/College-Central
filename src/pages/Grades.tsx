@@ -217,17 +217,40 @@ const CGPAForecaster: React.FC = () => {
         currentSemCredits: 0,
         requiredSGPA: 0,
         isTargetAchievable: false,
+        retakeCourses: [],
       };
     }
 
+    // Get all course codes from previous semesters to detect retakes
+    const previousCourseCodes = new Set<string>();
+    gradesData.semesters.forEach((sem) => {
+      sem.grades.forEach((grade) => {
+        previousCourseCodes.add(grade.subjectCode);
+      });
+    });
+
+    // Identify retake courses and calculate credits
     let totalPoints = 0;
-    const currentSemCredits = currentCourses.reduce((sum, course) => sum + course.credits, 0);
+    let newCredits = 0; // Credits for new courses only
+    let retakeCredits = 0; // Credits for retake courses
+    const retakeCourses: string[] = [];
 
     currentCourses.forEach((course) => {
       const grade = projectedGrades[course.courseCode];
       const points = grade ? gradePoints[grade] || 0 : 0;
       totalPoints += course.credits * points;
+
+      if (previousCourseCodes.has(course.courseCode)) {
+        // This is a retake - credits already counted in totalCredits
+        retakeCredits += course.credits;
+        retakeCourses.push(course.courseCode);
+      } else {
+        // New course - add credits to denominator
+        newCredits += course.credits;
+      }
     });
+
+    const currentSemCredits = newCredits + retakeCredits; // Total for SGPA calculation
 
     if (currentSemCredits === 0) {
       return {
@@ -236,17 +259,26 @@ const CGPAForecaster: React.FC = () => {
         currentSemCredits: 0,
         requiredSGPA: 0,
         isTargetAchievable: false,
+        retakeCourses: [],
       };
     }
 
     const sgpa = totalPoints / currentSemCredits;
     const creditsTillLastSem = gradesData.totalCredits;
     const currentCgpa = gradesData.cgpa;
-    const totalCreditsAfterThisSem = creditsTillLastSem + currentSemCredits;
+
+    // For CGPA, only add NEW course credits to avoid double-counting retakes
+    // Retake credits are already included in creditsTillLastSem
+    const totalCreditsAfterThisSem = creditsTillLastSem + newCredits;
+
+    // CGPA calculation: 
+    // For retakes, the old grade points are replaced with new ones
+    // We use totalCreditsAfterThisSem which doesn't double-count retake credits
     const newCgpa =
       (currentCgpa * creditsTillLastSem + sgpa * currentSemCredits) / totalCreditsAfterThisSem;
 
     // Calculate required SGPA for target (for current semester only)
+    // Use totalCreditsAfterThisSem to avoid double-counting retake credits
     const targetCGPANum = parseFloat(targetCGPA) || 0;
     const requiredTotalPoints = targetCGPANum * totalCreditsAfterThisSem;
     const currentTotalPoints = currentCgpa * creditsTillLastSem;
@@ -259,8 +291,9 @@ const CGPAForecaster: React.FC = () => {
       currentSemCredits,
       requiredSGPA: requiredSGPA,
       isTargetAchievable: requiredSGPA <= 10 && requiredSGPA >= 0,
+      retakeCourses,
     };
-  }, [projectedGrades, currentCourses, gradesData, targetCGPA]);
+  }, [projectedGrades, currentCourses, gradesData, targetCGPA, gradePoints]);
 
   // === What-If Scenarios Feature ===
 
@@ -1508,8 +1541,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
   const performanceTrend = useMemo(() => {
     const sortedSemesters = [...gradesData.semesters].sort((a, b) => a.semester - b.semester);
     return sortedSemesters.map((sem: Semester, index: number) => {
-      const credits = sem.grades.reduce(
-        (total: number, grade: Grade) => total + (grade.credits || 0),
+      // Only count earned credits (passed courses where grade != 'F')
+      const earnedCredits = sem.grades.reduce(
+        (total: number, grade: Grade) => total + (grade.grade !== 'F' ? (grade.credits || 0) : 0),
         0
       );
       const prevSem = sortedSemesters[index - 1];
@@ -1519,7 +1553,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
         semester: `Semester ${sem.semester}`,
         semesterNum: sem.semester,
         sgpa: sem.sgpa,
-        credits,
+        credits: earnedCredits, // Now only counts earned (passed) credits
         delta: index > 0 ? delta : 0,
         courseCount: sem.grades.length,
       };
@@ -2883,26 +2917,25 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
             {/* Recharts Line Chart */}
             {(() => {
-              // Calculate CGPA progression for each semester
-              const chartData = performanceTrend.reduce((acc: any[], item, index) => {
-                const prevCredits = index > 0 ? acc[index - 1].cumulativeCredits : 0;
-                const prevCgpaPoints = index > 0 ? acc[index - 1].cumulativeCgpaPoints : 0;
-                const cumulativeCredits = prevCredits + item.credits;
-                const cumulativeCgpaPoints = prevCgpaPoints + item.sgpa * item.credits;
-                const cgpa = cumulativeCredits > 0 ? cumulativeCgpaPoints / cumulativeCredits : 0;
+              // Use extracted SGPA and CGPA values directly from the gradesheet
+              const sortedSemesters = [...gradesData.semesters].sort((a, b) => a.semester - b.semester);
 
-                acc.push({
-                  name: `Sem ${item.semesterNum}`,
-                  semester: item.semesterNum,
-                  SGPA: parseFloat(item.sgpa.toFixed(2)),
-                  CGPA: parseFloat(cgpa.toFixed(2)),
-                  credits: item.credits,
-                  courses: item.courseCount,
-                  cumulativeCredits,
-                  cumulativeCgpaPoints,
-                });
-                return acc;
-              }, []);
+              const chartData = sortedSemesters.map((sem) => {
+                // Calculate earned credits for this semester (passed courses only)
+                const semCredits = sem.grades.reduce(
+                  (total, grade) => total + (grade.grade !== 'F' ? (grade.credits || 0) : 0),
+                  0
+                );
+
+                return {
+                  name: `Sem ${sem.semester}`,
+                  semester: sem.semester,
+                  SGPA: parseFloat(sem.sgpa.toFixed(2)), // Use extracted SGPA directly
+                  CGPA: parseFloat((sem.cgpa || sem.sgpa).toFixed(2)), // Use extracted CGPA directly (fallback to SGPA for older data)
+                  credits: semCredits,
+                  courses: sem.grades.length,
+                };
+              });
 
               // Custom tooltip component
               const CustomTooltip = ({ active, payload, label }: any) => {
@@ -3135,7 +3168,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                       </div>
                       <p className="text-lg sm:text-2xl font-bold text-blue-700 dark:text-blue-300 group-hover:scale-105 transition-transform origin-left">
                         {chartData.length > 0
-                          ? chartData[chartData.length - 1].CGPA.toFixed(2)
+                          ? chartData[chartData.length - 1]?.CGPA?.toFixed(2) || '0.00'
                           : '0.00'}
                       </p>
                     </motion.div>
@@ -3484,14 +3517,40 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               initial="hidden"
               animate="show"
             >
-              {performanceTrend
-                .reduce((acc: any[], item) => {
-                  const cumulativeCredits =
-                    acc.length > 0 ? acc[acc.length - 1].cumulative + item.credits : item.credits;
-                  acc.push({ ...item, cumulative: cumulativeCredits });
-                  return acc;
-                }, [])
-                .map((item: any, index: number) => (
+              {(() => {
+                // Track unique courses to avoid counting retakes multiple times
+                const seenCourses = new Set<string>();
+                const sortedSemesters = [...gradesData.semesters].sort((a, b) => a.semester - b.semester);
+
+                // Calculate new unique earned credits per semester
+                const creditProgressionData = sortedSemesters.map((sem) => {
+                  let newUniqueCredits = 0;
+
+                  sem.grades.forEach((grade) => {
+                    // Only count if: course not seen before AND passed (grade != 'F')
+                    if (!seenCourses.has(grade.subjectCode) && grade.grade !== 'F') {
+                      newUniqueCredits += grade.credits || 0;
+                      seenCourses.add(grade.subjectCode);
+                    }
+                  });
+
+                  return {
+                    semester: `Semester ${sem.semester}`,
+                    semesterNum: sem.semester,
+                    newCredits: newUniqueCredits,
+                  };
+                });
+
+                // Calculate cumulative totals
+                let cumulative = 0;
+                const dataWithCumulative = creditProgressionData.map((item) => {
+                  cumulative += item.newCredits;
+                  return { ...item, cumulative };
+                });
+
+                const totalEarnedCredits = gradesData.earnedCredits || gradesData.totalCredits;
+
+                return dataWithCumulative.map((item, index) => (
                   <motion.div
                     key={index}
                     className="flex items-center gap-3"
@@ -3503,7 +3562,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     <span className="text-sm font-medium w-16">{item.semester}</span>
                     <div className="group flex-1 cursor-pointer">
                       <div className="flex justify-between text-xs text-slate-500 mb-1">
-                        <span>+{item.credits} credits</span>
+                        <span>+{item.newCredits} credits</span>
                         <span className="group-hover:text-primary transition-colors">
                           Total: {item.cumulative} credits
                         </span>
@@ -3513,7 +3572,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                           className="absolute left-0 top-0 h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
                           initial={{ width: 0 }}
                           animate={{
-                            width: `${(item.cumulative / gradesData.totalCredits) * 100}%`,
+                            width: `${(item.cumulative / totalEarnedCredits) * 100}%`,
                           }}
                           transition={{ duration: 1, ease: 'easeOut' }}
                           whileHover={{
@@ -3526,7 +3585,8 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                ));
+              })()}
             </motion.div>
           </div>
         </div>
@@ -3908,6 +3968,7 @@ const Grades: React.FC = () => {
   const [selectedSemester, setSelectedSemester] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dropSuccess, setDropSuccess] = useState(false);
+  const [showCreditsInfo, setShowCreditsInfo] = useState(false);
 
   const sortedGradesData = useMemo(() => {
     if (!gradesData) return null;
@@ -4376,13 +4437,34 @@ const Grades: React.FC = () => {
           </div>
         </div>
 
-        <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] sm:hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className={`group relative bg-gradient-to-br from-green-500 to-green-600 text-white p-3 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] sm:hover:scale-105 ${showCreditsInfo ? 'z-[100]' : ''}`}>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl sm:rounded-2xl"></div>
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <h3 className="text-green-100 text-xs sm:text-sm font-semibold">Total Credits</h3>
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
+              <div className="flex items-center gap-1">
+                <h3 className="text-green-100 text-[10px] sm:text-sm font-semibold">Credits</h3>
+                <button
+                  onClick={() => setShowCreditsInfo(!showCreditsInfo)}
+                  className="cursor-help p-0.5"
+                  aria-label="Credits information"
+                >
+                  <svg
+                    className="w-3 h-3 sm:w-4 sm:h-4 text-green-200 hover:text-white transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </button>
+              </div>
               <svg
-                className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+                className="w-4 h-4 sm:w-6 sm:h-6 md:w-7 md:h-7 opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -4395,10 +4477,35 @@ const Grades: React.FC = () => {
                 />
               </svg>
             </div>
-            <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black group-hover:scale-110 transition-transform origin-left">
-              {sortedGradesData.totalCredits}
-            </p>
-            <p className="text-green-100 text-[10px] sm:text-sm font-semibold mt-1">Completed</p>
+
+            {/* Two-column layout for Earned and Total */}
+            <div className="relative grid grid-cols-2 gap-1.5 sm:gap-3">
+              {/* Earned Credits - Primary */}
+              <div className="bg-white/10 rounded-lg p-1.5 sm:p-3">
+                <p className="text-green-200 text-[9px] sm:text-xs font-medium mb-0.5">Earned</p>
+                <p className="text-xl sm:text-3xl font-black group-hover:scale-105 transition-transform origin-left">
+                  {sortedGradesData.earnedCredits || sortedGradesData.totalCredits}
+                </p>
+              </div>
+              {/* Total Credits - Secondary */}
+              <div className="bg-white/5 rounded-lg p-1.5 sm:p-3">
+                <p className="text-green-200/80 text-[9px] sm:text-xs font-medium mb-0.5">Total</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-100">
+                  {sortedGradesData.totalCredits}
+                </p>
+              </div>
+
+              {/* Tooltip - overlays on earned/total */}
+              {showCreditsInfo && (
+                <div
+                  className="absolute inset-0 bg-slate-900/95 text-white text-[9px] sm:text-xs rounded-lg p-2 sm:p-3 shadow-lg flex flex-col justify-center"
+                  onClick={() => setShowCreditsInfo(false)}
+                >
+                  <p className="mb-1"><span className="text-green-400 font-semibold">Earned</span> = Passed courses</p>
+                  <p><span className="text-blue-400 font-semibold">Total</span> = All courses</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

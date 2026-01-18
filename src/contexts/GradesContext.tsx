@@ -31,7 +31,8 @@ import useGradingScale from '@hooks/useGradingScale';
 export interface GradesData {
   semesters: Semester[];
   cgpa: number;
-  totalCredits: number;
+  totalCredits: number; // Sum of credits from all unique courses
+  earnedCredits: number; // Sum of credits from unique passed courses (grade != 'F')
   gradeSheetUrl?: string; // Firebase Storage URL for the uploaded grade sheet
   gradeSheetFileName?: string; // Original filename
 }
@@ -244,6 +245,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                       'The type of the semester session (e.g., "Monsoon", "Winter", "Summer").',
                   },
                   sgpa: { type: Type.NUMBER, description: 'The SGPA for this semester.' },
+                  cgpa: { type: Type.NUMBER, description: 'The cumulative CGPA up to and including this semester, as shown on the grade sheet.' },
                   grades: {
                     type: Type.ARRAY,
                     items: {
@@ -270,7 +272,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     },
                   },
                 },
-                required: ['semester', 'sessionYear', 'sessionType', 'sgpa', 'grades'],
+                required: ['semester', 'sessionYear', 'sessionType', 'sgpa', 'cgpa', 'grades'],
               },
             },
           },
@@ -278,7 +280,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
 
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3-flash-preview',
           contents: {
             parts: [
               {
@@ -388,19 +390,23 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         });
       });
 
-      // Recalculate totalCredits using only latest grades
-      // Credits for F grades should only be counted when the student clears them
-      let totalPassedCredits = 0;
+      // Calculate totalCredits (all unique courses) and earnedCredits (passed courses only)
+      let totalCredits = 0;
+      let earnedCredits = 0;
 
       Object.values(courseMap).forEach((courseData) => {
         const grade = courseData.grade;
-        // Only add credits if grade is not 'F'
+        const credits = grade.credits || 0;
+        // Total credits includes all unique courses
+        totalCredits += credits;
+        // Earned credits only includes passed courses (grade != 'F')
         if (grade.grade !== 'F') {
-          totalPassedCredits += grade.credits || 0;
+          earnedCredits += credits;
         }
       });
 
-      result.totalCredits = totalPassedCredits;
+      result.totalCredits = totalCredits;
+      result.earnedCredits = earnedCredits;
       // Keep the CGPA as extracted from the grade sheet (don't recalculate)
 
       // Add grade sheet URL and filename to result

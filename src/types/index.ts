@@ -55,6 +55,7 @@ export interface Semester {
   sessionYear: string;
   sessionType: SessionType;
   sgpa: number;
+  cgpa: number; // Cumulative CGPA up to and including this semester
   grades: Grade[];
 }
 
