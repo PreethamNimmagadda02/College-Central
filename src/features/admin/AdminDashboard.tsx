@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import AnalyticsEditor from './components/AnalyticsEditor';
@@ -16,12 +16,12 @@ import { useAuth } from '../auth/hooks/useAuth';
 import { AdminTab } from './types';
 import './styles.css';
 
-// Editor Components
 import CoursesEditor from './components/CoursesEditor';
 import StudentDirectoryEditor from './components/StudentDirectoryEditor';
 import SupportEditor from './components/SupportEditor';
 import GradingEditor from './components/GradingEditor';
 import AdminFooter from './components/AdminFooter';
+import AdminSearch from './components/AdminSearch';
 
 // Icons
 const BuildingIcon = () => (
@@ -244,7 +244,7 @@ const allTabs = Object.values(menuSections).flat();
 // Get active tab from current path
 const getActiveTabFromPath = (pathname: string): AdminTab => {
   const segment = pathname.replace('/admin/', '').replace('/admin', '');
-  // Handle support route which is not in sidebar tabs but still a valid route
+  // Handle special routes
   if (segment === 'support') return 'support';
   const tab = allTabs.find((t) => t.id === segment);
   return tab?.id || 'college-info';
@@ -253,8 +253,8 @@ const getActiveTabFromPath = (pathname: string): AdminTab => {
 const AdminDashboard: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const [showResetModal, setShowResetModal] = React.useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const adminConfig = useAdminConfig();
   const { logout } = useAuth();
 
@@ -267,6 +267,18 @@ const AdminDashboard: React.FC = () => {
       navigate('/admin/college-info', { replace: true });
     }
   }, [location.pathname, navigate]);
+
+  // Global keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Lock body scroll when sidebar is open
   useEffect(() => {
@@ -375,6 +387,18 @@ const AdminDashboard: React.FC = () => {
                 <span className="hidden sm:inline">Unsaved Changes</span>
               </span>
             )}
+            {/* Search Button */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="admin-btn admin-btn-secondary p-2 sm:px-4 flex items-center gap-2"
+              title="Search (⌘K)"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span className="hidden sm:inline">Search</span>
+              <kbd className="hidden lg:inline-flex px-1.5 py-0.5 text-xs bg-slate-700 text-slate-300 rounded">⌘K</kbd>
+            </button>
             {/* User Dashboard Button */}
             <button
               onClick={() => navigate('/')}
@@ -390,21 +414,6 @@ const AdminDashboard: React.FC = () => {
                 />
               </svg>
               <span className="hidden sm:inline">User Dashboard</span>
-            </button>
-            <button
-              onClick={() => setShowResetModal(true)}
-              className="admin-btn admin-btn-secondary p-2 sm:px-4"
-              title="Reset to default configuration"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-              <span className="hidden sm:inline">Reset</span>
             </button>
           </div>
         </div>
@@ -707,74 +716,8 @@ const AdminDashboard: React.FC = () => {
       {/* Footer - positioned properly at bottom */}
       <AdminFooter />
 
-      {/* Reset Confirmation Modal */}
-      {showResetModal && (
-        <div className="admin-modal-overlay" onClick={() => setShowResetModal(false)}>
-          <div className="admin-modal max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="text-center">
-              {/* Warning Icon */}
-              <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-amber-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-              </div>
-
-              <h3 className="text-xl font-bold text-white mb-2">Reset All Configuration?</h3>
-
-              <div className="text-left bg-slate-800/50 rounded-lg p-4 mb-4 text-sm">
-                <p className="text-amber-400 font-semibold mb-2">⚠️ This action will reset:</p>
-                <ul className="text-slate-300 space-y-1 list-disc list-inside">
-                  <li>College information to defaults</li>
-                  <li>All branches, hostels, and quick links</li>
-                  <li>All quotes and forms</li>
-                  <li>Calendar events and directory entries</li>
-                  <li>Courses, students, and campus map data</li>
-                  <li>Grading scale configuration</li>
-                </ul>
-                <p className="text-emerald-400 mt-3">✓ Admin email addresses will be preserved</p>
-              </div>
-
-              <p className="text-red-400 text-sm mb-6">This action cannot be undone.</p>
-
-              <div className="flex gap-3 justify-center">
-                <button
-                  onClick={() => setShowResetModal(false)}
-                  className="admin-btn admin-btn-secondary flex-1"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    adminConfig.resetToDefaults();
-                    setShowResetModal(false);
-                  }}
-                  className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium transition-colors flex-1 flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                  Reset All
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Search Modal */}
+      <AdminSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
 };
