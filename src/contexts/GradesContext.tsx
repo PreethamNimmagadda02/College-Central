@@ -600,6 +600,18 @@ Include retakes. Return exact values as shown on the document.`
   }, [selectedFile, currentUser, gradesData, setGradesData, selectFile, adminGradePoints, gradeOptions]);
 
   const resetGradesState = useCallback(async () => {
+    // Delete grade sheet from storage if it exists
+    if (gradesData?.gradeSheetUrl) {
+      try {
+        const storage = firebase.storage();
+        const oldFileRef = storage.refFromURL(gradesData.gradeSheetUrl);
+        await oldFileRef.delete();
+      } catch (deleteError) {
+        // Continue even if deletion fails (file might already be deleted)
+        console.warn('Failed to delete old grade sheet from storage:', deleteError);
+      }
+    }
+
     if (currentUser) {
       await logActivity(currentUser.uid, {
         type: 'grades',
@@ -612,7 +624,7 @@ Include retakes. Return exact values as shown on the document.`
     await setGradesData(null);
     selectFile(null);
     setError(null);
-  }, [currentUser, setGradesData, selectFile]);
+  }, [currentUser, gradesData, setGradesData, selectFile]);
 
   const contextValue = useMemo(
     () => ({
