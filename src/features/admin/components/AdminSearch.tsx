@@ -228,7 +228,7 @@ const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose }) => {
 
             {/* Modal */}
             <div
-                className="absolute top-[10%] left-1/2 -translate-x-1/2 w-full max-w-2xl mx-4"
+                className="absolute top-4 sm:top-[10%] left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] sm:w-full max-w-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="admin-card overflow-hidden shadow-2xl">
@@ -262,13 +262,13 @@ const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose }) => {
                             </div>
                         </div>
 
-                        {/* Filter Tabs */}
-                        <div className="flex flex-wrap gap-2 mt-3">
+                        {/* Filter Tabs - scrollable on mobile */}
+                        <div className="flex gap-2 mt-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap scrollbar-hide">
                             {filterTypes.map((type) => (
                                 <button
                                     key={type}
                                     onClick={() => setSelectedFilter(type)}
-                                    className={`px-3 py-1 text-xs rounded-full transition-colors ${selectedFilter === type
+                                    className={`px-3 py-1.5 sm:py-1 text-xs rounded-full transition-colors whitespace-nowrap flex-shrink-0 ${selectedFilter === type
                                             ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50'
                                             : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700 border border-transparent'
                                         }`}
@@ -279,8 +279,8 @@ const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Results */}
-                    <div className="max-h-[400px] overflow-y-auto">
+                    {/* Results - taller on mobile */}
+                    <div className="max-h-[50vh] sm:max-h-[400px] overflow-y-auto">
                         {filteredResults.length > 0 ? (
                             <div className="p-2">
                                 {filteredResults.map((result, index) => (
@@ -289,8 +289,8 @@ const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose }) => {
                                         onClick={() => handleResultClick(result)}
                                         onMouseEnter={() => setSelectedIndex(index)}
                                         className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${index === selectedIndex
-                                                ? 'bg-purple-500/20 border border-purple-500/30'
-                                                : 'hover:bg-slate-700/30 border border-transparent'
+                                            ? 'bg-purple-500/20 border border-purple-500/30'
+                                            : 'hover:bg-slate-700/30 border border-transparent'
                                             }`}
                                     >
                                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${typeColors[result.type]}`}>
@@ -329,9 +329,9 @@ const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose }) => {
                         )}
                     </div>
 
-                    {/* Footer */}
+                    {/* Footer - simplified on mobile */}
                     <div className="p-3 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-400">
-                        <div className="flex items-center gap-3">
+                        <div className="hidden sm:flex items-center gap-3">
                             <span className="flex items-center gap-1">
                                 <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">↑</kbd>
                                 <kbd className="px-1.5 py-0.5 bg-slate-700 rounded">↓</kbd>
@@ -342,11 +342,12 @@ const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose }) => {
                                 to select
                             </span>
                         </div>
+                        <span className="sm:hidden">Tap to select</span>
                         <span>{filteredResults.length} results</span>
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
