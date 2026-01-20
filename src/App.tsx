@@ -27,6 +27,7 @@ import { lazyWithRetry } from '@lib/utils/lazyWithRetry';
 import { measurePageLoad } from '@lib/utils/performance';
 import React, { Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
+import { Toaster } from 'sonner';
 
 // Lazy load pages with automatic retry on chunk loading failure
 const Dashboard = lazyWithRetry(() => import('@pages/Dashboard'));
@@ -268,6 +269,7 @@ const App: React.FC = () => {
       <UpdatePrompt />
       <InstallPrompt />
       <OfflineIndicator />
+      <Toaster />
     </>
   );
 };
