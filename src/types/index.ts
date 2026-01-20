@@ -21,6 +21,7 @@ export interface User {
   quickLinks?: QuickLink[];
   bio?: string;
   socialLinks?: SocialLinks;
+  interests?: string[];
   createdAt?: any; // Firestore Timestamp
   lastSemesterReset?: string; // Date string of the last semester reset (YYYY-MM-DD)
 

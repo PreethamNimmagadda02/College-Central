@@ -8,8 +8,12 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  Loader2,
 } from 'lucide-react';
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 import { DirectoryEntry, StudentDirectoryEntry } from '@/types';
 
@@ -154,10 +158,13 @@ const Directory = () => {
     if (sortConfig.key) {
       filtered.sort((a, b) => {
         const key = sortConfig.key as keyof StudentDirectoryEntry;
-        if (a[key]! < b[key]!) {
+        const aVal = a[key] ?? '';
+        const bVal = b[key] ?? '';
+
+        if (aVal < bVal) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
-        if (a[key]! > b[key]!) {
+        if (aVal > bVal) {
           return sortConfig.direction === 'asc' ? 1 : -1;
         }
         return 0;
@@ -221,6 +228,41 @@ const Directory = () => {
     );
   }
 
+  // Profile Lookup Logic
+  const navigate = useNavigate();
+  const [checkingProfile, setCheckingProfile] = useState<string | null>(null); // admNo being checked
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const handleViewProfile = async (admissionNumber: string) => {
+    if (!admissionNumber) return;
+    setCheckingProfile(admissionNumber);
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('admissionNumber', '==', admissionNumber));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userId = querySnapshot.docs[0].id;
+        navigate(`/u/${userId}`);
+      } else {
+        setNotification({
+          message: 'This user has not created a profile yet.',
+          type: 'error'
+        });
+        setTimeout(() => setNotification(null), 3000);
+      }
+    } catch (error) {
+      console.error('Error checking profile:', error);
+      setNotification({
+        message: 'Failed to access directory database.',
+        type: 'error'
+      });
+      setTimeout(() => setNotification(null), 3000);
+    } finally {
+      setCheckingProfile(null);
+    }
+  };
+
   const searchPlaceholder =
     activeTab === 'faculty'
       ? 'Search by name, department, designation, or email...'
@@ -233,7 +275,20 @@ const Directory = () => {
       : studentDirectory.length;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 relative">
+      {/* Toast Notification */}
+      {notification && (
+        <div className="fixed top-20 right-4 z-50 animate-slideIn">
+          <div className={`px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 text-white ${notification.type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            }`}>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="font-medium">{notification.message}</span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
         <div>
@@ -261,11 +316,10 @@ const Directory = () => {
                 setActiveTab('faculty');
                 clearFilters();
               }}
-              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'faculty'
-                  ? 'border-primary text-primary dark:text-secondary bg-white dark:bg-dark-card'
-                  : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
-              }`}
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${activeTab === 'faculty'
+                ? 'border-primary text-primary dark:text-secondary bg-white dark:bg-dark-card'
+                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
             >
               <Building2 className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">
@@ -280,11 +334,10 @@ const Directory = () => {
                 setActiveTab('student');
                 clearFilters();
               }}
-              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'student'
-                  ? 'border-primary text-primary dark:text-secondary bg-white dark:bg-dark-card'
-                  : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
-              }`}
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${activeTab === 'student'
+                ? 'border-primary text-primary dark:text-secondary bg-white dark:bg-dark-card'
+                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
             >
               <GraduationCap className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">
@@ -332,11 +385,10 @@ const Directory = () => {
               <div className="flex bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`px-3 py-2.5 transition-all duration-300 ${
-                    viewMode === 'table'
-                      ? 'bg-primary text-white dark:bg-secondary'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
-                  }`}
+                  className={`px-3 py-2.5 transition-all duration-300 ${viewMode === 'table'
+                    ? 'bg-primary text-white dark:bg-secondary'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    }`}
                   title="Table View"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -350,11 +402,10 @@ const Directory = () => {
                 </button>
                 <button
                   onClick={() => setViewMode('card')}
-                  className={`px-3 py-2.5 transition-all duration-300 ${
-                    viewMode === 'card'
-                      ? 'bg-primary text-white dark:bg-secondary'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
-                  }`}
+                  className={`px-3 py-2.5 transition-all duration-300 ${viewMode === 'card'
+                    ? 'bg-primary text-white dark:bg-secondary'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    }`}
                   title="Card View"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -390,110 +441,116 @@ const Directory = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {activeTab === 'faculty'
                 ? paginatedFaculty.map((group) => {
-                    const person = group[0]!;
-                    return (
-                      <div
-                        key={person.id}
-                        className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="relative z-10">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
-                                {person.name}
-                              </h3>
-                            </div>
-                            <Building2 className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
+                  const person = group[0]!;
+                  return (
+                    <div
+                      key={person.id}
+                      className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                              {person.name}
+                            </h3>
                           </div>
-                          <div className="space-y-3">
-                            {group.map((role, index) => (
-                              <div key={role.id}>
-                                {index > 0 && (
-                                  <hr className="my-3 border-slate-200 dark:border-slate-700" />
-                                )}
-                                <div className="space-y-2">
-                                  <div className="flex items-start gap-2">
-                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
-                                      Role:
-                                    </span>
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                      {role.designation}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-start gap-2">
-                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
-                                      Dept:
-                                    </span>
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                      {role.department}
-                                    </span>
-                                  </div>
-                                  <a
-                                    href={`mailto:${role.email}`}
-                                    className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link"
-                                  >
-                                    <Mail className="w-4 h-4 flex-shrink-0" />
-                                    <span className="group-hover/link:underline truncate">
-                                      {role.email}
-                                    </span>
-                                  </a>
-                                  {isValidIndianPhoneNumber(role.phone) && (
-                                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
-                                      <Phone className="w-4 h-4 flex-shrink-0" />
-                                      <span>{role.phone}</span>
-                                    </div>
-                                  )}
+                          <Building2 className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
+                        </div>
+                        <div className="space-y-3">
+                          {group.map((role, index) => (
+                            <div key={role.id}>
+                              {index > 0 && (
+                                <hr className="my-3 border-slate-200 dark:border-slate-700" />
+                              )}
+                              <div className="space-y-2">
+                                <div className="flex items-start gap-2">
+                                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
+                                    Role:
+                                  </span>
+                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    {role.designation}
+                                  </span>
                                 </div>
+                                <div className="flex items-start gap-2">
+                                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
+                                    Dept:
+                                  </span>
+                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    {role.department}
+                                  </span>
+                                </div>
+                                <a
+                                  href={`mailto:${role.email}`}
+                                  className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link"
+                                >
+                                  <Mail className="w-4 h-4 flex-shrink-0" />
+                                  <span className="group-hover/link:underline truncate">
+                                    {role.email}
+                                  </span>
+                                </a>
+                                {isValidIndianPhoneNumber(role.phone) && (
+                                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
+                                    <Phone className="w-4 h-4 flex-shrink-0" />
+                                    <span>{role.phone}</span>
+                                  </div>
+                                )}
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    );
-                  })
+                    </div>
+                  );
+                })
                 : paginatedStudents.map((group) => {
-                    const student = group[0]!; // Student data is not expected to have multiple roles.
-                    return (
-                      <div
-                        key={student.id}
-                        className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="relative z-10">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
-                                {student.name}
-                              </h3>
-                              <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">
-                                {student.admNo}
-                              </p>
-                            </div>
-                            <GraduationCap className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
+                  const student = group[0]!; // Student data is not expected to have multiple roles.
+                  const isChecking = checkingProfile === student.admNo;
+                  return (
+                    <div
+                      key={student.id}
+                      onClick={() => handleViewProfile(student.admNo)}
+                      className="group relative overflow-hidden cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="relative z-10">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors flex items-center gap-2">
+                              {student.name}
+                              {isChecking && <Loader2 className="w-4 h-4 animate-spin" />}
+                            </h3>
+                            <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">
+                              {student.admNo}
+                            </p>
                           </div>
-                          <div className="space-y-2">
+                          <GraduationCap className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                              Branch:
+                            </span>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              {student.branch}
+                            </span>
+                          </div>
+                          {student.year && (
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Branch:
+                                Year:
                               </span>
                               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {student.branch}
+                                {student.year}
                               </span>
                             </div>
-                            {student.year && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                  Year:
-                                </span>
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  {student.year}
-                                </span>
-                              </div>
-                            )}
+                          )}
+                          <div
+                            onClick={(e) => e.stopPropagation()} // Prevent card click
+                          >
                             <a
                               href={`mailto:${student.admNo.toLowerCase()}@${config?.collegeInfo?.email?.domain || 'college.edu'}`}
-                              className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link"
+                              className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link w-fit"
                             >
                               <Mail className="w-4 h-4 flex-shrink-0" />
                               <span className="group-hover/link:underline truncate">
@@ -504,8 +561,9 @@ const Directory = () => {
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  );
+                })}
             </div>
           </div>
         ) : (
@@ -646,10 +704,12 @@ const Directory = () => {
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                   {paginatedStudents.map((group) => {
                     const student = group[0]!; // Students are not expected to have multiple roles
+                    const isChecking = checkingProfile === student.admNo;
                     return (
                       <tr
                         key={student.id}
-                        className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                        onClick={() => handleViewProfile(student.admNo)}
+                        className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       >
                         <td className="px-6 py-4">
                           <div className="font-mono text-sm font-medium text-slate-900 dark:text-white">
@@ -657,8 +717,9 @@ const Directory = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="font-medium text-slate-900 dark:text-white">
+                          <div className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
                             {student.name}
+                            {isChecking && <Loader2 className="w-3 h-3 animate-spin" />}
                           </div>
                           {student.year && (
                             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -669,7 +730,7 @@ const Directory = () => {
                         <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
                           {student.branch}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                           <a
                             href={`mailto:${student.admNo.toLowerCase()}@${config?.collegeInfo?.email?.domain || 'college.edu'}`}
                             className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group"

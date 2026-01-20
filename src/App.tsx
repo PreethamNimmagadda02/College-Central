@@ -42,6 +42,7 @@ const Login = lazyWithRetry(() => import('@pages/Login'));
 const PrivacyPolicy = lazyWithRetry(() => import('@pages/PrivacyPolicy'));
 const TermsOfService = lazyWithRetry(() => import('@pages/TermsOfService'));
 const OfflinePage = lazyWithRetry(() => import('@pages/OfflinePage'));
+const UserProfile = lazyWithRetry(() => import('@pages/UserProfile'));
 
 // Admin Dashboard - available for admin users in all environments
 const AdminDashboard = lazyWithRetry(() => import('@features/admin/AdminDashboard'));
@@ -179,11 +180,20 @@ const router = createHashRouter([
           </Suspense>
         ),
       },
+
       {
         path: 'profile',
         element: (
           <Suspense fallback={<PageLoader />}>
             <Profile />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'u/:userId',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <UserProfile />
           </Suspense>
         ),
       },
