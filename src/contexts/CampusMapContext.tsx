@@ -147,9 +147,11 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       const fromLoc = locations.find((loc: CampusLocation) => loc.name === from);
       const toLoc = locations.find((loc: CampusLocation) => loc.name === to);
 
-      if (fromLoc && toLoc) {
-        const origin = `${fromLoc.coordinates.lat},${fromLoc.coordinates.lng}`;
-        const destination = `${toLoc.coordinates.lat},${toLoc.coordinates.lng}`;
+      // If existing location, use coordinates. If not, treat as raw query/coordinates.
+      const origin = fromLoc ? `${fromLoc.coordinates.lat},${fromLoc.coordinates.lng}` : from;
+      const destination = toLoc ? `${toLoc.coordinates.lat},${toLoc.coordinates.lng}` : to;
+
+      if (origin && destination) {
         return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=walking`;
       }
 

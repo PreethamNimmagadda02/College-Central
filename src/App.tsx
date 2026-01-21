@@ -13,6 +13,7 @@ import { InstallPrompt } from '@components/common/InstallPrompt';
 import { OfflineIndicator } from '@components/common/OfflineIndicator';
 import { CalendarProvider } from '@contexts/CalendarContext';
 import { CampusMapProvider } from '@contexts/CampusMapContext';
+import { LocationProvider } from '@contexts/LocationContext';
 import { WeatherProvider } from '@contexts/WeatherContext';
 import WeatherModal from '@components/weather/WeatherModal';
 import { FormsProvider } from '@contexts/FormsContext';
@@ -254,8 +255,10 @@ const App: React.FC = () => {
                     <FormsProvider>
                       <WeatherProvider>
                         <CampusMapProvider>
-                          <RouterProvider router={router} />
-                          <WeatherModal />
+                          <LocationProvider>
+                            <RouterProvider router={router} />
+                            <WeatherModal />
+                          </LocationProvider>
                         </CampusMapProvider>
                       </WeatherProvider>
                     </FormsProvider>

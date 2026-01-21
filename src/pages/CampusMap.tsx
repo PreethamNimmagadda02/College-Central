@@ -1,5 +1,6 @@
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useCampusMap } from '@contexts/CampusMapContext';
+import { useLocation } from '@contexts/LocationContext';
 import React, { useState, useRef, useMemo } from 'react';
 
 import { CampusLocation, CampusLocationCategory } from '@/types';
@@ -15,6 +16,7 @@ const CampusMap: React.FC = () => {
     getDirections,
     shareLocation,
   } = useCampusMap();
+  const { location: userLocation, error: locationError, permissionStatus } = useLocation();
   const { config: appConfig } = useAppConfig();
   const [selectedCategory, setSelectedCategory] = useState<CampusLocationCategory | 'all'>('all');
   const [selectedLocation, setSelectedLocation] = useState<CampusLocation | null>(null);
@@ -156,11 +158,10 @@ const CampusMap: React.FC = () => {
             <button
               key={view}
               onClick={() => setMapView(view)}
-              className={`px-3 md:px-4 py-2 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${
-                mapView === view
-                  ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-105'
-              }`}
+              className={`px-3 md:px-4 py-2 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${mapView === view
+                ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-105'
+                }`}
             >
               {view.charAt(0).toUpperCase() + view.slice(1)}
             </button>
@@ -292,61 +293,55 @@ const CampusMap: React.FC = () => {
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedCategory('all')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                  selectedCategory === 'all'
-                    ? 'bg-primary text-white shadow-md scale-105'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'all'
+                  ? 'bg-primary text-white shadow-md scale-105'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                  }`}
               >
                 All
               </button>
               <button
                 onClick={() => setSelectedCategory('academic')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                  selectedCategory === 'academic'
-                    ? 'bg-blue-500 text-white shadow-md scale-105'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'academic'
+                  ? 'bg-blue-500 text-white shadow-md scale-105'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                  }`}
               >
                 Academic
               </button>
               <button
                 onClick={() => setSelectedCategory('administration')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                  selectedCategory === 'administration'
-                    ? 'bg-indigo-500 text-white shadow-md scale-105'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'administration'
+                  ? 'bg-indigo-500 text-white shadow-md scale-105'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                  }`}
               >
                 Administration
               </button>
               <button
                 onClick={() => setSelectedCategory('residential')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                  selectedCategory === 'residential'
-                    ? 'bg-green-500 text-white shadow-md scale-105'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'residential'
+                  ? 'bg-green-500 text-white shadow-md scale-105'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                  }`}
               >
                 Residential
               </button>
               <button
                 onClick={() => setSelectedCategory('facilities')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                  selectedCategory === 'facilities'
-                    ? 'bg-purple-500 text-white shadow-md scale-105'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'facilities'
+                  ? 'bg-purple-500 text-white shadow-md scale-105'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                  }`}
               >
                 Facilities
               </button>
               <button
                 onClick={() => setSelectedCategory('dining')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                  selectedCategory === 'dining'
-                    ? 'bg-orange-500 text-white shadow-md scale-105'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'dining'
+                  ? 'bg-orange-500 text-white shadow-md scale-105'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                  }`}
               >
                 Dining
               </button>
@@ -385,11 +380,10 @@ const CampusMap: React.FC = () => {
                   <div
                     key={location.id}
                     onClick={() => setSelectedLocation(location)}
-                    className={`group relative overflow-hidden p-4 border-b border-slate-100 dark:border-slate-800 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white dark:hover:from-slate-800 dark:hover:to-slate-800/50 cursor-pointer transition-all duration-300 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] ${
-                      selectedLocation?.id === location.id
-                        ? 'bg-primary/10 dark:bg-primary/20 shadow-md'
-                        : ''
-                    }`}
+                    className={`group relative overflow-hidden p-4 border-b border-slate-100 dark:border-slate-800 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white dark:hover:from-slate-800 dark:hover:to-slate-800/50 cursor-pointer transition-all duration-300 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] ${selectedLocation?.id === location.id
+                      ? 'bg-primary/10 dark:bg-primary/20 shadow-md'
+                      : ''
+                      }`}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-start justify-between">
@@ -402,17 +396,16 @@ const CampusMap: React.FC = () => {
                             {location.name}
                           </h4>
                           <span
-                            className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full transition-all duration-300 group-hover:scale-105 ${
-                              location.category === 'academic'
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                : location.category === 'residential'
-                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                  : location.category === 'facilities'
-                                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                                    : location.category === 'administration'
-                                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
-                                      : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                            }`}
+                            className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full transition-all duration-300 group-hover:scale-105 ${location.category === 'academic'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                              : location.category === 'residential'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : location.category === 'facilities'
+                                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                  : location.category === 'administration'
+                                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                                    : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                              }`}
                           >
                             {location.category}
                           </span>
@@ -500,17 +493,16 @@ const CampusMap: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-base md:text-lg font-semibold">{selectedLocation.name}</h3>
                     <span
-                      className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${
-                        selectedLocation.category === 'academic'
-                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                          : selectedLocation.category === 'residential'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : selectedLocation.category === 'facilities'
-                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                              : selectedLocation.category === 'administration'
-                                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
-                                : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                      }`}
+                      className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${selectedLocation.category === 'academic'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        : selectedLocation.category === 'residential'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : selectedLocation.category === 'facilities'
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                            : selectedLocation.category === 'administration'
+                              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                              : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                        }`}
                     >
                       {selectedLocation.category}
                     </span>
@@ -585,8 +577,33 @@ const CampusMap: React.FC = () => {
           {/* Map Container */}
           <div
             ref={mapRef}
-            className="bg-white dark:bg-dark-card rounded-xl shadow-lg overflow-hidden"
+            className="bg-white dark:bg-dark-card rounded-xl shadow-lg overflow-hidden relative"
           >
+            {/* User Location Indicator */}
+            {userLocation && (
+              <div className="absolute top-4 left-4 z-10 bg-white/90 dark:bg-black/80 backdrop-blur px-3 py-2 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 text-xs font-medium flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500 border-2 border-white dark:border-black"></span>
+                  </span>
+                  <span className="text-slate-900 dark:text-white">You are here</span>
+                </div>
+                <div className="text-xxs text-slate-500 font-mono ml-5">
+                  {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+                </div>
+              </div>
+            )}
+            {/* Location Permission Warning */}
+            {locationError && permissionStatus === 'denied' && (
+              <div className="absolute top-4 left-4 z-10 bg-red-50/90 dark:bg-red-900/80 backdrop-blur px-3 py-2 rounded-lg shadow-md border border-red-200 dark:border-red-700 text-xs font-medium text-red-600 dark:text-red-200 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Location access denied
+              </div>
+            )}
+
             <div className="relative">
               <iframe
                 src={getMapUrl()}
@@ -733,9 +750,8 @@ const CampusMap: React.FC = () => {
       {/* Notification Toast */}
       {notification && (
         <div
-          className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
-            notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-          } animate-slide-in-right`}
+          className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            } animate-slide-in-right`}
         >
           <div className="flex items-center gap-2">
             {notification.type === 'success' ? (
@@ -942,6 +958,9 @@ const CampusMap: React.FC = () => {
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
                 >
                   <option value="">Select starting point...</option>
+                  {userLocation && (
+                    <option value={`${userLocation.lat},${userLocation.lng}`}>Current Location</option>
+                  )}
                   {locations.map((loc) => (
                     <option key={loc.id} value={loc.name}>
                       {loc.name}
@@ -1038,6 +1057,9 @@ const CampusMap: React.FC = () => {
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
                 >
                   <option value="">Select starting point...</option>
+                  {userLocation && (
+                    <option value={`${userLocation.lat},${userLocation.lng}`}>Current Location</option>
+                  )}
                   {locations.map((loc) => (
                     <option key={loc.id} value={loc.name}>
                       {loc.name}
