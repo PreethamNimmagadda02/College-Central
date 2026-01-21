@@ -610,6 +610,7 @@ const CampusMap: React.FC = () => {
                 width="100%"
                 style={{ border: 0 }}
                 allowFullScreen={true}
+                allow="geolocation"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 title={`${appConfig?.collegeInfo?.name?.short || 'IIT ISM'} Campus Map`}
