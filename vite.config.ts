@@ -30,7 +30,7 @@ export default defineConfig({
     },
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      'Permissions-Policy': 'geolocation=*, microphone=(), camera=()',
+      'Permissions-Policy': 'geolocation=(self), microphone=(), camera=()',
       'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://apis.google.com https://*.firebaseapp.com https://*.firebase.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com https://r2cdn.perplexity.ai; img-src 'self' data: blob: https: http:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com https://api.emailjs.com https://picsum.photos https://cdn.tailwindcss.com https://apis.google.com https://api.open-meteo.com https://www.google.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://www.google.com https://maps.google.com https://*.google.com; object-src 'none'; base-uri 'self'",
     }
   },
