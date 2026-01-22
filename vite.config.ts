@@ -3,6 +3,8 @@ import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import fs from 'fs';
 
+import tailwindcss from '@tailwindcss/vite';
+
 // Plugin to inject build timestamp into service worker
 const injectBuildTime = (): Plugin => {
   return {
@@ -30,10 +32,11 @@ export default defineConfig({
     },
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://apis.google.com https://*.firebaseapp.com https://*.firebase.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com https://api.emailjs.com https://picsum.photos https://cdn.tailwindcss.com https://apis.google.com https://api.open-meteo.com https://www.google.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://www.google.com https://maps.google.com https://*.google.com; object-src 'none'; base-uri 'self'",
+      'Permissions-Policy': 'geolocation=*, microphone=(), camera=()',
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://apis.google.com https://*.firebaseapp.com https://*.firebase.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com https://r2cdn.perplexity.ai; img-src 'self' data: blob: https: http:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com https://api.emailjs.com https://picsum.photos https://cdn.tailwindcss.com https://apis.google.com https://api.open-meteo.com https://www.google.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://www.google.com https://maps.google.com https://*.google.com; object-src 'none'; base-uri 'self'",
     }
   },
-  plugins: [react(), injectBuildTime()],
+  plugins: [react(), tailwindcss(), injectBuildTime()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
