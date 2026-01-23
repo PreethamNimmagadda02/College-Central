@@ -20,7 +20,7 @@ const MyStatsModal: React.FC<MyStatsModalProps> = ({
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
             <div
-                className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl w-full max-w-lg transform transition-all animate-fadeIn overflow-hidden flex flex-col max-h-[90vh]"
+                className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg transform transition-all animate-fadeIn overflow-hidden flex flex-col max-h-[90vh]"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -46,13 +46,16 @@ const MyStatsModal: React.FC<MyStatsModalProps> = ({
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-12">
                             <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-                            <p className="text-slate-500">Calculating your stats...</p>
+                            <p className="text-slate-500 dark:text-slate-400">Calculating your stats...</p>
                         </div>
                     ) : !stats || stats.totalVisits === 0 ? (
-                        <div className="text-center py-8 text-slate-500">
+                        <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                             <p className="text-4xl mb-3">📉</p>
-                            <p>No activity recorded yet for the last 30 days.</p>
-                            <p className="text-xs mt-2">Visit some campus locations to start building your profile!</p>
+                            <p className="text-lg font-medium text-slate-900 dark:text-white mb-1">No activity yet</p>
+                            <p>We haven't recorded any campus visits for you in the last 30 days.</p>
+                            <p className="text-xs mt-4 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 p-3 rounded-lg">
+                                Tip: Visit campus locations to start building your profile!
+                            </p>
                         </div>
                     ) : (
                         <div className="space-y-6">

@@ -54,11 +54,20 @@ const CampusMap: React.FC = () => {
   // Handle opening stats modal
   const handleOpenStats = async () => {
     setShowStatsModal(true);
+    console.log('Opening stats modal. User:', currentUser?.uid);
     if (currentUser && analyticsConsent) {
       setLoadingStats(true);
-      const stats = await getUserStats(currentUser.uid);
-      setUserStats(stats);
-      setLoadingStats(false);
+      try {
+        const stats = await getUserStats(currentUser.uid);
+        console.log('Fetched user stats:', stats);
+        setUserStats(stats);
+      } catch (err) {
+        console.error('Error fetching user stats:', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    } else {
+      console.log('Skipping stats fetch. Consent:', analyticsConsent);
     }
   };
 

@@ -20,12 +20,9 @@ import AdminPageLayout from './AdminPageLayout';
 import {
     getAggregatedAnalytics,
     getPeakAnalysis,
-    getDwellTimeInsights,
     AnalyticsSummary,
     PeakAnalysis,
-    DwellTimeInsights,
 } from '@/services/locationAnalyticsService';
-import DwellTimeChart from './DwellTimeChart';
 
 // Chart colors
 const CHART_COLORS = [
@@ -80,7 +77,6 @@ const TrendingUpIcon = () => (
 const LocationAnalyticsEditor: React.FC = () => {
     const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
     const [peakAnalysis, setPeakAnalysis] = useState<PeakAnalysis | null>(null);
-    const [dwellInsights, setDwellInsights] = useState<DwellTimeInsights[]>([]);
     const [loading, setLoading] = useState(true);
     const [dateRange, setDateRange] = useState<'today' | 'week' | 'month'>('week');
 
@@ -107,17 +103,14 @@ const LocationAnalyticsEditor: React.FC = () => {
 
             const [
                 analyticsData,
-                peak,
-                dwell
+                peak
             ] = await Promise.all([
                 getAggregatedAnalytics(startDate, endDate).catch(err => { console.error('Analytics error:', err); return null; }),
                 getPeakAnalysis(startDate, endDate).catch(err => { console.error('Peak error:', err); return null; }),
-                getDwellTimeInsights(startDate, endDate).catch(err => { console.error('Dwell error:', err); return []; })
             ]);
 
             setAnalytics(analyticsData);
             setPeakAnalysis(peak);
-            setDwellInsights(dwell);
         } catch (error) {
             console.error('Error fetching location analytics:', error);
         } finally {
@@ -176,7 +169,7 @@ const LocationAnalyticsEditor: React.FC = () => {
                 </div>
 
                 {/* Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-800 text-white p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
                         <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
                             <TrendingUpIcon />
@@ -207,20 +200,7 @@ const LocationAnalyticsEditor: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-600 dark:from-emerald-600 dark:to-emerald-800 text-white p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
-                            <ClockIcon />
-                        </div>
-                        <div className="relative z-10 flex items-center justify-between">
-                            <div>
-                                <p className="text-emerald-100 text-sm font-medium">Avg. Dwell Time</p>
-                                <p className="text-3xl font-black tracking-tight mt-1">{Math.round(analytics?.avgDwellTime || 0)} <span className="text-lg font-normal opacity-80">min</span></p>
-                            </div>
-                            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                                <ClockIcon />
-                            </div>
-                        </div>
-                    </div>
+
 
                     <div className="relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-800 text-white p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
                         <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
@@ -242,40 +222,12 @@ const LocationAnalyticsEditor: React.FC = () => {
                 {/* Consent Stats Removed */}
 
                 {/* Charts Row 1 */}
+                {/* Charts Row 1 */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Hourly Traffic */}
-                    <div className="admin-card">
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <ClockIcon />
-                            Hourly Traffic
-                        </h3>
-                        <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={analytics?.hourlyAnalytics || []}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.15)" />
-                                <XAxis
-                                    dataKey="hour"
-                                    tickFormatter={formatHour}
-                                    tick={{ fontSize: 10, fill: '#94a3b8' }}
-                                    interval={2}
-                                    stroke="#94a3b8"
-                                />
-                                <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} stroke="#94a3b8" />
-                                <Tooltip
-                                    labelFormatter={(label) => formatHour(label as number)}
-                                    contentStyle={{
-                                        backgroundColor: '#1e293b',
-                                        border: '1px solid rgba(96, 165, 250, 0.3)',
-                                        borderRadius: '12px',
-                                        color: '#f8fafc',
-                                    }}
-                                />
-                                <Bar dataKey="visits" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                    {/* Hourly Traffic Removed */}
 
                     {/* Daily Trends */}
-                    <div className="admin-card">
+                    <div className="admin-card col-span-2">
                         <h3 className="text-lg font-semibold mb-4">Weekly Pattern</h3>
                         <ResponsiveContainer width="100%" height={250}>
                             <LineChart data={analytics?.dailyAnalytics || []}>
@@ -304,15 +256,11 @@ const LocationAnalyticsEditor: React.FC = () => {
                 </div>
 
 
-                {/* Dwell Time & Peak Analysis Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Peak Analysis Row */}
+                <div className="grid grid-cols-1 gap-6">
 
 
-                    {/* Dwell Time Analysis */}
-                    <div className="admin-card">
-                        <h3 className="text-lg font-semibold mb-4">Dwell Time Analysis</h3>
-                        <DwellTimeChart data={dwellInsights} />
-                    </div>
+                    {/* Dwell Time Analysis Removed */}
 
                     {/* Peak Usage Stats */}
                     <div className="admin-card">
