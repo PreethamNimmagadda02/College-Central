@@ -195,6 +195,39 @@ service cloud.firestore {
                     && isValidDataSize();
       allow delete: if isAuthenticated() && request.auth.uid == userId;
     }
+    
+    // ============================================
+    // LOCATION ANALYTICS (Privacy-aware tracking)
+    // ============================================
+
+    // Location visits - users can write own data, admins can read for analytics
+    match /locationAnalytics/{docId} {
+      allow create: if isAuthenticated() 
+                    && request.resource.data.userId == request.auth.uid
+                    && isValidDataSize();
+      allow read: if isAdmin();
+      // No updates or deletes - immutable for data integrity
+      allow update, delete: if false;
+    }
+
+    // Location consent - users manage their own consent
+    match /locationConsent/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create, update: if isAuthenticated() 
+                            && request.auth.uid == userId
+                            && isValidDataSize();
+      // Admins can read consent stats
+      allow read: if isAdmin();
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User location state - for cross-browser deduplication
+    match /userLocationState/{userId} {
+      // Users can manage their own state
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      // Admins can read for analysis/debugging
+      allow read: if isAdmin();
+    }
 
     // ============================================
     // AUDIT LOGGING (append-only for security)

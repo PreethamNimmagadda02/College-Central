@@ -624,3 +624,9 @@ export const CAMPUS_QUICK_ROUTES: QuickRoute[] = [
     steps: ['Exit Main Building', 'Walk towards dining area', 'Barista on left'],
   },
 ];
+
+export const CAMPUS_CONFIG = {
+  defaultCenter: { lat: 23.814382, lng: 86.441162 }, // Center of Academic Complex
+  defaultZoom: 16,
+  mapId: import.meta.env.VITE_GOOGLE_MAPS_MAP_ID,
+};

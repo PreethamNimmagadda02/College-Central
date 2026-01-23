@@ -150,5 +150,6 @@ export type AdminTab =
   | 'campus-map'
   | 'grading'
   | 'analytics'
+  | 'location-analytics'
   | 'support'
   | 'export';

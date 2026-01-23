@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    /* Screens */
+    --breakpoint-xs: 480px;
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+
+    /* Colors */
+    --color-ism-maroon: #800000;
+    --color-ism-gold: #FFD700;
+    --color-primary: #3b82f6;
+    --color-primary-dark: #2563eb;
+    --color-secondary: #06b6d4;
+    --color-secondary-light: #67e8f9;
+    --color-light-bg: #f1f5f9;
+    --color-dark-bg: #0f172a;
+    --color-dark-card: #1e293b;
+    --color-dark-text: #e2e8f0;
+
+    /* Animations */
+    --animate-blob: blob 7s infinite;
+    --animate-shimmer: shimmer 2s linear infinite;
+    --animate-fadeIn: fadeIn 0.3s ease-out forwards;
+    --animate-gradient-shift: gradient-shift 3s ease infinite;
+    --animate-spin-slow: spin-slow 8s linear infinite;
+
+    /* Keyframes */
+    @keyframes blob {
+        0% {
+            transform: translate(0px, 0px) scale(1);
+        }
+
+        33% {
+            transform: translate(30px, -50px) scale(1.1);
+        }
+
+        66% {
+            transform: translate(-20px, 20px) scale(0.9);
+        }
+
+        100% {
+            transform: translate(0px, 0px) scale(1);
+        }
+    }
+
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes gradient-shift {
+
+        0%,
+        100% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+    }
+
+    @keyframes spin-slow {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+}
+
+/* Custom Utilities for Animation Delay */
+@utility animation-delay-2000 {
+    animation-delay: 2s;
+}
+
+@utility animation-delay-4000 {
+    animation-delay: 4s;
+}

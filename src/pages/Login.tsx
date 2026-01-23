@@ -109,7 +109,7 @@ const useMousePosition = () => {
 const smartMetrics = [
   {
     label: 'Active Students',
-    value: 500,
+    value: 600,
     suffix: '+',
     icon: '🎓',
     description: 'Students using the app',
@@ -393,11 +393,10 @@ const Login: React.FC = () => {
       {/* Fixed Logo and Name - Top Left (appears when scrolling past first section) */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className={`fixed top-3 left-3 sm:top-4 sm:left-4 md:top-6 md:left-6 z-50 transition-all duration-700 ease-out cursor-pointer group/logo ${
-          scrollY > window.innerHeight * 0.8
+        className={`fixed top-3 left-3 sm:top-4 sm:left-4 md:top-6 md:left-6 z-50 transition-all duration-700 ease-out cursor-pointer group/logo ${scrollY > window.innerHeight * 0.8
             ? 'opacity-100 translate-x-0'
             : 'opacity-0 -translate-x-8 pointer-events-none'
-        }`}
+          }`}
         aria-label="Scroll to top"
       >
         <div className="flex items-center gap-2 sm:gap-3">
@@ -969,11 +968,10 @@ const Login: React.FC = () => {
                     <button
                       key={index}
                       onClick={() => setTestimonialIndex(index)}
-                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                        testimonialIndex === index
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${testimonialIndex === index
                           ? 'bg-white scale-125 shadow-lg shadow-white/30'
                           : 'bg-white/30 hover:bg-white/50'
-                      }`}
+                        }`}
                       aria-label={`Go to testimonial ${index + 1}`}
                     />
                   ))}
@@ -1105,11 +1103,10 @@ const Login: React.FC = () => {
                             setIsSignUp(false);
                             setError('');
                           }}
-                          className={`flex-1 py-3 px-4 rounded-lg font-bold text-base transition-all duration-300 ${
-                            !isSignUp
+                          className={`flex-1 py-3 px-4 rounded-lg font-bold text-base transition-all duration-300 ${!isSignUp
                               ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg scale-105 animate-pulse-glow'
                               : 'text-white/70 hover:text-white hover:bg-white/10'
-                          }`}
+                            }`}
                         >
                           Sign In
                         </button>
@@ -1119,11 +1116,10 @@ const Login: React.FC = () => {
                             setIsSignUp(true);
                             setError('');
                           }}
-                          className={`flex-1 py-3 px-4 rounded-lg font-bold text-base transition-all duration-300 ${
-                            isSignUp
+                          className={`flex-1 py-3 px-4 rounded-lg font-bold text-base transition-all duration-300 ${isSignUp
                               ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg scale-105 animate-pulse-glow'
                               : 'text-white/70 hover:text-white hover:bg-white/10'
-                          }`}
+                            }`}
                         >
                           Sign Up
                         </button>

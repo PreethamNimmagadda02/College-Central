@@ -99,16 +99,16 @@
       ]
     },
     {
-      "collectionGroup": "activity",
+      "collectionGroup": "locationAnalytics",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "timestamp",
-          "order": "DESCENDING"
+          "fieldPath": "userId",
+          "order": "ASCENDING"
         },
         {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
+          "fieldPath": "timestamp",
+          "order": "ASCENDING"
         }
       ]
     }

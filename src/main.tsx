@@ -2,6 +2,7 @@ import { setupGlobalErrorTracking } from '@lib/utils/errorTracking';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
+import './index.css';
 import App from './App';
 
 // Setup global error tracking

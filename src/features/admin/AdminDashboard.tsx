@@ -20,6 +20,7 @@ import CoursesEditor from './components/CoursesEditor';
 import StudentDirectoryEditor from './components/StudentDirectoryEditor';
 import SupportEditor from './components/SupportEditor';
 import GradingEditor from './components/GradingEditor';
+import LocationAnalyticsEditor from './components/LocationAnalyticsEditor';
 import AdminFooter from './components/AdminFooter';
 import AdminSearch from './components/AdminSearch';
 
@@ -232,8 +233,14 @@ const menuSections = {
     {
       id: 'analytics' as AdminTab,
       path: '/admin/analytics',
-      label: 'Analytics',
+      label: 'User Analytics',
       icon: <ChartBarIcon />,
+    },
+    {
+      id: 'location-analytics' as AdminTab,
+      path: '/admin/location-analytics',
+      label: 'Location Insights',
+      icon: <MapPinIcon />,
     },
   ],
 };
@@ -318,6 +325,8 @@ const AdminDashboard: React.FC = () => {
         return <CampusMapEditor {...adminConfig} />;
       case 'analytics':
         return <AnalyticsEditor />;
+      case 'location-analytics':
+        return <LocationAnalyticsEditor />;
       case 'grading':
         return <GradingEditor {...adminConfig} />;
       case 'support':

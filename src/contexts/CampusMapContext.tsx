@@ -14,6 +14,7 @@ import { db } from '@lib/firebase';
 import { logActivity } from '@services/activityService';
 
 import { useAppConfig } from './AppConfigContext';
+import { getRealTimeCrowdLevels, LiveZoneStatus } from '@services/locationAnalyticsService';
 
 import { CampusLocation, QuickRoute } from '@/types';
 
@@ -26,6 +27,7 @@ interface CampusMapContextType {
   toggleSavePlace: (locationId: string) => Promise<void>;
   getDirections: (from: string, to: string) => string;
   shareLocation: (locationId: string) => Promise<void>;
+  liveZoneStatus: LiveZoneStatus[];
 }
 
 const CampusMapContext = createContext<CampusMapContextType | undefined>(undefined);
@@ -47,6 +49,24 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [savedPlaces, setSavedPlaces] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [liveZoneStatus, setLiveZoneStatus] = useState<LiveZoneStatus[]>([]);
+
+  // Fetch live zone status every 5 minutes
+  useEffect(() => {
+    const fetchLiveStatus = async () => {
+      try {
+        const status = await getRealTimeCrowdLevels();
+        setLiveZoneStatus(status);
+      } catch (err) {
+        console.error('Error fetching live zone status:', err);
+      }
+    };
+
+    fetchLiveStatus();
+    const interval = setInterval(fetchLiveStatus, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Update loading state based on config loading
   useEffect(() => {
@@ -199,6 +219,7 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       toggleSavePlace,
       getDirections,
       shareLocation,
+      liveZoneStatus,
     }),
     [
       locations,
@@ -209,6 +230,7 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       toggleSavePlace,
       getDirections,
       shareLocation,
+      liveZoneStatus,
     ]
   );
 

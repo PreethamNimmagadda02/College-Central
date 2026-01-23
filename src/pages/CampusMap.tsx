@@ -1,9 +1,13 @@
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useCampusMap } from '@contexts/CampusMapContext';
 import { useLocation } from '@contexts/LocationContext';
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 
 import { CampusLocation, CampusLocationCategory } from '@/types';
+import { useAuth } from '@features/auth/hooks/useAuth';
+import { getUserStats, UserStats } from '@/services/locationAnalyticsService';
+import MyStatsModal from '@/components/MyStatsModal';
+import PopularTimesChart from '@/components/PopularTimesChart';
 
 const CampusMap: React.FC = () => {
   const {
@@ -15,9 +19,27 @@ const CampusMap: React.FC = () => {
     toggleSavePlace,
     getDirections,
     shareLocation,
+    liveZoneStatus,
   } = useCampusMap();
-  const { location: userLocation, error: locationError, permissionStatus } = useLocation();
+  const {
+    location: userLocation,
+    error: locationError,
+    permissionStatus,
+    analyticsConsent,
+    requestAnalyticsConsent,
+  } = useLocation();
   const { config: appConfig } = useAppConfig();
+
+  // Request analytics consent on first visit
+  useEffect(() => {
+    // Small delay to not interrupt the user immediately
+    const timer = setTimeout(() => {
+      if (analyticsConsent === null) {
+        requestAnalyticsConsent();
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [analyticsConsent, requestAnalyticsConsent]);
   const [selectedCategory, setSelectedCategory] = useState<CampusLocationCategory | 'all'>('all');
   const [selectedLocation, setSelectedLocation] = useState<CampusLocation | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,12 +55,63 @@ const CampusMap: React.FC = () => {
   const [savedPlaceForDirections, setSavedPlaceForDirections] = useState<CampusLocation | null>(
     null
   );
+  const { currentUser } = useAuth();
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
+
+  // Handle opening stats modal
+  const handleOpenStats = async () => {
+    setShowStatsModal(true);
+    if (currentUser && analyticsConsent) {
+      setLoadingStats(true);
+      const stats = await getUserStats(currentUser.uid);
+      setUserStats(stats);
+      setLoadingStats(false);
+    }
+  };
 
   // Show notification helper
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  // Get live status for a location
+  const getLiveStatus = (locationId: string) => {
+    return liveZoneStatus.find(s => s.zoneId === locationId);
+  };
+
+  // Helper to render crowd badge
+  const getCrowdBadge = (locationId: string) => {
+    const status = getLiveStatus(locationId);
+    if (!status || status.level === 'unknown') return null;
+
+    const colors = {
+      quiet: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+      moderate: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+      busy: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    };
+
+    const icons = {
+      quiet: '🟢',
+      moderate: '🟡',
+      busy: '🔴',
+    };
+
+    const labels = {
+      quiet: 'Quiet',
+      moderate: 'Moderate',
+      busy: 'Busy',
+    };
+
+    return (
+      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ml-2 ${colors[status.level]}`}>
+        <span className="text-[8px]">{icons[status.level]}</span>
+        {labels[status.level]}
+      </span>
+    );
   };
 
   // Handle get directions
@@ -153,24 +226,34 @@ const CampusMap: React.FC = () => {
         </div>
 
         {/* Map View Toggles */}
-        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 shadow-md hover:shadow-lg transition-all duration-300">
-          {(['map', 'satellite'] as const).map((view) => (
-            <button
-              key={view}
-              onClick={() => setMapView(view)}
-              className={`px-3 md:px-4 py-2 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${mapView === view
-                ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-105'
-                }`}
-            >
-              {view.charAt(0).toUpperCase() + view.slice(1)}
-            </button>
-          ))}
+        <div className="flex gap-3">
+          <button
+            onClick={handleOpenStats}
+            className="flex items-center gap-2 px-3 md:px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+          >
+            <span>📊</span>
+            <span className="hidden md:inline font-medium">My Stats</span>
+          </button>
+
+          <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 shadow-md hover:shadow-lg transition-all duration-300">
+            {(['map', 'satellite'] as const).map((view) => (
+              <button
+                key={view}
+                onClick={() => setMapView(view)}
+                className={`px-3 md:px-4 py-2 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${mapView === view
+                  ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-105'
+                  }`}
+              >
+                {view.charAt(0).toUpperCase() + view.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+      < div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4" >
         <div
           onClick={() => setSelectedCategory('academic')}
           className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
@@ -259,7 +342,7 @@ const CampusMap: React.FC = () => {
             </span>
           </div>
         </div>
-      </div>
+      </div >
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Panel - Location Directory */}
@@ -374,6 +457,22 @@ const CampusMap: React.FC = () => {
                 Campus Locations
               </h3>
             </div>
+
+            {!analyticsConsent && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-3 text-xs border-b border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
+                <span className="text-slate-600 dark:text-slate-300">
+                  <span className="mr-1">🚀</span>
+                  Enable location to see live crowd levels
+                </span>
+                <button
+                  onClick={requestAnalyticsConsent}
+                  className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
+                >
+                  Enable
+                </button>
+              </div>
+            )}
+
             <div className="max-h-[50vh] overflow-y-auto overflow-x-hidden">
               {searchedLocations.length > 0 ? (
                 searchedLocations.map((location) => (
@@ -392,8 +491,9 @@ const CampusMap: React.FC = () => {
                           {location.icon}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                          <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors flex items-center">
                             {location.name}
+                            {getCrowdBadge(location.id)}
                           </h4>
                           <span
                             className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full transition-all duration-300 group-hover:scale-105 ${location.category === 'academic'
@@ -506,10 +606,23 @@ const CampusMap: React.FC = () => {
                     >
                       {selectedLocation.category}
                     </span>
+                    {getCrowdBadge(selectedLocation.id) && (
+                      <div className="mt-2 text-xs text-slate-500">
+                        Live Status: {getCrowdBadge(selectedLocation.id)}
+                        <span className="ml-2 opacity-70">• {getLiveStatus(selectedLocation.id)?.visitorCount || 0} active visitors</span>
+                      </div>
+                    )}
+
+                    {/* Popular Times Chart */}
+                    <PopularTimesChart locationId={selectedLocation.id} />
+
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
                         onClick={() => {
                           setToLocation(selectedLocation.name);
+                          if (userLocation) {
+                            setFromLocation(`${userLocation.lat},${userLocation.lng}`);
+                          }
                           setShowDirections(true);
                         }}
                         className="group px-3 py-1.5 bg-primary text-white text-xs md:text-sm rounded-lg hover:bg-primary-dark transition-all duration-300 flex items-center gap-1.5 shadow-md hover:shadow-lg hover:-translate-y-0.5 hover:scale-105 active:scale-95"
@@ -749,356 +862,375 @@ const CampusMap: React.FC = () => {
       </div>
 
       {/* Notification Toast */}
-      {notification && (
-        <div
-          className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-            } animate-slide-in-right`}
-        >
-          <div className="flex items-center gap-2">
-            {notification.type === 'success' ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            )}
-            <span className="font-medium">{notification.message}</span>
+      {
+        notification && (
+          <div
+            className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+              } animate-slide-in-right`}
+          >
+            <div className="flex items-center gap-2">
+              {notification.type === 'success' ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              )}
+              <span className="font-medium">{notification.message}</span>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Emergency Contacts Modal */}
-      {showEmergency && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
-          onClick={() => setShowEmergency(false)}
-        >
+      {
+        showEmergency && (
           <div
-            className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
+            onClick={() => setShowEmergency(false)}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-                Emergency Contacts
-              </h3>
-              <button
-                onClick={() => setShowEmergency(false)}
-                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
-              >
-                <svg
-                  className="w-5 h-5 text-slate-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-red-700 dark:text-red-400">Police Emergency</p>
-                    <p className="text-2xl font-bold text-red-600 dark:text-red-500">100</p>
-                  </div>
-                  <a
-                    href="tel:100"
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
-                  >
-                    Call Now
-                  </a>
-                </div>
-              </div>
-
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-blue-700 dark:text-blue-400">Health Centre</p>
-                    <p className="text-xl font-bold text-blue-600 dark:text-blue-500">
-                      0326-223-5435
-                    </p>
-                  </div>
-                  <a
-                    href="tel:03262235435"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                  >
-                    Call Now
-                  </a>
-                </div>
-              </div>
-
-              <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-orange-700 dark:text-orange-400">Ambulance</p>
-                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-500">102</p>
-                  </div>
-                  <a
-                    href="tel:102"
-                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
-                  >
-                    Call Now
-                  </a>
-                </div>
-              </div>
-
-              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-purple-700 dark:text-purple-400">
-                      Security Control Room
-                    </p>
-                    <p className="text-xl font-bold text-purple-600 dark:text-purple-500">
-                      0326-223-5000
-                    </p>
-                  </div>
-                  <a
-                    href="tel:03262235000"
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-                  >
-                    Call Now
-                  </a>
-                </div>
-              </div>
-
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-green-700 dark:text-green-400">
-                      Fire Emergency
-                    </p>
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-500">101</p>
-                  </div>
-                  <a
-                    href="tel:101"
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
-                  >
-                    Call Now
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
-              <p className="text-xs text-slate-600 dark:text-slate-400 text-center">
-                <strong>Important:</strong> In case of emergency, call the nearest contact or
-                security immediately
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Directions Modal */}
-      {showDirections && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
-          onClick={() => setShowDirections(false)}
-        >
-          <div
-            className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold">Get Directions</h3>
-              <button
-                onClick={() => setShowDirections(false)}
-                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
-              >
-                <svg
-                  className="w-5 h-5 text-slate-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  From
-                </label>
-                <select
-                  value={fromLocation}
-                  onChange={(e) => setFromLocation(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
-                >
-                  <option value="">Select starting point...</option>
-                  {userLocation && (
-                    <option value={`${userLocation.lat},${userLocation.lng}`}>Current Location</option>
-                  )}
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.name}>
-                      {loc.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  To
-                </label>
-                <select
-                  value={toLocation}
-                  onChange={(e) => setToLocation(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
-                >
-                  <option value="">Select destination...</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.name}>
-                      {loc.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={handleGetDirections}
-                  className="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div
+              className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                     />
                   </svg>
-                  Open in Google Maps
+                  Emergency Contacts
+                </h3>
+                <button
+                  onClick={() => setShowEmergency(false)}
+                  className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                >
+                  <svg
+                    className="w-5 h-5 text-slate-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Saved Place Directions Modal */}
-      {savedPlaceForDirections && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
-          onClick={() => setSavedPlaceForDirections(null)}
-        >
-          <div
-            className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-bold">Get Directions</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  To:{' '}
-                  <span className="font-medium text-primary">{savedPlaceForDirections.name}</span>
+              <div className="space-y-3">
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-red-700 dark:text-red-400">Police Emergency</p>
+                      <p className="text-2xl font-bold text-red-600 dark:text-red-500">100</p>
+                    </div>
+                    <a
+                      href="tel:100"
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Call Now
+                    </a>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-blue-700 dark:text-blue-400">Health Centre</p>
+                      <p className="text-xl font-bold text-blue-600 dark:text-blue-500">
+                        0326-223-5435
+                      </p>
+                    </div>
+                    <a
+                      href="tel:03262235435"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Call Now
+                    </a>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-orange-700 dark:text-orange-400">Ambulance</p>
+                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-500">102</p>
+                    </div>
+                    <a
+                      href="tel:102"
+                      className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Call Now
+                    </a>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-purple-700 dark:text-purple-400">
+                        Security Control Room
+                      </p>
+                      <p className="text-xl font-bold text-purple-600 dark:text-purple-500">
+                        0326-223-5000
+                      </p>
+                    </div>
+                    <a
+                      href="tel:03262235000"
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Call Now
+                    </a>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-green-700 dark:text-green-400">
+                        Fire Emergency
+                      </p>
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-500">101</p>
+                    </div>
+                    <a
+                      href="tel:101"
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Call Now
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                <p className="text-xs text-slate-600 dark:text-slate-400 text-center">
+                  <strong>Important:</strong> In case of emergency, call the nearest contact or
+                  security immediately
                 </p>
               </div>
-              <button
-                onClick={() => setSavedPlaceForDirections(null)}
-                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
-              >
-                <svg
-                  className="w-5 h-5 text-slate-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
             </div>
+          </div>
+        )
+      }
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  From
-                </label>
-                <select
-                  value={fromLocation}
-                  onChange={(e) => setFromLocation(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
-                >
-                  <option value="">Select starting point...</option>
-                  {userLocation && (
-                    <option value={`${userLocation.lat},${userLocation.lng}`}>Current Location</option>
-                  )}
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.name}>
-                      {loc.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex gap-2">
+      {/* Directions Modal */}
+      {
+        showDirections && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
+            onClick={() => setShowDirections(false)}
+          >
+            <div
+              className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold">Get Directions</h3>
                 <button
-                  onClick={() => {
-                    if (!fromLocation) {
-                      showNotification('Please select a starting point', 'error');
-                      return;
-                    }
-                    const url = getDirections(fromLocation, savedPlaceForDirections.name);
-                    window.open(url, '_blank');
-                    setSavedPlaceForDirections(null);
-                    setFromLocation('');
-                    showNotification(`Opening directions to ${savedPlaceForDirections.name}`);
-                  }}
-                  className="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  onClick={() => setShowDirections(false)}
+                  className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-5 h-5 text-slate-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                      d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
-                  Open in Google Maps
                 </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    From
+                  </label>
+                  <select
+                    value={fromLocation}
+                    onChange={(e) => setFromLocation(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
+                  >
+                    <option value="">Select starting point...</option>
+                    {userLocation && (
+                      <option value={`${userLocation.lat},${userLocation.lng}`}>Current Location</option>
+                    )}
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.name}>
+                        {loc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    To
+                  </label>
+                  <select
+                    value={toLocation}
+                    onChange={(e) => setToLocation(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
+                  >
+                    <option value="">Select destination...</option>
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.name}>
+                        {loc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleGetDirections}
+                    className="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                      />
+                    </svg>
+                    Open in Google Maps
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
+
+      {/* Saved Place Directions Modal */}
+      {
+        savedPlaceForDirections && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
+            onClick={() => setSavedPlaceForDirections(null)}
+          >
+            <div
+              className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-bold">Get Directions</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    To:{' '}
+                    <span className="font-medium text-primary">{savedPlaceForDirections.name}</span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSavedPlaceForDirections(null)}
+                  className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                >
+                  <svg
+                    className="w-5 h-5 text-slate-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    From
+                  </label>
+                  <select
+                    value={fromLocation}
+                    onChange={(e) => setFromLocation(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
+                  >
+                    <option value="">Select starting point...</option>
+                    {userLocation && (
+                      <option value={`${userLocation.lat},${userLocation.lng}`}>Current Location</option>
+                    )}
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.name}>
+                        {loc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      const from = fromLocation || (userLocation ? `${userLocation.lat},${userLocation.lng}` : '');
+                      if (!from) {
+                        showNotification('Please select a starting point', 'error');
+                        return;
+                      }
+                      const url = getDirections(from, savedPlaceForDirections.name);
+                      window.open(url, '_blank');
+                      setSavedPlaceForDirections(null);
+                      setFromLocation('');
+                      showNotification(`Opening directions to ${savedPlaceForDirections.name}`);
+                    }}
+                    className="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                      />
+                    </svg>
+                    Open in Google Maps
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* My Stats Modal */}
+      <MyStatsModal
+        stats={userStats}
+        isOpen={showStatsModal}
+        onClose={() => setShowStatsModal(false)}
+        isLoading={loadingStats}
+        onRequestConsent={requestAnalyticsConsent}
+        hasConsent={!!analyticsConsent}
+      />
     </div>
   );
 };
