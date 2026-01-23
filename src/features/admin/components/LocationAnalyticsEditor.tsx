@@ -19,7 +19,6 @@ import { AdminHeader } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 import {
     getAggregatedAnalytics,
-    getConsentStats,
     getPeakAnalysis,
     getDwellTimeInsights,
     AnalyticsSummary,
@@ -80,7 +79,6 @@ const TrendingUpIcon = () => (
 
 const LocationAnalyticsEditor: React.FC = () => {
     const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
-    const [consentStats, setConsentStats] = useState<{ opted: number; total: number }>({ opted: 0, total: 0 });
     const [peakAnalysis, setPeakAnalysis] = useState<PeakAnalysis | null>(null);
     const [dwellInsights, setDwellInsights] = useState<DwellTimeInsights[]>([]);
     const [loading, setLoading] = useState(true);
@@ -109,18 +107,15 @@ const LocationAnalyticsEditor: React.FC = () => {
 
             const [
                 analyticsData,
-                consent,
                 peak,
                 dwell
             ] = await Promise.all([
                 getAggregatedAnalytics(startDate, endDate).catch(err => { console.error('Analytics error:', err); return null; }),
-                getConsentStats().catch(err => { console.error('Consent error:', err); return { opted: 0, total: 0 }; }),
                 getPeakAnalysis(startDate, endDate).catch(err => { console.error('Peak error:', err); return null; }),
                 getDwellTimeInsights(startDate, endDate).catch(err => { console.error('Dwell error:', err); return []; })
             ]);
 
             setAnalytics(analyticsData);
-            setConsentStats(consent);
             setPeakAnalysis(peak);
             setDwellInsights(dwell);
         } catch (error) {
@@ -244,27 +239,7 @@ const LocationAnalyticsEditor: React.FC = () => {
                 </div>
 
                 {/* Consent Stats */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-900/30 rounded-lg text-green-400">
-                                <UsersIcon />
-                            </div>
-                            <div>
-                                <p className="font-medium text-white">Tracking Consent</p>
-                                <p className="text-sm text-slate-400">
-                                    {consentStats.opted} of {consentStats.total} users have opted in ({consentStats.total > 0 ? Math.round((consentStats.opted / consentStats.total) * 100) : 0}%)
-                                </p>
-                            </div>
-                        </div>
-                        <div className="w-32 h-2 bg-slate-700 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-green-500 rounded-full transition-all"
-                                style={{ width: `${consentStats.total > 0 ? (consentStats.opted / consentStats.total) * 100 : 0}%` }}
-                            />
-                        </div>
-                    </div>
-                </div>
+                {/* Consent Stats Removed */}
 
                 {/* Charts Row 1 */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -22,12 +22,7 @@ export interface LocationVisit {
     hourOfDay: number;
 }
 
-export interface LocationConsent {
-    userId: string;
-    consentGiven: boolean;
-    consentTimestamp: firebase.firestore.Timestamp;
-    lastUpdated: firebase.firestore.Timestamp;
-}
+
 
 export interface ZoneAnalytics {
     zoneId: string;
@@ -125,47 +120,6 @@ export function detectCurrentZone(
         }
     }
     return null;
-}
-
-// ============================================
-// CONSENT MANAGEMENT
-// ============================================
-
-const CONSENT_COLLECTION = 'locationConsent';
-
-/**
- * Get user's consent status for location tracking
- */
-export async function getUserConsentStatus(userId: string): Promise<LocationConsent | null> {
-    try {
-        const doc = await db.collection(CONSENT_COLLECTION).doc(userId).get();
-        if (doc.exists) {
-            return { userId, ...doc.data() } as LocationConsent;
-        }
-        return null;
-    } catch (error) {
-        console.error('Error getting consent status:', error);
-        return null;
-    }
-}
-
-/**
- * Update user's consent for location tracking
- */
-export async function updateUserConsent(userId: string, consentGiven: boolean): Promise<boolean> {
-    try {
-        const now = firebase.firestore.Timestamp.now();
-        await db.collection(CONSENT_COLLECTION).doc(userId).set({
-            userId,
-            consentGiven,
-            consentTimestamp: consentGiven ? now : null,
-            lastUpdated: now,
-        }, { merge: true });
-        return true;
-    } catch (error) {
-        console.error('Error updating consent:', error);
-        return false;
-    }
 }
 
 // ============================================
@@ -389,19 +343,7 @@ export async function getAggregatedAnalytics(
     }
 }
 
-/**
- * Get total consent counts for admin dashboard
- */
-export async function getConsentStats(): Promise<{ opted: number; total: number }> {
-    try {
-        const snapshot = await db.collection(CONSENT_COLLECTION).get();
-        const opted = snapshot.docs.filter(doc => doc.data().consentGiven === true).length;
-        return { opted, total: snapshot.size };
-    } catch (error) {
-        console.error('Error getting consent stats:', error);
-        return { opted: 0, total: 0 };
-    }
-}
+
 
 // ============================================
 // PHASE 2: ENHANCED AGGREGATION FUNCTIONS
