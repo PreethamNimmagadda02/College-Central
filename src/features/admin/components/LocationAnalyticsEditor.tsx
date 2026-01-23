@@ -113,10 +113,10 @@ const LocationAnalyticsEditor: React.FC = () => {
                 peak,
                 dwell
             ] = await Promise.all([
-                getAggregatedAnalytics(startDate, endDate),
-                getConsentStats(),
-                getPeakAnalysis(startDate, endDate),
-                getDwellTimeInsights(startDate, endDate)
+                getAggregatedAnalytics(startDate, endDate).catch(err => { console.error('Analytics error:', err); return null; }),
+                getConsentStats().catch(err => { console.error('Consent error:', err); return { opted: 0, total: 0 }; }),
+                getPeakAnalysis(startDate, endDate).catch(err => { console.error('Peak error:', err); return null; }),
+                getDwellTimeInsights(startDate, endDate).catch(err => { console.error('Dwell error:', err); return []; })
             ]);
 
             setAnalytics(analyticsData);
