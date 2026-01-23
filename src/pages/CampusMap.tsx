@@ -1,7 +1,7 @@
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useCampusMap } from '@contexts/CampusMapContext';
 import { useLocation } from '@contexts/LocationContext';
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 
 import { CampusLocation, CampusLocationCategory } from '@/types';
 import { useAuth } from '@features/auth/hooks/useAuth';
@@ -26,20 +26,10 @@ const CampusMap: React.FC = () => {
     error: locationError,
     permissionStatus,
     analyticsConsent,
-    requestAnalyticsConsent,
   } = useLocation();
   const { config: appConfig } = useAppConfig();
 
-  // Request analytics consent on first visit
-  useEffect(() => {
-    // Small delay to not interrupt the user immediately
-    const timer = setTimeout(() => {
-      if (analyticsConsent === null) {
-        requestAnalyticsConsent();
-      }
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [analyticsConsent, requestAnalyticsConsent]);
+  // Request analytics consent on first visit - REMOVED
   const [selectedCategory, setSelectedCategory] = useState<CampusLocationCategory | 'all'>('all');
   const [selectedLocation, setSelectedLocation] = useState<CampusLocation | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -458,20 +448,7 @@ const CampusMap: React.FC = () => {
               </h3>
             </div>
 
-            {!analyticsConsent && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-3 text-xs border-b border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
-                <span className="text-slate-600 dark:text-slate-300">
-                  <span className="mr-1">🚀</span>
-                  Enable location to see live crowd levels
-                </span>
-                <button
-                  onClick={requestAnalyticsConsent}
-                  className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
-                >
-                  Enable
-                </button>
-              </div>
-            )}
+            {/* Consent banner removed */}
 
             <div className="max-h-[50vh] overflow-y-auto overflow-x-hidden">
               {searchedLocations.length > 0 ? (
@@ -1228,8 +1205,6 @@ const CampusMap: React.FC = () => {
         isOpen={showStatsModal}
         onClose={() => setShowStatsModal(false)}
         isLoading={loadingStats}
-        onRequestConsent={requestAnalyticsConsent}
-        hasConsent={!!analyticsConsent}
       />
     </div>
   );

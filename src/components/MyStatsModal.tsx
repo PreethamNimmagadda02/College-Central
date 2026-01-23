@@ -6,8 +6,6 @@ interface MyStatsModalProps {
     isOpen: boolean;
     onClose: () => void;
     isLoading: boolean;
-    onRequestConsent: () => void;
-    hasConsent: boolean;
 }
 
 const MyStatsModal: React.FC<MyStatsModalProps> = ({
@@ -15,8 +13,7 @@ const MyStatsModal: React.FC<MyStatsModalProps> = ({
     isOpen,
     onClose,
     isLoading,
-    onRequestConsent,
-    hasConsent,
+    // hasConsent removed
 }) => {
     if (!isOpen) return null;
 
@@ -46,23 +43,7 @@ const MyStatsModal: React.FC<MyStatsModalProps> = ({
 
                 {/* Content */}
                 <div className="p-6 overflow-y-auto">
-                    {!hasConsent ? (
-                        <div className="text-center py-8">
-                            <div className="bg-blue-50 dark:bg-blue-900/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span className="text-4xl">📍</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Enable Location History</h3>
-                            <p className="text-slate-600 dark:text-slate-400 mb-6">
-                                To see your personalized campus stats, you need to enable location analytics.
-                            </p>
-                            <button
-                                onClick={onRequestConsent}
-                                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
-                            >
-                                Turn On Analytics
-                            </button>
-                        </div>
-                    ) : isLoading ? (
+                    {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-12">
                             <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
                             <p className="text-slate-500">Calculating your stats...</p>

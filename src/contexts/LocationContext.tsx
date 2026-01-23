@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from 'react';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import {
-    getUserConsentStatus,
-    updateUserConsent,
     detectCurrentZone,
     recordLocationVisit,
     updateDwellTime,
@@ -11,7 +9,6 @@ import {
     updateUserLocationState,
     CampusZone,
 } from '@services/locationAnalyticsService';
-import LocationConsentModal from '@components/LocationConsentModal';
 
 interface Location {
     lat: number;
@@ -39,11 +36,9 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [loading, setLoading] = useState<boolean>(true);
     const [permissionStatus, setPermissionStatus] = useState<PermissionState | 'unknown'>('unknown');
 
-    // Analytics state
+    // Analytics state - Implicitly true for all users (browser permission is the gate)
     const [currentZone, setCurrentZone] = useState<CampusZone | null>(null);
-    const [analyticsConsent, setAnalyticsConsent] = useState<boolean | null>(null);
-    const [showConsentModal, setShowConsentModal] = useState(false);
-    const [consentChecked, setConsentChecked] = useState(false);
+    const analyticsConsent = true; // Implicit consent
 
     // Tracking refs (will be populated from Firestore on mount)
     const lastRecordedZoneId = useRef<string | null>(null);
@@ -52,23 +47,12 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
     const lastLocationUpdate = useRef<number>(0);
     const serverStateLoaded = useRef<boolean>(false);
 
-    // Check analytics consent and load server-side zone state on mount
+    // Load server-side zone state on mount
     useEffect(() => {
         const initializeState = async () => {
-            if (!currentUser?.uid) {
-                setConsentChecked(true);
-                return;
-            }
+            if (!currentUser?.uid) return;
 
             try {
-                // Check consent
-                const consent = await getUserConsentStatus(currentUser.uid);
-                if (consent === null) {
-                    setAnalyticsConsent(null);
-                } else {
-                    setAnalyticsConsent(consent.consentGiven);
-                }
-
                 // Load server-side zone state (for cross-browser deduplication)
                 const serverState = await getUserLocationState(currentUser.uid);
                 if (serverState) {
@@ -81,39 +65,15 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
                 console.error('Error initializing location state:', err);
                 serverStateLoaded.current = true; // Continue even on error
             }
-            setConsentChecked(true);
         };
 
         initializeState();
     }, [currentUser?.uid]);
 
-    // Handle consent response
-    const handleConsent = useCallback(async () => {
-        if (!currentUser?.uid) return;
-
-        const success = await updateUserConsent(currentUser.uid, true);
-        if (success) {
-            setAnalyticsConsent(true);
-        }
-        setShowConsentModal(false);
-    }, [currentUser?.uid]);
-
-    const handleDecline = useCallback(async () => {
-        if (!currentUser?.uid) return;
-
-        const success = await updateUserConsent(currentUser.uid, false);
-        if (success) {
-            setAnalyticsConsent(false);
-        }
-        setShowConsentModal(false);
-    }, [currentUser?.uid]);
-
-    // Request to show consent modal
+    // Request to show consent modal - No-op now as consent is implicit
     const requestAnalyticsConsent = useCallback(() => {
-        if (analyticsConsent === null && consentChecked && currentUser?.uid) {
-            setShowConsentModal(true);
-        }
-    }, [analyticsConsent, consentChecked, currentUser?.uid]);
+        // No-op
+    }, []);
 
     // Track zone visits - only record when zone CHANGES (server-side deduplication)
     useEffect(() => {
@@ -251,11 +211,6 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
             }}
         >
             {children}
-            <LocationConsentModal
-                isOpen={showConsentModal}
-                onConsent={handleConsent}
-                onDecline={handleDecline}
-            />
         </LocationContext.Provider>
     );
 };
