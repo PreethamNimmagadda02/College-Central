@@ -954,3 +954,193 @@ export function streamActiveUsers(onUpdate: (users: ActiveUserLocation[]) => voi
             onUpdate([]);
         });
 }
+
+// ============================================
+// PHASE 3: ADVANCED METRICS (Retention, Correlations, Comparisons)
+// ============================================
+
+export interface RetentionMetric {
+    zoneId: string;
+    zoneName: string;
+    visitCount: number;
+    returnRate: number; // Percentage of users who visited more than once in the period
+}
+
+/**
+ * Get retention/loyalty metrics for top zones
+ * "Return Rate" = % of unique visitors who visited > 1 time
+ */
+export async function getRetentionMetrics(
+    startDate: Date,
+    endDate: Date
+): Promise<RetentionMetric[]> {
+    try {
+        const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
+        const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
+
+        const snapshot = await db
+            .collection(ANALYTICS_COLLECTION)
+            .where('timestamp', '>=', startTimestamp)
+            .where('timestamp', '<=', endTimestamp)
+            .get();
+
+        if (snapshot.empty) return [];
+
+        const visits = snapshot.docs.map(doc => doc.data()) as LocationVisit[];
+
+        // Group by Zone -> User -> Visit Count
+        const zoneUserCounts = new Map<string, Map<string, number>>();
+        const zoneNames = new Map<string, string>();
+
+        visits.forEach(v => {
+            if (!zoneUserCounts.has(v.zoneId)) {
+                zoneUserCounts.set(v.zoneId, new Map());
+                zoneNames.set(v.zoneId, v.zoneName);
+            }
+            const userMap = zoneUserCounts.get(v.zoneId)!;
+            userMap.set(v.userId, (userMap.get(v.userId) || 0) + 1);
+        });
+
+        const results: RetentionMetric[] = [];
+
+        for (const [zoneId, userMap] of zoneUserCounts.entries()) {
+            const totalUniqueUsers = userMap.size;
+            if (totalUniqueUsers === 0) continue;
+
+            const returningUsers = Array.from(userMap.values()).filter(count => count > 1).length;
+            const returnRate = (returningUsers / totalUniqueUsers) * 100;
+            const totalVisits = Array.from(userMap.values()).reduce((a, b) => a + b, 0);
+
+            results.push({
+                zoneId,
+                zoneName: zoneNames.get(zoneId) || 'Unknown',
+                visitCount: totalVisits,
+                returnRate: returnRate
+            });
+        }
+
+        return results.sort((a, b) => b.returnRate - a.returnRate).slice(0, 5); // Top 5 sticky zones
+    } catch (error) {
+        console.error('Error calculating retention metrics:', error);
+        return [];
+    }
+}
+
+export interface ZoneCorrelation {
+    sourceZoneId: string;
+    sourceZoneName: string;
+    totalSourceVisitors: number;
+    correlatedZones: {
+        zoneId: string;
+        zoneName: string;
+        count: number;
+        correlation: number // % of source users who also visited this zone
+    }[];
+}
+
+/**
+ * Calculate cross-facility correlations
+ * "Users who visited X also visited Y"
+ */
+export async function getZoneCorrelations(
+    sourceZoneId: string,
+    startDate: Date,
+    endDate: Date
+): Promise<ZoneCorrelation | null> {
+    try {
+        const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
+        const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
+
+        // 1. Get all visits for the target timeframe
+        // Note: For large datasets, we should do this in 2 queries:
+        // Query 1: Get Users who visited Source Zone
+        // Query 2: Get all visits for those Users
+        // BUT Firestore 'IN' queries are limited to 10-30 items.
+        // So fetching all visits in range and processing in memory is often feasible for mid-size app.
+
+        const snapshot = await db
+            .collection(ANALYTICS_COLLECTION)
+            .where('timestamp', '>=', startTimestamp)
+            .where('timestamp', '<=', endTimestamp)
+            .get();
+
+        if (snapshot.empty) return null;
+
+        const allVisits = snapshot.docs.map(doc => doc.data()) as LocationVisit[];
+
+        // 2. Identify users who visited the source zone
+        const sourceZoneVisits = allVisits.filter(v => v.zoneId === sourceZoneId);
+        const sourceUsers = new Set(sourceZoneVisits.map(v => v.userId));
+        const sourceZoneName = sourceZoneVisits[0]?.zoneName || 'Selected Zone';
+
+        if (sourceUsers.size === 0) return null;
+
+        // 3. Find where else these users went
+        const correlationMap = new Map<string, { name: string; users: Set<string> }>();
+
+        allVisits.forEach(v => {
+            if (v.zoneId === sourceZoneId) return; // Skip source zone
+            if (!sourceUsers.has(v.userId)) return; // Only care about source users
+
+            if (!correlationMap.has(v.zoneId)) {
+                correlationMap.set(v.zoneId, { name: v.zoneName, users: new Set() });
+            }
+            correlationMap.get(v.zoneId)!.users.add(v.userId);
+        });
+
+        // 4. Calculate stats
+        const correlatedZones = Array.from(correlationMap.entries())
+            .map(([zoneId, data]) => ({
+                zoneId,
+                zoneName: data.name,
+                count: data.users.size,
+                correlation: (data.users.size / sourceUsers.size) * 100
+            }))
+            .sort((a, b) => b.correlation - a.correlation)
+            .slice(0, 5); // Top 5
+
+        return {
+            sourceZoneId,
+            sourceZoneName,
+            totalSourceVisitors: sourceUsers.size,
+            correlatedZones
+        };
+
+    } catch (error) {
+        console.error('Error getting zone correlations:', error);
+        return null;
+    }
+}
+
+export interface HeatmapComparison {
+    currentPeriod: { day: number; hour: number; value: number }[];
+    previousPeriod: { day: number; hour: number; value: number }[];
+}
+
+/**
+ * Get data for heatmap comparison (Current vs Previous period)
+ */
+export async function getHeatmapComparison(
+    currentStart: Date,
+    currentEnd: Date
+): Promise<HeatmapComparison | null> {
+    try {
+        // Calculate previous period
+        const duration = currentEnd.getTime() - currentStart.getTime();
+        const previousEnd = new Date(currentStart.getTime() - 1);
+        const previousStart = new Date(previousEnd.getTime() - duration);
+
+        const [current, previous] = await Promise.all([
+            getHourlyHeatmapData(currentStart, currentEnd),
+            getHourlyHeatmapData(previousStart, previousEnd)
+        ]);
+
+        return {
+            currentPeriod: current,
+            previousPeriod: previous
+        };
+    } catch (error) {
+        console.error('Error comparing heatmaps:', error);
+        return null;
+    }
+}

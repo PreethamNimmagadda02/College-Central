@@ -18,8 +18,14 @@ import AdminPageLayout from './AdminPageLayout';
 import {
     getAggregatedAnalytics,
     getPeakAnalysis,
+    getRetentionMetrics,
+    getZoneCorrelations,
+    getHeatmapComparison,
     AnalyticsSummary,
     PeakAnalysis,
+    RetentionMetric,
+    ZoneCorrelation,
+    HeatmapComparison,
 } from '@/services/locationAnalyticsService';
 
 // Chart colors
@@ -75,6 +81,10 @@ const TrendingUpIcon = () => (
 const LocationAnalyticsEditor: React.FC = () => {
     const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
     const [peakAnalysis, setPeakAnalysis] = useState<PeakAnalysis | null>(null);
+    const [retentionMetrics, setRetentionMetrics] = useState<RetentionMetric[]>([]);
+    const [zoneCorrelations, setZoneCorrelations] = useState<ZoneCorrelation | null>(null);
+    const [heatmapComparison, setHeatmapComparison] = useState<HeatmapComparison | null>(null);
+    const [selectedCorrelationZone, setSelectedCorrelationZone] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [dateRange, setDateRange] = useState<'today' | 'week' | 'month'>('week');
 
@@ -101,14 +111,29 @@ const LocationAnalyticsEditor: React.FC = () => {
 
             const [
                 analyticsData,
-                peak
+                peak,
+                retention,
+                heatmap,
             ] = await Promise.all([
                 getAggregatedAnalytics(startDate, endDate).catch(err => { console.error('Analytics error:', err); return null; }),
                 getPeakAnalysis(startDate, endDate).catch(err => { console.error('Peak error:', err); return null; }),
+                getRetentionMetrics(startDate, endDate).catch(err => { console.error('Retention error:', err); return []; }),
+                getHeatmapComparison(startDate, endDate).catch(err => { console.error('Heatmap error:', err); return null; }),
             ]);
 
             setAnalytics(analyticsData);
             setPeakAnalysis(peak);
+            setRetentionMetrics(retention || []);
+            setHeatmapComparison(heatmap);
+
+            // Default correlation zone to most popular if not set
+            if (analyticsData?.mostPopularZone && !selectedCorrelationZone && (analyticsData.zoneAnalytics?.length || 0) > 0) {
+                const topZoneId = analyticsData.zoneAnalytics[0].zoneId;
+                setSelectedCorrelationZone(topZoneId);
+                // Trigger correlation fetch immediately? Or let effect handle it?
+                // Let's call it directly here to save a render cycle if possible, or just let the effect below handle it.
+                // We will add a separate effect for correlation fetching when selectedCorrelationZone changes.
+            }
         } catch (error) {
             console.error('Error fetching location analytics:', error);
         } finally {
@@ -119,6 +144,35 @@ const LocationAnalyticsEditor: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    // Fetch correlations when selected zone changes
+    useEffect(() => {
+        if (!selectedCorrelationZone) {
+            setZoneCorrelations(null);
+            return;
+        }
+
+        const fetchCorrelations = async () => {
+            try {
+                // Calculate dates again (or memoize them)
+                const endDate = new Date();
+                const startDate = new Date();
+                switch (dateRange) {
+                    case 'today': startDate.setHours(0, 0, 0, 0); break;
+                    case 'week': startDate.setDate(startDate.getDate() - 7); break;
+                    case 'month': startDate.setMonth(startDate.getMonth() - 1); break;
+                }
+
+                const correlations = await getZoneCorrelations(selectedCorrelationZone, startDate, endDate);
+                setZoneCorrelations(correlations);
+            } catch (error) {
+                console.error("Error fetching correlations:", error);
+                setZoneCorrelations(null);
+            }
+        };
+
+        fetchCorrelations();
+    }, [selectedCorrelationZone, dateRange]);
 
     const formatHour = (hour: number): string => {
         if (hour === 0) return '12 AM';
@@ -383,6 +437,141 @@ const LocationAnalyticsEditor: React.FC = () => {
                                 </div>
                             )}
                         </div>
+                    </div>
+                </div>
+
+                {/* Advanced Metrics Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Retention / Loyalty */}
+                    <div className="admin-card">
+                        <h3 className="text-lg font-semibold mb-4">Top Sticky Zones (Loyalty)</h3>
+                        <div className="space-y-4">
+                            {retentionMetrics.length > 0 ? (
+                                retentionMetrics.map((zone) => (
+                                    <div key={zone.zoneId} className="space-y-1">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-medium text-slate-200">{zone.zoneName}</span>
+                                            <span className="text-emerald-400 font-bold">{zone.returnRate.toFixed(1)}% Return Rate</span>
+                                        </div>
+                                        <div className="w-full bg-slate-700 rounded-full h-2">
+                                            <div
+                                                className="bg-emerald-500 h-2 rounded-full"
+                                                style={{ width: `${zone.returnRate}%` }}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-slate-500">{zone.visitCount} total visits</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-slate-500 text-sm">No retention data available yet.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Cross-Correlation */}
+                    <div className="admin-card">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">Zone Correlations</h3>
+                            <select
+                                className="bg-slate-700 border-none text-sm rounded-lg px-2 py-1 focus:ring-2 focus:ring-primary"
+                                value={selectedCorrelationZone}
+                                onChange={(e) => setSelectedCorrelationZone(e.target.value)}
+                            >
+                                <option value="" disabled>Select Zone</option>
+                                {analytics?.zoneAnalytics.map(z => (
+                                    <option key={z.zoneId} value={z.zoneId}>{z.zoneName}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {zoneCorrelations ? (
+                            <div className="space-y-4">
+                                <p className="text-sm text-slate-400">
+                                    Visitors of <span className="text-primary font-medium">{zoneCorrelations.sourceZoneName}</span> also visited:
+                                </p>
+                                {zoneCorrelations.correlatedZones.map((zone) => (
+                                    <div key={zone.zoneId} className="space-y-1">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-medium text-slate-200">{zone.zoneName}</span>
+                                            <span className="text-blue-400 font-bold">{zone.correlation.toFixed(1)}%</span>
+                                        </div>
+                                        <div className="w-full bg-slate-700 rounded-full h-2">
+                                            <div
+                                                className="bg-blue-500 h-2 rounded-full"
+                                                style={{ width: `${zone.correlation}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                                {zoneCorrelations.correlatedZones.length === 0 && (
+                                    <p className="text-slate-500 text-sm italic">No strong correlations found.</p>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-40 text-slate-500 text-sm">
+                                {selectedCorrelationZone ? 'Loading correlations...' : 'Select a zone to view correlations'}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Heatmap Comparison */}
+                <div className="admin-card">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold">Activity Heatmap (vs Last Period)</h3>
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 bg-indigo-500 rounded-sm"></div>
+                                <span className="text-slate-400">Higher Activity</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
+                                <span className="text-slate-400">Lower Activity</span>
+                            </div>
+                        </div>
+                    </div>
+                    {heatmapComparison ? (
+                        <div className="grid grid-cols-24 gap-px bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+                            {/* We need to render 7 rows (days) x 24 cols (hours) */}
+                            {Array.from({ length: 7 }).map((_, dayMetrics) => (
+                                <React.Fragment key={dayMetrics}>
+                                    {Array.from({ length: 24 }).map((_, hourMetrics) => {
+                                        // Find value in current and previous
+                                        const currVal = heatmapComparison.currentPeriod.find(d => d.day === dayMetrics && d.hour === hourMetrics)?.value || 0;
+                                        const prevVal = heatmapComparison.previousPeriod.find(d => d.day === dayMetrics && d.hour === hourMetrics)?.value || 0;
+
+                                        const diff = currVal - prevVal;
+                                        // Color scale: 
+                                        // > 0 (Increased): Indigo 500
+                                        // < 0 (Decreased): Red 500
+                                        // 0 (Same): Slate 800
+                                        // Opacity based on magnitude
+
+                                        let bgColor = 'bg-slate-900';
+                                        if (diff > 0) bgColor = `bg-indigo-500/${Math.min(diff * 10 + 20, 100)}`;
+                                        else if (diff < 0) bgColor = `bg-red-500/${Math.min(Math.abs(diff) * 10 + 20, 100)}`;
+
+                                        return (
+                                            <div
+                                                key={`${dayMetrics}-${hourMetrics}`}
+                                                className={`h-8 ${bgColor} text-[8px] flex items-center justify-center text-transparent hover:text-white transition-all cursor-crosshair`}
+                                                title={`Day ${dayMetrics}, Hour ${hourMetrics}: ${currVal} visits (${diff > 0 ? '+' : ''}${diff})`}
+                                            >
+                                                {diff !== 0 && Math.abs(diff)}
+                                            </div>
+                                        );
+                                    })}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-slate-500 text-sm">No heatmap data available.</p>
+                    )}
+                    <div className="flex justify-between text-xs text-slate-500 mt-2 px-1">
+                        <span>12 AM</span>
+                        <span>6 AM</span>
+                        <span>12 PM</span>
+                        <span>6 PM</span>
                     </div>
                 </div>
 
