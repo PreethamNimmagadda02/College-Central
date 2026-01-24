@@ -29,6 +29,8 @@ import { measurePageLoad } from '@lib/utils/performance';
 import React, { Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { Capacitor } from '@capacitor/core';
+import { NativeLocationProvider } from '@contexts/NativeLocationProvider';
 
 // Lazy load pages with automatic retry on chunk loading failure
 const Dashboard = lazyWithRetry(() => import('@pages/Dashboard'));
@@ -229,7 +231,11 @@ const router = createHashRouter([
   },
 ]);
 
+// ... existing imports
+
 const App: React.FC = () => {
+  const isNative = Capacitor.isNativePlatform();
+
   useEffect(() => {
     // Measure initial app load performance
     measurePageLoad('app_initial_load');
@@ -257,8 +263,18 @@ const App: React.FC = () => {
                       <WeatherProvider>
                         <CampusMapProvider>
                           <LocationProvider>
-                            <RouterProvider router={router} />
-                            <WeatherModal />
+                            {isNative && (
+                              <NativeLocationProvider>
+                                <RouterProvider router={router} />
+                                <WeatherModal />
+                              </NativeLocationProvider>
+                            )}
+                            {!isNative && (
+                              <>
+                                <RouterProvider router={router} />
+                                <WeatherModal />
+                              </>
+                            )}
                           </LocationProvider>
                         </CampusMapProvider>
                       </WeatherProvider>

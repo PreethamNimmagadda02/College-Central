@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">College Central</string>
+    <string name="title_activity_main">College Central</string>
+    <string name="package_name">college.central_02</string>
+    <string name="custom_url_scheme">college.central_02</string>
+    <string name="server_client_id">659896441461-fe0921ravutsrl1hm5lj2mpdosthlvir.apps.googleusercontent.com</string>
+</resources>

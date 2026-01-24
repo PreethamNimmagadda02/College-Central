@@ -7,6 +7,8 @@ import 'firebase/compat/auth';
 import { auth } from '@lib/firebase';
 import { ALLOWED_EMAIL_DOMAIN, HOSTED_DOMAIN } from '@lib/utils/constants';
 import { logActivity } from '@services/activityService';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { Capacitor } from '@capacitor/core';
 
 type User = firebase.User;
 
@@ -28,6 +30,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      GoogleAuth.initialize();
+    }
     // onAuthStateChanged is the recommended way to listen for auth changes.
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setCurrentUser(user);
@@ -76,13 +81,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const loginWithGoogle = async () => {
     try {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      // Restrict to iitism.ac.in domain
-      provider.setCustomParameters({
-        prompt: 'select_account',
-        hd: HOSTED_DOMAIN, // Hosted domain parameter for Google Workspace
-      });
-      const userCredential = await auth.signInWithPopup(provider);
+      let userCredential: firebase.auth.UserCredential;
+
+      if (Capacitor.isNativePlatform()) {
+        const googleUser = await GoogleAuth.signIn();
+        const credential = firebase.auth.GoogleAuthProvider.credential(googleUser.authentication.idToken);
+        userCredential = await auth.signInWithCredential(credential);
+      } else {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        // Restrict to iitism.ac.in domain
+        provider.setCustomParameters({
+          prompt: 'select_account',
+          hd: HOSTED_DOMAIN, // Hosted domain parameter for Google Workspace
+        });
+        userCredential = await auth.signInWithPopup(provider);
+      }
 
       // Verify the email domain after authentication
       const email = userCredential.user?.email;
