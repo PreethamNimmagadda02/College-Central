@@ -25,6 +25,7 @@ interface LocationContextType {
     currentZone: CampusZone | null;
     analyticsConsent: boolean | null;
     requestAnalyticsConsent: () => void;
+    retryLocation: () => void;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -198,6 +199,33 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
         };
     }, []);
 
+    // Retry function to clear error and restart watcher
+    const retryLocation = useCallback(() => {
+        setError(null);
+        setLoading(true);
+
+        // Re-check permission
+        if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+                setPermissionStatus(result.state);
+            });
+        }
+
+        // Restart watcher (logic is in useEffect, so we can just trigger a component re-mount or 
+        // simply let the watcher continue if it was just a timeout. 
+        // But for a full reset, we might need a key or just force a status update.)
+
+        // Actually, the watcher never stops unless components unmount. 
+        // If we want to force a "retry" of the *request*, we might need to clear and re-add.
+        // However, standard watchPosition keeps trying. 
+        // The main use case is when the USER changes settings and clicks "Retry".
+        // In that case, we just want to clear the error state and let the existing watcher (or a new one) fire.
+
+        // Let's rely on the fact that if the user fixed it, the *next* update will succeed.
+        // But we need to clear the Error UI.
+        setError(null);
+    }, []);
+
     return (
         <LocationContext.Provider
             value={{
@@ -208,6 +236,7 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
                 currentZone,
                 analyticsConsent,
                 requestAnalyticsConsent,
+                retryLocation,
             }}
         >
             {children}

@@ -14,6 +14,7 @@ import { OfflineIndicator } from '@components/common/OfflineIndicator';
 import { CalendarProvider } from '@contexts/CalendarContext';
 import { CampusMapProvider } from '@contexts/CampusMapContext';
 import { LocationProvider } from '@contexts/LocationContext';
+import { LocationRequirement } from '@components/common/LocationRequirement';
 import { WeatherProvider } from '@contexts/WeatherContext';
 import WeatherModal from '@components/weather/WeatherModal';
 import { FormsProvider } from '@contexts/FormsContext';
@@ -263,18 +264,20 @@ const App: React.FC = () => {
                       <WeatherProvider>
                         <CampusMapProvider>
                           <LocationProvider>
-                            {isNative && (
-                              <NativeLocationProvider>
-                                <RouterProvider router={router} />
-                                <WeatherModal />
-                              </NativeLocationProvider>
-                            )}
-                            {!isNative && (
-                              <>
-                                <RouterProvider router={router} />
-                                <WeatherModal />
-                              </>
-                            )}
+                            <LocationRequirement>
+                              {isNative && (
+                                <NativeLocationProvider>
+                                  <RouterProvider router={router} />
+                                  <WeatherModal />
+                                </NativeLocationProvider>
+                              )}
+                              {!isNative && (
+                                <>
+                                  <RouterProvider router={router} />
+                                  <WeatherModal />
+                                </>
+                              )}
+                            </LocationRequirement>
                           </LocationProvider>
                         </CampusMapProvider>
                       </WeatherProvider>
