@@ -11,6 +11,12 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    // Check if user is an admin via Firestore lookup
+    function isAdmin() {
+      return isAuthenticated() &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     // Check if the filename is safe (no path traversal)
     function isSafeFilename() {
       return !request.resource.name.matches('.*\\.\\.\\/.*')
@@ -27,20 +33,18 @@ service firebase.storage {
     // ============================================
 
     // Hero images - readable by all, writable by admins only
-    // Note: Admin check happens at application level since we can't read Firestore from Storage rules
     match /hero-images/{allPaths=**} {
       // Public read for login page (unauthenticated access needed)
       allow read: if true;
       
-      // Write requires authentication, valid file, and size limit
-      // Admin role validation is enforced at the application layer
-      allow write: if isAuthenticated()
+      // Write requires admin role, valid file, and size limit
+      allow write: if isAdmin()
                    && isSafeFilename()
                    && request.resource.size < 15 * 1024 * 1024  // Max 15MB
                    && isValidImageType();
       
-      // Delete requires authentication
-      allow delete: if isAuthenticated();
+      // Delete requires admin role
+      allow delete: if isAdmin();
     }
 
     // ============================================
