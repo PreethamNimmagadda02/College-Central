@@ -374,15 +374,19 @@ Include retakes. Return exact values as shown on the document.`
       const semesterConfidences: { semester: number; confidence: number; sgpaMismatch?: number }[] = [];
 
       // Perform multiple extraction passes
-      for (let pass = 0; pass < MAX_PASSES; pass++) {
-        try {
-          //console.log(`[Extraction] Pass ${pass + 1}/${MAX_PASSES}`);
-          const passResult = await performExtraction(pass);
-          allPasses.push(passResult);
-        } catch (passError) {
-          console.warn(`[Extraction] Pass ${pass + 1} failed:`, passError);
+      const extractionPromises = Array.from({ length: MAX_PASSES }, (_, pass) =>
+        performExtraction(pass)
+      );
+
+      const results = await Promise.allSettled(extractionPromises);
+
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          allPasses.push(result.value);
+        } else {
+          console.warn(`[Extraction] Pass ${index + 1} failed:`, result.reason);
         }
-      }
+      });
 
       if (allPasses.length === 0) {
         throw new Error('All extraction passes failed');
