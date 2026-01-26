@@ -97,8 +97,8 @@ const Directory = () => {
     setSortConfig({ key, direction });
   };
 
-  // Group faculty by name first, then filter
-  const groupedFaculty = useMemo(() => {
+  // Group faculty by name
+  const baseGroupedFaculty = useMemo(() => {
     // First group all faculty by name
     const grouped = new Map<string, DirectoryEntry[]>();
     facultyDirectory.forEach((entry) => {
@@ -113,10 +113,13 @@ const Directory = () => {
     });
 
     // Convert to array of groups
-    let groupedArray = Array.from(grouped.values());
+    return Array.from(grouped.values());
+  }, [facultyDirectory]);
 
+  // Filter and sort grouped faculty
+  const groupedFaculty = useMemo(() => {
     // Filter groups based on search term only
-    groupedArray = groupedArray.filter((group) => {
+    const groupedArray = baseGroupedFaculty.filter((group) => {
       // Check if any entry in the group matches the search term
       return group.some(
         (entry) =>
@@ -144,7 +147,7 @@ const Directory = () => {
     }
 
     return groupedArray;
-  }, [facultyDirectory, searchTerm, sortConfig]);
+  }, [baseGroupedFaculty, searchTerm, sortConfig]);
 
   // Filter and sort students
   const filteredStudents = useMemo(() => {
