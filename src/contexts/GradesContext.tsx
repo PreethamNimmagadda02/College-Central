@@ -387,6 +387,19 @@ Include retakes. Return exact values as shown on the document.`
           console.warn(`[Extraction] Pass ${index + 1} failed:`, result.reason);
         }
       });
+      const passPromises = Array.from({ length: MAX_PASSES }, async (_, pass) => {
+        try {
+          //console.log(`[Extraction] Pass ${pass + 1}/${MAX_PASSES}`);
+          return await performExtraction(pass);
+        } catch (passError) {
+          console.warn(`[Extraction] Pass ${pass + 1} failed:`, passError);
+          return null;
+        }
+      });
+
+      const results = await Promise.all(passPromises);
+      const successfulPasses = results.filter((result) => result !== null);
+      allPasses.push(...successfulPasses);
 
       if (allPasses.length === 0) {
         throw new Error('All extraction passes failed');
