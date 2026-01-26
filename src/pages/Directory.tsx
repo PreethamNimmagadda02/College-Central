@@ -97,9 +97,8 @@ const Directory = () => {
     setSortConfig({ key, direction });
   };
 
-  // Group faculty by name
-  const baseGroupedFaculty = useMemo(() => {
-    // First group all faculty by name
+  // First group all faculty by name - purely data dependent
+  const facultyGroups = useMemo(() => {
     const grouped = new Map<string, DirectoryEntry[]>();
     facultyDirectory.forEach((entry) => {
       const existing = grouped.get(entry.name);
@@ -111,24 +110,27 @@ const Directory = () => {
         grouped.set(entry.name, [entry]);
       }
     });
-
-    // Convert to array of groups
     return Array.from(grouped.values());
   }, [facultyDirectory]);
 
-  // Filter and sort grouped faculty
+  // Then filter and sort - search/sort dependent
   const groupedFaculty = useMemo(() => {
-    // Filter groups based on search term only
-    const groupedArray = baseGroupedFaculty.filter((group) => {
-      // Check if any entry in the group matches the search term
-      return group.some(
-        (entry) =>
-          entry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          entry.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          entry.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          entry.email.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
+    // Start with pre-grouped data
+    let groupedArray = [...facultyGroups];
+
+    // Filter groups based on search term
+    if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      groupedArray = groupedArray.filter((group) => {
+        return group.some(
+          (entry) =>
+            entry.name.toLowerCase().includes(lowerSearchTerm) ||
+            entry.department.toLowerCase().includes(lowerSearchTerm) ||
+            entry.designation.toLowerCase().includes(lowerSearchTerm) ||
+            entry.email.toLowerCase().includes(lowerSearchTerm)
+        );
+      });
+    }
 
     // Sort groups if needed
     if (sortConfig.key) {
@@ -147,18 +149,26 @@ const Directory = () => {
     }
 
     return groupedArray;
-  }, [baseGroupedFaculty, searchTerm, sortConfig]);
+  }, [facultyGroups, searchTerm, sortConfig]);
 
   // Filter and sort students
   const filteredStudents = useMemo(() => {
-    const filtered = studentDirectory.filter(
-      (entry) =>
-        entry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.admNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.branch.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    let filtered = studentDirectory;
+    if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (entry) =>
+          entry.name.toLowerCase().includes(lowerSearchTerm) ||
+          entry.admNo.toLowerCase().includes(lowerSearchTerm) ||
+          entry.branch.toLowerCase().includes(lowerSearchTerm)
+      );
+    }
 
     if (sortConfig.key) {
+      // Create a copy before sorting if it wasn't already created by filter
+      if (filtered === studentDirectory) {
+        filtered = [...filtered];
+      }
       filtered.sort((a, b) => {
         const key = sortConfig.key as keyof StudentDirectoryEntry;
         const aVal = a[key] ?? '';
@@ -234,7 +244,10 @@ const Directory = () => {
   // Profile Lookup Logic
   const navigate = useNavigate();
   const [checkingProfile, setCheckingProfile] = useState<string | null>(null); // admNo being checked
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   const handleViewProfile = async (admissionNumber: string) => {
     if (!admissionNumber) return;
@@ -245,12 +258,12 @@ const Directory = () => {
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        const userId = querySnapshot.docs[0].id;
+        const userId = querySnapshot.docs[0]!.id;
         navigate(`/u/${userId}`);
       } else {
         setNotification({
           message: 'This user has not created a profile yet.',
-          type: 'error'
+          type: 'error',
         });
         setTimeout(() => setNotification(null), 3000);
       }
@@ -258,7 +271,7 @@ const Directory = () => {
       console.error('Error checking profile:', error);
       setNotification({
         message: 'Failed to access directory database.',
-        type: 'error'
+        type: 'error',
       });
       setTimeout(() => setNotification(null), 3000);
     } finally {
@@ -282,10 +295,18 @@ const Directory = () => {
       {/* Toast Notification */}
       {notification && (
         <div className="fixed top-20 right-4 z-50 animate-slideIn">
-          <div className={`px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 text-white ${notification.type === 'error' ? 'bg-red-500' : 'bg-green-500'
-            }`}>
+          <div
+            className={`px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 text-white ${
+              notification.type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            }`}
+          >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <span className="font-medium">{notification.message}</span>
           </div>
@@ -319,10 +340,11 @@ const Directory = () => {
                 setActiveTab('faculty');
                 clearFilters();
               }}
-              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${activeTab === 'faculty'
-                ? 'border-primary text-primary dark:text-secondary bg-white dark:bg-dark-card'
-                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
-                }`}
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'faculty'
+                  ? 'border-primary text-primary dark:text-secondary bg-white dark:bg-dark-card'
+                  : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
             >
               <Building2 className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">
@@ -337,10 +359,11 @@ const Directory = () => {
                 setActiveTab('student');
                 clearFilters();
               }}
-              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${activeTab === 'student'
-                ? 'border-primary text-primary dark:text-secondary bg-white dark:bg-dark-card'
-                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
-                }`}
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'student'
+                  ? 'border-primary text-primary dark:text-secondary bg-white dark:bg-dark-card'
+                  : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
             >
               <GraduationCap className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">
@@ -388,10 +411,11 @@ const Directory = () => {
               <div className="flex bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`px-3 py-2.5 transition-all duration-300 ${viewMode === 'table'
-                    ? 'bg-primary text-white dark:bg-secondary'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
-                    }`}
+                  className={`px-3 py-2.5 transition-all duration-300 ${
+                    viewMode === 'table'
+                      ? 'bg-primary text-white dark:bg-secondary'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  }`}
                   title="Table View"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -405,10 +429,11 @@ const Directory = () => {
                 </button>
                 <button
                   onClick={() => setViewMode('card')}
-                  className={`px-3 py-2.5 transition-all duration-300 ${viewMode === 'card'
-                    ? 'bg-primary text-white dark:bg-secondary'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
-                    }`}
+                  className={`px-3 py-2.5 transition-all duration-300 ${
+                    viewMode === 'card'
+                      ? 'bg-primary text-white dark:bg-secondary'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  }`}
                   title="Card View"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -444,129 +469,129 @@ const Directory = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {activeTab === 'faculty'
                 ? paginatedFaculty.map((group) => {
-                  const person = group[0]!;
-                  return (
-                    <div
-                      key={person.id}
-                      className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <div className="relative z-10">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
-                              {person.name}
-                            </h3>
-                          </div>
-                          <Building2 className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
-                        </div>
-                        <div className="space-y-3">
-                          {group.map((role, index) => (
-                            <div key={role.id}>
-                              {index > 0 && (
-                                <hr className="my-3 border-slate-200 dark:border-slate-700" />
-                              )}
-                              <div className="space-y-2">
-                                <div className="flex items-start gap-2">
-                                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
-                                    Role:
-                                  </span>
-                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    {role.designation}
-                                  </span>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
-                                    Dept:
-                                  </span>
-                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    {role.department}
-                                  </span>
-                                </div>
-                                <a
-                                  href={`mailto:${role.email}`}
-                                  className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link"
-                                >
-                                  <Mail className="w-4 h-4 flex-shrink-0" />
-                                  <span className="group-hover/link:underline truncate">
-                                    {role.email}
-                                  </span>
-                                </a>
-                                {isValidIndianPhoneNumber(role.phone) && (
-                                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
-                                    <Phone className="w-4 h-4 flex-shrink-0" />
-                                    <span>{role.phone}</span>
-                                  </div>
-                                )}
-                              </div>
+                    const person = group[0]!;
+                    return (
+                      <div
+                        key={person.id}
+                        className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                {person.name}
+                              </h3>
                             </div>
-                          ))}
+                            <Building2 className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
+                          </div>
+                          <div className="space-y-3">
+                            {group.map((role, index) => (
+                              <div key={role.id}>
+                                {index > 0 && (
+                                  <hr className="my-3 border-slate-200 dark:border-slate-700" />
+                                )}
+                                <div className="space-y-2">
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
+                                      Role:
+                                    </span>
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                      {role.designation}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
+                                      Dept:
+                                    </span>
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                      {role.department}
+                                    </span>
+                                  </div>
+                                  <a
+                                    href={`mailto:${role.email}`}
+                                    className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link"
+                                  >
+                                    <Mail className="w-4 h-4 flex-shrink-0" />
+                                    <span className="group-hover/link:underline truncate">
+                                      {role.email}
+                                    </span>
+                                  </a>
+                                  {isValidIndianPhoneNumber(role.phone) && (
+                                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
+                                      <Phone className="w-4 h-4 flex-shrink-0" />
+                                      <span>{role.phone}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })
                 : paginatedStudents.map((group) => {
-                  const student = group[0]!; // Student data is not expected to have multiple roles.
-                  const isChecking = checkingProfile === student.admNo;
-                  return (
-                    <div
-                      key={student.id}
-                      onClick={() => handleViewProfile(student.admNo)}
-                      className="group relative overflow-hidden cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <div className="relative z-10">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors flex items-center gap-2">
-                              {student.name}
-                              {isChecking && <Loader2 className="w-4 h-4 animate-spin" />}
-                            </h3>
-                            <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">
-                              {student.admNo}
-                            </p>
+                    const student = group[0]!; // Student data is not expected to have multiple roles.
+                    const isChecking = checkingProfile === student.admNo;
+                    return (
+                      <div
+                        key={student.id}
+                        onClick={() => handleViewProfile(student.admNo)}
+                        className="group relative overflow-hidden cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors flex items-center gap-2">
+                                {student.name}
+                                {isChecking && <Loader2 className="w-4 h-4 animate-spin" />}
+                              </h3>
+                              <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">
+                                {student.admNo}
+                              </p>
+                            </div>
+                            <GraduationCap className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
                           </div>
-                          <GraduationCap className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                              Branch:
-                            </span>
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              {student.branch}
-                            </span>
-                          </div>
-                          {student.year && (
+                          <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Year:
+                                Branch:
                               </span>
                               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {student.year}
+                                {student.branch}
                               </span>
                             </div>
-                          )}
-                          <div
-                            onClick={(e) => e.stopPropagation()} // Prevent card click
-                          >
-                            <a
-                              href={`mailto:${student.admNo.toLowerCase()}@${config?.collegeInfo?.email?.domain || 'college.edu'}`}
-                              className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link w-fit"
+                            {student.year && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                  Year:
+                                </span>
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                  {student.year}
+                                </span>
+                              </div>
+                            )}
+                            <div
+                              onClick={(e) => e.stopPropagation()} // Prevent card click
                             >
-                              <Mail className="w-4 h-4 flex-shrink-0" />
-                              <span className="group-hover/link:underline truncate">
-                                {student.admNo.toLowerCase()}@
-                                {config?.collegeInfo?.email?.domain || 'college.edu'}
-                              </span>
-                            </a>
+                              <a
+                                href={`mailto:${student.admNo.toLowerCase()}@${config?.collegeInfo?.email?.domain || 'college.edu'}`}
+                                className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link w-fit"
+                              >
+                                <Mail className="w-4 h-4 flex-shrink-0" />
+                                <span className="group-hover/link:underline truncate">
+                                  {student.admNo.toLowerCase()}@
+                                  {config?.collegeInfo?.email?.domain || 'college.edu'}
+                                </span>
+                              </a>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
             </div>
           </div>
         ) : (

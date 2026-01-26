@@ -223,7 +223,7 @@ const Profile: React.FC = () => {
         if (error.code === 'permission-denied') {
           console.error(
             'Firestore Security Rules Error: The current user does not have permission to read their own activity log. ' +
-            "Please ensure your Firestore rules allow reads on the 'users/{userId}/activity/{activityId}' path for authenticated users."
+              "Please ensure your Firestore rules allow reads on the 'users/{userId}/activity/{activityId}' path for authenticated users."
           );
         }
         setActivityLoading(false);
@@ -487,8 +487,9 @@ const Profile: React.FC = () => {
       {notification && (
         <div className="fixed top-20 right-4 z-50 animate-slideIn">
           <div
-            className={`px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 ${notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-              }`}
+            className={`px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 ${
+              notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`}
           >
             {notification.type === 'success' ? (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -576,12 +577,13 @@ const Profile: React.FC = () => {
                       bannerGradient: gradient.class,
                     }));
                   }}
-                  className={`w-8 h-8 rounded-full ${gradient.class} ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 transition-all ${formData.bannerGradient === gradient.class ||
+                  className={`w-8 h-8 rounded-full ${gradient.class} ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 transition-all ${
+                    formData.bannerGradient === gradient.class ||
                     (!formData.bannerGradient && gradient.id === 'gradient-midnight') || // default check logic could be improved but this is a start
                     (!formData.bannerGradient && user.bannerGradient === gradient.class)
-                    ? 'ring-primary scale-110'
-                    : 'ring-transparent opacity-70 hover:opacity-100 hover:scale-105'
-                    }`}
+                      ? 'ring-primary scale-110'
+                      : 'ring-transparent opacity-70 hover:opacity-100 hover:scale-105'
+                  }`}
                 />
               ))}
             </div>
@@ -613,10 +615,11 @@ const Profile: React.FC = () => {
                 <button
                   key={frame.id}
                   onClick={() => setFormData((prev) => ({ ...prev, profileFrame: frame.id }))}
-                  className={`w-8 h-8 rounded-full transition-all ${frame.class} ${(formData.profileFrame || user.profileFrame || 'none') === frame.id
-                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-white dark:ring-offset-slate-900 scale-110'
-                    : 'opacity-70 hover:opacity-100 hover:scale-105'
-                    }`}
+                  className={`w-8 h-8 rounded-full transition-all ${frame.class} ${
+                    (formData.profileFrame || user.profileFrame || 'none') === frame.id
+                      ? 'ring-2 ring-primary ring-offset-2 ring-offset-white dark:ring-offset-slate-900 scale-110'
+                      : 'opacity-70 hover:opacity-100 hover:scale-105'
+                  }`}
                   title={frame.name}
                 >
                   <div className="w-full h-full rounded-full bg-white/20"></div>
@@ -631,10 +634,11 @@ const Profile: React.FC = () => {
       <div className="relative rounded-xl shadow-lg overflow-hidden group/banner">
         {/* Banner Image */}
         <div
-          className={`absolute inset-0 ${formData.bannerGradient ||
+          className={`absolute inset-0 ${
+            formData.bannerGradient ||
             user.bannerGradient ||
             'bg-gradient-to-r from-primary to-secondary'
-            }`}
+          }`}
         >
           {/* Overlay for better text readability */}
           <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
@@ -670,8 +674,9 @@ const Profile: React.FC = () => {
               {previewImage || (user.profilePicture && !imageError) ? (
                 <div className={getFrameClass(formData.profileFrame || user.profileFrame)}>
                   <img
-                    className={`h-32 w-32 rounded-full object-cover transition-all duration-300 ${isDragging ? 'scale-105 opacity-80' : ''
-                      } ${isUploading ? 'opacity-50' : 'opacity-100'}`}
+                    className={`h-32 w-32 rounded-full object-cover transition-all duration-300 ${
+                      isDragging ? 'scale-105 opacity-80' : ''
+                    } ${isUploading ? 'opacity-50' : 'opacity-100'}`}
                     src={previewImage || user.profilePicture}
                     alt="Profile"
                     onError={() => setImageError(true)}
@@ -679,8 +684,9 @@ const Profile: React.FC = () => {
                 </div>
               ) : (
                 <div
-                  className={`h-32 w-32 rounded-full bg-white text-primary flex items-center justify-center text-4xl font-bold transition-all duration-300 ${getFrameClass(formData.profileFrame || user.profileFrame)} ${isDragging ? 'scale-105' : ''
-                    }`}
+                  className={`h-32 w-32 rounded-full bg-white text-primary flex items-center justify-center text-4xl font-bold transition-all duration-300 ${getFrameClass(formData.profileFrame || user.profileFrame)} ${
+                    isDragging ? 'scale-105' : ''
+                  }`}
                 >
                   {getInitials(user.name)}
                 </div>
@@ -701,10 +707,11 @@ const Profile: React.FC = () => {
               {/* Hover Overlay with Upload Icon */}
               {isEditing && (
                 <div
-                  className={`absolute inset-0 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${isDragging
-                    ? 'bg-blue-500/80 opacity-100'
-                    : 'bg-black/50 opacity-0 group-hover:opacity-100'
-                    }`}
+                  className={`absolute inset-0 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
+                    isDragging
+                      ? 'bg-blue-500/80 opacity-100'
+                      : 'bg-black/50 opacity-0 group-hover:opacity-100'
+                  }`}
                 >
                   {isUploading ? (
                     <div className="flex flex-col items-center">
@@ -833,10 +840,11 @@ const Profile: React.FC = () => {
                   <button
                     onClick={handleSave}
                     disabled={isUploading}
-                    className={`px-6 py-2.5 rounded-lg font-medium transition-all shadow-lg flex items-center gap-2 ${isUploading
-                      ? 'bg-white/50 text-primary/50 cursor-not-allowed'
-                      : 'bg-white text-primary hover:bg-white/90'
-                      }`}
+                    className={`px-6 py-2.5 rounded-lg font-medium transition-all shadow-lg flex items-center gap-2 ${
+                      isUploading
+                        ? 'bg-white/50 text-primary/50 cursor-not-allowed'
+                        : 'bg-white text-primary hover:bg-white/90'
+                    }`}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -893,10 +901,11 @@ const Profile: React.FC = () => {
         <div className="flex border-b border-slate-200 dark:border-slate-700">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`flex-1 px-6 py-4 font-medium transition-all flex items-center justify-center gap-2 ${activeTab === 'overview'
-              ? 'text-primary border-b-2 border-primary bg-primary/5'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-              }`}
+            className={`flex-1 px-6 py-4 font-medium transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'overview'
+                ? 'text-primary border-b-2 border-primary bg-primary/5'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -910,10 +919,11 @@ const Profile: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('activity')}
-            className={`flex-1 px-6 py-4 font-medium transition-all flex items-center justify-center gap-2 ${activeTab === 'activity'
-              ? 'text-primary border-b-2 border-primary bg-primary/5'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-              }`}
+            className={`flex-1 px-6 py-4 font-medium transition-all flex items-center justify-center gap-2 ${
+              activeTab === 'activity'
+                ? 'text-primary border-b-2 border-primary bg-primary/5'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -1659,73 +1669,136 @@ const Profile: React.FC = () => {
                         const getTypeStyle = (type: string) => {
                           switch (type) {
                             case 'schedule':
-                              return { bg: 'bg-blue-500', ring: 'ring-blue-200 dark:ring-blue-800', badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' };
+                              return {
+                                bg: 'bg-blue-500',
+                                ring: 'ring-blue-200 dark:ring-blue-800',
+                                badge:
+                                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                              };
                             case 'grades':
-                              return { bg: 'bg-green-500', ring: 'ring-green-200 dark:ring-green-800', badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
+                              return {
+                                bg: 'bg-green-500',
+                                ring: 'ring-green-200 dark:ring-green-800',
+                                badge:
+                                  'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                              };
                             case 'profile':
-                              return { bg: 'bg-purple-500', ring: 'ring-purple-200 dark:ring-purple-800', badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' };
+                              return {
+                                bg: 'bg-purple-500',
+                                ring: 'ring-purple-200 dark:ring-purple-800',
+                                badge:
+                                  'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+                              };
                             case 'calendar':
-                              return { bg: 'bg-orange-500', ring: 'ring-orange-200 dark:ring-orange-800', badge: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' };
+                              return {
+                                bg: 'bg-orange-500',
+                                ring: 'ring-orange-200 dark:ring-orange-800',
+                                badge:
+                                  'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+                              };
                             case 'form':
-                              return { bg: 'bg-cyan-500', ring: 'ring-cyan-200 dark:ring-cyan-800', badge: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400' };
+                              return {
+                                bg: 'bg-cyan-500',
+                                ring: 'ring-cyan-200 dark:ring-cyan-800',
+                                badge:
+                                  'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+                              };
                             case 'map':
-                              return { bg: 'bg-emerald-500', ring: 'ring-emerald-200 dark:ring-emerald-800', badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' };
+                              return {
+                                bg: 'bg-emerald-500',
+                                ring: 'ring-emerald-200 dark:ring-emerald-800',
+                                badge:
+                                  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                              };
                             default:
-                              return { bg: 'bg-primary', ring: 'ring-primary/20', badge: 'bg-primary/10 text-primary' };
+                              return {
+                                bg: 'bg-primary',
+                                ring: 'ring-primary/20',
+                                badge: 'bg-primary/10 text-primary',
+                              };
                           }
                         };
 
                         const typeStyle = getTypeStyle(activityItem.type);
 
                         const content = (
-                          <div className={`relative w-full md:flex md:items-center pb-12 ${isEven ? 'md:justify-end' : 'md:justify-start'}`}>
-
+                          <div
+                            className={`relative w-full md:flex md:items-center pb-12 ${isEven ? 'md:justify-end' : 'md:justify-start'}`}
+                          >
                             {/* Connecting Line (Segment) */}
                             {!isLast && (
                               <div className="absolute left-8 md:left-1/2 -translate-x-1/2 top-5 h-full w-[3px] bg-slate-200 dark:bg-slate-700 z-0"></div>
                             )}
 
                             {/* Timeline node - Absolute Center */}
-                            <div className={`
+                            <div
+                              className={`
                               absolute top-0 w-10 h-10 rounded-full ${typeStyle.bg} ring-4 ${typeStyle.ring} shadow-lg z-10 
                               flex items-center justify-center text-white transition-transform duration-300 group-hover:scale-110
                               left-3
                               md:left-1/2 md:-translate-x-1/2
-                            `}>
+                            `}
+                            >
                               <div className="text-base">{activityItem.icon}</div>
                             </div>
 
                             {/* Content Wrapper */}
-                            <div className={`
+                            <div
+                              className={`
                               w-full md:w-[45%] pl-20 md:pl-0
                               ${isEven ? 'text-left' : 'md:text-right text-left'}
-                            `}>
-                              <div className={`
+                            `}
+                            >
+                              <div
+                                className={`
                                 w-full p-5 bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 
                                 border border-slate-100 dark:border-slate-700 group hover:-translate-y-1 relative overflow-visible
-                              `}>
+                              `}
+                              >
                                 {/* Connector Arrow */}
-                                <div className={`
+                                <div
+                                  className={`
                                   absolute top-5 w-3 h-3 bg-white dark:bg-slate-800 rotate-45
                                   border-slate-100 dark:border-slate-700
                                   left-[-6px] border-l border-b
                                   ${isEven ? '' : 'md:left-auto md:right-[-6px] md:border-l-0 md:border-b-0 md:border-t md:border-r'}
-                                `}></div>
+                                `}
+                                ></div>
 
                                 {/* Colored accent stripe */}
-                                <div className={`absolute top-0 left-0 w-1 h-full ${typeStyle.bg} rounded-l-xl`}></div>
+                                <div
+                                  className={`absolute top-0 left-0 w-1 h-full ${typeStyle.bg} rounded-l-xl`}
+                                ></div>
 
-                                <div className={`flex items-center gap-2 mb-2 flex-wrap ${isEven ? '' : 'md:justify-end'}`}>
-                                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${typeStyle.badge}`}>
+                                <div
+                                  className={`flex items-center gap-2 mb-2 flex-wrap ${isEven ? '' : 'md:justify-end'}`}
+                                >
+                                  <span
+                                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${typeStyle.badge}`}
+                                  >
                                     {activityItem.type}
                                   </span>
                                   <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
-                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                      />
+                                    </svg>
                                     {formatTimeAgo(activityItem.timestamp)}
                                   </span>
                                 </div>
 
-                                <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-1">{activityItem.title}</h4>
+                                <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-1">
+                                  {activityItem.title}
+                                </h4>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                                   {activityItem.description}
                                 </p>
@@ -1735,11 +1808,17 @@ const Profile: React.FC = () => {
                         );
 
                         return activityItem.link ? (
-                          <Link to={activityItem.link} key={activityItem.id} className="block group">
+                          <Link
+                            to={activityItem.link}
+                            key={activityItem.id}
+                            className="block group"
+                          >
                             {content}
                           </Link>
                         ) : (
-                          <div key={activityItem.id} className="group">{content}</div>
+                          <div key={activityItem.id} className="group">
+                            {content}
+                          </div>
                         );
                       })}
                     </div>
@@ -1831,175 +1910,171 @@ const Profile: React.FC = () => {
       </div>
 
       {/* Expanded Image Modal */}
-      {
-        isImageExpanded && user.profilePicture && (
-          <div
-            className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out ${showModalContent ? 'opacity-100' : 'opacity-0'}`}
+      {isImageExpanded && user.profilePicture && (
+        <div
+          className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out ${showModalContent ? 'opacity-100' : 'opacity-0'}`}
+          onClick={closeModal}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Expanded profile picture view"
+        >
+          {/* Full-screen blurred background of the same image */}
+          <img
+            src={user.profilePicture}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover filter blur-xl scale-110"
+          />
+          {/* Semi-transparent overlay for contrast */}
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+
+          <button
+            className="absolute top-6 right-6 text-white/70 hover:text-white hover:scale-110 transition-all z-[101]"
+            aria-label="Close image view"
             onClick={closeModal}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Expanded profile picture view"
           >
-            {/* Full-screen blurred background of the same image */}
+            <X size={32} />
+          </button>
+          <div
+            className={`relative transition-all duration-300 ease-out ${showModalContent ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <img
               src={user.profilePicture}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-cover filter blur-xl scale-110"
+              alt="Expanded profile"
+              className="w-[70vmin] h-[70vmin] max-w-lg max-h-lg object-cover rounded-full shadow-2xl ring-4 ring-white/20"
             />
-            {/* Semi-transparent overlay for contrast */}
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-
-            <button
-              className="absolute top-6 right-6 text-white/70 hover:text-white hover:scale-110 transition-all z-[101]"
-              aria-label="Close image view"
-              onClick={closeModal}
-            >
-              <X size={32} />
-            </button>
-            <div
-              className={`relative transition-all duration-300 ease-out ${showModalContent ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <img
-                src={user.profilePicture}
-                alt="Expanded profile"
-                className="w-[70vmin] h-[70vmin] max-w-lg max-h-lg object-cover rounded-full shadow-2xl ring-4 ring-white/20"
-              />
-            </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* Data Modal */}
-      {
-        modalData && (
+      {modalData && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-opacity duration-300"
+          onClick={() => setModalData(null)}
+          role="dialog"
+          aria-modal="true"
+        >
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-opacity duration-300"
-            onClick={() => setModalData(null)}
-            role="dialog"
-            aria-modal="true"
+            className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[90vh] flex flex-col"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
-            <div
-              className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[90vh] flex flex-col"
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            >
-              <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center flex-shrink-0">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {modalData.title}
-                </h2>
-                <button
-                  onClick={() => setModalData(null)}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center flex-shrink-0">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                {modalData.title}
+              </h2>
+              <button
+                onClick={() => setModalData(null)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              <div className="p-6 space-y-3 overflow-y-auto">
-                {modalData.data.length === 0 ? (
-                  <p className="text-center text-slate-500 dark:text-slate-400 py-8">
-                    No items to display.
-                  </p>
-                ) : modalData.type === 'forms' ? (
-                  modalData.data.map((form: Form) => (
-                    <div
-                      key={form.formNumber}
-                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
+            <div className="p-6 space-y-3 overflow-y-auto">
+              {modalData.data.length === 0 ? (
+                <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+                  No items to display.
+                </p>
+              ) : modalData.type === 'forms' ? (
+                modalData.data.map((form: Form) => (
+                  <div
+                    key={form.formNumber}
+                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-800 dark:text-white">{form.title}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Form No: {form.formNumber}
+                      </p>
+                    </div>
+                    <a
+                      href={form.downloadLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => addRecentDownload(form)}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-primary-dark transition-colors"
                     >
+                      <Download className="w-4 h-4" /> Download
+                    </a>
+                  </div>
+                ))
+              ) : modalData.type === 'events' ? (
+                modalData.data.map((event: CalendarEvent) => (
+                  <div
+                    key={event.id}
+                    className="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
+                  >
+                    <Calendar className="w-5 h-5 mr-3 text-primary" />
+                    <div>
+                      <p className="font-semibold text-slate-800 dark:text-white">
+                        {event.description}
+                      </p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {new Date(event.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : modalData.type === 'reminders' ? (
+                modalData.data.map((event: CalendarEvent) => (
+                  <div
+                    key={getEventKey(event)}
+                    className="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
+                  >
+                    <Bell className="w-5 h-5 mr-3 text-primary" />
+                    <div>
+                      <p className="font-semibold text-slate-800 dark:text-white">
+                        {event.description}
+                      </p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {new Date(event.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : modalData.type === 'places' ? (
+                modalData.data.map((place: CampusLocation) => (
+                  <div
+                    key={place.id}
+                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{place.icon}</span>
                       <div>
-                        <p className="font-semibold text-slate-800 dark:text-white">{form.title}</p>
+                        <p className="font-semibold text-slate-800 dark:text-white">{place.name}</p>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                          Form No: {form.formNumber}
+                          {place.category}
                         </p>
                       </div>
-                      <a
-                        href={form.downloadLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => addRecentDownload(form)}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-primary-dark transition-colors"
-                      >
-                        <Download className="w-4 h-4" /> Download
-                      </a>
                     </div>
-                  ))
-                ) : modalData.type === 'events' ? (
-                  modalData.data.map((event: CalendarEvent) => (
-                    <div
-                      key={event.id}
-                      className="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${place.coordinates.lat},${place.coordinates.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-primary-dark transition-colors"
                     >
-                      <Calendar className="w-5 h-5 mr-3 text-primary" />
-                      <div>
-                        <p className="font-semibold text-slate-800 dark:text-white">
-                          {event.description}
-                        </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                          {new Date(event.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : modalData.type === 'reminders' ? (
-                  modalData.data.map((event: CalendarEvent) => (
-                    <div
-                      key={getEventKey(event)}
-                      className="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
-                    >
-                      <Bell className="w-5 h-5 mr-3 text-primary" />
-                      <div>
-                        <p className="font-semibold text-slate-800 dark:text-white">
-                          {event.description}
-                        </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                          {new Date(event.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : modalData.type === 'places' ? (
-                  modalData.data.map((place: CampusLocation) => (
-                    <div
-                      key={place.id}
-                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{place.icon}</span>
-                        <div>
-                          <p className="font-semibold text-slate-800 dark:text-white">{place.name}</p>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {place.category}
-                          </p>
-                        </div>
-                      </div>
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${place.coordinates.lat},${place.coordinates.lng}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-primary-dark transition-colors"
-                      >
-                        <MapPin className="w-4 h-4" /> Directions
-                      </a>
-                    </div>
-                  ))
-                ) : null}
-              </div>
+                      <MapPin className="w-4 h-4" /> Directions
+                    </a>
+                  </div>
+                ))
+              ) : null}
+            </div>
 
-              <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex-shrink-0 text-center">
-                <Link
-                  to={modalData.link}
-                  onClick={() => setModalData(null)}
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  View all in {modalData.linkText} page →
-                </Link>
-              </div>
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex-shrink-0 text-center">
+              <Link
+                to={modalData.link}
+                onClick={() => setModalData(null)}
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                View all in {modalData.linkText} page →
+              </Link>
             </div>
           </div>
-        )
-      }
-    </div >
+        </div>
+      )}
+    </div>
   );
 };
 

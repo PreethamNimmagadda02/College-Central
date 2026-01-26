@@ -85,7 +85,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (Capacitor.isNativePlatform()) {
         const googleUser = await GoogleAuth.signIn();
-        const credential = firebase.auth.GoogleAuthProvider.credential(googleUser.authentication.idToken);
+        const credential = firebase.auth.GoogleAuthProvider.credential(
+          googleUser.authentication.idToken
+        );
         userCredential = await auth.signInWithCredential(credential);
       } else {
         const provider = new firebase.auth.GoogleAuthProvider();

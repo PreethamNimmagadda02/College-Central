@@ -140,25 +140,28 @@ const AcademicCalendar: React.FC = () => {
       .slice(0, 3); // Limit to 3 countdown events
   }, [reminderPreferences, calendarData, getEventKey]);
 
-  const getCountdown = useCallback((dateStr: string) => {
-    // Use countdownTick to trigger recalculation
-    void countdownTick;
-    const eventDate = new Date(dateStr);
-    eventDate.setHours(0, 0, 0, 0);
-    const now = new Date();
-    const diff = eventDate.getTime() - now.getTime();
+  const getCountdown = useCallback(
+    (dateStr: string) => {
+      // Use countdownTick to trigger recalculation
+      void countdownTick;
+      const eventDate = new Date(dateStr);
+      eventDate.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const diff = eventDate.getTime() - now.getTime();
 
-    if (diff <= 0) {
-      return { days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true };
-    }
+      if (diff <= 0) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true };
+      }
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-    return { days, hours, minutes, seconds, isPast: false };
-  }, [countdownTick]);
+      return { days, hours, minutes, seconds, isPast: false };
+    },
+    [countdownTick]
+  );
 
   const filteredEvents = useMemo(() => {
     if (!calendarData) return [];
@@ -307,16 +310,16 @@ const AcademicCalendar: React.FC = () => {
                 </div>
                 <h2>Important Events</h2>
                 ${calendarData.events
-        .map(
-          (event) => `
+                  .map(
+                    (event) => `
                     <div class="event">
                         <span class="event-date">${formatDateWithMonthName(event.date)}${event.endDate ? ' - ' + formatDateWithMonthName(event.endDate) : ''}</span>
                         <span class="event-type">${event.type}</span>
                         <p style="margin: 0.5rem 0 0 0;">${event.description}</p>
                     </div>
                 `
-        )
-        .join('')}
+                  )
+                  .join('')}
                 <div class="no-print" style="margin-top: 1.875rem; text-align: center;">
                     <button onclick="window.print()" style="padding: 0.625rem 1.25rem; background: #2563eb; color: white; border: none; border-radius: 0.375rem; cursor: pointer;">Print/Save as PDF</button>
                     <button onclick="window.close()" style="padding: 0.625rem 1.25rem; background: #64748b; color: white; border: none; border-radius: 0.375rem; cursor: pointer; margin-left: 0.625rem;">Close</button>
@@ -645,21 +648,24 @@ const AcademicCalendar: React.FC = () => {
               const countdown = getCountdown(event.date);
               const eventKey = getEventKey(event);
               const isToday = new Date(event.date).toDateString() === new Date().toDateString();
-              const urgencyPercent = countdown.isPast ? 100 : Math.min(100, Math.max(0, 100 - (countdown.days / 30) * 100));
+              const urgencyPercent = countdown.isPast
+                ? 100
+                : Math.min(100, Math.max(0, 100 - (countdown.days / 30) * 100));
               const isUrgent = countdown.days <= 3 && !countdown.isPast;
               const isNear = countdown.days <= 7 && !countdown.isPast;
 
               return (
                 <div
                   key={eventKey}
-                  className={`relative p-5 rounded-2xl shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl text-white overflow-hidden group ${countdown.isPast
-                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
-                    : isUrgent
-                      ? 'bg-gradient-to-br from-rose-500 to-orange-500'
-                      : isNear
-                        ? 'bg-gradient-to-br from-amber-500 to-orange-500'
-                        : 'bg-gradient-to-br from-blue-500 to-purple-600'
-                    }`}
+                  className={`relative p-5 rounded-2xl shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl text-white overflow-hidden group ${
+                    countdown.isPast
+                      ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
+                      : isUrgent
+                        ? 'bg-gradient-to-br from-rose-500 to-orange-500'
+                        : isNear
+                          ? 'bg-gradient-to-br from-amber-500 to-orange-500'
+                          : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                  }`}
                 >
                   {/* Decorative Background Elements */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl pointer-events-none group-hover:scale-150 transition-transform duration-700" />
@@ -674,17 +680,33 @@ const AcademicCalendar: React.FC = () => {
                     title="Remove reminder"
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      <path
+                        fillRule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </button>
 
                   <div className="relative z-10 flex items-center gap-3 sm:gap-5">
                     {/* Progress Ring Visual */}
                     <div className="relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20">
-                      <svg className="w-full h-full -rotate-90 transform group-hover:rotate-12 transition-transform duration-500" viewBox="0 0 36 36">
-                        <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
+                      <svg
+                        className="w-full h-full -rotate-90 transform group-hover:rotate-12 transition-transform duration-500"
+                        viewBox="0 0 36 36"
+                      >
                         <circle
-                          cx="18" cy="18" r="15"
+                          cx="18"
+                          cy="18"
+                          r="15"
+                          fill="none"
+                          stroke="rgba(255,255,255,0.2)"
+                          strokeWidth="3"
+                        />
+                        <circle
+                          cx="18"
+                          cy="18"
+                          r="15"
                           fill="none"
                           stroke="white"
                           strokeWidth="3"
@@ -699,34 +721,66 @@ const AcademicCalendar: React.FC = () => {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-base sm:text-lg leading-tight mb-1 truncate pr-6">{event.description}</h4>
+                      <h4 className="font-bold text-base sm:text-lg leading-tight mb-1 truncate pr-6">
+                        {event.description}
+                      </h4>
                       <p className="text-white/90 text-xs mb-3 font-medium flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
                         {formatDateWithMonthName(event.date)}
                       </p>
 
                       {countdown.isPast ? (
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                          <span className="text-sm font-bold">{isToday ? '✓ Event Started' : '✓ Event Concluded'}</span>
+                          <span className="text-sm font-bold">
+                            {isToday ? '✓ Event Started' : '✓ Event Concluded'}
+                          </span>
                         </div>
                       ) : (
                         <div className="flex items-baseline gap-2 sm:gap-3">
                           <div className="text-center">
-                            <span className="text-2xl sm:text-3xl font-black leading-none drop-shadow-sm">{Math.max(0, countdown.days)}</span>
-                            <span className="block text-[8px] sm:text-[10px] font-bold uppercase opacity-80 mt-0.5">Days</span>
+                            <span className="text-2xl sm:text-3xl font-black leading-none drop-shadow-sm">
+                              {Math.max(0, countdown.days)}
+                            </span>
+                            <span className="block text-[8px] sm:text-[10px] font-bold uppercase opacity-80 mt-0.5">
+                              Days
+                            </span>
                           </div>
                           <div className="flex gap-1.5 sm:gap-2">
                             <div className="text-center">
-                              <span className="text-base sm:text-lg font-bold leading-none tabular-nums opacity-90">{countdown.hours}</span>
-                              <span className="block text-[8px] sm:text-[9px] font-bold uppercase opacity-70">Hr</span>
+                              <span className="text-base sm:text-lg font-bold leading-none tabular-nums opacity-90">
+                                {countdown.hours}
+                              </span>
+                              <span className="block text-[8px] sm:text-[9px] font-bold uppercase opacity-70">
+                                Hr
+                              </span>
                             </div>
                             <div className="text-center">
-                              <span className="text-base sm:text-lg font-bold leading-none tabular-nums opacity-90">{countdown.minutes}</span>
-                              <span className="block text-[8px] sm:text-[9px] font-bold uppercase opacity-70">Min</span>
+                              <span className="text-base sm:text-lg font-bold leading-none tabular-nums opacity-90">
+                                {countdown.minutes}
+                              </span>
+                              <span className="block text-[8px] sm:text-[9px] font-bold uppercase opacity-70">
+                                Min
+                              </span>
                             </div>
                             <div className="text-center w-5 sm:w-6">
-                              <span className="text-base sm:text-lg font-bold leading-none tabular-nums opacity-90">{countdown.seconds}</span>
-                              <span className="block text-[8px] sm:text-[9px] font-bold uppercase opacity-70">Sec</span>
+                              <span className="text-base sm:text-lg font-bold leading-none tabular-nums opacity-90">
+                                {countdown.seconds}
+                              </span>
+                              <span className="block text-[8px] sm:text-[9px] font-bold uppercase opacity-70">
+                                Sec
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -828,10 +882,11 @@ const AcademicCalendar: React.FC = () => {
                     setViewMode(mode);
                     setCurrentPage(1);
                   }}
-                  className={`flex-1 lg:flex-initial px-3 py-1.5 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${viewMode === mode
-                    ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-105'
-                    }`}
+                  className={`flex-1 lg:flex-initial px-3 py-1.5 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${
+                    viewMode === mode
+                      ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-105'
+                  }`}
                 >
                   {mode.charAt(0).toUpperCase() + mode.slice(1)}
                 </button>
@@ -949,14 +1004,15 @@ const AcademicCalendar: React.FC = () => {
                                                     hover:-translate-y-0.5
                                                     active:scale-[0.99]
                                                     p-3 sm:p-4 mb-3 border-2
-                                                    ${isOngoing
-                            ? 'border-green-500 dark:border-green-500'
-                            : isUrgent
-                              ? 'border-red-300 dark:border-red-600/50'
-                              : isUpcoming
-                                ? 'border-amber-300 dark:border-amber-600/50'
-                                : 'border-slate-200 dark:border-slate-700'
-                          }
+                                                    ${
+                                                      isOngoing
+                                                        ? 'border-green-500 dark:border-green-500'
+                                                        : isUrgent
+                                                          ? 'border-red-300 dark:border-red-600/50'
+                                                          : isUpcoming
+                                                            ? 'border-amber-300 dark:border-amber-600/50'
+                                                            : 'border-slate-200 dark:border-slate-700'
+                                                    }
                                                     hover:border-primary/50 dark:hover:border-primary/50
                                                 `}
                       >
@@ -1035,12 +1091,13 @@ const AcademicCalendar: React.FC = () => {
                                       </span>
                                     ) : (
                                       <span
-                                        className={`inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg ${isUrgent
-                                          ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                                          : isUpcoming
-                                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                                          }`}
+                                        className={`inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg ${
+                                          isUrgent
+                                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                            : isUpcoming
+                                              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                                              : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                                        }`}
                                       >
                                         {daysUntil >= 0
                                           ? daysUntil === 0
@@ -1223,12 +1280,13 @@ const AcademicCalendar: React.FC = () => {
                                 <div
                                   className={`
                                                                     text-2xl font-extrabold
-                                                                    ${isUrgent
-                                      ? 'text-red-600 dark:text-red-400'
-                                      : isUpcoming
-                                        ? 'text-amber-600 dark:text-amber-400'
-                                        : 'text-primary dark:text-secondary'
-                                    }
+                                                                    ${
+                                                                      isUrgent
+                                                                        ? 'text-red-600 dark:text-red-400'
+                                                                        : isUpcoming
+                                                                          ? 'text-amber-600 dark:text-amber-400'
+                                                                          : 'text-primary dark:text-secondary'
+                                                                    }
                                                                 `}
                                 >
                                   {daysUntil}
@@ -1314,14 +1372,15 @@ const AcademicCalendar: React.FC = () => {
                     className={`
                                             bg-white dark:bg-slate-900/30 rounded-xl p-4 border-2 cursor-pointer
                                             hover:shadow-lg transition-all duration-200 active:scale-[0.98]
-                                            ${isOngoing
-                        ? 'border-green-500 bg-green-50/30 dark:bg-green-900/10'
-                        : isUrgent
-                          ? 'border-red-300 bg-red-50/30 dark:bg-red-900/10'
-                          : isUpcoming
-                            ? 'border-amber-300 bg-amber-50/30 dark:bg-amber-900/10'
-                            : 'border-slate-200 dark:border-slate-700'
-                      }
+                                            ${
+                                              isOngoing
+                                                ? 'border-green-500 bg-green-50/30 dark:bg-green-900/10'
+                                                : isUrgent
+                                                  ? 'border-red-300 bg-red-50/30 dark:bg-red-900/10'
+                                                  : isUpcoming
+                                                    ? 'border-amber-300 bg-amber-50/30 dark:bg-amber-900/10'
+                                                    : 'border-slate-200 dark:border-slate-700'
+                                            }
                                         `}
                   >
                     <div className="flex items-start gap-3">
@@ -1447,14 +1506,15 @@ const AcademicCalendar: React.FC = () => {
                                                     hover:shadow-lg hover:shadow-primary/5
                                                     hover:scale-[1.01] hover:-translate-y-0.5
                                                     active:scale-[0.99] active:translate-y-0
-                                                    ${isOngoing
-                            ? 'border-l-4 border-l-green-500 bg-green-50/30 dark:bg-green-900/10'
-                            : isUrgent
-                              ? 'border-l-4 border-l-red-500 bg-red-50/30 dark:bg-red-900/10'
-                              : isUpcoming
-                                ? 'border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-900/10'
-                                : 'border-l-4 border-l-transparent hover:border-l-primary'
-                          }
+                                                    ${
+                                                      isOngoing
+                                                        ? 'border-l-4 border-l-green-500 bg-green-50/30 dark:bg-green-900/10'
+                                                        : isUrgent
+                                                          ? 'border-l-4 border-l-red-500 bg-red-50/30 dark:bg-red-900/10'
+                                                          : isUpcoming
+                                                            ? 'border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-900/10'
+                                                            : 'border-l-4 border-l-transparent hover:border-l-primary'
+                                                    }
                                                 `}
                       >
                         <td className="py-4 lg:py-5 px-4 lg:px-6">
@@ -1954,12 +2014,13 @@ const AcademicCalendar: React.FC = () => {
                   <button
                     onClick={() => !isDisabled && handleSetEventReminder(selectedEvent)}
                     disabled={isDisabled}
-                    className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${isDisabled
-                      ? 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
-                      : hasReminder
-                        ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                        : 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300'
-                      }`}
+                    className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
+                      isDisabled
+                        ? 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
+                        : hasReminder
+                          ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                          : 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300'
+                    }`}
                     title={
                       isStarted
                         ? 'Cannot set reminder for started and past events'
@@ -1984,7 +2045,11 @@ const AcademicCalendar: React.FC = () => {
                       />
                     </svg>
                     <span className="text-sm">
-                      {hasReminder ? 'Reminder Set ✓' : atMaxReminders ? 'Max Reached' : 'Set Reminder'}
+                      {hasReminder
+                        ? 'Reminder Set ✓'
+                        : atMaxReminders
+                          ? 'Max Reached'
+                          : 'Set Reminder'}
                     </span>
                   </button>
                 );
@@ -2008,10 +2073,11 @@ const AcademicCalendar: React.FC = () => {
               <button
                 onClick={() => openEditModal(selectedEvent, selectedEventIndex)}
                 disabled={!selectedEvent.userId}
-                className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${selectedEvent.userId
-                  ? 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 cursor-pointer'
-                  : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
-                  }`}
+                className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
+                  selectedEvent.userId
+                    ? 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 cursor-pointer'
+                    : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
+                }`}
                 title={!selectedEvent.userId ? 'Cannot edit preloaded events' : 'Edit this event'}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2031,10 +2097,11 @@ const AcademicCalendar: React.FC = () => {
                   setShowEventDetailsModal(false);
                 }}
                 disabled={!selectedEvent.userId}
-                className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${selectedEvent.userId
-                  ? 'bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 cursor-pointer'
-                  : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
-                  }`}
+                className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${
+                  selectedEvent.userId
+                    ? 'bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 cursor-pointer'
+                    : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed border-2 border-slate-400 dark:border-slate-600'
+                }`}
                 title={
                   !selectedEvent.userId ? 'Cannot delete preloaded events' : 'Delete this event'
                 }

@@ -46,8 +46,6 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ClassSchedule, CalendarEvent, QuickLink } from '@/types';
 
-
-
 // Helper function to get emoji for calendar event type
 const getEventEmoji = (event: CalendarEvent): string => {
   const desc = event.description.toLowerCase();
@@ -91,7 +89,6 @@ const getEventEmoji = (event: CalendarEvent): string => {
   return '📌';
 };
 
-
 // Original 16-color palette with order-based assignment
 // Ordered for maximum visual distinction - alternating warm/cool, no similar colors adjacent
 const COURSE_COLORS = [
@@ -134,8 +131,6 @@ const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
   const colorIndex = dashboardColorMap.get(courseCode)!;
   return COURSE_COLORS[colorIndex];
 };
-
-
 
 // Default quick links (stored data without icons)
 // Default quick links are now imported from collegeConfig
@@ -185,13 +180,11 @@ const getIconForLink = (link: QuickLink): React.ReactNode => {
 
 // Default city used as fallback when cities array is unexpectedly empty
 
-
 const Dashboard: React.FC = () => {
   // Performance monitoring
   usePageLoadTrace('dashboard');
 
   const { config: appConfig } = useAppConfig();
-
 
   const { user, loading: userLoading, updateUser } = useUser();
   const { gradesData, loading: gradesLoading } = useGrades();
@@ -214,7 +207,6 @@ const Dashboard: React.FC = () => {
   }, [appConfig?.quotes]);
 
   // Update default city from admin config when config loads (only if user hasn't saved a preference)
-
 
   const upcomingEventsCount = useMemo(() => {
     if (!calendarData) return 0;
@@ -245,7 +237,6 @@ const Dashboard: React.FC = () => {
   }, [calendarData]);
 
   // AI Weather Recommendation State
-
 
   // Quick Links state management
   const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
@@ -293,24 +284,27 @@ const Dashboard: React.FC = () => {
       .slice(0, 3);
   }, [reminderPreferences, calendarData, getEventKey]);
 
-  const getCountdown = useCallback((dateStr: string) => {
-    void countdownTick;
-    const eventDate = new Date(dateStr);
-    eventDate.setHours(0, 0, 0, 0);
-    const now = new Date();
-    const diff = eventDate.getTime() - now.getTime();
+  const getCountdown = useCallback(
+    (dateStr: string) => {
+      void countdownTick;
+      const eventDate = new Date(dateStr);
+      eventDate.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const diff = eventDate.getTime() - now.getTime();
 
-    if (diff <= 0) {
-      return { days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true };
-    }
+      if (diff <= 0) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true };
+      }
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-    return { days, hours, minutes, seconds, isPast: false };
-  }, [countdownTick]);
+      return { days, hours, minutes, seconds, isPast: false };
+    },
+    [countdownTick]
+  );
 
   // Date navigation handlers
   const handleResetToToday = useCallback(() => setSelectedDate(new Date()), []);
@@ -396,11 +390,11 @@ const Dashboard: React.FC = () => {
       const updatedLinks = quickLinks.map((l) =>
         l.id === editingLink.id
           ? {
-            ...editingLink,
-            href: editingLink.href.startsWith('http')
-              ? editingLink.href
-              : `https://${editingLink.href}`,
-          }
+              ...editingLink,
+              href: editingLink.href.startsWith('http')
+                ? editingLink.href
+                : `https://${editingLink.href}`,
+            }
           : l
       );
       saveQuickLinks(updatedLinks);
@@ -903,19 +897,6 @@ const Dashboard: React.FC = () => {
     };
   }, [calendarData, scheduleData, selectedDate]);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
   // Start with a random quote, then change every 30 seconds
   const [motivationalQuote, setMotivationalQuote] = useState(() => getRandomItem(configQuotes));
 
@@ -1095,100 +1076,138 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-end items-center gap-2 sm:gap-3 w-full sm:w-auto transition-all duration-300">
               {/* Today Pill */}
               <div className="group bg-white dark:bg-slate-800/50 backdrop-blur-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 flex flex-col justify-center min-w-[80px]">
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-0.5">Today</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-0.5">
+                  Today
+                </p>
                 <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white whitespace-nowrap">
-                  {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  {new Date().toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
                 </p>
               </div>
 
               {/* Week Pill */}
               <div className="group bg-white dark:bg-slate-800/50 backdrop-blur-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 flex flex-col justify-center min-w-[80px]">
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-0.5">Week</p>
-                <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white">#{currentWeek}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-0.5">
+                  Week
+                </p>
+                <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white">
+                  #{currentWeek}
+                </p>
               </div>
 
               {/* Smart Countdown Pill - Visual Enhanced */}
-              {getCountdownEvents.length > 0 && (() => {
-                const sortedEvents = [...getCountdownEvents].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                const now = new Date();
-                const nextEvent = sortedEvents.find(e => new Date(e.date) > now) || sortedEvents[sortedEvents.length - 1];
+              {getCountdownEvents.length > 0 &&
+                (() => {
+                  const sortedEvents = [...getCountdownEvents].sort(
+                    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+                  );
+                  const now = new Date();
+                  const nextEvent =
+                    sortedEvents.find((e) => new Date(e.date) > now) ||
+                    sortedEvents[sortedEvents.length - 1];
 
-                if (!nextEvent) return null;
+                  if (!nextEvent) return null;
 
-                const countdown = getCountdown(nextEvent.date);
-                const urgencyPercent = countdown.isPast ? 100 : Math.min(100, Math.max(0, 100 - (countdown.days / 30) * 100));
-                const isUrgent = countdown.days <= 3 && !countdown.isPast;
-                const eventDate = new Date(nextEvent.date);
-                const isToday = eventDate.toDateString() === now.toDateString();
-                const isPast = countdown.isPast;
+                  const countdown = getCountdown(nextEvent.date);
+                  const urgencyPercent = countdown.isPast
+                    ? 100
+                    : Math.min(100, Math.max(0, 100 - (countdown.days / 30) * 100));
+                  const isUrgent = countdown.days <= 3 && !countdown.isPast;
+                  const eventDate = new Date(nextEvent.date);
+                  const isToday = eventDate.toDateString() === now.toDateString();
+                  const isPast = countdown.isPast;
 
-                return (
-                  <Link
-                    to="/academic-calendar"
-                    className={`col-span-2 sm:col-span-1 w-full sm:w-auto group relative flex items-center justify-between sm:justify-start gap-3 pl-3 pr-4 py-2 sm:pr-5 sm:py-2.5 rounded-xl border shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 overflow-hidden ${isPast
-                      ? 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border-emerald-200 dark:border-emerald-700'
-                      : isUrgent
-                        ? 'bg-gradient-to-br from-rose-50 to-orange-50 dark:from-rose-900/30 dark:to-orange-900/30 border-rose-200 dark:border-rose-700'
-                        : 'bg-white dark:bg-slate-800/80 backdrop-blur-md border-slate-200 dark:border-slate-700'
+                  return (
+                    <Link
+                      to="/academic-calendar"
+                      className={`col-span-2 sm:col-span-1 w-full sm:w-auto group relative flex items-center justify-between sm:justify-start gap-3 pl-3 pr-4 py-2 sm:pr-5 sm:py-2.5 rounded-xl border shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 overflow-hidden ${
+                        isPast
+                          ? 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border-emerald-200 dark:border-emerald-700'
+                          : isUrgent
+                            ? 'bg-gradient-to-br from-rose-50 to-orange-50 dark:from-rose-900/30 dark:to-orange-900/30 border-rose-200 dark:border-rose-700'
+                            : 'bg-white dark:bg-slate-800/80 backdrop-blur-md border-slate-200 dark:border-slate-700'
                       }`}
-                  >
-                    {/* Urgency Progress Ring */}
-                    <div className="flex items-center gap-3">
-                      <div className="relative flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10">
-                        <svg className="w-full h-full -rotate-90 transform group-hover:scale-110 transition-transform duration-300" viewBox="0 0 36 36">
-                          <path
-                            className={`${isUrgent ? 'text-rose-100 dark:text-rose-900/30' : 'text-slate-100 dark:text-slate-700'}`}
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                          />
-                          <path
-                            className={`${isUrgent ? 'text-rose-500' : isPast ? 'text-emerald-500' : 'text-purple-500'}`}
-                            strokeDasharray={`${urgencyPercent}, 100`}
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center text-base sm:text-lg">
-                          {getEventEmoji(nextEvent)}
+                    >
+                      {/* Urgency Progress Ring */}
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10">
+                          <svg
+                            className="w-full h-full -rotate-90 transform group-hover:scale-110 transition-transform duration-300"
+                            viewBox="0 0 36 36"
+                          >
+                            <path
+                              className={`${isUrgent ? 'text-rose-100 dark:text-rose-900/30' : 'text-slate-100 dark:text-slate-700'}`}
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                            />
+                            <path
+                              className={`${isUrgent ? 'text-rose-500' : isPast ? 'text-emerald-500' : 'text-purple-500'}`}
+                              strokeDasharray={`${urgencyPercent}, 100`}
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center text-base sm:text-lg">
+                            {getEventEmoji(nextEvent)}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider ${isUrgent ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'
-                            }`}>
-                            {isPast ? (isToday ? 'Happening' : 'Completed') : 'Next Up'}
-                          </span>
-                          {isUrgent && !isPast && (
-                            <span className="relative flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider ${
+                                isUrgent
+                                  ? 'text-rose-600 dark:text-rose-400'
+                                  : 'text-slate-500 dark:text-slate-400'
+                              }`}
+                            >
+                              {isPast ? (isToday ? 'Happening' : 'Completed') : 'Next Up'}
                             </span>
-                          )}
+                            {isUrgent && !isPast && (
+                              <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                              </span>
+                            )}
+                          </div>
+
+                          <span
+                            className={`text-xs sm:text-sm font-bold truncate max-w-[120px] sm:max-w-[140px] ${
+                              isUrgent
+                                ? 'text-slate-900 dark:text-white'
+                                : 'text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            {nextEvent.description}
+                          </span>
                         </div>
-
-                        <span className={`text-xs sm:text-sm font-bold truncate max-w-[120px] sm:max-w-[140px] ${isUrgent ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'
-                          }`}>
-                          {nextEvent.description}
-                        </span>
                       </div>
-                    </div>
 
-                    {!isPast && (
-                      <div className={`flex items-baseline text-sm font-black ${isUrgent ? 'text-rose-500 dark:text-rose-400' : 'text-purple-600 dark:text-purple-400'
-                        }`}>
-                        <span>{countdown.days}d</span>
-                        <span className="text-[10px] ml-0.5 opacity-80 font-bold">{countdown.hours}h</span>
-                      </div>
-                    )}
-                  </Link>
-                );
-              })()}
+                      {!isPast && (
+                        <div
+                          className={`flex items-baseline text-sm font-black ${
+                            isUrgent
+                              ? 'text-rose-500 dark:text-rose-400'
+                              : 'text-purple-600 dark:text-purple-400'
+                          }`}
+                        >
+                          <span>{countdown.days}d</span>
+                          <span className="text-[10px] ml-0.5 opacity-80 font-bold">
+                            {countdown.hours}h
+                          </span>
+                        </div>
+                      )}
+                    </Link>
+                  );
+                })()}
             </div>
           </div>
 
@@ -1316,7 +1335,7 @@ const Dashboard: React.FC = () => {
                         0,
                         Math.floor(
                           (stableNow.getTime() - semesterStartDate.getTime()) /
-                          (1000 * 60 * 60 * 24)
+                            (1000 * 60 * 60 * 24)
                         )
                       )}
                     </p>
@@ -1440,8 +1459,6 @@ const Dashboard: React.FC = () => {
           </div>
         </Link>
       </div>
-
-
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 md:gap-6">
         {/* Left Column - 2/3 width */}
@@ -1628,12 +1645,13 @@ const Dashboard: React.FC = () => {
                                   }}
                                   className={`
                                                                         text-sm py-1.5 rounded transition-colors
-                                                                        ${isSelected
-                                      ? 'bg-primary text-white font-bold'
-                                      : isToday
-                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold'
-                                        : 'hover:bg-slate-100 dark:hover:bg-slate-700'
-                                    }
+                                                                        ${
+                                                                          isSelected
+                                                                            ? 'bg-primary text-white font-bold'
+                                                                            : isToday
+                                                                              ? 'bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold'
+                                                                              : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                                                                        }
                                                                     `}
                                 >
                                   {day}
@@ -1848,16 +1866,18 @@ const Dashboard: React.FC = () => {
                         return (
                           <li
                             key={c.slotId}
-                            className={`relative pl-8 transition-all duration-700 ease-out ${allClassesCompleted ? 'opacity-50' : isPast ? 'opacity-35' : ''
-                              }`}
+                            className={`relative pl-8 transition-all duration-700 ease-out ${
+                              allClassesCompleted ? 'opacity-50' : isPast ? 'opacity-35' : ''
+                            }`}
                           >
                             {/* Timeline segment for this class */}
                             {index < scheduleInfo.classes.length - 1 && (
                               <div
-                                className={`absolute left-2.5 w-0.5 transition-all duration-700 ease-out ${allClassesCompleted || isPast
-                                  ? 'bg-emerald-500/80 dark:bg-emerald-400/80'
-                                  : 'bg-slate-300 dark:bg-slate-600'
-                                  }`}
+                                className={`absolute left-2.5 w-0.5 transition-all duration-700 ease-out ${
+                                  allClassesCompleted || isPast
+                                    ? 'bg-emerald-500/80 dark:bg-emerald-400/80'
+                                    : 'bg-slate-300 dark:bg-slate-600'
+                                }`}
                                 style={{
                                   top: '1.25rem',
                                   height: 'calc(100% + 0.75rem)', // Extends to next item (space-y-3 = 0.75rem)
@@ -1866,14 +1886,15 @@ const Dashboard: React.FC = () => {
                             )}
 
                             <div
-                              className={`absolute left-0 top-2.5 h-5 w-5 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${isCurrent
-                                ? 'bg-primary ring-4 ring-primary/20 scale-110 shadow-md'
-                                : isNext
-                                  ? 'bg-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-md'
-                                  : isPast || allClassesCompleted
-                                    ? 'bg-emerald-500/90 ring-4 ring-emerald-500/15 dark:bg-emerald-400/90 dark:ring-emerald-400/15'
-                                    : 'bg-slate-300 dark:bg-slate-600 ring-4 ring-slate-200 dark:ring-slate-700'
-                                }`}
+                              className={`absolute left-0 top-2.5 h-5 w-5 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
+                                isCurrent
+                                  ? 'bg-primary ring-4 ring-primary/20 scale-110 shadow-md'
+                                  : isNext
+                                    ? 'bg-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-md'
+                                    : isPast || allClassesCompleted
+                                      ? 'bg-emerald-500/90 ring-4 ring-emerald-500/15 dark:bg-emerald-400/90 dark:ring-emerald-400/15'
+                                      : 'bg-slate-300 dark:bg-slate-600 ring-4 ring-slate-200 dark:ring-slate-700'
+                              }`}
                             >
                               {isPast || allClassesCompleted ? (
                                 <svg
@@ -1892,23 +1913,25 @@ const Dashboard: React.FC = () => {
                             </div>
 
                             <div
-                              className={`transition-all duration-500 ease-out ${isCurrent
-                                ? 'bg-primary/5 border-l-2 border-primary pl-4 pr-3 py-3 rounded-r-lg'
-                                : isNext
-                                  ? 'bg-amber-50 dark:bg-amber-900/10 border-l-2 border-amber-500 pl-4 pr-3 py-3 rounded-r-lg'
-                                  : 'py-2'
-                                }`}
+                              className={`transition-all duration-500 ease-out ${
+                                isCurrent
+                                  ? 'bg-primary/5 border-l-2 border-primary pl-4 pr-3 py-3 rounded-r-lg'
+                                  : isNext
+                                    ? 'bg-amber-50 dark:bg-amber-900/10 border-l-2 border-amber-500 pl-4 pr-3 py-3 rounded-r-lg'
+                                    : 'py-2'
+                              }`}
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
                                     <span
-                                      className={`text-xs font-semibold transition-colors duration-500 ${isCurrent
-                                        ? 'text-primary'
-                                        : isPast || allClassesCompleted
-                                          ? 'text-emerald-600/80 dark:text-emerald-400/80'
-                                          : 'text-slate-500 dark:text-slate-400'
-                                        }`}
+                                      className={`text-xs font-semibold transition-colors duration-500 ${
+                                        isCurrent
+                                          ? 'text-primary'
+                                          : isPast || allClassesCompleted
+                                            ? 'text-emerald-600/80 dark:text-emerald-400/80'
+                                            : 'text-slate-500 dark:text-slate-400'
+                                      }`}
                                     >
                                       {c.startTime} - {c.endTime}
                                     </span>
@@ -1924,18 +1947,20 @@ const Dashboard: React.FC = () => {
                                     )}
                                   </div>
                                   <p
-                                    className={`font-semibold text-sm mb-2 transition-all duration-500 ${isPast || allClassesCompleted
-                                      ? 'text-slate-400 dark:text-slate-500'
-                                      : 'text-slate-900 dark:text-white'
-                                      }`}
+                                    className={`font-semibold text-sm mb-2 transition-all duration-500 ${
+                                      isPast || allClassesCompleted
+                                        ? 'text-slate-400 dark:text-slate-500'
+                                        : 'text-slate-900 dark:text-white'
+                                    }`}
                                   >
                                     {c.courseName}
                                   </p>
                                   <div
-                                    className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs transition-colors duration-500 ${isPast || allClassesCompleted
-                                      ? 'text-slate-400 dark:text-slate-600'
-                                      : 'text-slate-500 dark:text-slate-400'
-                                      }`}
+                                    className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs transition-colors duration-500 ${
+                                      isPast || allClassesCompleted
+                                        ? 'text-slate-400 dark:text-slate-600'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                    }`}
                                   >
                                     <span className="flex items-center gap-1">
                                       <InstructorIcon className="w-3.5 h-3.5" />
@@ -1946,8 +1971,9 @@ const Dashboard: React.FC = () => {
                                       {c.location}
                                     </span>
                                     <span
-                                      className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-500 ${isPast || allClassesCompleted ? 'opacity-60' : ''
-                                        } ${getClassColor(c.courseCode, c.isCustomTask)}`}
+                                      className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-500 ${
+                                        isPast || allClassesCompleted ? 'opacity-60' : ''
+                                      } ${getClassColor(c.courseCode, c.isCustomTask)}`}
                                     >
                                       {c.isCustomTask ? '✓ ' : ''}
                                       {c.courseCode}
@@ -1977,13 +2003,10 @@ const Dashboard: React.FC = () => {
               </>
             )}
           </div>
-
         </div>
 
         {/* Right Column - 1/3 width */}
         <div className="space-y-6">
-
-
           {/* Quick Links - Compact & Flexible */}
           <div className="bg-gradient-to-br from-white to-slate-50 dark:from-dark-card dark:to-slate-900/50 p-4 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 backdrop-blur-sm">
             <div className="flex justify-between items-center mb-3">
@@ -2310,10 +2333,8 @@ const Dashboard: React.FC = () => {
               </div>
             )}
           </div>
-
         </div>
       </div>
-
 
       {/* Add Link Modal */}
       {showAddModal && (
@@ -2395,10 +2416,11 @@ const Dashboard: React.FC = () => {
                     <button
                       key={iconOption.icon}
                       onClick={() => setNewLink({ ...newLink, icon: iconOption.icon })}
-                      className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${newLink.icon === iconOption.icon
-                        ? 'border-primary bg-primary/10 shadow-md'
-                        : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
-                        }`}
+                      className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${
+                        newLink.icon === iconOption.icon
+                          ? 'border-primary bg-primary/10 shadow-md'
+                          : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
+                      }`}
                       title={iconOption.name}
                       aria-label={`Select ${iconOption.name} icon`}
                       aria-pressed={newLink.icon === iconOption.icon}
@@ -2425,10 +2447,11 @@ const Dashboard: React.FC = () => {
                     <button
                       key={color.value}
                       onClick={() => setNewLink({ ...newLink, color: color.value })}
-                      className={`p-2 rounded-lg border-2 transition-all ${newLink.color === color.value
-                        ? 'border-primary bg-primary/10'
-                        : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
-                        }`}
+                      className={`p-2 rounded-lg border-2 transition-all ${
+                        newLink.color === color.value
+                          ? 'border-primary bg-primary/10'
+                          : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
+                      }`}
                       aria-label={`Select ${color.name} color`}
                       aria-pressed={newLink.color === color.value}
                     >

@@ -403,10 +403,17 @@ const AdminDashboard: React.FC = () => {
               title="Search (⌘K)"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
               <span className="hidden sm:inline">Search</span>
-              <kbd className="hidden lg:inline-flex px-1.5 py-0.5 text-xs bg-slate-700 text-slate-300 rounded">⌘K</kbd>
+              <kbd className="hidden lg:inline-flex px-1.5 py-0.5 text-xs bg-slate-700 text-slate-300 rounded">
+                ⌘K
+              </kbd>
             </button>
             {/* User Dashboard Button */}
             <button
