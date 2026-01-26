@@ -240,14 +240,18 @@ const CalendarUploader: React.FC<Props> = ({ onImport, onClose }) => {
     pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
     const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-    let fullText = '';
-
+    const pagePromises = [];
     for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items.map((item: any) => item.str).join(' ');
-      fullText += pageText + '\n';
+      pagePromises.push(
+        pdf.getPage(i).then(async (page) => {
+          const textContent = await page.getTextContent();
+          return textContent.items.map((item: any) => item.str).join(' ');
+        })
+      );
     }
+
+    const pageTexts = await Promise.all(pagePromises);
+    const fullText = pageTexts.join('\n') + '\n';
 
     // Use AI to extract events with progress tracking
     const result = await extractCalendarEventsWithAI(fullText, setExtractionProgress);
