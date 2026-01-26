@@ -2227,6 +2227,7 @@ const Dashboard: React.FC = () => {
                           onClick={() => handleEditLink(link)}
                           className="p-1 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200"
                           title="Edit"
+                          aria-label={`Edit ${link.name}`}
                         >
                           <svg
                             className="w-2.5 h-2.5"
@@ -2246,6 +2247,7 @@ const Dashboard: React.FC = () => {
                           onClick={() => handleRemoveLink(link.id)}
                           className="p-1 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200"
                           title="Delete"
+                          aria-label={`Delete ${link.name}`}
                         >
                           <svg
                             className="w-2.5 h-2.5"
@@ -2398,6 +2400,8 @@ const Dashboard: React.FC = () => {
                         : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
                         }`}
                       title={iconOption.name}
+                      aria-label={`Select ${iconOption.name} icon`}
+                      aria-pressed={newLink.icon === iconOption.icon}
                     >
                       <div className={`${newLink.color} text-2xl`}>{iconOption.component}</div>
                     </button>
@@ -2425,6 +2429,8 @@ const Dashboard: React.FC = () => {
                         ? 'border-primary bg-primary/10'
                         : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
                         }`}
+                      aria-label={`Select ${color.name} color`}
+                      aria-pressed={newLink.color === color.value}
                     >
                       <div className={`${color.value} text-xl`}>{getIconByName(newLink.icon)}</div>
                     </button>
