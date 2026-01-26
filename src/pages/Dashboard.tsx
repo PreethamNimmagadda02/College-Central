@@ -91,103 +91,6 @@ const getEventEmoji = (event: CalendarEvent): string => {
   return '📌';
 };
 
-// Interface for semester information
-interface SemesterInfo {
-  name: string; // "Monsoon 2025" or "Winter 2025-26"
-  startDate: Date;
-  endDate: Date;
-  isActive: boolean; // Whether we're currently in this semester
-}
-
-/**
- * Intelligently detects the current/next semester from calendar events
- * Uses "Start of Semester" and "End-Semester Exams" events to determine boundaries
- */
-const getSemesterInfo = (events: CalendarEvent[], today: Date): SemesterInfo | null => {
-  if (!events || events.length === 0) return null;
-
-  // Find all semester start events
-  const startEvents = events
-    .filter((e) => e.type === 'Start of Semester')
-    .map((e) => ({
-      date: new Date(e.date),
-      description: e.description,
-    }))
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-  // Find all end-semester exam events (use endDate if available, else date)
-  const endEvents = events
-    .filter((e) => e.type === 'End-Semester Exams')
-    .map((e) => ({
-      date: new Date(e.endDate || e.date),
-      description: e.description,
-    }))
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-  if (startEvents.length === 0) return null;
-
-  // Build semester periods by pairing each start with the next available end
-  const semesters: SemesterInfo[] = [];
-
-  for (const start of startEvents) {
-    // Find the next end event after this start
-    const nextEnd = endEvents.find((e) => e.date > start.date);
-
-    if (nextEnd) {
-      // Determine semester name from description or month
-      const startMonth = start.date.getMonth();
-      const startYear = start.date.getFullYear();
-
-      // Determine academic year based on semester type
-      // Monsoon (Jul-Dec): Academic year starts same year (2025-26 for Monsoon starting Jul 2025)
-      // Winter (Dec-May): Academic year started previous year (2025-26 for Winter starting Jan 2026)
-
-      let academicYearStart: number;
-      let name: string;
-      const desc = start.description.toLowerCase();
-      const isMonsoon = desc.includes('monsoon') || (startMonth >= 6 && startMonth <= 11);
-      const isWinter =
-        desc.includes('winter') || desc.includes('spring') || (startMonth >= 0 && startMonth <= 5);
-
-      if (isMonsoon) {
-        // Monsoon: starts Jul-Dec, academic year is that year to next year
-        academicYearStart = startYear;
-      } else if (isWinter || startMonth === 11) {
-        // Winter: starts Dec-May, academic year uses previous year if Jan-May
-        academicYearStart = startMonth >= 0 && startMonth <= 5 ? startYear - 1 : startYear;
-      } else {
-        academicYearStart = startYear;
-      }
-
-      const academicYear = `${academicYearStart}-${((academicYearStart + 1) % 100).toString().padStart(2, '0')}`;
-
-      if (isMonsoon) {
-        name = `Monsoon Semester ${academicYear}`;
-      } else {
-        name = `Winter Semester ${academicYear}`;
-      }
-
-      semesters.push({
-        name,
-        startDate: start.date,
-        endDate: nextEnd.date,
-        isActive: today >= start.date && today <= nextEnd.date,
-      });
-    }
-  }
-
-  // Find the active semester (current date falls within)
-  const activeSemester = semesters.find((s) => s.isActive);
-  if (activeSemester) return activeSemester;
-
-  // If no active semester, find the next upcoming one
-  const upcomingSemester = semesters.find((s) => s.startDate > today);
-  if (upcomingSemester) return upcomingSemester;
-
-  // If no upcoming, return the most recent one
-  const recentSemester = semesters[semesters.length - 1];
-  return recentSemester || null;
-};
 
 // Original 16-color palette with order-based assignment
 // Ordered for maximum visual distinction - alternating warm/cool, no similar colors adjacent
@@ -1066,31 +969,50 @@ const Dashboard: React.FC = () => {
       );
       const defaultEndDate = new Date(year, SEMESTER_DEFAULTS.END_MONTH, SEMESTER_DEFAULTS.END_DAY);
 
-      // Try to intelligently detect semester from calendar events
-      const detectedSemester = getSemesterInfo(calendarData?.events || [], stableNow);
-
       let startDate: Date;
       let endDate: Date;
       let name: string | null = null;
 
-      if (detectedSemester) {
-        // Use detected semester dates
-        startDate = detectedSemester.startDate;
-        endDate = detectedSemester.endDate;
-        name = detectedSemester.name;
-      } else if (calendarData?.semesterStartDate && calendarData?.semesterEndDate) {
-        // Fall back to configured dates
+      if (calendarData?.semesterStartDate && calendarData?.semesterEndDate) {
+        // Use configured dates (which are auto-calculated by CalendarContext)
         startDate = new Date(calendarData.semesterStartDate);
         endDate = new Date(calendarData.semesterEndDate);
+
+        // Use configured name or derive it
+        if (calendarData.semesterName) {
+          name = calendarData.semesterName;
+        } else {
+          // Derive name if missing
+          const startMonth = startDate.getMonth();
+          const startYear = startDate.getFullYear();
+
+          // Determine academic year based on semester type
+          // Monsoon (Jul-Dec): Academic year starts same year
+          // Winter (Dec-May): Academic year started previous year
+          let academicYearStart: number;
+          const isMonsoon = startMonth >= 6 && startMonth <= 11;
+          const isWinter = startMonth >= 0 && startMonth <= 5;
+
+          if (isMonsoon) {
+            academicYearStart = startYear;
+          } else if (isWinter || startMonth === 11) {
+            academicYearStart = startMonth >= 0 && startMonth <= 5 ? startYear - 1 : startYear;
+          } else {
+            academicYearStart = startYear;
+          }
+
+          const academicYear = `${academicYearStart}-${((academicYearStart + 1) % 100).toString().padStart(2, '0')}`;
+
+          if (isMonsoon) {
+            name = `Monsoon Semester ${academicYear}`;
+          } else {
+            name = `Winter Semester ${academicYear}`;
+          }
+        }
       } else {
         // Fall back to defaults
         startDate = defaultStartDate;
         endDate = defaultEndDate;
-      }
-
-      // Prioritize admin-configured semester name over auto-detected name
-      if (calendarData?.semesterName) {
-        name = calendarData.semesterName;
       }
 
       if (startDate > endDate) {
@@ -1117,7 +1039,6 @@ const Dashboard: React.FC = () => {
       stableNow,
       calendarData?.semesterStartDate,
       calendarData?.semesterEndDate,
-      calendarData?.events,
       calendarData?.semesterName,
     ]);
 
