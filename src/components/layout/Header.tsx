@@ -171,8 +171,12 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
                 <span className="text-sm animate-pulse">⏳</span>
               ) : weather ? (
                 <>
-                  <span className="hidden sm:inline text-base leading-none sm:text-lg group-hover:scale-110 transition-transform">{weather.icon}</span>
-                  <span className="text-sm font-bold text-sky-700 dark:text-sky-300">{weather.temp}°C</span>
+                  <span className="hidden sm:inline text-base leading-none sm:text-lg group-hover:scale-110 transition-transform">
+                    {weather.icon}
+                  </span>
+                  <span className="text-sm font-bold text-sky-700 dark:text-sky-300">
+                    {weather.temp}°C
+                  </span>
                 </>
               ) : (
                 <span className="text-sm text-slate-500">--°</span>

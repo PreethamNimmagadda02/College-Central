@@ -817,13 +817,13 @@ const Schedule: React.FC = () => {
 
     // Map day names to RRULE day abbreviations
     const dayMap: { [key: string]: string } = {
-      'Monday': 'MO',
-      'Tuesday': 'TU',
-      'Wednesday': 'WE',
-      'Thursday': 'TH',
-      'Friday': 'FR',
-      'Saturday': 'SA',
-      'Sunday': 'SU',
+      Monday: 'MO',
+      Tuesday: 'TU',
+      Wednesday: 'WE',
+      Thursday: 'TH',
+      Friday: 'FR',
+      Saturday: 'SA',
+      Sunday: 'SU',
     };
 
     // Get next occurrence of a specific day
@@ -1748,10 +1748,11 @@ const Schedule: React.FC = () => {
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`flex-1 sm:flex-initial px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${viewMode === mode
-                    ? 'bg-white dark:bg-slate-600 text-primary shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                    }`}
+                  className={`flex-1 sm:flex-initial px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${
+                    viewMode === mode
+                      ? 'bg-white dark:bg-slate-600 text-primary shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  }`}
                 >
                   {mode.charAt(0).toUpperCase() + mode.slice(1)}
                 </button>
@@ -2405,10 +2406,11 @@ const Schedule: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setNewInstructor(e.target.value)
                     }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.instructor
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
+                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
+                      validationErrors.instructor
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                    } dark:bg-slate-700 transition-colors`}
                     placeholder={
                       editingItem.isCustomTask
                         ? 'e.g., Study Group, Self, Club Name'
@@ -2505,10 +2507,11 @@ const Schedule: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setNewVenue(e.target.value)
                     }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.venue
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
+                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
+                      validationErrors.venue
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                    } dark:bg-slate-700 transition-colors`}
                     placeholder="e.g., Room 101, Main Building"
                   />
                   {validationErrors.venue && (
@@ -2593,10 +2596,11 @@ const Schedule: React.FC = () => {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewStartTime(e.target.value)
                       }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.startTime
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                        } dark:bg-slate-700 transition-colors`}
+                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
+                        validationErrors.time || validationErrors.startTime
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                      } dark:bg-slate-700 transition-colors`}
                     />
                     <span className="text-slate-500 dark:text-slate-400 font-medium">to</span>
                     <input
@@ -2605,34 +2609,35 @@ const Schedule: React.FC = () => {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewEndTime(e.target.value)
                       }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.endTime
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                        } dark:bg-slate-700 transition-colors`}
+                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
+                        validationErrors.time || validationErrors.endTime
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                      } dark:bg-slate-700 transition-colors`}
                     />
                   </div>
                   {(validationErrors.time ||
                     validationErrors.startTime ||
                     validationErrors.endTime) && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {validationErrors.time ||
-                          validationErrors.startTime ||
-                          validationErrors.endTime}
-                      </p>
-                    )}
+                    <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      {validationErrors.time ||
+                        validationErrors.startTime ||
+                        validationErrors.endTime}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -2761,10 +2766,11 @@ const Schedule: React.FC = () => {
                   </button>
                   <button
                     onClick={handleUpdateClassDetails}
-                    className={`flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center ${editingItem.isCustomTask
-                      ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
-                      : 'bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white'
-                      }`}
+                    className={`flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center ${
+                      editingItem.isCustomTask
+                        ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
+                        : 'bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white'
+                    }`}
                   >
                     <svg
                       className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2"
@@ -2899,10 +2905,11 @@ const Schedule: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setCustomTaskName(e.target.value)
                     }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.customTaskName
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
+                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
+                      validationErrors.customTaskName
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                    } dark:bg-slate-700 transition-colors`}
                     placeholder="e.g., Study Session, Gym, Club Meeting"
                   />
                   {validationErrors.customTaskName && (
@@ -2992,10 +2999,11 @@ const Schedule: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setNewVenue(e.target.value)
                     }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.venue
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
+                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
+                      validationErrors.venue
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                    } dark:bg-slate-700 transition-colors`}
                     placeholder="e.g., Library, Gym, Room 101"
                   />
                   {validationErrors.venue && (
@@ -3113,10 +3121,11 @@ const Schedule: React.FC = () => {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewStartTime(e.target.value)
                       }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.startTime
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                        } dark:bg-slate-700 transition-colors`}
+                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
+                        validationErrors.time || validationErrors.startTime
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                      } dark:bg-slate-700 transition-colors`}
                     />
                     <span className="text-slate-500 dark:text-slate-400 font-medium">to</span>
                     <input
@@ -3125,34 +3134,35 @@ const Schedule: React.FC = () => {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewEndTime(e.target.value)
                       }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.endTime
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                        } dark:bg-slate-700 transition-colors`}
+                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
+                        validationErrors.time || validationErrors.endTime
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                      } dark:bg-slate-700 transition-colors`}
                     />
                   </div>
                   {(validationErrors.time ||
                     validationErrors.startTime ||
                     validationErrors.endTime) && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {validationErrors.time ||
-                          validationErrors.startTime ||
-                          validationErrors.endTime}
-                      </p>
-                    )}
+                    <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      {validationErrors.time ||
+                        validationErrors.startTime ||
+                        validationErrors.endTime}
+                    </p>
+                  )}
                 </div>
               </div>
 

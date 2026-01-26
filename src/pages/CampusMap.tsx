@@ -79,7 +79,7 @@ const CampusMap: React.FC = () => {
 
   // Get live status for a location
   const getLiveStatus = (locationId: string) => {
-    return liveZoneStatus.find(s => s.zoneId === locationId);
+    return liveZoneStatus.find((s) => s.zoneId === locationId);
   };
 
   // Helper to render crowd badge
@@ -106,7 +106,9 @@ const CampusMap: React.FC = () => {
     };
 
     return (
-      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ml-2 ${colors[status.level]}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ml-2 ${colors[status.level]}`}
+      >
         <span className="text-[8px]">{icons[status.level]}</span>
         {labels[status.level]}
       </span>
@@ -239,10 +241,11 @@ const CampusMap: React.FC = () => {
               <button
                 key={view}
                 onClick={() => setMapView(view)}
-                className={`px-3 md:px-4 py-2 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${mapView === view
-                  ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-105'
-                  }`}
+                className={`px-3 md:px-4 py-2 text-xs md:text-sm font-medium rounded-md transition-all duration-300 ${
+                  mapView === view
+                    ? 'bg-white dark:bg-slate-600 text-primary shadow-md scale-105'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-105'
+                }`}
               >
                 {view.charAt(0).toUpperCase() + view.slice(1)}
               </button>
@@ -252,7 +255,7 @@ const CampusMap: React.FC = () => {
       </div>
 
       {/* Quick Stats */}
-      < div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4" >
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         <div
           onClick={() => setSelectedCategory('academic')}
           className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-3 md:p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
@@ -341,7 +344,7 @@ const CampusMap: React.FC = () => {
             </span>
           </div>
         </div>
-      </div >
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Panel - Location Directory */}
@@ -375,55 +378,61 @@ const CampusMap: React.FC = () => {
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedCategory('all')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'all'
-                  ? 'bg-primary text-white shadow-md scale-105'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                  }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'all'
+                    ? 'bg-primary text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                }`}
               >
                 All
               </button>
               <button
                 onClick={() => setSelectedCategory('academic')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'academic'
-                  ? 'bg-blue-500 text-white shadow-md scale-105'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                  }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'academic'
+                    ? 'bg-blue-500 text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                }`}
               >
                 Academic
               </button>
               <button
                 onClick={() => setSelectedCategory('administration')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'administration'
-                  ? 'bg-indigo-500 text-white shadow-md scale-105'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                  }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'administration'
+                    ? 'bg-indigo-500 text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                }`}
               >
                 Administration
               </button>
               <button
                 onClick={() => setSelectedCategory('residential')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'residential'
-                  ? 'bg-green-500 text-white shadow-md scale-105'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                  }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'residential'
+                    ? 'bg-green-500 text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                }`}
               >
                 Residential
               </button>
               <button
                 onClick={() => setSelectedCategory('facilities')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'facilities'
-                  ? 'bg-purple-500 text-white shadow-md scale-105'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                  }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'facilities'
+                    ? 'bg-purple-500 text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                }`}
               >
                 Facilities
               </button>
               <button
                 onClick={() => setSelectedCategory('dining')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${selectedCategory === 'dining'
-                  ? 'bg-orange-500 text-white shadow-md scale-105'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
-                  }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                  selectedCategory === 'dining'
+                    ? 'bg-orange-500 text-white shadow-md scale-105'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105'
+                }`}
               >
                 Dining
               </button>
@@ -465,10 +474,11 @@ const CampusMap: React.FC = () => {
                   <div
                     key={location.id}
                     onClick={() => setSelectedLocation(location)}
-                    className={`group relative overflow-hidden p-4 border-b border-slate-100 dark:border-slate-800 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white dark:hover:from-slate-800 dark:hover:to-slate-800/50 cursor-pointer transition-all duration-300 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] ${selectedLocation?.id === location.id
-                      ? 'bg-primary/10 dark:bg-primary/20 shadow-md'
-                      : ''
-                      }`}
+                    className={`group relative overflow-hidden p-4 border-b border-slate-100 dark:border-slate-800 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white dark:hover:from-slate-800 dark:hover:to-slate-800/50 cursor-pointer transition-all duration-300 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] ${
+                      selectedLocation?.id === location.id
+                        ? 'bg-primary/10 dark:bg-primary/20 shadow-md'
+                        : ''
+                    }`}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-start justify-between">
@@ -482,16 +492,17 @@ const CampusMap: React.FC = () => {
                             {getCrowdBadge(location.id)}
                           </h4>
                           <span
-                            className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full transition-all duration-300 group-hover:scale-105 ${location.category === 'academic'
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                              : location.category === 'residential'
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                : location.category === 'facilities'
-                                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                                  : location.category === 'administration'
-                                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
-                                    : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                              }`}
+                            className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full transition-all duration-300 group-hover:scale-105 ${
+                              location.category === 'academic'
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                : location.category === 'residential'
+                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  : location.category === 'facilities'
+                                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                    : location.category === 'administration'
+                                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                                      : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                            }`}
                           >
                             {location.category}
                           </span>
@@ -579,23 +590,26 @@ const CampusMap: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-base md:text-lg font-semibold">{selectedLocation.name}</h3>
                     <span
-                      className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${selectedLocation.category === 'academic'
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                        : selectedLocation.category === 'residential'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : selectedLocation.category === 'facilities'
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                            : selectedLocation.category === 'administration'
-                              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
-                              : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                        }`}
+                      className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${
+                        selectedLocation.category === 'academic'
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          : selectedLocation.category === 'residential'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            : selectedLocation.category === 'facilities'
+                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                              : selectedLocation.category === 'administration'
+                                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                                : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                      }`}
                     >
                       {selectedLocation.category}
                     </span>
                     {getCrowdBadge(selectedLocation.id) && (
                       <div className="mt-2 text-xs text-slate-500">
                         Live Status: {getCrowdBadge(selectedLocation.id)}
-                        <span className="ml-2 opacity-70">• {getLiveStatus(selectedLocation.id)?.visitorCount || 0} active visitors</span>
+                        <span className="ml-2 opacity-70">
+                          • {getLiveStatus(selectedLocation.id)?.visitorCount || 0} active visitors
+                        </span>
                       </div>
                     )}
 
@@ -697,7 +711,12 @@ const CampusMap: React.FC = () => {
             {locationError && permissionStatus === 'denied' && (
               <div className="absolute top-4 left-4 z-10 bg-red-50/90 dark:bg-red-900/80 backdrop-blur px-3 py-2 rounded-lg shadow-md border border-red-200 dark:border-red-700 text-xs font-medium text-red-600 dark:text-red-200 flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
                 Location access denied
               </div>
@@ -848,24 +867,69 @@ const CampusMap: React.FC = () => {
       </div>
 
       {/* Notification Toast */}
-      {
-        notification && (
+      {notification && (
+        <div
+          className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
+            notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+          } animate-slide-in-right`}
+        >
+          <div className="flex items-center gap-2">
+            {notification.type === 'success' ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            )}
+            <span className="font-medium">{notification.message}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Emergency Contacts Modal */}
+      {showEmergency && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
+          onClick={() => setShowEmergency(false)}
+        >
           <div
-            className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-              } animate-slide-in-right`}
+            className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-2">
-              {notification.type === 'success' ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M5 13l4 4L19 7"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                   />
                 </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                Emergency Contacts
+              </h3>
+              <button
+                onClick={() => setShowEmergency(false)}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+              >
+                <svg
+                  className="w-5 h-5 text-slate-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -873,340 +937,294 @@ const CampusMap: React.FC = () => {
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-              )}
-              <span className="font-medium">{notification.message}</span>
+              </button>
             </div>
-          </div>
-        )
-      }
 
-      {/* Emergency Contacts Modal */}
-      {
-        showEmergency && (
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
-            onClick={() => setShowEmergency(false)}
-          >
-            <div
-              className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                  Emergency Contacts
-                </h3>
-                <button
-                  onClick={() => setShowEmergency(false)}
-                  className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
-                >
-                  <svg
-                    className="w-5 h-5 text-slate-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+            <div className="space-y-3">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-red-700 dark:text-red-400">Police Emergency</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-500">100</p>
+                  </div>
+                  <a
+                    href="tel:100"
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-red-700 dark:text-red-400">Police Emergency</p>
-                      <p className="text-2xl font-bold text-red-600 dark:text-red-500">100</p>
-                    </div>
-                    <a
-                      href="tel:100"
-                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
-                    >
-                      Call Now
-                    </a>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-blue-700 dark:text-blue-400">Health Centre</p>
-                      <p className="text-xl font-bold text-blue-600 dark:text-blue-500">
-                        0326-223-5435
-                      </p>
-                    </div>
-                    <a
-                      href="tel:03262235435"
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                    >
-                      Call Now
-                    </a>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-orange-700 dark:text-orange-400">Ambulance</p>
-                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-500">102</p>
-                    </div>
-                    <a
-                      href="tel:102"
-                      className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
-                    >
-                      Call Now
-                    </a>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-purple-700 dark:text-purple-400">
-                        Security Control Room
-                      </p>
-                      <p className="text-xl font-bold text-purple-600 dark:text-purple-500">
-                        0326-223-5000
-                      </p>
-                    </div>
-                    <a
-                      href="tel:03262235000"
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-                    >
-                      Call Now
-                    </a>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-green-700 dark:text-green-400">
-                        Fire Emergency
-                      </p>
-                      <p className="text-2xl font-bold text-green-600 dark:text-green-500">101</p>
-                    </div>
-                    <a
-                      href="tel:101"
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
-                    >
-                      Call Now
-                    </a>
-                  </div>
+                    Call Now
+                  </a>
                 </div>
               </div>
 
-              <div className="mt-4 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                <p className="text-xs text-slate-600 dark:text-slate-400 text-center">
-                  <strong>Important:</strong> In case of emergency, call the nearest contact or
-                  security immediately
-                </p>
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-blue-700 dark:text-blue-400">Health Centre</p>
+                    <p className="text-xl font-bold text-blue-600 dark:text-blue-500">
+                      0326-223-5435
+                    </p>
+                  </div>
+                  <a
+                    href="tel:03262235435"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Call Now
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-orange-700 dark:text-orange-400">Ambulance</p>
+                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-500">102</p>
+                  </div>
+                  <a
+                    href="tel:102"
+                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Call Now
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-purple-700 dark:text-purple-400">
+                      Security Control Room
+                    </p>
+                    <p className="text-xl font-bold text-purple-600 dark:text-purple-500">
+                      0326-223-5000
+                    </p>
+                  </div>
+                  <a
+                    href="tel:03262235000"
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Call Now
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-green-700 dark:text-green-400">
+                      Fire Emergency
+                    </p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-500">101</p>
+                  </div>
+                  <a
+                    href="tel:101"
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Call Now
+                  </a>
+                </div>
               </div>
             </div>
+
+            <div className="mt-4 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              <p className="text-xs text-slate-600 dark:text-slate-400 text-center">
+                <strong>Important:</strong> In case of emergency, call the nearest contact or
+                security immediately
+              </p>
+            </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* Directions Modal */}
-      {
-        showDirections && (
+      {showDirections && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
+          onClick={() => setShowDirections(false)}
+        >
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
-            onClick={() => setShowDirections(false)}
+            className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold">Get Directions</h3>
-                <button
-                  onClick={() => setShowDirections(false)}
-                  className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">Get Directions</h3>
+              <button
+                onClick={() => setShowDirections(false)}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+              >
+                <svg
+                  className="w-5 h-5 text-slate-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5 text-slate-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  From
+                </label>
+                <select
+                  value={fromLocation}
+                  onChange={(e) => setFromLocation(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
+                >
+                  <option value="">Select starting point...</option>
+                  {userLocation && (
+                    <option value={`${userLocation.lat},${userLocation.lng}`}>
+                      Current Location
+                    </option>
+                  )}
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.name}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  To
+                </label>
+                <select
+                  value={toLocation}
+                  onChange={(e) => setToLocation(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
+                >
+                  <option value="">Select destination...</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.name}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleGetDirections}
+                  className="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
+                      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
                     />
                   </svg>
+                  Open in Google Maps
                 </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    From
-                  </label>
-                  <select
-                    value={fromLocation}
-                    onChange={(e) => setFromLocation(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
-                  >
-                    <option value="">Select starting point...</option>
-                    {userLocation && (
-                      <option value={`${userLocation.lat},${userLocation.lng}`}>Current Location</option>
-                    )}
-                    {locations.map((loc) => (
-                      <option key={loc.id} value={loc.name}>
-                        {loc.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    To
-                  </label>
-                  <select
-                    value={toLocation}
-                    onChange={(e) => setToLocation(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
-                  >
-                    <option value="">Select destination...</option>
-                    {locations.map((loc) => (
-                      <option key={loc.id} value={loc.name}>
-                        {loc.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleGetDirections}
-                    className="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                      />
-                    </svg>
-                    Open in Google Maps
-                  </button>
-                </div>
               </div>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* Saved Place Directions Modal */}
-      {
-        savedPlaceForDirections && (
+      {savedPlaceForDirections && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
+          onClick={() => setSavedPlaceForDirections(null)}
+        >
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
-            onClick={() => setSavedPlaceForDirections(null)}
+            className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className="bg-white dark:bg-dark-card rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-xl font-bold">Get Directions</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    To:{' '}
-                    <span className="font-medium text-primary">{savedPlaceForDirections.name}</span>
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSavedPlaceForDirections(null)}
-                  className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold">Get Directions</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  To:{' '}
+                  <span className="font-medium text-primary">{savedPlaceForDirections.name}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setSavedPlaceForDirections(null)}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+              >
+                <svg
+                  className="w-5 h-5 text-slate-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5 text-slate-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  From
+                </label>
+                <select
+                  value={fromLocation}
+                  onChange={(e) => setFromLocation(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
+                >
+                  <option value="">Select starting point...</option>
+                  {userLocation && (
+                    <option value={`${userLocation.lat},${userLocation.lng}`}>
+                      Current Location
+                    </option>
+                  )}
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.name}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    const from =
+                      fromLocation ||
+                      (userLocation ? `${userLocation.lat},${userLocation.lng}` : '');
+                    if (!from) {
+                      showNotification('Please select a starting point', 'error');
+                      return;
+                    }
+                    const url = getDirections(from, savedPlaceForDirections.name);
+                    window.open(url, '_blank');
+                    setSavedPlaceForDirections(null);
+                    setFromLocation('');
+                    showNotification(`Opening directions to ${savedPlaceForDirections.name}`);
+                  }}
+                  className="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
+                      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
                     />
                   </svg>
+                  Open in Google Maps
                 </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    From
-                  </label>
-                  <select
-                    value={fromLocation}
-                    onChange={(e) => setFromLocation(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-700"
-                  >
-                    <option value="">Select starting point...</option>
-                    {userLocation && (
-                      <option value={`${userLocation.lat},${userLocation.lng}`}>Current Location</option>
-                    )}
-                    {locations.map((loc) => (
-                      <option key={loc.id} value={loc.name}>
-                        {loc.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      const from = fromLocation || (userLocation ? `${userLocation.lat},${userLocation.lng}` : '');
-                      if (!from) {
-                        showNotification('Please select a starting point', 'error');
-                        return;
-                      }
-                      const url = getDirections(from, savedPlaceForDirections.name);
-                      window.open(url, '_blank');
-                      setSavedPlaceForDirections(null);
-                      setFromLocation('');
-                      showNotification(`Opening directions to ${savedPlaceForDirections.name}`);
-                    }}
-                    className="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                      />
-                    </svg>
-                    Open in Google Maps
-                  </button>
-                </div>
               </div>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* My Stats Modal */}
       <MyStatsModal

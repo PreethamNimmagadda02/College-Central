@@ -232,7 +232,10 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
               type: Type.OBJECT,
               properties: {
                 semester: { type: Type.NUMBER, description: 'The semester number.' },
-                sessionYear: { type: Type.STRING, description: 'Academic session year (YYYY-YYYY).' },
+                sessionYear: {
+                  type: Type.STRING,
+                  description: 'Academic session year (YYYY-YYYY).',
+                },
                 sessionType: { type: Type.STRING, description: 'Monsoon, Winter, or Summer.' },
                 sgpa: { type: Type.NUMBER, description: 'The SGPA for this semester.' },
                 cgpa: { type: Type.NUMBER, description: 'Cumulative CGPA up to this semester.' },
@@ -259,17 +262,27 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
       const gradePointMap: { [key: string]: number } = {
         ...adminGradePoints,
-        'EX': -1, 'I': -1, 'W': -1, 'P': -1 // Special grades excluded from calculation
+        EX: -1,
+        I: -1,
+        W: -1,
+        P: -1, // Special grades excluded from calculation
       };
 
       // Common OCR error corrections
       const ocrCorrections: { [key: string]: string } = {
-        '0': 'O', 'o': 'O', // Zero to O (though O is typically not valid)
+        '0': 'O',
+        o: 'O', // Zero to O (though O is typically not valid)
         '8': 'B', // 8 misread as B
         '4': 'A', // 4 misread as A
-        'AT': 'A+', 'A T': 'A+', 'A1': 'A+',
-        'BT': 'B+', 'B T': 'B+', 'B1': 'B+',
-        'CT': 'C+', 'C T': 'C+', 'C1': 'C+',
+        AT: 'A+',
+        'A T': 'A+',
+        A1: 'A+',
+        BT: 'B+',
+        'B T': 'B+',
+        B1: 'B+',
+        CT: 'C+',
+        'C T': 'C+',
+        C1: 'C+',
       };
 
       // Function to normalize a grade string
@@ -288,13 +301,16 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
       // Function to calculate SGPA for a set of grades
       const calculateSGPA = (grades: { grade: string; credits: number }[]): number => {
-        const validGrades = grades.filter(g => {
+        const validGrades = grades.filter((g) => {
           const points = gradePointMap[g.grade];
           return points !== undefined && points >= 0;
         });
         if (validGrades.length === 0) return 0;
         const totalCredits = validGrades.reduce((sum, g) => sum + g.credits, 0);
-        const totalPoints = validGrades.reduce((sum, g) => sum + (gradePointMap[g.grade] ?? 0) * g.credits, 0);
+        const totalPoints = validGrades.reduce(
+          (sum, g) => sum + (gradePointMap[g.grade] ?? 0) * g.credits,
+          0
+        );
         return totalCredits > 0 ? totalPoints / totalCredits : 0;
       };
 
@@ -312,7 +328,9 @@ GRADE READING RULES (CRITICAL):
 
 VALIDATION:
 - Verify each semester's grades produce the shown SGPA (grade points × credits / total credits)
-- Grade points: ${Object.entries(adminGradePoints).map(([g, p]) => `${g}=${p}`).join(', ')}
+- Grade points: ${Object.entries(adminGradePoints)
+            .map(([g, p]) => `${g}=${p}`)
+            .join(', ')}
 - If calculated SGPA differs from shown SGPA, re-check the grades
 
 EXTRACT:
@@ -332,11 +350,13 @@ CRITICAL CHECKS:
 
 SELF-VALIDATION:
 - For each semester, verify: SGPA ≈ Σ(grade_points × credits) / Σ(credits)
-- Grade point values: ${Object.entries(adminGradePoints).map(([g, p]) => `${g}=${p}`).join(', ')}
+- Grade point values: ${Object.entries(adminGradePoints)
+            .map(([g, p]) => `${g}=${p}`)
+            .join(', ')}
 - If your calculation differs significantly from shown SGPA, re-examine the grades
 
 Extract ALL semesters with semester number, year, type, SGPA, CGPA, and all courses.
-Include retakes. Return exact values as shown on the document.`
+Include retakes. Return exact values as shown on the document.`,
         ];
 
         const response = await ai.models.generateContent({
@@ -354,9 +374,12 @@ Include retakes. Return exact values as shown on the document.`
           },
         });
 
-        interface AIResponse { text?: string | (() => string); }
+        interface AIResponse {
+          text?: string | (() => string);
+        }
         const rawText = (response as AIResponse)?.text;
-        const text = typeof rawText === 'string' ? rawText : typeof rawText === 'function' ? rawText() : '';
+        const text =
+          typeof rawText === 'string' ? rawText : typeof rawText === 'function' ? rawText() : '';
         if (!text) throw new Error('AI response was empty');
         return JSON.parse(text.trim());
       };
@@ -370,8 +393,14 @@ Include retakes. Return exact values as shown on the document.`
       let retryCount = 0;
       let bestResult: any = null;
       let consensusReached = false;
-      const lowConfidenceGrades: { semester: number; subjectCode: string; extractedGrade: string; reason: string }[] = [];
-      const semesterConfidences: { semester: number; confidence: number; sgpaMismatch?: number }[] = [];
+      const lowConfidenceGrades: {
+        semester: number;
+        subjectCode: string;
+        extractedGrade: string;
+        reason: string;
+      }[] = [];
+      const semesterConfidences: { semester: number; confidence: number; sgpaMismatch?: number }[] =
+        [];
 
       // Perform multiple extraction passes
       for (let pass = 0; pass < MAX_PASSES; pass++) {
@@ -459,7 +488,9 @@ Include retakes. Return exact values as shown on the document.`
         });
 
         if (sgpaMismatch > SGPA_TOLERANCE) {
-          console.warn(`Semester ${sem.semester}: SGPA mismatch - extracted ${sem.sgpa}, calculated ${calculatedSGPA.toFixed(2)} (diff: ${sgpaMismatch.toFixed(2)})`);
+          console.warn(
+            `Semester ${sem.semester}: SGPA mismatch - extracted ${sem.sgpa}, calculated ${calculatedSGPA.toFixed(2)} (diff: ${sgpaMismatch.toFixed(2)})`
+          );
           needsRetry = true;
 
           // Find which grades might be wrong by trying alternatives
@@ -468,7 +499,7 @@ Include retakes. Return exact values as shown on the document.`
             if (currentPoints !== undefined && currentPoints >= 0) {
               // Check if changing this grade would help
               const similarGrades = Object.keys(gradePointMap).filter(
-                grade => Math.abs((gradePointMap[grade] ?? 0) - currentPoints) === 1
+                (grade) => Math.abs((gradePointMap[grade] ?? 0) - currentPoints) === 1
               );
               if (similarGrades.length > 0) {
                 lowConfidenceGrades.push({
@@ -528,9 +559,11 @@ Include retakes. Return exact values as shown on the document.`
       }
 
       // ===== CALCULATE OVERALL CONFIDENCE =====
-      const overallConfidence = semesterConfidences.length > 0
-        ? semesterConfidences.reduce((sum, s) => sum + s.confidence, 0) / semesterConfidences.length
-        : 1;
+      const overallConfidence =
+        semesterConfidences.length > 0
+          ? semesterConfidences.reduce((sum, s) => sum + s.confidence, 0) /
+            semesterConfidences.length
+          : 1;
 
       //console.log(`[Extraction] Complete - Overall confidence: ${(overallConfidence * 100).toFixed(1)}%`);
       //console.log(`[Extraction] Low confidence grades: ${lowConfidenceGrades.length}`);
@@ -597,7 +630,15 @@ Include retakes. Return exact values as shown on the document.`
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedFile, currentUser, gradesData, setGradesData, selectFile, adminGradePoints, gradeOptions]);
+  }, [
+    selectedFile,
+    currentUser,
+    gradesData,
+    setGradesData,
+    selectFile,
+    adminGradePoints,
+    gradeOptions,
+  ]);
 
   const resetGradesState = useCallback(async () => {
     // Delete grade sheet from storage if it exists
