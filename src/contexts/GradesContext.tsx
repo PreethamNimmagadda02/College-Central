@@ -397,8 +397,8 @@ Include retakes. Return exact values as shown on the document.`
         }
       });
 
-      const results = await Promise.all(passPromises);
-      const successfulPasses = results.filter((result) => result !== null);
+      const passResults = await Promise.all(passPromises);
+      const successfulPasses = passResults.filter((result) => result !== null);
       allPasses.push(...successfulPasses);
 
       if (allPasses.length === 0) {
