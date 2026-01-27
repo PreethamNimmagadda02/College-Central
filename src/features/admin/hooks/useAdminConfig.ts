@@ -58,26 +58,31 @@ export const useAdminConfig = () => {
     };
   }, []);
 
-  // Save config to Firestore
-  const saveToFirestore = useCallback(async (newConfig: AdminConfig) => {
-    setSaving(true);
-    setError(null);
-    try {
-      const success = await updateFirestoreConfig(newConfig);
-      if (success) {
-        setHasChanges(false);
-        // Also save to localStorage as backup
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
-      } else {
-        setError('Failed to save to Firestore');
+  // Save specific sections to Firestore
+  const saveChangedSections = useCallback(
+    async (sections: Array<keyof AdminConfig>, newConfig: AdminConfig) => {
+      setSaving(true);
+      setError(null);
+      try {
+        const promises = sections.map((section) => updateConfigSection(section, newConfig[section]));
+        const results = await Promise.all(promises);
+
+        if (results.every((r) => r)) {
+          setHasChanges(false);
+          // Also save to localStorage as backup
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
+        } else {
+          setError('Failed to save some sections');
+        }
+      } catch (err) {
+        console.error('Error saving sections:', err);
+        setError('Failed to save configuration');
+      } finally {
+        setSaving(false);
       }
-    } catch (err) {
-      console.error('Error saving config:', err);
-      setError('Failed to save configuration');
-    } finally {
-      setSaving(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   // Save specific section to Firestore
   const saveSection = useCallback(
@@ -108,13 +113,25 @@ export const useAdminConfig = () => {
     (updater: (prev: AdminConfig) => AdminConfig) => {
       setConfig((prev) => {
         const newConfig = updater(prev);
-        // Auto-save to Firestore
-        saveToFirestore(newConfig);
+
+        // Identify changed sections
+        const changedSections = (Object.keys(newConfig) as Array<keyof AdminConfig>).filter(
+          (key) => newConfig[key] !== prev[key]
+        );
+
+        // Optimization: Update only changed sections
+        if (changedSections.length > 0) {
+          // Schedule save for next tick to avoid side-effects/state-updates during render
+          setTimeout(() => {
+            saveChangedSections(changedSections, newConfig);
+          }, 0);
+        }
+
         return newConfig;
       });
       setHasChanges(true);
     },
-    [saveToFirestore]
+    [saveChangedSections]
   );
 
   // Update functions for each config section
