@@ -23,3 +23,7 @@
 ## 2024-05-24 - [Parallel PDF Page Extraction]
 **Learning:** `CalendarUploader.tsx` was extracting PDF pages sequentially, causing significant delay for multi-page documents. Parallelizing the extraction with `Promise.all` reduced processing time by ~12x (250ms -> 20ms for 50 pages).
 **Action:** When performing independent asynchronous operations (like fetching pages from a document), always prefer `Promise.all` over sequential `await` loops unless memory constraints or order dependencies strictly forbid it.
+
+## 2024-05-25 - [Redundant Sorting in Analytics]
+**Learning:** `PerformanceAnalytics` was re-sorting semesters in every render/computation, despite `Grades.tsx` (parent) already providing sorted data via `sortedGradesData`.
+**Action:** When passing large datasets to children, check if the data is already processed/sorted in the parent to avoid redundant O(N log N) operations in children.

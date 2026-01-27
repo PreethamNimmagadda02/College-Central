@@ -165,7 +165,7 @@ const getCGPAStatus = (cgpa: number) => {
   };
 };
 
-const CGPAForecaster: React.FC = () => {
+const CGPAForecaster: React.FC = React.memo(() => {
   const { gradesData } = useGrades();
   const { scheduleData } = useSchedule();
   const { user, updateUser } = useUser();
@@ -974,13 +974,13 @@ const CGPAForecaster: React.FC = () => {
       )}
     </motion.div>
   );
-};
+});
 
 /**
  * ImprovementExamForecaster allows students to modify their past grades
  * and see how improvement exams could affect their CGPA.
  */
-const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = ({ gradesData }) => {
+const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.memo(({ gradesData }) => {
   const { gradeOptions, gradePoints, getGradeColor } = useGradingScale();
   const [modifiedGrades, setModifiedGrades] = useState<{ [subjectCode: string]: string }>({});
   const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set());
@@ -1602,13 +1602,13 @@ const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = ({ grade
       </div>
     </motion.div>
   );
-};
+});
 
 /**
  * PerformanceAnalytics displays grade analytics using only the latest grade for each course.
  * When a student retakes a course, only the most recent attempt is counted in analytics.
  */
-const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: string }> = ({
+const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: string }> = React.memo(({
   gradesData,
   courseOption,
 }) => {
@@ -1647,7 +1647,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
   // Calculate performance trends with enhanced metrics
   const performanceTrend = useMemo(() => {
-    const sortedSemesters = [...gradesData.semesters].sort((a, b) => a.semester - b.semester);
+    const sortedSemesters = gradesData.semesters;
     return sortedSemesters.map((sem: Semester, index: number) => {
       // Only count earned credits (passed courses where grade != 'F')
       const earnedCredits = sem.grades.reduce(
@@ -1670,7 +1670,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
   // Advanced Performance Metrics
   const advancedMetrics = useMemo(() => {
-    const sortedSemesters = [...gradesData.semesters].sort((a, b) => a.semester - b.semester);
+    const sortedSemesters = gradesData.semesters;
 
     // 1. Consistency Score (lower std deviation = more consistent)
     const sgpaValues = sortedSemesters.map((s) => s.sgpa);
@@ -4063,7 +4063,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
       )}
     </motion.div>
   );
-};
+});
 
 const Grades: React.FC = () => {
   const {
