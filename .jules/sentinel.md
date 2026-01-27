@@ -9,3 +9,8 @@
 **Vulnerability:** The list of admin emails was stored in a publicly readable `appConfig` collection, exposing sensitive information and potential targets for phishing.
 **Learning:** Security by obscurity (hiding the list in UI but making it public in DB) is not security. Client-side promotion logic (checking if user is in a list) is insecure and prone to spoofing.
 **Prevention:** Store sensitive configuration in a restricted `privateConfig` collection. Use server-side validation (Firestore Rules) to enforce role assignments based on this secure list, rather than trusting the client.
+
+## 2025-10-27 - Missing Tenant Isolation in Firestore
+**Vulnerability:** The application relied on client-side checks to restrict access to users from a specific email domain (e.g., `@iitism.ac.in`). Firestore rules only checked `request.auth != null`, allowing any authenticated user (including those from personal Gmail accounts) to read sensitive data like user directories and analytics.
+**Learning:** Authentication != Authorization. Just because a user is logged in via Google doesn't mean they belong to the organization. Multi-tenant or restricted apps must enforce domain boundaries at the database level.
+**Prevention:** Implement `isAuthorizedDomain()` in `firestore.rules` to cross-reference the user's email domain against a secured configuration document before granting access.
