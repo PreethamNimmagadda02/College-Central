@@ -10,7 +10,6 @@ const CONFIG_COLLECTION = 'appConfig';
 // Document IDs for each config section
 const CONFIG_DOCS = {
   collegeInfo: 'collegeInfo',
-  adminEmails: 'adminEmails',
   appConstants: 'appConstants',
   branches: 'branches',
   hostels: 'hostels',
@@ -28,7 +27,6 @@ const CONFIG_DOCS = {
 
 // Config sections that are arrays and need to be wrapped in { items: [...] }
 const ARRAY_CONFIG_KEYS = [
-  'adminEmails',
   'branches',
   'hostels',
   'quotes',
