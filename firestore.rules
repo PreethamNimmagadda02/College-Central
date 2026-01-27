@@ -47,9 +47,20 @@ service cloud.firestore {
       return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
     }
 
+    // Check if email is authorized to be admin
+    function isAuthorizedAdminEmail(email) {
+      return exists(/databases/$(database)/documents/privateConfig/adminEmails) &&
+             email in get(/databases/$(database)/documents/privateConfig/adminEmails).data.items;
+    }
+
     // ============================================
     // APP CONFIGURATION
     // ============================================
+
+    // Private configuration - only accessible by admins
+    match /privateConfig/{docId} {
+      allow read, write: if isAdmin();
+    }
 
     // App-wide configuration - readable by all (needed before login), writable by admins only
     match /appConfig/{docId} {
@@ -82,7 +93,14 @@ service cloud.firestore {
       allow update: if isAuthenticated() 
                     && request.auth.uid == userId
                     && isValidDataSize()
-                    && isValidUserUpdate();
+                    && (
+                      isValidUserUpdate() ||
+                      (
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']) &&
+                        request.resource.data.role == 'admin' &&
+                        isAuthorizedAdminEmail(request.auth.token.email)
+                      )
+                    );
       
       // Admin can update any user's role
       allow update: if isAdmin() && isValidDataSize();

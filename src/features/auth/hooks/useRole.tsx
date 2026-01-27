@@ -38,36 +38,12 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
 
-      const userEmail = currentUser.email?.toLowerCase();
-
-      // Check if user's email is in the adminEmails list
-      const adminEmails = appConfig?.adminEmails || [];
-      const isEmailAdmin = adminEmails.some((email: string) => email.toLowerCase() === userEmail);
-
-      if (isEmailAdmin) {
-        // User is an admin based on email list
+      // Sentinel 🛡️: Removed insecure client-side admin promotion.
+      // Roles are now strictly managed via Firestore 'users' collection.
+      if (user?.role === 'admin') {
         setRole('admin');
-
-        // Update user's role in Firestore if not already admin
-        if (user && user.role !== 'admin') {
-          try {
-            await db.collection('users').doc(currentUser.uid).update({ role: 'admin' });
-          } catch (error) {
-            console.error('Failed to update user role to admin:', error);
-          }
-        }
       } else {
-        // Regular user
         setRole('user');
-
-        // Ensure role is 'user' in Firestore if it was previously admin but email was removed
-        if (user && user.role === 'admin') {
-          try {
-            await db.collection('users').doc(currentUser.uid).update({ role: 'user' });
-          } catch (error) {
-            console.error('Failed to update user role to user:', error);
-          }
-        }
       }
 
       setIsLoading(false);
