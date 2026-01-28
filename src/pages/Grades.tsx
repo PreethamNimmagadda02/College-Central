@@ -437,10 +437,14 @@ const CGPAForecaster: React.FC = () => {
           <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-4 sm:p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 sm:mb-2">
+                <label
+                  htmlFor="target-cgpa"
+                  className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 sm:mb-2"
+                >
                   Target CGPA
                 </label>
                 <input
+                  id="target-cgpa"
                   type="text"
                   inputMode="decimal"
                   value={targetCGPA}
@@ -942,7 +946,11 @@ const CGPAForecaster: React.FC = () => {
               SGPA: <strong>{calculations.projectedSgpa.toFixed(2)}</strong> → CGPA:{' '}
               <strong>{calculations.projectedCgpa.toFixed(2)}</strong>
             </p>
+            <label htmlFor="scenario-name" className="sr-only">
+              Scenario Name
+            </label>
             <input
+              id="scenario-name"
               type="text"
               placeholder="e.g., Best Case, Realistic, Worst Case"
               value={scenarioName}
@@ -1321,6 +1329,7 @@ const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = ({ grade
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search courses..."
+                  aria-label="Search courses"
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 dark:text-white text-sm"
                 />
               </div>
