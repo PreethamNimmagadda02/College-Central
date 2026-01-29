@@ -51,8 +51,14 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [error, setError] = useState<string | null>(null);
   const [liveZoneStatus, setLiveZoneStatus] = useState<LiveZoneStatus[]>([]);
 
-  // Fetch live zone status every 5 minutes
+  // Fetch live zone status every 5 minutes (only when authenticated)
   useEffect(() => {
+    // Skip if user is not authenticated - Firestore rules require auth
+    if (!currentUser) {
+      setLiveZoneStatus([]);
+      return;
+    }
+
     const fetchLiveStatus = async () => {
       try {
         const status = await getRealTimeCrowdLevels();
@@ -66,7 +72,7 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
     const interval = setInterval(fetchLiveStatus, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [currentUser]);
 
   // Update loading state based on config loading
   useEffect(() => {
