@@ -14,3 +14,8 @@
 **Vulnerability:** The application relied on client-side checks to restrict access to users from a specific email domain (e.g., `@iitism.ac.in`). Firestore rules only checked `request.auth != null`, allowing any authenticated user (including those from personal Gmail accounts) to read sensitive data like user directories and analytics.
 **Learning:** Authentication != Authorization. Just because a user is logged in via Google doesn't mean they belong to the organization. Multi-tenant or restricted apps must enforce domain boundaries at the database level.
 **Prevention:** Implement `isAuthorizedDomain()` in `firestore.rules` to cross-reference the user's email domain against a secured configuration document before granting access.
+
+## 2025-10-28 - Exposure of Admin Credentials via Source Control
+**Vulnerability:** The `serviceAccountKey.json` file, required by `scripts/addAdmin.ts` for admin privilege escalation, was missing from `.gitignore`. This file contains sensitive Firebase Admin SDK credentials which, if committed, would grant full database access to anyone with the repository.
+**Learning:** Utility scripts often require high-privilege credentials that are not needed by the main application. Documentation or scripts instructing developers to create/download these keys must be paired with immediate `.gitignore` updates.
+**Prevention:** Audit all scripts in the `scripts/` directory for credential usage. Ensure any file paths used for secrets are explicitly ignored in `.gitignore` before the script is even written.
