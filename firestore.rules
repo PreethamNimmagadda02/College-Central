@@ -8,7 +8,20 @@ service cloud.firestore {
 
     // Check if user is authenticated
     function isAuthenticated() {
-      return request.auth != null;
+      return request.auth != null && isAuthorizedDomain();
+    }
+
+    // Check if user's email domain matches the allowed college domain
+    function isAuthorizedDomain() {
+      // 🛡️ Sentinel: Enforce domain isolation at the database level
+      // This prevents users from other organizations (who might bypass client checks)
+      // from accessing sensitive data.
+      let configPath = /databases/$(database)/documents/appConfig/collegeInfo;
+
+      return request.auth.token.email != null &&
+             exists(configPath) &&
+             request.auth.token.email.split('@').size() == 2 &&
+             request.auth.token.email.split('@')[1] == get(configPath).data.email.domain;
     }
 
     // Check if user is an admin
