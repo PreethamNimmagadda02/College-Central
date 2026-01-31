@@ -92,6 +92,15 @@ const Schedule: React.FC = () => {
   // Get all courses for fallback matching (both CBCS and NEP)
   const allCoursesData = useMemo(() => config?.courses || [], [config?.courses]);
 
+  // Create Maps for O(1) lookup
+  const allCoursesMap = useMemo(() => {
+    return new Map(allCoursesData.map((c) => [c.courseCode, c]));
+  }, [allCoursesData]);
+
+  const timetableMap = useMemo(() => {
+    return new Map(timetableData.map((c) => [c.courseCode, c]));
+  }, [timetableData]);
+
   // Sync schedule with admin timetable changes
   // This effect updates user's schedule when admin modifies course data (course name)
   // while PRESERVING user-specific modifications like instructor names, venue, day, and time
@@ -121,7 +130,7 @@ const Schedule: React.FC = () => {
     const validSlotIds = new Set<string>();
 
     scheduledCourseCodes.forEach((courseCode) => {
-      const timetableCourse = timetableData.find((c) => c.courseCode === courseCode);
+      const timetableCourse = timetableMap.get(courseCode);
 
       if (!timetableCourse) {
         // Course no longer exists in timetable - keep existing entries as-is
@@ -180,7 +189,7 @@ const Schedule: React.FC = () => {
 
     // Check if any slots were removed by admin (exist in schedule but not in timetable)
     const removedSlots = courseEntries.filter((item) => {
-      const timetableCourse = timetableData.find((c) => c.courseCode === item.courseCode);
+      const timetableCourse = timetableMap.get(item.courseCode);
       // Only check for removal if the course exists in timetable
       if (!timetableCourse) return false;
       return !validSlotIds.has(item.slotId);
@@ -193,7 +202,7 @@ const Schedule: React.FC = () => {
     if (needsUpdate) {
       setScheduleData([...updatedCourses, ...customTasks]);
     }
-  }, [timetableData, scheduleLoading]);
+  }, [timetableData, scheduleLoading, timetableMap]);
 
   const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -352,24 +361,22 @@ const Schedule: React.FC = () => {
   // Display the actual count from schedule, not just selected codes
   // Only count courses that exist in the current timetable structure
   const displayCoursesCount = useMemo(() => {
-    const validCourses = uniqueCoursesFromSchedule.filter((code) =>
-      timetableData.some((course) => course.courseCode === code)
-    );
+    const validCourses = uniqueCoursesFromSchedule.filter((code) => timetableMap.has(code));
     return validCourses.length;
-  }, [uniqueCoursesFromSchedule, timetableData]);
+  }, [uniqueCoursesFromSchedule, timetableMap]);
 
   const totalCredits = useMemo(() => {
     // Always use courses from actual schedule data for accurate credit count
     // Search in all courses to handle mixed CBCS/NEP schedules
     return uniqueCoursesFromSchedule.reduce((acc, code) => {
       // Find course in all courses (both CBCS and NEP)
-      const course = allCoursesData.find((c) => c.courseCode === code);
+      const course = allCoursesMap.get(code);
 
       if (!course) return acc;
       const credits = calculateCreditsFromLTP(course.ltp, course.courseType || courseOption);
       return acc + credits;
     }, 0);
-  }, [uniqueCoursesFromSchedule, courseOption, allCoursesData]);
+  }, [uniqueCoursesFromSchedule, courseOption, allCoursesMap]);
 
   const todaysClasses = useMemo(() => {
     if (!scheduleData || !today) return [];
@@ -393,14 +400,14 @@ const Schedule: React.FC = () => {
     ];
     return uniqueCodes
       .map((code) => {
-        const course = timetableData.find((c) => c.courseCode === code);
+        const course = timetableMap.get(code);
         return {
           code: code,
           name: course ? `${code} - ${course.courseName}` : code,
         };
       })
       .sort((a, b) => (a.code as string).localeCompare(b.code as string));
-  }, [scheduleData, timetableData]);
+  }, [scheduleData, timetableMap]);
 
   const handleCourseSelection = (courseCode: string) => {
     // Check if this course belongs to the current timetable
