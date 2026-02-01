@@ -28,6 +28,9 @@
 **Learning:** `PerformanceAnalytics` was re-sorting semesters in every render/computation, despite `Grades.tsx` (parent) already providing sorted data via `sortedGradesData`.
 **Action:** When passing large datasets to children, check if the data is already processed/sorted in the parent to avoid redundant O(N log N) operations in children.
 
+## 2024-05-26 - [Dashboard Re-render Optimization]
+**Learning:** `Dashboard.tsx` was re-rendering every second due to a `setInterval` updating local state for a small countdown pill. This caused the entire heavy dashboard component to reconcile.
+**Action:** Extracted the countdown logic into a dedicated, memoized `CountdownPill` component. Always isolate frequent state updates (timers, animations) into the smallest possible sub-component to prevent parent re-renders.
 ## 2024-05-26 - [Schedule Computation Optimization]
 **Learning:** `Schedule.tsx` performed O(N*M) lookups inside `useMemo` hooks (e.g., `totalCredits` finding courses in a large array), causing performance degradation with large datasets.
 **Action:** Always index large static datasets (like course catalogs) into a `Map` or `Set` before performing repeated lookups in derived state calculations. This reduced execution time by >10x in benchmarks.
