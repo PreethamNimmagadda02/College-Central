@@ -19,3 +19,7 @@
 **Vulnerability:** The `locationAnalytics` feature relies on the client fetching the entire collection to compute "crowd levels", requiring `read` access for all users to all location data.
 **Learning:** Client-side aggregation of sensitive data (PII) forces insecure rules.
 **Prevention:** Aggregation must happen server-side (Cloud Functions or scheduled jobs) writing to a public summary document. Do not expose raw event streams to clients.
+## 2025-10-28 - Exposure of Admin Credentials via Source Control
+**Vulnerability:** The `serviceAccountKey.json` file, required by `scripts/addAdmin.ts` for admin privilege escalation, was missing from `.gitignore`. This file contains sensitive Firebase Admin SDK credentials which, if committed, would grant full database access to anyone with the repository.
+**Learning:** Utility scripts often require high-privilege credentials that are not needed by the main application. Documentation or scripts instructing developers to create/download these keys must be paired with immediate `.gitignore` updates.
+**Prevention:** Audit all scripts in the `scripts/` directory for credential usage. Ensure any file paths used for secrets are explicitly ignored in `.gitignore` before the script is even written.
