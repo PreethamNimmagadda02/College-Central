@@ -15,6 +15,10 @@
 **Learning:** Authentication != Authorization. Just because a user is logged in via Google doesn't mean they belong to the organization. Multi-tenant or restricted apps must enforce domain boundaries at the database level.
 **Prevention:** Implement `isAuthorizedDomain()` in `firestore.rules` to cross-reference the user's email domain against a secured configuration document before granting access.
 
+## 2025-10-27 - Missing Content Security Policy
+**Vulnerability:** The application lacked a `Content-Security-Policy` (CSP) meta tag, leaving it vulnerable to Cross-Site Scripting (XSS) and data injection attacks by allowing resources to be loaded from any origin.
+**Learning:** Modern frontend tooling (like Vite) does not enforce CSP by default. Developers often focus on functional permissions (like Firebase Rules) and overlook browser-level security boundaries, assuming the build process handles security.
+**Prevention:** Always explicitly define allowed content sources using a CSP meta tag in `index.html` or HTTP headers. Start with a restrictive policy (`default-src 'self'`) and whitelist strictly necessary external services (e.g., Firebase, Google Maps).
 ## 2025-10-28 - Client-Side Analytics Data Leak
 **Vulnerability:** The `locationAnalytics` feature relies on the client fetching the entire collection to compute "crowd levels", requiring `read` access for all users to all location data.
 **Learning:** Client-side aggregation of sensitive data (PII) forces insecure rules.
