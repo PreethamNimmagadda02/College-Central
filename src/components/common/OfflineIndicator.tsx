@@ -34,11 +34,10 @@ export const OfflineIndicator: React.FC = () => {
         className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] animate-fadeIn"
         role="status"
         aria-live="polite"
-        aria-atomic="true"
       >
-        <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3">
-          <Wifi size={20} aria-hidden="true" />
-          <span className="font-medium">Back online!</span>
+        <div className="bg-green-600/95 backdrop-blur-md border border-green-400/30 text-white px-6 py-3 rounded-xl shadow-xl flex items-center gap-3">
+          <Wifi size={20} className="animate-pulse" />
+          <span className="font-bold tracking-wide">Back online!</span>
         </div>
       </div>
     );
@@ -49,15 +48,18 @@ export const OfflineIndicator: React.FC = () => {
     return (
       <div
         className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] animate-fadeIn"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
+        role="alert"
+        aria-live="assertive"
       >
-        <div className="bg-orange-500 text-white px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3">
-          <WifiOff size={20} aria-hidden="true" />
+        <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-4">
+          <div className="p-2 bg-red-500/20 rounded-full">
+            <WifiOff size={20} className="text-red-400" />
+          </div>
           <div>
-            <div className="font-medium">You're offline</div>
-            <div className="text-sm text-white/90">Some features may be limited</div>
+            <div className="font-bold text-red-100">You're offline</div>
+            <div className="text-xs text-slate-400 font-medium mt-0.5">
+              Some features may be limited
+            </div>
           </div>
         </div>
       </div>
