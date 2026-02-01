@@ -663,8 +663,9 @@ export const useAdminConfig = () => {
   const resetToDefaults = useCallback(async () => {
     try {
       // Fetch current adminEmails directly from Firestore to ensure we don't lose them
+      // Sentinel 🛡️: Reading from privateConfig to avoid exposing sensitive data in public appConfig
       const { db } = await import('@lib/firebase');
-      const adminEmailsDoc = await db.collection('appConfig').doc('adminEmails').get();
+      const adminEmailsDoc = await db.collection('privateConfig').doc('adminEmails').get();
       const currentAdminEmails = adminEmailsDoc.exists
         ? adminEmailsDoc.data()?.items || []
         : config.adminEmails || [];

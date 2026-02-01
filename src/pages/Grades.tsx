@@ -1912,7 +1912,10 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             initial="hidden"
             animate="show"
           >
-            <motion.div
+            <motion.button
+              type="button"
+              aria-expanded={selectedKPI === 'standing'}
+              aria-label="View details for Academic Standing"
               variants={{
                 hidden: { opacity: 0, y: 20, scale: 0.9 },
                 show: { opacity: 1, y: 0, scale: 1 },
@@ -1920,7 +1923,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'standing' ? null : 'standing')}
-              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-blue-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer"
+              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-blue-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent dark:from-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative z-10">
@@ -1953,9 +1956,12 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   />
                 </div>
               </div>
-            </motion.div>
+            </motion.button>
 
-            <motion.div
+            <motion.button
+              type="button"
+              aria-expanded={selectedKPI === 'consistency'}
+              aria-label="View details for Consistency Score"
               variants={{
                 hidden: { opacity: 0, y: 20, scale: 0.9 },
                 show: { opacity: 1, y: 0, scale: 1 },
@@ -1963,7 +1969,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'consistency' ? null : 'consistency')}
-              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-green-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer"
+              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-green-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent dark:from-green-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative z-10">
@@ -1998,9 +2004,12 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   σ = {advancedMetrics.stdDev.toFixed(3)}
                 </p>
               </div>
-            </motion.div>
+            </motion.button>
 
-            <motion.div
+            <motion.button
+              type="button"
+              aria-expanded={selectedKPI === 'efficiency'}
+              aria-label="View details for Credit Efficiency"
               variants={{
                 hidden: { opacity: 0, y: 20, scale: 0.9 },
                 show: { opacity: 1, y: 0, scale: 1 },
@@ -2008,7 +2017,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'efficiency' ? null : 'efficiency')}
-              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-purple-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer"
+              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-purple-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent dark:from-purple-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative z-10">
@@ -2042,9 +2051,12 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   )}
                 </div>
               </div>
-            </motion.div>
+            </motion.button>
 
-            <motion.div
+            <motion.button
+              type="button"
+              aria-expanded={selectedKPI === 'trend'}
+              aria-label="View details for Performance Trend"
               variants={{
                 hidden: { opacity: 0, y: 20, scale: 0.9 },
                 show: { opacity: 1, y: 0, scale: 1 },
@@ -2052,7 +2064,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'trend' ? null : 'trend')}
-              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-orange-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer"
+              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-orange-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-transparent dark:from-orange-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative z-10">
@@ -2108,7 +2120,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   /sem
                 </p>
               </div>
-            </motion.div>
+            </motion.button>
           </motion.div>
 
           {/* KPI Explanation Panel */}
