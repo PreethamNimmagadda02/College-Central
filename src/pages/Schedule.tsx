@@ -360,10 +360,6 @@ const Schedule: React.FC = () => {
 
   // Display the actual count from schedule, not just selected codes
   // Only count courses that exist in the current timetable structure
-  const timetableCourseCodes = useMemo(() => {
-    return new Set(timetableData.map((c) => c.courseCode));
-  }, [timetableData]);
-
   const displayCoursesCount = useMemo(() => {
     const validCourses = uniqueCoursesFromSchedule.filter((code) => timetableMap.has(code));
     return validCourses.length;
@@ -1239,7 +1235,7 @@ const Schedule: React.FC = () => {
 
   const filteredCourses = useMemo(() => {
     // Sort courses: selected courses first, then alphabetically by course code
-    courses = [...courses].sort((a, b) => {
+    const sortedCourses = [...uniqueTimetableCourses].sort((a, b) => {
       const aSelected = selectedCourseCodes.includes(a.courseCode);
       const bSelected = selectedCourseCodes.includes(b.courseCode);
 
@@ -1252,13 +1248,13 @@ const Schedule: React.FC = () => {
     });
 
     if (!searchTerm.trim()) {
-      return uniqueTimetableCourses;
+      return sortedCourses;
     }
 
     const searchLower = searchTerm.toLowerCase().trim();
     const searchNoSpaces = searchLower.replace(/\s+/g, '');
 
-    return uniqueTimetableCourses.filter((course) => {
+    return sortedCourses.filter((course) => {
       if (!course.courseCode || !course.courseName) return false;
 
       const courseCode = course.courseCode.toLowerCase();
@@ -1286,7 +1282,7 @@ const Schedule: React.FC = () => {
 
       return false;
     });
-  }, [searchTerm, uniqueTimetableCourses]);
+  }, [searchTerm, uniqueTimetableCourses, selectedCourseCodes]);
 
   const filteredSchedule = useMemo(() => {
     if (!scheduleData) return [];
