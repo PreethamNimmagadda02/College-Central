@@ -316,11 +316,11 @@ const Dashboard: React.FC = () => {
       const updatedLinks = quickLinks.map((l) =>
         l.id === editingLink.id
           ? {
-              ...editingLink,
-              href: editingLink.href.startsWith('http')
-                ? editingLink.href
-                : `https://${editingLink.href}`,
-            }
+            ...editingLink,
+            href: editingLink.href.startsWith('http')
+              ? editingLink.href
+              : `https://${editingLink.href}`,
+          }
           : l
       );
       saveQuickLinks(updatedLinks);
@@ -1097,8 +1097,8 @@ const Dashboard: React.FC = () => {
               <div className="relative mb-4">
                 <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-4 overflow-hidden shadow-inner">
                   <div
-                    className="bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
-                    style={{ width: `${semesterProgress}%` }}
+                    className="bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden min-w-0"
+                    style={{ width: `${Math.min(100, Math.max(0, semesterProgress))}%` }}
                   >
                     {/* Shimmer effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
@@ -1155,7 +1155,7 @@ const Dashboard: React.FC = () => {
                         0,
                         Math.floor(
                           (stableNow.getTime() - semesterStartDate.getTime()) /
-                            (1000 * 60 * 60 * 24)
+                          (1000 * 60 * 60 * 24)
                         )
                       )}
                     </p>
@@ -1465,13 +1465,12 @@ const Dashboard: React.FC = () => {
                                   }}
                                   className={`
                                                                         text-sm py-1.5 rounded transition-colors
-                                                                        ${
-                                                                          isSelected
-                                                                            ? 'bg-primary text-white font-bold'
-                                                                            : isToday
-                                                                              ? 'bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold'
-                                                                              : 'hover:bg-slate-100 dark:hover:bg-slate-700'
-                                                                        }
+                                                                        ${isSelected
+                                      ? 'bg-primary text-white font-bold'
+                                      : isToday
+                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold'
+                                        : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    }
                                                                     `}
                                 >
                                   {day}
@@ -1686,18 +1685,16 @@ const Dashboard: React.FC = () => {
                         return (
                           <li
                             key={c.slotId}
-                            className={`relative pl-8 transition-all duration-700 ease-out ${
-                              allClassesCompleted ? 'opacity-50' : isPast ? 'opacity-35' : ''
-                            }`}
+                            className={`relative pl-8 transition-all duration-700 ease-out ${allClassesCompleted ? 'opacity-50' : isPast ? 'opacity-35' : ''
+                              }`}
                           >
                             {/* Timeline segment for this class */}
                             {index < scheduleInfo.classes.length - 1 && (
                               <div
-                                className={`absolute left-2.5 w-0.5 transition-all duration-700 ease-out ${
-                                  allClassesCompleted || isPast
+                                className={`absolute left-2.5 w-0.5 transition-all duration-700 ease-out ${allClassesCompleted || isPast
                                     ? 'bg-emerald-500/80 dark:bg-emerald-400/80'
                                     : 'bg-slate-300 dark:bg-slate-600'
-                                }`}
+                                  }`}
                                 style={{
                                   top: '1.25rem',
                                   height: 'calc(100% + 0.75rem)', // Extends to next item (space-y-3 = 0.75rem)
@@ -1706,15 +1703,14 @@ const Dashboard: React.FC = () => {
                             )}
 
                             <div
-                              className={`absolute left-0 top-2.5 h-5 w-5 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
-                                isCurrent
+                              className={`absolute left-0 top-2.5 h-5 w-5 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${isCurrent
                                   ? 'bg-primary ring-4 ring-primary/20 scale-110 shadow-md'
                                   : isNext
                                     ? 'bg-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-md'
                                     : isPast || allClassesCompleted
                                       ? 'bg-emerald-500/90 ring-4 ring-emerald-500/15 dark:bg-emerald-400/90 dark:ring-emerald-400/15'
                                       : 'bg-slate-300 dark:bg-slate-600 ring-4 ring-slate-200 dark:ring-slate-700'
-                              }`}
+                                }`}
                             >
                               {isPast || allClassesCompleted ? (
                                 <svg
@@ -1733,25 +1729,23 @@ const Dashboard: React.FC = () => {
                             </div>
 
                             <div
-                              className={`transition-all duration-500 ease-out ${
-                                isCurrent
+                              className={`transition-all duration-500 ease-out ${isCurrent
                                   ? 'bg-primary/5 border-l-2 border-primary pl-4 pr-3 py-3 rounded-r-lg'
                                   : isNext
                                     ? 'bg-amber-50 dark:bg-amber-900/10 border-l-2 border-amber-500 pl-4 pr-3 py-3 rounded-r-lg'
                                     : 'py-2'
-                              }`}
+                                }`}
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
                                     <span
-                                      className={`text-xs font-semibold transition-colors duration-500 ${
-                                        isCurrent
+                                      className={`text-xs font-semibold transition-colors duration-500 ${isCurrent
                                           ? 'text-primary'
                                           : isPast || allClassesCompleted
                                             ? 'text-emerald-600/80 dark:text-emerald-400/80'
                                             : 'text-slate-500 dark:text-slate-400'
-                                      }`}
+                                        }`}
                                     >
                                       {c.startTime} - {c.endTime}
                                     </span>
@@ -1767,20 +1761,18 @@ const Dashboard: React.FC = () => {
                                     )}
                                   </div>
                                   <p
-                                    className={`font-semibold text-sm mb-2 transition-all duration-500 ${
-                                      isPast || allClassesCompleted
+                                    className={`font-semibold text-sm mb-2 transition-all duration-500 ${isPast || allClassesCompleted
                                         ? 'text-slate-400 dark:text-slate-500'
                                         : 'text-slate-900 dark:text-white'
-                                    }`}
+                                      }`}
                                   >
                                     {c.courseName}
                                   </p>
                                   <div
-                                    className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs transition-colors duration-500 ${
-                                      isPast || allClassesCompleted
+                                    className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs transition-colors duration-500 ${isPast || allClassesCompleted
                                         ? 'text-slate-400 dark:text-slate-600'
                                         : 'text-slate-500 dark:text-slate-400'
-                                    }`}
+                                      }`}
                                   >
                                     <span className="flex items-center gap-1">
                                       <InstructorIcon className="w-3.5 h-3.5" />
@@ -1791,9 +1783,8 @@ const Dashboard: React.FC = () => {
                                       {c.location}
                                     </span>
                                     <span
-                                      className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-500 ${
-                                        isPast || allClassesCompleted ? 'opacity-60' : ''
-                                      } ${getClassColor(c.courseCode, c.isCustomTask)}`}
+                                      className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-500 ${isPast || allClassesCompleted ? 'opacity-60' : ''
+                                        } ${getClassColor(c.courseCode, c.isCustomTask)}`}
                                     >
                                       {c.isCustomTask ? '✓ ' : ''}
                                       {c.courseCode}
@@ -2236,11 +2227,10 @@ const Dashboard: React.FC = () => {
                     <button
                       key={iconOption.icon}
                       onClick={() => setNewLink({ ...newLink, icon: iconOption.icon })}
-                      className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${
-                        newLink.icon === iconOption.icon
+                      className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${newLink.icon === iconOption.icon
                           ? 'border-primary bg-primary/10 shadow-md'
                           : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
-                      }`}
+                        }`}
                       title={iconOption.name}
                       aria-label={`Select ${iconOption.name} icon`}
                       aria-pressed={newLink.icon === iconOption.icon}
@@ -2267,11 +2257,10 @@ const Dashboard: React.FC = () => {
                     <button
                       key={color.value}
                       onClick={() => setNewLink({ ...newLink, color: color.value })}
-                      className={`p-2 rounded-lg border-2 transition-all ${
-                        newLink.color === color.value
+                      className={`p-2 rounded-lg border-2 transition-all ${newLink.color === color.value
                           ? 'border-primary bg-primary/10'
                           : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
-                      }`}
+                        }`}
                       aria-label={`Select ${color.name} color`}
                       aria-pressed={newLink.color === color.value}
                     >
