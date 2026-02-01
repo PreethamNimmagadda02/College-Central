@@ -92,6 +92,11 @@ const Schedule: React.FC = () => {
   // Get all courses for fallback matching (both CBCS and NEP)
   const allCoursesData = useMemo(() => config?.courses || [], [config?.courses]);
 
+  // Optimize lookups for courses (O(1) access)
+  const courseMap = useMemo(() => {
+    return new Map(allCoursesData.map((c) => [c.courseCode, c]));
+  }, [allCoursesData]);
+
   // Sync schedule with admin timetable changes
   // This effect updates user's schedule when admin modifies course data (course name)
   // while PRESERVING user-specific modifications like instructor names, venue, day, and time
@@ -351,25 +356,28 @@ const Schedule: React.FC = () => {
 
   // Display the actual count from schedule, not just selected codes
   // Only count courses that exist in the current timetable structure
+  const timetableCourseCodes = useMemo(() => {
+    return new Set(timetableData.map((c) => c.courseCode));
+  }, [timetableData]);
+
   const displayCoursesCount = useMemo(() => {
-    const validCourses = uniqueCoursesFromSchedule.filter((code) =>
-      timetableData.some((course) => course.courseCode === code)
-    );
+    // Optimized: O(N) instead of O(N*M)
+    const validCourses = uniqueCoursesFromSchedule.filter((code) => timetableCourseCodes.has(code));
     return validCourses.length;
-  }, [uniqueCoursesFromSchedule, timetableData]);
+  }, [uniqueCoursesFromSchedule, timetableCourseCodes]);
 
   const totalCredits = useMemo(() => {
     // Always use courses from actual schedule data for accurate credit count
     // Search in all courses to handle mixed CBCS/NEP schedules
+    // Optimized: O(N) lookup using Map
     return uniqueCoursesFromSchedule.reduce((acc, code) => {
-      // Find course in all courses (both CBCS and NEP)
-      const course = allCoursesData.find((c) => c.courseCode === code);
+      const course = courseMap.get(code);
 
       if (!course) return acc;
       const credits = calculateCreditsFromLTP(course.ltp, course.courseType || courseOption);
       return acc + credits;
     }, 0);
-  }, [uniqueCoursesFromSchedule, courseOption, allCoursesData]);
+  }, [uniqueCoursesFromSchedule, courseOption, courseMap]);
 
   const todaysClasses = useMemo(() => {
     if (!scheduleData || !today) return [];
@@ -1213,19 +1221,19 @@ const Schedule: React.FC = () => {
     });
   };
 
-  const filteredCourses = useMemo(() => {
-    let courses = timetableData;
-
-    // Remove duplicates based on courseCode (keep first occurrence)
+  // Separate unique courses calculation from filtering logic
+  const uniqueTimetableCourses = useMemo(() => {
     const seenCodes = new Set<string>();
-    courses = courses.filter((course) => {
+    return timetableData.filter((course) => {
       if (seenCodes.has(course.courseCode)) {
         return false;
       }
       seenCodes.add(course.courseCode);
       return true;
     });
+  }, [timetableData]);
 
+  const filteredCourses = useMemo(() => {
     // Sort courses: selected courses first, then alphabetically by course code
     courses = [...courses].sort((a, b) => {
       const aSelected = selectedCourseCodes.includes(a.courseCode);
@@ -1240,13 +1248,13 @@ const Schedule: React.FC = () => {
     });
 
     if (!searchTerm.trim()) {
-      return courses;
+      return uniqueTimetableCourses;
     }
 
     const searchLower = searchTerm.toLowerCase().trim();
     const searchNoSpaces = searchLower.replace(/\s+/g, '');
 
-    return courses.filter((course) => {
+    return uniqueTimetableCourses.filter((course) => {
       if (!course.courseCode || !course.courseName) return false;
 
       const courseCode = course.courseCode.toLowerCase();
@@ -1274,7 +1282,7 @@ const Schedule: React.FC = () => {
 
       return false;
     });
-  }, [searchTerm, timetableData, courseOption, selectedCourseCodes]);
+  }, [searchTerm, uniqueTimetableCourses]);
 
   const filteredSchedule = useMemo(() => {
     if (!scheduleData) return [];
