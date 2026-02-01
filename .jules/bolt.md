@@ -37,3 +37,7 @@
 ## 2024-05-26 - [Schedule Computation Optimization]
 **Learning:** `Schedule.tsx` performed O(N*M) lookups inside `useMemo` hooks (e.g., `totalCredits` finding courses in a large array), causing performance degradation with large datasets.
 **Action:** Always index large static datasets (like course catalogs) into a `Map` or `Set` before performing repeated lookups in derived state calculations. This reduced execution time by >10x in benchmarks.
+
+## 2026-02-01 - [Blocking Search Input]
+**Learning:** `Directory.tsx` was filtering a large dataset on every keystroke, causing the main thread to block and the input to feel sluggish.
+**Action:** Used `useDeferredValue` to deprioritize the heavy filtering operation. This allows the input state to update immediately while the filtering happens in the background, keeping the UI responsive.
