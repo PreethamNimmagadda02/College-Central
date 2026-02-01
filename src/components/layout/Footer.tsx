@@ -4,16 +4,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
-  const currentYear = new Date().getFullYear();
+  const currentYear = React.useMemo(() => new Date().getFullYear(), []);
   const { config: appConfig } = useAppConfig();
 
   return (
-    <footer className="relative bg-gradient-to-b from-white/80 via-slate-50/80 to-white/80 dark:from-slate-900/80 dark:via-slate-900/70 dark:to-slate-900/80 backdrop-blur-lg border-t border-slate-200/60 dark:border-slate-800/60 mt-auto overflow-hidden">
+    <footer
+      className="relative bg-gradient-to-b from-white/80 via-slate-50/80 to-white/80 dark:from-slate-900/80 dark:via-slate-900/70 dark:to-slate-900/80 backdrop-blur-lg border-t border-slate-200/60 dark:border-slate-800/60 mt-auto overflow-hidden will-change-transform"
+      style={{ transform: 'translateZ(0)' }}
+    >
       {/* Decorative gradient line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
 
       {/* Animated background accents */}
-      <div className="absolute inset-0 opacity-30 dark:opacity-20">
+      <div className="absolute inset-0 opacity-30 dark:opacity-20 pointer-events-none">
         <div className="absolute top-10 left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-10 right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl"></div>
       </div>
