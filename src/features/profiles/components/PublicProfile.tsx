@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, SocialLinks } from '@/types';
+import { validateUrl } from '@/lib/utils/security';
 import {
   Github,
   Linkedin,
@@ -15,6 +16,15 @@ import {
 } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
+
+// 🛡️ Sentinel: Helper to sanitize URLs and prevent XSS
+const getSafeUrl = (url?: string) => {
+  if (!url) return undefined;
+  if (validateUrl(url)) return url;
+  // Try adding https:// if missing protocol
+  const fixed = `https://${url}`;
+  return validateUrl(fixed) ? fixed : undefined;
+};
 
 interface PublicProfileProps {
   user: User;
@@ -399,9 +409,9 @@ export const PublicProfile: React.FC<PublicProfileProps> = ({
               user.socialLinks &&
               Object.values(user.socialLinks).some((link) => link) && (
                 <div className="flex flex-wrap justify-center gap-4">
-                  {user.socialLinks.github && (
+                  {getSafeUrl(user.socialLinks.github) && (
                     <a
-                      href={user.socialLinks.github}
+                      href={getSafeUrl(user.socialLinks.github)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="size-14 flex items-center justify-center bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-2xl hover:scale-110 hover:-rotate-3 hover:bg-[#24292e] hover:text-white dark:hover:bg-white dark:hover:text-[#24292e] shadow-sm hover:shadow-xl transition-all duration-300"
@@ -409,9 +419,9 @@ export const PublicProfile: React.FC<PublicProfileProps> = ({
                       <Github size={26} />
                     </a>
                   )}
-                  {user.socialLinks.linkedin && (
+                  {getSafeUrl(user.socialLinks.linkedin) && (
                     <a
-                      href={user.socialLinks.linkedin}
+                      href={getSafeUrl(user.socialLinks.linkedin)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="size-14 flex items-center justify-center bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-2xl hover:scale-110 hover:-rotate-3 hover:bg-[#0077b5] hover:text-white transition-all duration-300 hover:shadow-xl hover:shadow-[#0077b5]/20"
@@ -419,9 +429,9 @@ export const PublicProfile: React.FC<PublicProfileProps> = ({
                       <Linkedin size={26} />
                     </a>
                   )}
-                  {user.socialLinks.twitter && (
+                  {getSafeUrl(user.socialLinks.twitter) && (
                     <a
-                      href={user.socialLinks.twitter}
+                      href={getSafeUrl(user.socialLinks.twitter)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="size-14 flex items-center justify-center bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-2xl hover:scale-110 hover:-rotate-3 hover:bg-[#1DA1F2] hover:text-white transition-all duration-300 hover:shadow-xl hover:shadow-[#1DA1F2]/20"
@@ -429,9 +439,9 @@ export const PublicProfile: React.FC<PublicProfileProps> = ({
                       <Twitter size={26} />
                     </a>
                   )}
-                  {user.socialLinks.instagram && (
+                  {getSafeUrl(user.socialLinks.instagram) && (
                     <a
-                      href={user.socialLinks.instagram}
+                      href={getSafeUrl(user.socialLinks.instagram)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="size-14 flex items-center justify-center bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-2xl hover:scale-110 hover:-rotate-3 hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-red-500 hover:to-purple-500 hover:text-white transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20"
@@ -439,9 +449,9 @@ export const PublicProfile: React.FC<PublicProfileProps> = ({
                       <Instagram size={26} />
                     </a>
                   )}
-                  {user.socialLinks.website && (
+                  {getSafeUrl(user.socialLinks.website) && (
                     <a
-                      href={user.socialLinks.website}
+                      href={getSafeUrl(user.socialLinks.website)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="size-14 flex items-center justify-center bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-2xl hover:scale-110 hover:-rotate-3 hover:bg-emerald-500 hover:text-white transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/20"
@@ -459,7 +469,7 @@ export const PublicProfile: React.FC<PublicProfileProps> = ({
             {(parentIsEditing || (user.interests && user.interests.length > 0)) && (
               <div className="flex flex-col items-center">
                 {/* Only show title if editing or if there are interests */}
-                {(parentIsEditing || user.interests?.length > 0) && (
+                {(parentIsEditing || (user.interests?.length || 0) > 0) && (
                   <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center mb-4">
                     Interests
                   </h3>
