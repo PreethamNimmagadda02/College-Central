@@ -101,6 +101,7 @@ const FormCard: React.FC<{
                 : 'text-slate-400 hover:text-yellow-500 hover:bg-slate-100 dark:hover:bg-slate-700'
             }`}
             title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
             <BookmarkIcon filled={isFavorite} />
           </button>
@@ -141,6 +142,17 @@ const CollegeForms: React.FC = () => {
   const handleDownload = async (form: Form) => {
     window.open(form.downloadLink, '_blank');
     await addRecentDownload(form);
+  };
+
+  const handleRecentDownloadsClick = () => {
+    setActiveFilter('All');
+    // Scroll to recent downloads section
+    setTimeout(() => {
+      const element = document.getElementById('recent-downloads-section');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const filterForms = (forms: Form[]) => {
@@ -248,7 +260,16 @@ const CollegeForms: React.FC = () => {
 
         <div
           onClick={() => setActiveFilter('Favorites')}
-          className="group relative overflow-hidden bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 cursor-pointer active:scale-95"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setActiveFilter('Favorites');
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label="Filter by Favorites"
+          className="group relative overflow-hidden bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 cursor-pointer active:scale-95 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-yellow-500"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative z-10 flex items-center justify-between text-white">
@@ -276,17 +297,17 @@ const CollegeForms: React.FC = () => {
         </div>
 
         <div
-          onClick={() => {
-            setActiveFilter('All');
-            // Scroll to recent downloads section
-            setTimeout(() => {
-              const element = document.getElementById('recent-downloads-section');
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
-            }, 100);
+          onClick={handleRecentDownloadsClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleRecentDownloadsClick();
+            }
           }}
-          className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 sm:col-span-2 lg:col-span-1 cursor-pointer active:scale-95"
+          role="button"
+          tabIndex={0}
+          aria-label="Filter by Recent Downloads"
+          className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 sm:col-span-2 lg:col-span-1 cursor-pointer active:scale-95 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative z-10 flex items-center justify-between text-white">
@@ -311,6 +332,7 @@ const CollegeForms: React.FC = () => {
           <input
             type="text"
             placeholder="Search by form name, number, or submission office..."
+            aria-label="Search forms"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary focus:border-primary dark:focus:border-secondary transition-all text-slate-900 dark:text-white placeholder:text-slate-400"
@@ -318,6 +340,7 @@ const CollegeForms: React.FC = () => {
           {searchTerm && (
             <button
               onClick={() => setSearchTerm('')}
+              aria-label="Clear search"
               className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,7 +359,8 @@ const CollegeForms: React.FC = () => {
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
-              className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 ${
+              aria-pressed={activeFilter === filter}
+              className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 activeFilter === filter
                   ? 'bg-gradient-to-r from-primary to-primary-dark dark:from-secondary dark:to-secondary/80 text-white shadow-lg shadow-primary/30 dark:shadow-secondary/30'
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
