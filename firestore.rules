@@ -40,7 +40,8 @@ service cloud.firestore {
     // Validate that user is not trying to escalate their own privileges
     function isValidUserUpdate() {
       // Prevent users from modifying protected fields
-      let protectedFields = ['role', 'createdAt', 'id'];
+      // 🛡️ Sentinel: Added email and admissionNumber to prevent identity spoofing
+      let protectedFields = ['role', 'createdAt', 'id', 'email', 'admissionNumber'];
       let incomingData = request.resource.data.diff(resource.data).affectedKeys();
       return !incomingData.hasAny(protectedFields.toSet());
     }
@@ -64,6 +65,19 @@ service cloud.firestore {
     function isAuthorizedAdminEmail(email) {
       return exists(/databases/$(database)/documents/privateConfig/adminEmails) &&
              email in get(/databases/$(database)/documents/privateConfig/adminEmails).data.items;
+    }
+
+    // Validate location visit data
+    function isValidLocationVisit() {
+      let data = request.resource.data;
+      return data.userId == request.auth.uid &&
+             'zoneId' in data &&
+             'timestamp' in data &&
+             data.timestamp is timestamp &&
+             // Prevent future timestamps (allow 5 min clock skew)
+             data.timestamp < request.time + duration.value(5, 'm') &&
+             // Prevent backfilling (allow 24 hours for offline sync)
+             data.timestamp > request.time - duration.value(24, 'h');
     }
 
     // ============================================
@@ -234,7 +248,7 @@ service cloud.firestore {
     // Location visits - users can write own data, admins can read for analytics
     match /locationAnalytics/{docId} {
       allow create: if isAuthenticated() 
-                    && request.resource.data.userId == request.auth.uid
+                    && isValidLocationVisit()
                     && isValidDataSize();
       allow read: if isAuthenticated();
       // No updates or deletes - immutable for data integrity
