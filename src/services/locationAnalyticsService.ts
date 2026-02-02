@@ -91,9 +91,9 @@ function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: numbe
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) *
+    Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -292,7 +292,8 @@ export async function getAggregatedAnalytics(
     const hourlyMap = new Map<number, number>();
     for (let h = 0; h < 24; h++) hourlyMap.set(h, 0);
     visits.forEach((v) => {
-      hourlyMap.set(v.hourOfDay, (hourlyMap.get(v.hourOfDay) || 0) + 1);
+      const hour = v.timestamp.toDate().getHours();
+      hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1);
     });
     const hourlyAnalytics: HourlyAnalytics[] = Array.from(hourlyMap.entries())
       .map(([hour, count]) => ({ hour, visits: count }))
@@ -302,7 +303,8 @@ export async function getAggregatedAnalytics(
     const dailyMap = new Map<number, number>();
     for (let d = 0; d < 7; d++) dailyMap.set(d, 0);
     visits.forEach((v) => {
-      dailyMap.set(v.dayOfWeek, (dailyMap.get(v.dayOfWeek) || 0) + 1);
+      const day = v.timestamp.toDate().getDay();
+      dailyMap.set(day, (dailyMap.get(day) || 0) + 1);
     });
     const dailyAnalytics: DailyAnalytics[] = Array.from(dailyMap.entries())
       .map(([day, count]) => ({
@@ -420,7 +422,8 @@ export async function getTrendAnalytics(days: number = 30): Promise<TrendData[]>
     const dailyMap = new Map<string, { visits: typeof visits; users: Set<string> }>();
 
     visits.forEach((v) => {
-      const dateKey = v.timestamp.toISOString().split('T')[0];
+      const d = v.timestamp;
+      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       if (!dateKey) return;
       if (!dailyMap.has(dateKey)) {
         dailyMap.set(dateKey, { visits: [], users: new Set() });
@@ -471,7 +474,8 @@ export async function getPeakAnalysis(
     const hourlyCount = new Map<number, number>();
     for (let h = 0; h < 24; h++) hourlyCount.set(h, 0);
     visits.forEach((v) => {
-      hourlyCount.set(v.hourOfDay, (hourlyCount.get(v.hourOfDay) || 0) + 1);
+      const hour = v.timestamp.toDate().getHours();
+      hourlyCount.set(hour, (hourlyCount.get(hour) || 0) + 1);
     });
 
     const hourlyArray = Array.from(hourlyCount.entries());
@@ -494,7 +498,8 @@ export async function getPeakAnalysis(
     const dailyCount = new Map<number, number>();
     for (let d = 0; d < 7; d++) dailyCount.set(d, 0);
     visits.forEach((v) => {
-      dailyCount.set(v.dayOfWeek, (dailyCount.get(v.dayOfWeek) || 0) + 1);
+      const day = v.timestamp.toDate().getDay();
+      dailyCount.set(day, (dailyCount.get(day) || 0) + 1);
     });
 
     const peakDayData = Array.from(dailyCount.entries()).reduce(
@@ -682,7 +687,8 @@ export async function getHourlyHeatmapData(
     }
 
     visits.forEach((v) => {
-      const key = `${v.dayOfWeek}-${v.hourOfDay}`;
+      const date = v.timestamp.toDate();
+      const key = `${date.getDay()}-${date.getHours()}`;
       matrix.set(key, (matrix.get(key) || 0) + 1);
     });
 

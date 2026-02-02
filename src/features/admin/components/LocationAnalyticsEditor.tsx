@@ -165,13 +165,11 @@ const LocationAnalyticsEditor: React.FC = () => {
       if (
         analyticsData?.mostPopularZone &&
         !selectedCorrelationZone &&
-        (analyticsData.zoneAnalytics?.length || 0) > 0
+        analyticsData.zoneAnalytics &&
+        analyticsData.zoneAnalytics.length > 0
       ) {
         const topZoneId = analyticsData.zoneAnalytics[0].zoneId;
         setSelectedCorrelationZone(topZoneId);
-        // Trigger correlation fetch immediately? Or let effect handle it?
-        // Let's call it directly here to save a render cycle if possible, or just let the effect below handle it.
-        // We will add a separate effect for correlation fetching when selectedCorrelationZone changes.
       }
     } catch (error) {
       console.error('Error fetching location analytics:', error);
@@ -183,6 +181,18 @@ const LocationAnalyticsEditor: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Handle window resize for chart responsiveness
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch correlations when selected zone changes
   useEffect(() => {
@@ -247,11 +257,10 @@ const LocationAnalyticsEditor: React.FC = () => {
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                  dateRange === range
-                    ? 'bg-primary text-white shadow-md'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${dateRange === range
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
               >
                 {range === 'today' ? 'Today' : range === 'week' ? 'Last 7 Days' : 'Last 30 Days'}
               </button>
@@ -328,18 +337,36 @@ const LocationAnalyticsEditor: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Hourly Traffic Removed */}
 
-          {/* Daily Trends */}
+          {/* Daily/Hourly Trends */}
           <div className="admin-card col-span-2">
-            <h3 className="text-lg font-semibold mb-4">Weekly Pattern</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {dateRange === 'today' ? 'Hourly Activity (Today)' : 'Weekly Pattern'}
+            </h3>
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={analytics?.dailyAnalytics || []}>
+              <LineChart
+                data={
+                  dateRange === 'today'
+                    ? analytics?.hourlyAnalytics || []
+                    : analytics?.dailyAnalytics || []
+                }
+                margin={{ left: 10, right: 20, top: 10, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.15)" />
                 <XAxis
-                  dataKey="dayName"
+                  dataKey={dateRange === 'today' ? 'hour' : 'dayName'}
+                  tickFormatter={(val) => (dateRange === 'today' ? formatHour(Number(val)) : val)}
                   tick={{ fontSize: 12, fill: '#94a3b8' }}
                   stroke="#94a3b8"
+                  axisLine={{ stroke: '#475569' }}
                 />
-                <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} stroke="#94a3b8" />
+                <YAxis
+                  tick={{ fontSize: 12, fill: '#94a3b8' }}
+                  stroke="#94a3b8"
+                  axisLine={{ stroke: '#475569' }}
+                  label={{ value: 'Visits', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 12 }}
+                  tickFormatter={(value) => Math.round(value).toString()}
+                  allowDecimals={false}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: '#1e293b',
@@ -347,6 +374,8 @@ const LocationAnalyticsEditor: React.FC = () => {
                     borderRadius: '12px',
                     color: '#f8fafc',
                   }}
+                  formatter={(value) => [`${value ?? 0} visits`, 'Activity']}
+                  labelFormatter={(label) => (dateRange === 'today' ? formatHour(Number(label)) : label)}
                 />
                 <Line
                   type="monotone"
@@ -355,6 +384,7 @@ const LocationAnalyticsEditor: React.FC = () => {
                   strokeWidth={3}
                   dot={{ fill: '#a855f7', r: 5 }}
                   activeDot={{ r: 8 }}
+                  name="Activity"
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -414,19 +444,49 @@ const LocationAnalyticsEditor: React.FC = () => {
 
         {/* Charts Row 2 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Category Distribution */}
-          <div className="admin-card">
+          {/* Category Distribution - Takes more space now */}
+          <div className="admin-card lg:col-span-2">
             <h3 className="text-lg font-semibold mb-4">Category Distribution</h3>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={isMobile ? 400 : 320}>
               <PieChart>
                 <Pie
                   data={analytics?.categoryDistribution || []}
                   dataKey="count"
                   nameKey="category"
-                  cx="50%"
+                  cx={isMobile ? '50%' : '35%'}
                   cy="50%"
-                  outerRadius={80}
-                  label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
+                  outerRadius={isMobile ? 120 : 105}
+                  innerRadius={isMobile ? 60 : 55}
+                  paddingAngle={3}
+                  stroke="#1e293b"
+                  strokeWidth={2}
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                    if ((percent ?? 0) < 0.05) return null; // Don't show label for <5%
+                    const RADIAN = Math.PI / 180;
+                    // proper safety checks for all coordinates
+                    const safeInner = innerRadius ?? 0;
+                    const safeOuter = outerRadius ?? 0;
+                    const safeCx = cx ?? 0;
+                    const safeCy = cy ?? 0;
+                    const safeMidAngle = midAngle ?? 0;
+
+                    const radius = safeInner + (safeOuter - safeInner) * 0.5;
+                    const x = safeCx + radius * Math.cos(-safeMidAngle * RADIAN);
+                    const y = safeCy + radius * Math.sin(-safeMidAngle * RADIAN);
+                    return (
+                      <text
+                        x={x}
+                        y={y}
+                        fill="#fff"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={13}
+                        fontWeight={600}
+                      >
+                        {`${((percent ?? 0) * 100).toFixed(0)}%`}
+                      </text>
+                    );
+                  }}
                   labelLine={false}
                 >
                   {(analytics?.categoryDistribution || []).map((entry, index) => (
@@ -438,14 +498,36 @@ const LocationAnalyticsEditor: React.FC = () => {
                     />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1e293b',
+                    border: '1px solid rgba(96, 165, 250, 0.3)',
+                    borderRadius: '12px',
+                    color: '#f8fafc',
+                    padding: '10px 14px',
+                  }}
+                  itemStyle={{ color: '#f8fafc' }}
+                  formatter={(value, name) => [`${value ?? 0} visits`, name]}
+                />
+                <Legend
+                  layout={isMobile ? 'horizontal' : 'vertical'}
+                  align={isMobile ? 'center' : 'right'}
+                  verticalAlign={isMobile ? 'bottom' : 'middle'}
+                  wrapperStyle={
+                    isMobile
+                      ? { paddingTop: '20px', fontSize: '13px' }
+                      : { paddingLeft: '10px', fontSize: '13px', lineHeight: '28px' }
+                  }
+                  iconType="circle"
+                  iconSize={10}
+                  formatter={(value) => <span style={{ color: '#e2e8f0' }}>{value}</span>}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Popular Locations */}
-          <div className="admin-card lg:col-span-2">
+          {/* Popular Locations - Now takes 1 column */}
+          <div className="admin-card">
             <h3 className="text-lg font-semibold mb-4">Popular Locations</h3>
             <div className="space-y-3 max-h-[250px] overflow-y-auto">
               {(analytics?.zoneAnalytics || []).slice(0, 10).map((zone, index) => (
@@ -468,17 +550,16 @@ const LocationAnalyticsEditor: React.FC = () => {
                     <p className="text-xs text-slate-500">visits</p>
                   </div>
                   <span
-                    className={`flex-shrink-0 px-2 py-1 text-xs font-medium rounded-full ${
-                      zone.category === 'academic'
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                        : zone.category === 'residential'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : zone.category === 'facilities'
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                            : zone.category === 'dining'
-                              ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                              : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
-                    }`}
+                    className={`flex-shrink-0 px-2 py-1 text-xs font-medium rounded-full ${zone.category === 'academic'
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      : zone.category === 'residential'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : zone.category === 'facilities'
+                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                          : zone.category === 'dining'
+                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                            : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                      }`}
                   >
                     {zone.category}
                   </span>
@@ -588,69 +669,103 @@ const LocationAnalyticsEditor: React.FC = () => {
         <div className="admin-card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold">Activity Heatmap (vs Last Period)</h3>
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-3 text-xs">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-indigo-500 rounded-sm"></div>
-                <span className="text-slate-400">Higher Activity</span>
+                <span className="text-slate-400">Increased</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
+                <span className="text-slate-400">No Change</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
-                <span className="text-slate-400">Lower Activity</span>
+                <span className="text-slate-400">Decreased</span>
               </div>
             </div>
           </div>
           {heatmapComparison ? (
-            <div className="grid grid-cols-24 gap-px bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
-              {/* We need to render 7 rows (days) x 24 cols (hours) */}
-              {Array.from({ length: 7 }).map((_, dayMetrics) => (
-                <React.Fragment key={dayMetrics}>
-                  {Array.from({ length: 24 }).map((_, hourMetrics) => {
-                    // Find value in current and previous
-                    const currVal =
-                      heatmapComparison.currentPeriod.find(
-                        (d) => d.day === dayMetrics && d.hour === hourMetrics
-                      )?.value || 0;
-                    const prevVal =
-                      heatmapComparison.previousPeriod.find(
-                        (d) => d.day === dayMetrics && d.hour === hourMetrics
-                      )?.value || 0;
-
-                    const diff = currVal - prevVal;
-                    // Color scale:
-                    // > 0 (Increased): Indigo 500
-                    // < 0 (Decreased): Red 500
-                    // 0 (Same): Slate 800
-                    // Opacity based on magnitude
-
-                    let bgColor = 'bg-slate-900';
-                    if (diff > 0) bgColor = `bg-indigo-500/${Math.min(diff * 10 + 20, 100)}`;
-                    else if (diff < 0)
-                      bgColor = `bg-red-500/${Math.min(Math.abs(diff) * 10 + 20, 100)}`;
-
-                    return (
+            <div className="overflow-x-auto">
+              <div className="min-w-[700px]">
+                {/* Hour labels (X-axis) */}
+                <div className="flex">
+                  <div className="w-12 flex-shrink-0"></div>
+                  <div className="flex-1 grid grid-cols-24 gap-px">
+                    {Array.from({ length: 24 }).map((_, hour) => (
                       <div
-                        key={`${dayMetrics}-${hourMetrics}`}
-                        className={`h-8 ${bgColor} text-[8px] flex items-center justify-center text-transparent hover:text-white transition-all cursor-crosshair`}
-                        title={`Day ${dayMetrics}, Hour ${hourMetrics}: ${currVal} visits (${diff > 0 ? '+' : ''}${diff})`}
+                        key={hour}
+                        className="text-[10px] text-slate-500 text-center"
                       >
-                        {diff !== 0 && Math.abs(diff)}
+                        {hour % 3 === 0 ? formatHour(hour) : ''}
                       </div>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
+                    ))}
+                  </div>
+                </div>
+                {/* Heatmap grid with day labels */}
+                <div className="flex flex-col gap-px mt-1">
+                  {(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const).map((dayName, dayIndex) => (
+                    <div key={dayName} className="flex items-center">
+                      {/* Day label (Y-axis) */}
+                      <div className="w-12 flex-shrink-0 text-xs text-slate-400 font-medium pr-2 text-right">
+                        {dayName}
+                      </div>
+                      {/* Hour cells for this day */}
+                      <div className="flex-1 grid grid-cols-24 gap-px bg-slate-800 rounded overflow-hidden">
+                        {Array.from({ length: 24 }).map((_, hourIndex) => {
+                          const currVal =
+                            heatmapComparison.currentPeriod.find(
+                              (d) => d.day === dayIndex && d.hour === hourIndex
+                            )?.value || 0;
+                          const prevVal =
+                            heatmapComparison.previousPeriod.find(
+                              (d) => d.day === dayIndex && d.hour === hourIndex
+                            )?.value || 0;
+
+                          const diff = currVal - prevVal;
+                          // Color based on current value intensity + diff indicator
+                          // Use current value for base intensity, diff for color
+                          const maxVal = Math.max(
+                            ...heatmapComparison.currentPeriod.map((d) => d.value),
+                            1
+                          );
+                          const intensity = Math.round((currVal / maxVal) * 100);
+
+                          let bgColor = 'bg-slate-900';
+                          if (currVal > 0) {
+                            if (diff > 0) {
+                              bgColor = `bg-indigo-500`;
+                            } else if (diff < 0) {
+                              bgColor = `bg-red-500`;
+                            } else {
+                              bgColor = `bg-blue-500`;
+                            }
+                          }
+
+                          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+                          return (
+                            <div
+                              key={`${dayIndex}-${hourIndex}`}
+                              className={`h-7 ${bgColor} flex items-center justify-center text-[8px] text-transparent hover:text-white transition-all cursor-crosshair`}
+                              style={{
+                                opacity: currVal > 0 ? Math.max(0.2, intensity / 100) : 0.1,
+                              }}
+                              title={`${dayNames[dayIndex]}, ${formatHour(hourIndex)}: ${currVal} visits${diff !== 0 ? ` (${diff > 0 ? '+' : ''}${diff} vs last period)` : ''}`}
+                            >
+                              {currVal > 0 && currVal}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : (
             <p className="text-slate-500 text-sm">No heatmap data available.</p>
           )}
-          <div className="flex justify-between text-xs text-slate-500 mt-2 px-1">
-            <span>12 AM</span>
-            <span>6 AM</span>
-            <span>12 PM</span>
-            <span>6 PM</span>
-          </div>
         </div>
-
         {/* Info Footer */}
         <div className="bg-blue-900/20 rounded-xl p-4 border border-blue-800">
           <div className="flex items-start gap-3">
