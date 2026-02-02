@@ -51,6 +51,7 @@ export interface AnalyticsSummary {
   zoneAnalytics: ZoneAnalytics[];
   hourlyAnalytics: HourlyAnalytics[];
   dailyAnalytics: DailyAnalytics[];
+  trendAnalytics: { date: string; visits: number }[];
   categoryDistribution: { category: string; count: number }[];
 }
 
@@ -245,6 +246,7 @@ export async function getAggregatedAnalytics(
         zoneAnalytics: [],
         hourlyAnalytics: [],
         dailyAnalytics: [],
+        trendAnalytics: [],
         categoryDistribution: [],
       };
     }
@@ -319,6 +321,31 @@ export async function getAggregatedAnalytics(
     visits.forEach((v) => {
       categoryMap.set(v.category, (categoryMap.get(v.category) || 0) + 1);
     });
+    // Trend Analytics (Date-based)
+    // 1. Bucket visits by YYYY-MM-DD (Local Time)
+    const trendMap = new Map<string, number>();
+    visits.forEach((v) => {
+      const d = v.timestamp.toDate();
+      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      trendMap.set(dateKey, (trendMap.get(dateKey) || 0) + 1);
+    });
+
+    // 2. Iterate continuously from startDate to endDate filling gaps with 0
+    const trendAnalytics: { date: string; visits: number }[] = [];
+    const loopDate = new Date(startDate);
+    loopDate.setHours(0, 0, 0, 0); // Start at midnight
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999); // Ensure end date is fully covered
+
+    while (loopDate <= end) {
+      const key = `${loopDate.getFullYear()}-${String(loopDate.getMonth() + 1).padStart(2, '0')}-${String(loopDate.getDate()).padStart(2, '0')}`;
+      trendAnalytics.push({
+        date: key,
+        visits: trendMap.get(key) || 0,
+      });
+      loopDate.setDate(loopDate.getDate() + 1);
+    }
+
     const categoryDistribution = Array.from(categoryMap.entries())
       .map(([category, count]) => ({ category, count }))
       .sort((a, b) => b.count - a.count);
@@ -338,6 +365,7 @@ export async function getAggregatedAnalytics(
       zoneAnalytics,
       hourlyAnalytics,
       dailyAnalytics,
+      trendAnalytics,
       categoryDistribution,
     };
   } catch (error) {
@@ -362,6 +390,12 @@ export interface PeakAnalysis {
   peakHourVisits: number;
   peakDay: string;
   peakDayVisits: number;
+  quietestDay: string;
+  quietestDayVisits: number;
+  peakDate: string;
+  peakDateVisits: number;
+  quietestDate: string;
+  quietestDateVisits: number;
   quietHour: number;
   quietHourVisits: number;
   busyPeriods: { start: number; end: number; avgVisits: number }[];
@@ -507,6 +541,41 @@ export async function getPeakAnalysis(
       [0, 0]
     );
 
+    const quietestDayData = Array.from(dailyCount.entries()).reduce(
+      (min, curr) => (curr[1] < min[1] ? curr : min),
+      [0, Infinity]
+    );
+
+    // Date-based analysis (Specific Dates)
+    const dateCount = new Map<string, number>();
+    const loopDate = new Date(startDate);
+    loopDate.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    // Initialize all dates in range with 0
+    while (loopDate <= end) {
+      const key = `${loopDate.getFullYear()}-${String(loopDate.getMonth() + 1).padStart(2, '0')}-${String(loopDate.getDate()).padStart(2, '0')}`;
+      dateCount.set(key, 0);
+      loopDate.setDate(loopDate.getDate() + 1);
+    }
+
+    // Populate with visits
+    visits.forEach((v) => {
+      const d = v.timestamp.toDate();
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (dateCount.has(key)) {
+        dateCount.set(key, (dateCount.get(key) || 0) + 1);
+      }
+    });
+
+    const dateArray = Array.from(dateCount.entries());
+    const peakDateData = dateArray.reduce((max, curr) => (curr[1] > max[1] ? curr : max), ['', 0]);
+    const quietestDateData = dateArray.reduce(
+      (min, curr) => (curr[1] < min[1] ? curr : min),
+      ['', Infinity]
+    );
+
     // Identify busy periods (consecutive hours with above-average traffic)
     const avgHourlyVisits = visits.length / 24;
     const busyPeriods: { start: number; end: number; avgVisits: number }[] = [];
@@ -545,6 +614,12 @@ export async function getPeakAnalysis(
       peakHourVisits: peakHourData[1],
       peakDay: DAY_NAMES[peakDayData[0]] ?? 'Unknown',
       peakDayVisits: peakDayData[1],
+      quietestDay: DAY_NAMES[quietestDayData[0]] ?? 'Unknown',
+      quietestDayVisits: quietestDayData[1] === Infinity ? 0 : quietestDayData[1],
+      peakDate: peakDateData[0],
+      peakDateVisits: peakDateData[1],
+      quietestDate: quietestDateData[0],
+      quietestDateVisits: quietestDateData[1] === Infinity ? 0 : quietestDateData[1],
       quietHour: quietHourData[0],
       quietHourVisits: quietHourData[1] === Infinity ? 0 : quietHourData[1],
       busyPeriods,
@@ -663,7 +738,7 @@ export async function getComparativeAnalytics(
 export async function getHourlyHeatmapData(
   startDate: Date,
   endDate: Date
-): Promise<{ day: number; hour: number; value: number }[]> {
+): Promise<{ day: number; hour: number; value: number; zoneId?: string; zoneName?: string }[]> {
   try {
     const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
     const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
@@ -698,6 +773,53 @@ export async function getHourlyHeatmapData(
     });
   } catch (error) {
     console.error('Error getting heatmap data:', error);
+    return [];
+  }
+}
+
+/**
+ * Get zone-based heatmap data (hour x zone) for single day view
+ */
+export async function getZoneHeatmapData(
+  startDate: Date,
+  endDate: Date
+): Promise<{ day: number; hour: number; value: number; zoneId: string; zoneName: string }[]> {
+  try {
+    const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
+    const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
+
+    const snapshot = await db
+      .collection(ANALYTICS_COLLECTION)
+      .where('timestamp', '>=', startTimestamp)
+      .where('timestamp', '<=', endTimestamp)
+      .get();
+
+    if (snapshot.empty) return [];
+
+    const visits = snapshot.docs.map((doc) => doc.data()) as LocationVisit[];
+
+    // Matrix: zoneId-hour -> count
+    const matrix = new Map<string, number>();
+    // Pre-fill keys if needed? Or just sparse. Sparse is fine.
+
+    visits.forEach((v) => {
+      const date = v.timestamp.toDate();
+      const key = `${v.zoneId}|${v.zoneName}|${date.getHours()}`;
+      matrix.set(key, (matrix.get(key) || 0) + 1);
+    });
+
+    return Array.from(matrix.entries()).map(([key, value]) => {
+      const [zoneId, zoneName, hour] = key.split('|');
+      return {
+        day: 0, // Dummy day for compatibility
+        hour: Number(hour),
+        value,
+        zoneId: zoneId!,
+        zoneName: zoneName!,
+      };
+    });
+  } catch (error) {
+    console.error('Error getting zone heatmap data:', error);
     return [];
   }
 }
@@ -1144,8 +1266,8 @@ export async function getZoneCorrelations(
 }
 
 export interface HeatmapComparison {
-  currentPeriod: { day: number; hour: number; value: number }[];
-  previousPeriod: { day: number; hour: number; value: number }[];
+  currentPeriod: { day: number; hour: number; value: number; zoneId?: string; zoneName?: string }[];
+  previousPeriod: { day: number; hour: number; value: number; zoneId?: string; zoneName?: string }[];
 }
 
 /**
@@ -1153,7 +1275,8 @@ export interface HeatmapComparison {
  */
 export async function getHeatmapComparison(
   currentStart: Date,
-  currentEnd: Date
+  currentEnd: Date,
+  dateRange: 'today' | 'week' | 'month' = 'week'
 ): Promise<HeatmapComparison | null> {
   try {
     // Calculate previous period
@@ -1161,9 +1284,11 @@ export async function getHeatmapComparison(
     const previousEnd = new Date(currentStart.getTime() - 1);
     const previousStart = new Date(previousEnd.getTime() - duration);
 
+    const getDataFn = dateRange === 'today' ? getZoneHeatmapData : getHourlyHeatmapData;
+
     const [current, previous] = await Promise.all([
-      getHourlyHeatmapData(currentStart, currentEnd),
-      getHourlyHeatmapData(previousStart, previousEnd),
+      getDataFn(currentStart, currentEnd),
+      getDataFn(previousStart, previousEnd),
     ]);
 
     return {

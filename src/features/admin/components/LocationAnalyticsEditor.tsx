@@ -64,6 +64,39 @@ const MapPinIcon = () => (
   </svg>
 );
 
+const CalendarIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+    />
+  </svg>
+);
+
+const MetricInfo = ({ text }: { text: string }) => (
+  <div className="group relative inline-block ml-1.5 align-middle">
+    <svg
+      className="w-3.5 h-3.5 text-slate-400 cursor-help hover:text-white transition-colors opacity-70 hover:opacity-100"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+    <div className="invisible group-hover:visible absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg shadow-xl backdrop-blur-sm pointer-events-none">
+      {text}
+      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+    </div>
+  </div>
+);
+
 const RefreshIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path
@@ -130,10 +163,12 @@ const LocationAnalyticsEditor: React.FC = () => {
           startDate.setHours(0, 0, 0, 0);
           break;
         case 'week':
-          startDate.setDate(startDate.getDate() - 7);
+          startDate.setDate(startDate.getDate() - 6);
+          startDate.setHours(0, 0, 0, 0);
           break;
         case 'month':
-          startDate.setMonth(startDate.getMonth() - 1);
+          startDate.setDate(startDate.getDate() - 29);
+          startDate.setHours(0, 0, 0, 0);
           break;
       }
 
@@ -150,7 +185,7 @@ const LocationAnalyticsEditor: React.FC = () => {
           console.error('Retention error:', err);
           return [];
         }),
-        getHeatmapComparison(startDate, endDate).catch((err) => {
+        getHeatmapComparison(startDate, endDate, dateRange).catch((err) => {
           console.error('Heatmap error:', err);
           return null;
         }),
@@ -163,13 +198,16 @@ const LocationAnalyticsEditor: React.FC = () => {
 
       // Default correlation zone to most popular if not set
       if (
-        analyticsData?.mostPopularZone &&
+        analyticsData &&
+        analyticsData.mostPopularZone &&
         !selectedCorrelationZone &&
         analyticsData.zoneAnalytics &&
         analyticsData.zoneAnalytics.length > 0
       ) {
-        const topZoneId = analyticsData.zoneAnalytics[0].zoneId;
-        setSelectedCorrelationZone(topZoneId);
+        const topZone = analyticsData.zoneAnalytics![0];
+        if (topZone) {
+          setSelectedCorrelationZone(topZone.zoneId);
+        }
       }
     } catch (error) {
       console.error('Error fetching location analytics:', error);
@@ -235,6 +273,15 @@ const LocationAnalyticsEditor: React.FC = () => {
     return hour > 12 ? `${hour - 12} PM` : `${hour} AM`;
   };
 
+  const formatDate = (dateStr: string): string => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-').map(Number);
+    if (parts.length < 3) return dateStr;
+    const [year, month, day] = parts;
+    const date = new Date(year!, month! - 1, day!);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
   if (loading) {
     return (
       <AdminPageLayout>
@@ -276,14 +323,23 @@ const LocationAnalyticsEditor: React.FC = () => {
         </div>
 
         {/* Summary Cards */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-white">Overview</h2>
+          <p className="text-slate-400 text-sm">Key performance metrics for the selected period</p>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-800 text-white p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-            <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
-              <TrendingUpIcon />
+          <div className="relative rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+            <div className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-800">
+              <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
+                <TrendingUpIcon />
+              </div>
             </div>
-            <div className="relative z-10 flex items-center justify-between">
+            <div className="relative z-10 p-5 text-white flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Total Visits</p>
+                <p className="text-blue-100 text-sm font-medium">
+                  Total Visits
+                  <MetricInfo text="Total number of location pings received during the selected period." />
+                </p>
                 <p className="text-3xl font-black tracking-tight mt-1">
                   {analytics?.totalVisits || 0}
                 </p>
@@ -294,13 +350,18 @@ const LocationAnalyticsEditor: React.FC = () => {
             </div>
           </div>
 
-          <div className="relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-800 text-white p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-            <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
-              <UsersIcon />
+          <div className="relative rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+            <div className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-800">
+              <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
+                <UsersIcon />
+              </div>
             </div>
-            <div className="relative z-10 flex items-center justify-between">
+            <div className="relative z-10 p-5 text-white flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm font-medium">Unique Visitors</p>
+                <p className="text-purple-100 text-sm font-medium">
+                  Unique Visitors
+                  <MetricInfo text="Number of distinct users detected in the selected period." />
+                </p>
                 <p className="text-3xl font-black tracking-tight mt-1">
                   {analytics?.uniqueVisitors || 0}
                 </p>
@@ -311,19 +372,32 @@ const LocationAnalyticsEditor: React.FC = () => {
             </div>
           </div>
 
-          <div className="relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-800 text-white p-5 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-            <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
-              <ClockIcon />
+          <div className="relative rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+            <div className="absolute inset-0 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-800">
+              <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
+                {dateRange === 'today' ? <ClockIcon /> : <CalendarIcon />}
+              </div>
             </div>
-            <div className="relative z-10 flex items-center justify-between">
+            <div className="relative z-10 p-5 text-white flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Peak Hour</p>
+                <p className="text-orange-100 text-sm font-medium">
+                  {dateRange === 'today'
+                    ? 'Peak Hour'
+                    : dateRange === 'week'
+                      ? 'Busiest Day'
+                      : 'Busiest Date'}
+                  <MetricInfo text="The specific time or day with the highest traffic volume." />
+                </p>
                 <p className="text-3xl font-black tracking-tight mt-1">
-                  {formatHour(analytics?.peakHour || 0)}
+                  {dateRange === 'today'
+                    ? formatHour(analytics?.peakHour || 0)
+                    : dateRange === 'week'
+                      ? peakAnalysis?.peakDay || 'N/A'
+                      : formatDate(peakAnalysis?.peakDate || '') || 'N/A'}
                 </p>
               </div>
               <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                <ClockIcon />
+                {dateRange === 'today' ? <ClockIcon /> : <CalendarIcon />}
               </div>
             </div>
           </div>
@@ -334,27 +408,38 @@ const LocationAnalyticsEditor: React.FC = () => {
 
         {/* Charts Row 1 */}
         {/* Charts Row 1 */}
+        <div className="mb-6 mt-8">
+          <h2 className="text-xl font-bold text-white">Traffic Trends</h2>
+          <p className="text-slate-400 text-sm">Visitor activity patterns over time</p>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Hourly Traffic Removed */}
 
           {/* Daily/Hourly Trends */}
           <div className="admin-card col-span-2">
-            <h3 className="text-lg font-semibold mb-4">
-              {dateRange === 'today' ? 'Hourly Activity (Today)' : 'Weekly Pattern'}
+            <h3 className="text-lg font-semibold mb-4 text-white">
+              {dateRange === 'today' ? 'Hourly Activity (Today)' : 'Activity Trend'}
+              <MetricInfo text="Graph showing how visitor volume fluctuates over time." />
             </h3>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart
                 data={
                   dateRange === 'today'
                     ? analytics?.hourlyAnalytics || []
-                    : analytics?.dailyAnalytics || []
+                    : analytics?.trendAnalytics || []
                 }
                 margin={{ left: 10, right: 20, top: 10, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.15)" />
                 <XAxis
-                  dataKey={dateRange === 'today' ? 'hour' : 'dayName'}
-                  tickFormatter={(val) => (dateRange === 'today' ? formatHour(Number(val)) : val)}
+                  dataKey={dateRange === 'today' ? 'hour' : 'date'}
+                  tickFormatter={(val) => {
+                    if (dateRange === 'today') return formatHour(Number(val));
+                    if (dateRange === 'week') {
+                      return new Date(String(val)).toLocaleDateString('en-US', { weekday: 'short' });
+                    }
+                    return formatDate(String(val));
+                  }}
                   tick={{ fontSize: 12, fill: '#94a3b8' }}
                   stroke="#94a3b8"
                   axisLine={{ stroke: '#475569' }}
@@ -375,7 +460,11 @@ const LocationAnalyticsEditor: React.FC = () => {
                     color: '#f8fafc',
                   }}
                   formatter={(value) => [`${value ?? 0} visits`, 'Activity']}
-                  labelFormatter={(label) => (dateRange === 'today' ? formatHour(Number(label)) : label)}
+                  labelFormatter={(label) =>
+                    dateRange === 'today'
+                      ? formatHour(Number(label))
+                      : formatDate(String(label))
+                  }
                 />
                 <Line
                   type="monotone"
@@ -392,62 +481,112 @@ const LocationAnalyticsEditor: React.FC = () => {
         </div>
 
         {/* Peak Analysis Row */}
+        <div className="mb-6 mt-8">
+          <h2 className="text-xl font-bold text-white">Peak Insights</h2>
+          <p className="text-slate-400 text-sm">High and low traffic analysis</p>
+        </div>
         <div className="grid grid-cols-1 gap-6">
           {/* Dwell Time Analysis Removed */}
 
           {/* Peak Usage Stats */}
           <div className="admin-card">
-            <h3 className="text-lg font-semibold mb-4">Peak Usage Analysis</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white">
+              Peak Usage Analysis
+              <MetricInfo text="Insights into the busiest and quietest times to help with resource allocation." />
+            </h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-red-900/20 rounded-lg">
-                <div>
-                  <p className="text-sm text-red-400 font-medium">Busiest Day</p>
-                  <p className="text-2xl font-bold text-red-300">
-                    {peakAnalysis?.peakDay || 'N/A'}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-red-500">{peakAnalysis?.peakDayVisits || 0} visits</p>
-                </div>
-              </div>
+              {dateRange !== 'today' ? (
+                <>
+                  <div className="flex items-center justify-between p-3 bg-red-900/20 rounded-lg">
+                    <div>
+                      <p className="text-sm text-red-400 font-medium">
+                        {dateRange === 'month' ? 'Busiest Date' : 'Busiest Day'}
+                      </p>
+                      <p className="text-2xl font-bold text-red-300">
+                        {dateRange === 'month'
+                          ? formatDate(peakAnalysis?.peakDate || '') || 'N/A'
+                          : peakAnalysis?.peakDay || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-red-500">
+                        {dateRange === 'month'
+                          ? peakAnalysis?.peakDateVisits
+                          : peakAnalysis?.peakDayVisits || 0}{' '}
+                        visits
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex items-center justify-between p-3 bg-orange-900/20 rounded-lg">
-                <div>
-                  <p className="text-sm text-orange-400 font-medium">Peak Hour</p>
-                  <p className="text-2xl font-bold text-orange-300">
-                    {formatHour(peakAnalysis?.peakHour || 0)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-orange-500">
-                    {peakAnalysis?.peakHourVisits || 0} visits
-                  </p>
-                </div>
-              </div>
+                  <div className="flex items-center justify-between p-3 bg-emerald-900/20 rounded-lg">
+                    <div>
+                      <p className="text-sm text-emerald-400 font-medium">
+                        {dateRange === 'month' ? 'Quietest Date' : 'Quietest Day'}
+                      </p>
+                      <p className="text-2xl font-bold text-emerald-300">
+                        {dateRange === 'month'
+                          ? formatDate(peakAnalysis?.quietestDate || '') || 'N/A'
+                          : peakAnalysis?.quietestDay || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-emerald-500">
+                        {dateRange === 'month'
+                          ? peakAnalysis?.quietestDateVisits
+                          : peakAnalysis?.quietestDayVisits || 0}{' '}
+                        visits
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between p-3 bg-orange-900/20 rounded-lg">
+                    <div>
+                      <p className="text-sm text-orange-400 font-medium">Peak Hour</p>
+                      <p className="text-2xl font-bold text-orange-300">
+                        {formatHour(peakAnalysis?.peakHour || 0)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-orange-500">
+                        {peakAnalysis?.peakHourVisits || 0} visits
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex items-center justify-between p-3 bg-green-900/20 rounded-lg">
-                <div>
-                  <p className="text-sm text-green-400 font-medium">Quietest Hour</p>
-                  <p className="text-2xl font-bold text-green-300">
-                    {formatHour(peakAnalysis?.quietHour || 0)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-green-500">
-                    {peakAnalysis?.quietHourVisits || 0} visits
-                  </p>
-                </div>
-              </div>
+                  <div className="flex items-center justify-between p-3 bg-green-900/20 rounded-lg">
+                    <div>
+                      <p className="text-sm text-green-400 font-medium">Quietest Hour</p>
+                      <p className="text-2xl font-bold text-green-300">
+                        {formatHour(peakAnalysis?.quietHour || 0)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-green-500">
+                        {peakAnalysis?.quietHourVisits || 0} visits
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
 
         {/* Charts Row 2 */}
+        <div className="mb-6 mt-8">
+          <h2 className="text-xl font-bold text-white">Location Analysis</h2>
+          <p className="text-slate-400 text-sm">Zone popularity and category distribution</p>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Category Distribution - Takes more space now */}
           <div className="admin-card lg:col-span-2">
-            <h3 className="text-lg font-semibold mb-4">Category Distribution</h3>
-            <ResponsiveContainer width="100%" height={isMobile ? 400 : 320}>
+            <h3 className="text-lg font-semibold mb-4 text-white">
+              Category Distribution
+              <MetricInfo text="Breakdown of visits by location type (Academic, Residential, etc.)." />
+            </h3>
+            <ResponsiveContainer width="100%" height={400}>
               <PieChart>
                 <Pie
                   data={analytics?.categoryDistribution || []}
@@ -455,8 +594,8 @@ const LocationAnalyticsEditor: React.FC = () => {
                   nameKey="category"
                   cx={isMobile ? '50%' : '35%'}
                   cy="50%"
-                  outerRadius={isMobile ? 120 : 105}
-                  innerRadius={isMobile ? 60 : 55}
+                  outerRadius={140}
+                  innerRadius={80}
                   paddingAngle={3}
                   stroke="#1e293b"
                   strokeWidth={2}
@@ -527,13 +666,16 @@ const LocationAnalyticsEditor: React.FC = () => {
           </div>
 
           {/* Popular Locations - Now takes 1 column */}
-          <div className="admin-card">
-            <h3 className="text-lg font-semibold mb-4">Popular Locations</h3>
-            <div className="space-y-3 max-h-[250px] overflow-y-auto">
-              {(analytics?.zoneAnalytics || []).slice(0, 10).map((zone, index) => (
+          <div id="card-popular-locations" className="admin-card">
+            <h3 className="text-lg font-semibold mb-3 flex-shrink-0 text-white">
+              Popular Locations
+              <MetricInfo text="Ranking of zones calculated by total visit count." />
+            </h3>
+            <div className="space-y-1 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {(analytics?.zoneAnalytics || []).slice(0, 50).map((zone, index) => (
                 <div
                   key={zone.zoneId}
-                  className="flex items-center gap-4 p-3 bg-slate-800 rounded-lg"
+                  className="flex items-center gap-2 py-1 px-2 bg-slate-800/50 hover:bg-slate-800 rounded transition-colors"
                 >
                   <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
                     {index + 1}
@@ -577,10 +719,17 @@ const LocationAnalyticsEditor: React.FC = () => {
         </div>
 
         {/* Advanced Metrics Row */}
+        <div className="mb-6 mt-8">
+          <h2 className="text-xl font-bold text-white">Visitor Behavior</h2>
+          <p className="text-slate-400 text-sm">Retention rates and zone correlations</p>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Retention / Loyalty */}
           <div className="admin-card">
-            <h3 className="text-lg font-semibold mb-4">Top Sticky Zones (Loyalty)</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white">
+              Top Sticky Zones (Loyalty)
+              <MetricInfo text="Zones where users return most frequently. High percentage means high loyalty." />
+            </h3>
             <div className="space-y-4">
               {retentionMetrics.length > 0 ? (
                 retentionMetrics.map((zone) => (
@@ -609,9 +758,12 @@ const LocationAnalyticsEditor: React.FC = () => {
           {/* Cross-Correlation */}
           <div className="admin-card">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Zone Correlations</h3>
+              <h3 className="text-lg font-semibold text-white">
+                Zone Correlations
+                <MetricInfo text="Likelihood of a user visiting specific zones after visiting the selected source zone." />
+              </h3>
               <select
-                className="bg-slate-700 border-none text-sm rounded-lg px-2 py-1 focus:ring-2 focus:ring-primary"
+                className="bg-slate-700 border-none text-sm rounded-lg px-2 py-1 focus:ring-2 focus:ring-primary max-w-[150px] truncate"
                 value={selectedCorrelationZone}
                 onChange={(e) => setSelectedCorrelationZone(e.target.value)}
               >
@@ -668,7 +820,10 @@ const LocationAnalyticsEditor: React.FC = () => {
         {/* Heatmap Comparison */}
         <div className="admin-card">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold">Activity Heatmap (vs Last Period)</h3>
+            <h3 className="text-lg font-semibold text-white">
+              Activity Heatmap (vs Last Period)
+              <MetricInfo text="Visual representation of traffic intensity. Compare current period against previous." />
+            </h3>
             <div className="flex items-center gap-3 text-xs">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-indigo-500 rounded-sm"></div>
@@ -701,25 +856,76 @@ const LocationAnalyticsEditor: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                {/* Heatmap grid with day labels */}
-                <div className="flex flex-col gap-px mt-1">
-                  {(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const).map((dayName, dayIndex) => (
-                    <div key={dayName} className="flex items-center">
-                      {/* Day label (Y-axis) */}
-                      <div className="w-12 flex-shrink-0 text-xs text-slate-400 font-medium pr-2 text-right">
-                        {dayName}
+              </div>
+              {/* Heatmap grid with labels */}
+              <div className="flex flex-col gap-px mt-1">
+                {(() => {
+                  // Decide rows based on dateRange
+                  let rows: { label: string; key: string | number }[] = [];
+
+                  if (dateRange === 'today') {
+                    // Collect all unique zones from current period
+                    const uniqueZones = new Set<string>();
+                    const zoneNames = new Map<string, string>();
+
+                    heatmapComparison.currentPeriod.forEach(d => {
+                      if (d.zoneId) {
+                        uniqueZones.add(d.zoneId);
+                        zoneNames.set(d.zoneId, d.zoneName || d.zoneId);
+                      }
+                    });
+
+                    // Also add default zones if empty to show something
+                    if (uniqueZones.size === 0 && analytics?.zoneAnalytics) {
+                      analytics.zoneAnalytics.slice(0, 5).forEach(z => {
+                        uniqueZones.add(z.zoneId);
+                        zoneNames.set(z.zoneId, z.zoneName);
+                      });
+                    }
+
+                    rows = Array.from(uniqueZones).map(zoneId => ({
+                      label: zoneNames.get(zoneId) || zoneId,
+                      key: zoneId
+                    }));
+                  } else {
+                    // Standard Day rows
+                    rows = (['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const).map((dayName, index) => ({
+                      label: dayName,
+                      key: index
+                    }));
+                  }
+
+                  return rows.map((row) => (
+                    <div key={row.key} className="flex items-center">
+                      {/* Row label (Y-axis) */}
+                      <div className="w-24 flex-shrink-0 text-xs text-slate-400 font-medium pr-2 text-right truncate">
+                        {row.label}
                       </div>
-                      {/* Hour cells for this day */}
+                      {/* Hour cells for this row */}
                       <div className="flex-1 grid grid-cols-24 gap-px bg-slate-800 rounded overflow-hidden">
                         {Array.from({ length: 24 }).map((_, hourIndex) => {
-                          const currVal =
-                            heatmapComparison.currentPeriod.find(
+                          let currVal = 0;
+                          let prevVal = 0;
+
+                          if (dateRange === 'today') {
+                            // Match by ZoneId
+                            const zoneId = row.key as string;
+                            currVal = heatmapComparison.currentPeriod.find(
+                              (d) => d.zoneId === zoneId && d.hour === hourIndex
+                            )?.value || 0;
+                            prevVal = heatmapComparison.previousPeriod.find(
+                              (d) => d.zoneId === zoneId && d.hour === hourIndex
+                            )?.value || 0;
+                          } else {
+                            // Match by Day Index
+                            const dayIndex = row.key as number;
+                            currVal = heatmapComparison.currentPeriod.find(
                               (d) => d.day === dayIndex && d.hour === hourIndex
                             )?.value || 0;
-                          const prevVal =
-                            heatmapComparison.previousPeriod.find(
+                            prevVal = heatmapComparison.previousPeriod.find(
                               (d) => d.day === dayIndex && d.hour === hourIndex
                             )?.value || 0;
+                          }
 
                           const diff = currVal - prevVal;
                           // Color based on current value intensity + diff indicator
@@ -741,16 +947,17 @@ const LocationAnalyticsEditor: React.FC = () => {
                             }
                           }
 
-                          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                          // Simple opacity mapping based on intensity
+                          const opacity = currVal === 0 ? 0.3 : 0.4 + (intensity / 100) * 0.6;
 
                           return (
                             <div
-                              key={`${dayIndex}-${hourIndex}`}
+                              key={`${row.key}-${hourIndex}`}
                               className={`h-7 ${bgColor} flex items-center justify-center text-[8px] text-transparent hover:text-white transition-all cursor-crosshair`}
                               style={{
-                                opacity: currVal > 0 ? Math.max(0.2, intensity / 100) : 0.1,
+                                opacity: currVal > 0 ? opacity : 1,
                               }}
-                              title={`${dayNames[dayIndex]}, ${formatHour(hourIndex)}: ${currVal} visits${diff !== 0 ? ` (${diff > 0 ? '+' : ''}${diff} vs last period)` : ''}`}
+                              title={`${row.label} @ ${formatHour(hourIndex)}: ${currVal} visits (${diff > 0 ? '+' : ''}${diff} vs prev)`}
                             >
                               {currVal > 0 && currVal}
                             </div>
@@ -758,8 +965,8 @@ const LocationAnalyticsEditor: React.FC = () => {
                         })}
                       </div>
                     </div>
-                  ))}
-                </div>
+                  ));
+                })()}
               </div>
             </div>
           ) : (
@@ -793,7 +1000,7 @@ const LocationAnalyticsEditor: React.FC = () => {
           </div>
         </div>
       </div>
-    </AdminPageLayout>
+    </AdminPageLayout >
   );
 };
 
