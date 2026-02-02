@@ -10,7 +10,7 @@ import {
   ChevronUp,
   Loader2,
 } from 'lucide-react';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -61,6 +61,8 @@ const Directory = () => {
   const loading = configLoading;
 
   const [searchTerm, setSearchTerm] = useState('');
+  // Defer search term processing to prevent UI blocking during typing
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const [activeTab, setActiveTab] = useState('faculty');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({
     key: null,
@@ -119,8 +121,8 @@ const Directory = () => {
     let groupedArray = [...facultyGroups];
 
     // Filter groups based on search term
-    if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
+    if (deferredSearchTerm) {
+      const lowerSearchTerm = deferredSearchTerm.toLowerCase();
       groupedArray = groupedArray.filter((group) => {
         return group.some(
           (entry) =>
@@ -149,13 +151,13 @@ const Directory = () => {
     }
 
     return groupedArray;
-  }, [facultyGroups, searchTerm, sortConfig]);
+  }, [facultyGroups, deferredSearchTerm, sortConfig]);
 
   // Filter and sort students
   const filteredStudents = useMemo(() => {
     let filtered = studentDirectory;
-    if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
+    if (deferredSearchTerm) {
+      const lowerSearchTerm = deferredSearchTerm.toLowerCase();
       filtered = filtered.filter(
         (entry) =>
           entry.name.toLowerCase().includes(lowerSearchTerm) ||
@@ -185,7 +187,7 @@ const Directory = () => {
     }
 
     return filtered;
-  }, [studentDirectory, searchTerm, sortConfig]);
+  }, [studentDirectory, deferredSearchTerm, sortConfig]);
 
   // Group students by name (for consistency)
   const groupedStudents = useMemo(() => {
@@ -230,6 +232,14 @@ const Directory = () => {
     );
   };
 
+  // Profile Lookup Logic
+  const navigate = useNavigate();
+  const [checkingProfile, setCheckingProfile] = useState<string | null>(null); // admNo being checked
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -240,14 +250,6 @@ const Directory = () => {
       </div>
     );
   }
-
-  // Profile Lookup Logic
-  const navigate = useNavigate();
-  const [checkingProfile, setCheckingProfile] = useState<string | null>(null); // admNo being checked
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: 'success' | 'error';
-  } | null>(null);
 
   const handleViewProfile = async (admissionNumber: string) => {
     if (!admissionNumber) return;
