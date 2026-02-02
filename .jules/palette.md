@@ -11,3 +11,7 @@
 ## 2024-05-23 - Interactive Card Patterns
 **Learning:** Animated cards (using `motion.div`) often act as buttons but lack semantic HTML and keyboard accessibility. Refactoring to `motion.button` retains animation capabilities while providing native accessibility (focus, enter/space activation).
 **Action:** Replace clickable `div`s with `button`s in grid layouts, ensuring `w-full text-left` classes are added to maintain visual alignment.
+
+## 2024-05-25 - Copy to Clipboard Feedback
+**Learning:** When adding "Copy to Clipboard" functionality, visual feedback (icon change/tooltip) and keyboard accessibility (focus states on the button) are essential. Testing clipboard interactions requires mocking `navigator.clipboard.writeText` correctly in Jest/Vitest.
+**Action:** Use a dedicated button with `aria-label`, handle the promise from `writeText`, and show temporary success state. In tests, use `vi.fn().mockResolvedValue(undefined)` for clipboard mocks to avoid timeouts.
