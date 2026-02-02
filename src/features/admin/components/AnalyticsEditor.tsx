@@ -42,6 +42,7 @@ interface AnalyticsStats {
   newUsersThisWeek: number;
   newUsersThisMonth: number;
   profileCompletionRate: number;
+  profileCompleteCount: number;
   usersWithPhoto: number;
   usersWithBio: number;
 
@@ -125,16 +126,18 @@ const CalendarIcon = () => (
   </svg>
 );
 
-const UserCheckIcon = () => (
+const DocumentIcon = () => (
   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={2}
-      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
     />
   </svg>
 );
+
+
 
 const AnalyticsEditor: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -281,6 +284,7 @@ const AnalyticsEditor: React.FC = () => {
         newUsersThisWeek: newThisWeek,
         newUsersThisMonth: newThisMonth,
         profileCompletionRate,
+        profileCompleteCount: profileComplete,
         usersWithPhoto,
         usersWithBio,
 
@@ -336,32 +340,7 @@ const AnalyticsEditor: React.FC = () => {
     }
   };
 
-  // Filter functions for engagement metrics
-  const filterByProfilePhoto = () => {
-    if (!stats) return;
-    const filtered = stats.allUsers.filter((u) => u.profilePicture);
-    setSelectedFilter({ title: 'Users with Profile Photo', users: filtered });
-  };
-
-  const filterByBio = () => {
-    if (!stats) return;
-    const filtered = stats.allUsers.filter((u) => u.bio && u.bio.trim().length > 0);
-    setSelectedFilter({ title: 'Users with Bio', users: filtered });
-  };
-
-  const filterByGradesheets = () => {
-    if (!stats) return;
-    const filtered = stats.allUsers.filter((u) => u.gradesData?.gradeSheetUrl);
-    setSelectedFilter({ title: 'Users with Uploaded Gradesheets', users: filtered });
-  };
-
-  const filterBySocialLinks = () => {
-    if (!stats) return;
-    const filtered = stats.allUsers.filter(
-      (u) => u.socialLinks && Object.keys(u.socialLinks).length > 0
-    );
-    setSelectedFilter({ title: 'Users with Social Links', users: filtered });
-  };
+  // Filter functions for charts
 
   const closeModal = () => setSelectedFilter(null);
 
@@ -504,71 +483,16 @@ const AnalyticsEditor: React.FC = () => {
         </div>
         <div className="admin-stat-card p-3 sm:p-6">
           <div className="flex items-center justify-center gap-2 mb-2 text-purple-400">
-            <UserCheckIcon />
+            <DocumentIcon />
           </div>
           <div className="admin-stat-value text-xl sm:text-3xl text-purple-400">
-            {stats.profileCompletionRate}%
+            {stats.gradesheetsUploaded}
           </div>
-          <div className="admin-stat-label text-xs">Profile Completion</div>
+          <div className="admin-stat-label text-xs">Gradesheets Uploaded</div>
         </div>
       </div>
 
-      {/* Engagement Metrics - Row 2 (Clickable) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <div
-          className="admin-card p-3 sm:p-4 text-center cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
-          onClick={filterByProfilePhoto}
-        >
-          <div className="text-xl sm:text-3xl font-bold text-purple-400">
-            {stats.usersWithPhoto}
-          </div>
-          <div className="text-xs sm:text-sm text-indigo-400 mt-1">Profile Photo</div>
-          <div className="text-xs text-indigo-500">
-            {stats.totalUsers > 0 ? Math.round((stats.usersWithPhoto / stats.totalUsers) * 100) : 0}
-            %
-          </div>
-        </div>
-        <div
-          className="admin-card p-3 sm:p-4 text-center cursor-pointer hover:ring-2 hover:ring-pink-500/50 transition-all"
-          onClick={filterByBio}
-        >
-          <div className="text-xl sm:text-3xl font-bold text-pink-400">{stats.usersWithBio}</div>
-          <div className="text-xs sm:text-sm text-indigo-400 mt-1">Bio Written</div>
-          <div className="text-xs text-indigo-500">
-            {stats.totalUsers > 0 ? Math.round((stats.usersWithBio / stats.totalUsers) * 100) : 0}%
-          </div>
-        </div>
-        <div
-          className="admin-card p-3 sm:p-4 text-center cursor-pointer hover:ring-2 hover:ring-cyan-500/50 transition-all"
-          onClick={filterByGradesheets}
-        >
-          <div className="text-xl sm:text-3xl font-bold text-cyan-400">
-            {stats.gradesheetsUploaded}
-          </div>
-          <div className="text-xs sm:text-sm text-indigo-400 mt-1">Gradesheets</div>
-          <div className="text-xs text-indigo-500">
-            {stats.totalUsers > 0
-              ? Math.round((stats.gradesheetsUploaded / stats.totalUsers) * 100)
-              : 0}
-            %
-          </div>
-        </div>
-        <div
-          className="admin-card p-3 sm:p-4 text-center cursor-pointer hover:ring-2 hover:ring-emerald-500/50 transition-all"
-          onClick={filterBySocialLinks}
-        >
-          <div className="text-xl sm:text-3xl font-bold text-emerald-400">
-            {stats.usersWithSocialLinks}
-          </div>
-          <div className="text-xs sm:text-sm text-indigo-400 mt-1">Social Links</div>
-          <div className="text-xs text-indigo-500">
-            {stats.totalUsers > 0
-              ? Math.round((stats.usersWithSocialLinks / stats.totalUsers) * 100)
-              : 0}
-            %
-          </div>
-        </div>
-      </div>
+
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -1013,7 +937,7 @@ const AnalyticsEditor: React.FC = () => {
                       style={{
                         backgroundColor:
                           CHART_COLORS[
-                            (index + (currentPage - 1) * usersPerPage) % CHART_COLORS.length
+                          (index + (currentPage - 1) * usersPerPage) % CHART_COLORS.length
                           ],
                       }}
                     >
@@ -1076,11 +1000,10 @@ const AnalyticsEditor: React.FC = () => {
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                          currentPage === pageNum
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                            : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600'
-                        }`}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs sm:text-sm font-medium transition-colors ${currentPage === pageNum
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                          : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600'
+                          }`}
                       >
                         {pageNum}
                       </button>
