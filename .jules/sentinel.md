@@ -27,3 +27,8 @@
 **Vulnerability:** The `serviceAccountKey.json` file, required by `scripts/addAdmin.ts` for admin privilege escalation, was missing from `.gitignore`. This file contains sensitive Firebase Admin SDK credentials which, if committed, would grant full database access to anyone with the repository.
 **Learning:** Utility scripts often require high-privilege credentials that are not needed by the main application. Documentation or scripts instructing developers to create/download these keys must be paired with immediate `.gitignore` updates.
 **Prevention:** Audit all scripts in the `scripts/` directory for credential usage. Ensure any file paths used for secrets are explicitly ignored in `.gitignore` before the script is even written.
+
+## 2025-10-29 - Firestore Collection Query Permissions
+**Vulnerability:** Attempting to restrict read access to specific documents (e.g., `superAdmins`) within a public collection (`appConfig`) can cause client-side applications to break if they fetch the entire collection (e.g., `db.collection('appConfig').onSnapshot()`).
+**Learning:** Firestore security rules filter data *before* returning it. If a client query requests a set of documents (like "all in collection") and *any* of them are denied by rules, the *entire query* fails with "Missing or insufficient permissions". You cannot rely on rules to simply "filter out" hidden documents from a broad query.
+**Prevention:** Structure data such that public and private data are in separate collections (e.g., `appConfig` vs `privateConfig`). If mixed, the client MUST use filtered queries (e.g., `.where('public', '==', true)`) matching the rule constraints.

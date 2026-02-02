@@ -33,8 +33,8 @@ service cloud.firestore {
     // Check if user is a super admin (from environment config)
     function isSuperAdmin() {
       return isAuthenticated() && 
-        exists(/databases/$(database)/documents/appConfig/superAdmins) &&
-        request.auth.token.email in get(/databases/$(database)/documents/appConfig/superAdmins).data.emails;
+        exists(/databases/$(database)/documents/privateConfig/superAdmins) &&
+        request.auth.token.email in get(/databases/$(database)/documents/privateConfig/superAdmins).data.emails;
     }
 
     // Validate that user is not trying to escalate their own privileges
@@ -72,19 +72,19 @@ service cloud.firestore {
 
     // Private configuration - only accessible by admins
     match /privateConfig/{docId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAdmin() && docId != 'superAdmins';
+    }
+
+    // Super admin configuration - only super admins can modify
+    match /privateConfig/superAdmins {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin();
     }
 
     // App-wide configuration - readable by all (needed before login), writable by admins only
     match /appConfig/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Super admin configuration - only super admins can modify
-    match /appConfig/superAdmins {
-      allow read: if true;
-      allow write: if isSuperAdmin();
+      allow read: if docId != 'superAdmins';
+      allow write: if isAdmin() && docId != 'superAdmins';
     }
 
     // ============================================
