@@ -237,7 +237,8 @@ const CalendarUploader: React.FC<Props> = ({ onImport, onClose }) => {
     });
 
     const pdfjsLib = await import('pdfjs-dist');
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    // Use local worker to avoid CSP issues with CDN
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
     const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
     const pagePromises = [];
@@ -456,11 +457,10 @@ const CalendarUploader: React.FC<Props> = ({ onImport, onClose }) => {
           <>
             {/* Upload Zone */}
             <div
-              className={`border-2 border-dashed rounded-xl p-12 text-center transition-all ${
-                isDragging
+              className={`border-2 border-dashed rounded-xl p-12 text-center transition-all ${isDragging
                   ? 'border-indigo-400 bg-indigo-500/10'
                   : 'border-indigo-500/30 hover:border-indigo-500/50'
-              }`}
+                }`}
               onDragOver={(e) => {
                 e.preventDefault();
                 setIsDragging(true);
