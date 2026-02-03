@@ -1563,6 +1563,7 @@ const Schedule: React.FC = () => {
                       <input
                         type="text"
                         placeholder="Search courses..."
+                        aria-label="Search courses"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
@@ -2610,6 +2611,7 @@ const Schedule: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <input
                       type="time"
+                      aria-label="Start time"
                       value={newStartTime}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewStartTime(e.target.value)
@@ -2622,6 +2624,7 @@ const Schedule: React.FC = () => {
                     <span className="text-slate-500 dark:text-slate-400 font-medium">to</span>
                     <input
                       type="time"
+                      aria-label="End time"
                       value={newEndTime}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewEndTime(e.target.value)
@@ -3130,6 +3133,7 @@ const Schedule: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <input
                       type="time"
+                      aria-label="Start time"
                       value={newStartTime}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewStartTime(e.target.value)
@@ -3142,6 +3146,7 @@ const Schedule: React.FC = () => {
                     <span className="text-slate-500 dark:text-slate-400 font-medium">to</span>
                     <input
                       type="time"
+                      aria-label="End time"
                       value={newEndTime}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setNewEndTime(e.target.value)
