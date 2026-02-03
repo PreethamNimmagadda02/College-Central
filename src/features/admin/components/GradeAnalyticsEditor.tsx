@@ -19,6 +19,30 @@ import AdminPageLayout from './AdminPageLayout';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
+// Helper to calculate total credits consistently
+const calculateTotalCredits = (user: User): number | 'N/A' => {
+    if (user.gradesData?.earnedCredits !== undefined) {
+        return user.gradesData.earnedCredits;
+    }
+    // Fallback: Calculate from semesters if available
+    if (user.gradesData?.semesters && user.gradesData.semesters.length > 0) {
+        const uniqueCourses = new Set<string>();
+        let calculatedCredits = 0;
+
+        user.gradesData.semesters.forEach(sem => {
+            sem.grades?.forEach(g => {
+                // Simple unique check by subject code
+                if (!uniqueCourses.has(g.subjectCode) && g.grade !== 'F' && g.grade !== 'W') {
+                    uniqueCourses.add(g.subjectCode);
+                    calculatedCredits += (g.credits || 0);
+                }
+            });
+        });
+        return calculatedCredits > 0 ? calculatedCredits : 'N/A';
+    }
+    return 'N/A';
+};
+
 const GradeAnalyticsEditor: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,7 +61,10 @@ const GradeAnalyticsEditor: React.FC = () => {
 
     const [filterBatch, setFilterBatch] = useState('All');
     const [filterBranch, setFilterBranch] = useState('All');
+    const [searchQuery, setSearchQuery] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: keyof User | 'cgpa'; direction: 'asc' | 'desc' }>({ key: 'cgpa', direction: 'desc' });
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 20;
 
     useEffect(() => {
         fetchData();
@@ -153,10 +180,19 @@ const GradeAnalyticsEditor: React.FC = () => {
     const getFilteredUsers = () => {
         let filtered = [...users];
 
-        // Include users even if they don't have grades, so admin can see who is missing data if needed?
-        // Actually, let's keep showing everyone but filter logic needs to handle normalized values.
+        // Only show students with valid grade data (uploaded gradesheets/parsed data)
+        filtered = filtered.filter(u => u.gradesData && typeof u.gradesData.cgpa !== 'undefined');
 
         // Apply filters
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(u =>
+                u.name.toLowerCase().includes(q) ||
+                u.email.toLowerCase().includes(q) ||
+                (u.admissionNumber && u.admissionNumber.toLowerCase().includes(q))
+            );
+        }
+
         if (filterBranch !== 'All') {
             filtered = filtered.filter(u => {
                 const b = u.branch ? u.branch.trim().toUpperCase() : 'UNKNOWN';
@@ -194,6 +230,16 @@ const GradeAnalyticsEditor: React.FC = () => {
     };
 
     const filteredUsers = getFilteredUsers();
+
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedUsers = filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filterBranch, filterBatch]);
 
     // Unique branches and batches for filter dropdowns - NORMALIZED
     const uniqueBranches = Array.from(new Set(users.map(u => u.branch ? u.branch.trim().toUpperCase() : '').filter(Boolean))).sort();
@@ -263,9 +309,9 @@ const GradeAnalyticsEditor: React.FC = () => {
             </div>
 
             {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 {/* CGPA Distribution */}
-                <div className="admin-card min-h-[400px]">
+                <div className="admin-card">
                     <h3 className="text-lg font-semibold text-white mb-6">CGPA Distribution</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={stats.cgpaDistribution}>
@@ -286,39 +332,64 @@ const GradeAnalyticsEditor: React.FC = () => {
                 </div>
 
                 {/* Branch / Batch Performance */}
-                <div className="admin-card min-h-[400px]">
+                <div className="admin-card">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-semibold text-white">Performance by Branch</h3>
                         {/* Could add a toggle here for Branch vs Batch charts if needed */}
                     </div>
 
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={stats.branchDistribution} layout="vertical">
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} />
-                            <XAxis type="number" domain={[0, 10]} stroke="#94a3b8" />
-                            <YAxis dataKey="name" type="category" width={100} stroke="#94a3b8" fontSize={12} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                                formatter={(value: any) => [Number(value).toFixed(2), 'Avg CGPA']}
-                            />
-                            <Bar dataKey="avgCGPA" fill="#82ca9d" radius={[0, 4, 4, 0]}>
-                                <Cell fill="#10b981" />
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
+                    <div style={{ width: '100%', height: Math.max(400, stats.branchDistribution.length * 35) }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={stats.branchDistribution} layout="vertical" margin={{ left: 10, right: 30, top: 10, bottom: 10 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} horizontal={true} vertical={true} />
+                                <XAxis type="number" domain={[0, 10]} stroke="#94a3b8" />
+                                <YAxis
+                                    dataKey="name"
+                                    type="category"
+                                    width={220}
+                                    stroke="#94a3b8"
+                                    fontSize={11}
+                                    tick={{ fontSize: 11 }}
+                                />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
+                                    formatter={(value: any) => [Number(value).toFixed(2), 'Avg CGPA']}
+                                />
+                                <Bar dataKey="avgCGPA" fill="#82ca9d" radius={[0, 4, 4, 0]} barSize={24}>
+                                    <Cell fill="#10b981" />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </div>
 
             {/* Student List Table */}
             <div className="admin-card overflow-hidden">
-                <div className="p-4 border-b border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h3 className="text-lg font-semibold text-white">Student List</h3>
+                <div className="p-4 border-b border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex flex-col md:flex-row items-center gap-6 w-full md:w-auto">
+                        <h3 className="text-lg font-semibold text-white whitespace-nowrap">Student List</h3>
 
-                    <div className="flex flex-wrap gap-2">
+                        {/* Search Bar - Moved to Left */}
+                        <div className="relative w-full sm:w-96 group">
+                            <input
+                                type="text"
+                                placeholder="Search student by name, email, or ID..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="admin-input !pl-12 pr-4 py-2.5 w-full bg-slate-800/50 focus:bg-slate-800 border-slate-600 focus:border-blue-500 transition-all shadow-sm group-hover:shadow-md"
+                            />
+                            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
                         <select
                             value={filterBranch}
                             onChange={(e) => setFilterBranch(e.target.value)}
-                            className="admin-input text-sm py-1 px-2 !w-auto"
+                            className="admin-input py-2.5 px-3 w-full md:w-44 cursor-pointer bg-slate-800/50 hover:bg-slate-800 transition-colors border-slate-600"
                         >
                             <option value="All">All Branches</option>
                             {uniqueBranches.map(b => <option key={b} value={b}>{b}</option>)}
@@ -327,21 +398,104 @@ const GradeAnalyticsEditor: React.FC = () => {
                         <select
                             value={filterBatch}
                             onChange={(e) => setFilterBatch(e.target.value)}
-                            className="admin-input text-sm py-1 px-2 !w-auto"
+                            className="admin-input py-2.5 px-3 w-full md:w-44 cursor-pointer bg-slate-800/50 hover:bg-slate-800 transition-colors border-slate-600"
                         >
-                            <option value="All">All Batches</option>
+                            <option value="All">Batches</option>
                             {uniqueBatches.map(b => <option key={b} value={b}>{b}</option>)}
                         </select>
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Mobile/Tablet Grid View */}
+                <div className="p-4 block lg:hidden">
+                    {filteredUsers.length === 0 ? (
+                        <div className="p-12 text-center text-slate-500 bg-slate-800/20 rounded-xl border border-dashed border-slate-700">
+                            <p className="text-lg font-medium text-slate-400">No students found</p>
+                            <p className="text-sm mt-1">Try adjusting your filters or search query.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {paginatedUsers.map((user) => (
+                                <div
+                                    key={user.id}
+                                    className="bg-slate-800/40 border border-slate-700 rounded-xl p-5 hover:border-blue-500/50 hover:bg-slate-800/60 transition-all group relative overflow-hidden"
+                                >
+                                    {/* Header: Avatar & Basic Info */}
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-bold text-white shadow-lg overflow-hidden shrink-0">
+                                                {user.profilePicture ? (
+                                                    <img src={user.profilePicture} alt={user.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    user.name.charAt(0)
+                                                )}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className="font-bold text-slate-200 text-sm truncate pr-2 group-hover:text-blue-400 transition-colors">
+                                                    {user.name}
+                                                </h4>
+                                                <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Stats Grid */}
+                                    <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-xs mb-4">
+                                        <div>
+                                            <span className="block text-slate-500 mb-0.5">Branch</span>
+                                            <span className="font-medium text-slate-300">{user.branch || 'N/A'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-slate-500 mb-0.5">Batch</span>
+                                            <span className="font-medium text-slate-300">
+                                                {user.year || (user.email ? '20' + user.email.match(/^(\d{2})/)![1] : 'N/A')}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-slate-500 mb-0.5">Credits</span>
+                                            <span className="font-medium text-slate-300">{calculateTotalCredits(user)}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-slate-500 mb-0.5">CGPA</span>
+                                            {typeof user.gradesData?.cgpa === 'number' ? (
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${user.gradesData.cgpa >= 8.5 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                                    user.gradesData.cgpa >= 7.0 ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                                                        'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                                    }`}>
+                                                    {user.gradesData.cgpa.toFixed(2)}
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-500 italic">N/A</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Action Footer */}
+                                    <div className="pt-3 border-t border-slate-700/50 flex justify-end">
+                                        <button
+                                            onClick={() => setSelectedStudent(user)}
+                                            className="text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 opacity-80 group-hover:opacity-100"
+                                        >
+                                            View Details
+                                            <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-800/50 text-gray-400 text-xs uppercase tracking-wider border-b border-gray-700">
                                 <th className="p-4 font-semibold">Student</th>
-                                <th className="p-4 font-semibold">Branch</th>
-                                <th className="p-4 font-semibold">Batch</th>
+                                <th className="p-4 font-semibold hidden md:table-cell">Branch</th>
+                                <th className="p-4 font-semibold hidden md:table-cell">Batch</th>
                                 <th
                                     className="p-4 font-semibold cursor-pointer hover:text-white flex items-center gap-1"
                                     onClick={() => setSortConfig({ key: 'cgpa', direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
@@ -351,7 +505,7 @@ const GradeAnalyticsEditor: React.FC = () => {
                                         <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
                                     )}
                                 </th>
-                                <th className="p-4 font-semibold text-right">Credits</th>
+                                <th className="p-4 font-semibold text-right hidden lg:table-cell">Credits</th>
                                 <th className="p-4 font-semibold text-right">Actions</th>
                             </tr>
                         </thead>
@@ -361,7 +515,7 @@ const GradeAnalyticsEditor: React.FC = () => {
                                     <td colSpan={6} className="p-8 text-center text-gray-500">No students found matching filters.</td>
                                 </tr>
                             ) : (
-                                filteredUsers.map((user) => (
+                                paginatedUsers.map((user) => (
                                     <tr key={user.id} className="hover:bg-gray-700/30 transition-colors group">
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
@@ -374,12 +528,12 @@ const GradeAnalyticsEditor: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <div className="text-sm font-medium text-gray-200">{user.name}</div>
-                                                    <div className="text-xs text-gray-500">{user.email}</div>
+                                                    <div className="text-xs text-gray-500 hidden sm:block">{user.email}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="p-4 text-sm text-gray-300">{user.branch || '-'}</td>
-                                        <td className="p-4 text-sm text-gray-300">{user.year || (user.email ? '20' + user.email.match(/^(\d{2})/)![1] : '-')}</td>
+                                        <td className="p-4 text-sm text-gray-300 hidden md:table-cell">{user.branch || '-'}</td>
+                                        <td className="p-4 text-sm text-gray-300 hidden md:table-cell">{user.year || (user.email ? '20' + user.email.match(/^(\d{2})/)![1] : '-')}</td>
                                         <td className="p-4">
                                             {typeof user.gradesData?.cgpa === 'number' ? (
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.gradesData.cgpa >= 8.5 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
@@ -392,32 +546,8 @@ const GradeAnalyticsEditor: React.FC = () => {
                                                 <span className="text-gray-600 text-xs italic">N/A</span>
                                             )}
                                         </td>
-                                        <td className="p-4 text-sm text-gray-400 text-right">
-                                            {(() => {
-                                                if (user.gradesData?.earnedCredits !== undefined) {
-                                                    return user.gradesData.earnedCredits;
-                                                }
-                                                // Fallback: Calculate from semesters if available
-                                                if (user.gradesData?.semesters && user.gradesData.semesters.length > 0) {
-                                                    const uniqueCourses = new Set<string>();
-                                                    let calculatedCredits = 0;
-
-                                                    // Iterate semesters from newest to oldest (standard order usually)
-                                                    // We need to handle retakes - only count latest attempt?
-                                                    // For simple display, summing passed courses is better than N/A
-                                                    user.gradesData.semesters.forEach(sem => {
-                                                        sem.grades?.forEach(g => {
-                                                            // Simple unique check by subject code
-                                                            if (!uniqueCourses.has(g.subjectCode) && g.grade !== 'F' && g.grade !== 'W') {
-                                                                uniqueCourses.add(g.subjectCode);
-                                                                calculatedCredits += (g.credits || 0);
-                                                            }
-                                                        });
-                                                    });
-                                                    return calculatedCredits > 0 ? calculatedCredits : 'N/A';
-                                                }
-                                                return 'N/A';
-                                            })()}
+                                        <td className="p-4 text-sm text-gray-400 text-right hidden lg:table-cell">
+                                            {calculateTotalCredits(user)}
                                         </td>
                                         <td className="p-4 text-right">
                                             <button
@@ -435,8 +565,28 @@ const GradeAnalyticsEditor: React.FC = () => {
                 </div>
 
                 {/* Pagination could go here */}
-                <div className="p-4 border-t border-gray-700 text-xs text-gray-500 flex justify-between">
-                    <span>Showing {filteredUsers.length} of {users.length} students</span>
+                <div className="p-4 border-t border-gray-700 bg-slate-800/30 text-xs text-gray-500 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <span>
+                        Showing <span className="font-medium text-white">{Math.min(startIndex + 1, filteredUsers.length)}</span> to <span className="font-medium text-white">{Math.min(startIndex + ITEMS_PER_PAGE, filteredUsers.length)}</span> of <span className="font-medium text-white">{filteredUsers.length}</span> students
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed rounded text-white transition-colors"
+                        >
+                            Previous
+                        </button>
+                        <span className="text-slate-400">Page <span className="text-white font-medium">{currentPage}</span> of {totalPages || 1}</span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages || totalPages === 0}
+                            className="px-3 py-1 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed rounded text-white transition-colors"
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -500,7 +650,7 @@ const GradeAnalyticsEditor: React.FC = () => {
                                 <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
                                     <div className="text-slate-400 text-xs uppercase mb-1">Total Credits</div>
                                     <div className="text-xl font-bold text-white">
-                                        {selectedStudent.gradesData?.earnedCredits || 'N/A'}
+                                        {calculateTotalCredits(selectedStudent)}
                                     </div>
                                 </div>
                                 <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">

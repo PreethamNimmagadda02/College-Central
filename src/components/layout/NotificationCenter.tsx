@@ -95,7 +95,7 @@ const NotificationCenter: React.FC = () => {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200">
+                <div className="fixed top-[72px] left-4 right-4 sm:absolute sm:top-full sm:left-auto sm:right-0 sm:mt-2 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200">
                     <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 backdrop-blur-sm">
                         <h3 className="font-semibold text-slate-900 dark:text-white">Notifications</h3>
                         {unreadCount > 0 && (
