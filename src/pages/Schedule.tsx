@@ -1233,11 +1233,19 @@ const Schedule: React.FC = () => {
     });
   }, [timetableData]);
 
-  const filteredCourses = useMemo(() => {
+  // Optimization: Create Set for O(1) lookup during sort
+  const selectedCourseCodesSet = useMemo(
+    () => new Set(selectedCourseCodes),
+    [selectedCourseCodes]
+  );
+
+  // Optimization: Split sorting (O(N log N)) from filtering (O(N))
+  // This prevents expensive re-sorting on every search keystroke
+  const sortedCourses = useMemo(() => {
     // Sort courses: selected courses first, then alphabetically by course code
-    const sortedCourses = [...uniqueTimetableCourses].sort((a, b) => {
-      const aSelected = selectedCourseCodes.includes(a.courseCode);
-      const bSelected = selectedCourseCodes.includes(b.courseCode);
+    return [...uniqueTimetableCourses].sort((a, b) => {
+      const aSelected = selectedCourseCodesSet.has(a.courseCode);
+      const bSelected = selectedCourseCodesSet.has(b.courseCode);
 
       // Selected courses come first
       if (aSelected && !bSelected) return -1;
@@ -1246,7 +1254,9 @@ const Schedule: React.FC = () => {
       // Within each group, sort alphabetically by course code
       return a.courseCode.localeCompare(b.courseCode);
     });
+  }, [uniqueTimetableCourses, selectedCourseCodesSet]);
 
+  const filteredCourses = useMemo(() => {
     if (!searchTerm.trim()) {
       return sortedCourses;
     }
@@ -1282,7 +1292,7 @@ const Schedule: React.FC = () => {
 
       return false;
     });
-  }, [searchTerm, uniqueTimetableCourses, selectedCourseCodes]);
+  }, [searchTerm, sortedCourses]);
 
   const filteredSchedule = useMemo(() => {
     if (!scheduleData) return [];
