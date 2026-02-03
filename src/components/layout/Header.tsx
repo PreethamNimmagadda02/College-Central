@@ -19,6 +19,8 @@ import { useWeather } from '@contexts/WeatherContext';
 import { useRole } from '@features/auth/hooks/useRole';
 import React from 'react';
 import { Link } from 'react-router-dom';
+import NotificationCenter from './NotificationCenter';
+
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -182,6 +184,9 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
                 <span className="text-sm text-slate-500">--°</span>
               )}
             </button>
+
+            {/* Notification Center */}
+            <NotificationCenter />
 
             {/* Theme Toggle */}
             <button

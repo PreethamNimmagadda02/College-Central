@@ -324,7 +324,7 @@ function normalizeStudentData(item: StudentData): StudentData {
   return {
     name: item.name.trim(),
     rollNumber: item.rollNumber.trim().toUpperCase(),
-    branch: item.branch.trim(),
+    branch: item.branch.trim().toUpperCase(),
     year: typeof item.year === 'number' && item.year >= 1 && item.year <= 5 ? item.year : 1,
     email: (item.email || '').trim() || '',
   };

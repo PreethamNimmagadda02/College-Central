@@ -83,7 +83,7 @@ service cloud.firestore {
 
     // App-wide configuration - readable by all (needed before login), writable by admins only
     match /appConfig/{docId} {
-      allow read: if docId != 'superAdmins';
+      allow read: if true;
       allow write: if isAdmin() && docId != 'superAdmins';
     }
 
@@ -128,6 +128,12 @@ service cloud.firestore {
       
       match /grades/{gradeId} {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+      
+      // Notifications subcollection - Allow admins to send broadcasts
+      match /notifications/{notificationId} {
+        allow read, update, delete: if isAuthenticated() && request.auth.uid == userId;
+        allow create: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
       }
       
       match /{document=**} {

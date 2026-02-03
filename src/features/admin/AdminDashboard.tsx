@@ -24,146 +24,10 @@ import LocationAnalyticsEditor from './components/LocationAnalyticsEditor';
 import AdminFooter from './components/AdminFooter';
 import AdminSearch from './components/AdminSearch';
 
-// Icons
-const BuildingIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-    />
-  </svg>
-);
+import BroadcastEditor from './components/BroadcastEditor';
+import GradeAnalyticsEditor from './components/GradeAnalyticsEditor';
 
-const AcademicCapIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path d="M12 14l9-5-9-5-9 5 9 5z" />
-    <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"
-    />
-  </svg>
-);
-
-const MapPinIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-    <circle cx="12" cy="10" r="3"></circle>
-  </svg>
-);
-
-const HomeIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-    />
-  </svg>
-);
-
-const LinkIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-    />
-  </svg>
-);
-
-const SparklesIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-    />
-  </svg>
-);
-
-const DocumentIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-    />
-  </svg>
-);
-
-const CalendarIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-    />
-  </svg>
-);
-
-const UsersIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-    />
-  </svg>
-);
-
-const BookOpenIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-    />
-  </svg>
-);
-
-const UserGroupIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-    />
-  </svg>
-);
-
-const ChartBarIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-    />
-  </svg>
-);
+import { BuildingIcon, AcademicCapIcon, MapPinIcon, HomeIcon, LinkIcon, SparklesIcon, DocumentIcon, CalendarIcon, UsersIcon, BookOpenIcon, UserGroupIcon, ChartBarIcon, SpeakerphoneIcon } from './components/AdminIcons';
 
 // Categorized menu sections
 const menuSections = {
@@ -229,12 +93,26 @@ const menuSections = {
     { id: 'forms' as AdminTab, path: '/admin/forms', label: 'Forms', icon: <DocumentIcon /> },
     { id: 'quotes' as AdminTab, path: '/admin/quotes', label: 'Quotes', icon: <SparklesIcon /> },
   ],
+  communication: [
+    {
+      id: 'broadcasts' as AdminTab,
+      path: '/admin/broadcasts',
+      label: 'Broadcasts',
+      icon: <SpeakerphoneIcon />,
+    }
+  ],
   monitoring: [
     {
       id: 'analytics' as AdminTab,
       path: '/admin/analytics',
       label: 'User Analytics',
       icon: <ChartBarIcon />,
+    },
+    {
+      id: 'grade-analytics' as AdminTab,
+      path: '/admin/grade-analytics',
+      label: 'Learning Analytics',
+      icon: <AcademicCapIcon />,
     },
     {
       id: 'location-analytics' as AdminTab,
@@ -325,12 +203,16 @@ const AdminDashboard: React.FC = () => {
         return <CampusMapEditor {...adminConfig} />;
       case 'analytics':
         return <AnalyticsEditor />;
+      case 'grade-analytics':
+        return <GradeAnalyticsEditor />;
       case 'location-analytics':
         return <LocationAnalyticsEditor />;
       case 'grading':
         return <GradingEditor {...adminConfig} />;
       case 'support':
         return <SupportEditor />;
+      case 'broadcasts':
+        return <BroadcastEditor />;
       default:
         return null;
     }
@@ -396,6 +278,8 @@ const AdminDashboard: React.FC = () => {
                 <span className="hidden sm:inline">Unsaved Changes</span>
               </span>
             )}
+
+
             {/* Search Button */}
             <button
               onClick={() => setSearchOpen(true)}
@@ -627,6 +511,46 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
                 {menuSections.content.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      navigate(tab.path);
+                      setSidebarOpen(false);
+                    }}
+                    className={`admin-tab text-left text-sm sm:text-base ${activeTab === tab.id ? 'active' : ''}`}
+                  >
+                    {tab.icon}
+                    <span className="truncate">{tab.label}</span>
+                    {activeTab === tab.id && (
+                      <svg
+                        className="w-4 h-4 ml-auto opacity-70 flex-shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Communication Section */}
+              <div>
+                <div className="px-3 pt-2 pb-1 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-4 bg-gradient-to-b from-indigo-500 to-violet-500 rounded-full"></div>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      Communication
+                    </h3>
+                  </div>
+                </div>
+                {menuSections.communication.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => {

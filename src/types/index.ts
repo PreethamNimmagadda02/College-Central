@@ -273,8 +273,26 @@ export interface SocialLinks {
   github?: string;
   linkedin?: string;
   instagram?: string;
-  twitter?: string;
-  website?: string;
+  eventDate?: Date;
+  metadata?: Record<string, any>;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  type: 'info' | 'warning' | 'success' | 'error' | 'event';
+  createdAt: any; // Firestore Timestamp
+  read: boolean;
+  link?: string;
+  sender?: string;
+}
+
+export interface NotificationFilter {
+  branch?: string;
+  year?: string;
+  hostel?: string;
+  courseOption?: 'CBCS' | 'NEP';
 }
 
 // Extraction confidence tracking for gradesheet processing
@@ -291,4 +309,49 @@ export interface ExtractionConfidence {
   lowConfidenceGrades: LowConfidenceGrade[];
   passCount: number; // Number of extraction passes performed
   consensusReached: boolean; // True if all passes agreed
+}
+
+export interface GradesData {
+  semesters: Semester[];
+  cgpa: number;
+  totalCredits: number; // Sum of credits from all unique courses
+  earnedCredits: number; // Sum of credits from unique passed courses (grade != 'F')
+  gradeSheetUrl?: string; // Firebase Storage URL for the uploaded grade sheet
+  gradeSheetFileName?: string; // Original filename
+  extractionConfidence?: ExtractionConfidence; // Confidence metadata from extraction
+}
+
+export interface User {
+  id: string;
+  name: string;
+  role: 'user' | 'admin'; // User role for access control
+  admissionNumber: string;
+  branch: string;
+  hostel: string;
+  email: string;
+  phone: string;
+  profilePicture?: string;
+  profilePicturePath?: string;
+
+  bannerGradient?: string;
+  profileFrame?: string;
+  fullName?: string;
+  rollNumber?: string;
+  year?: string;
+  semester?: number;
+  courseOption?: 'CBCS' | 'NEP';
+  quickLinks?: QuickLink[];
+  bio?: string;
+  socialLinks?: SocialLinks;
+  interests?: string[];
+  createdAt?: any; // Firestore Timestamp
+  lastSemesterReset?: string; // Date string of the last semester reset (YYYY-MM-DD)
+
+  // User Preferences synced to Firestore
+  gradeScenarios?: SavedScenario[];
+  pinnedEventKeys?: string[];
+  reminderPreferences?: string[]; // Already existed in CalendarContext, moving to User object for unity if needed, strictly speaking optional but good for types
+
+  // Grade Data
+  gradesData?: GradesData;
 }

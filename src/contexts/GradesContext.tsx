@@ -8,7 +8,7 @@ import React, {
   useCallback,
 } from 'react';
 
-import { Semester, ExtractionConfidence } from '@/types';
+import { GradesData } from '@/types';
 
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { db } from '@lib/firebase';
@@ -28,16 +28,6 @@ import useGradingScale from '@hooks/useGradingScale';
  * - Analytics and displays use only the most recent grade for each course
  * - Multi-pass extraction with consensus voting for maximum accuracy
  */
-
-export interface GradesData {
-  semesters: Semester[];
-  cgpa: number;
-  totalCredits: number; // Sum of credits from all unique courses
-  earnedCredits: number; // Sum of credits from unique passed courses (grade != 'F')
-  gradeSheetUrl?: string; // Firebase Storage URL for the uploaded grade sheet
-  gradeSheetFileName?: string; // Original filename
-  extractionConfidence?: ExtractionConfidence; // Confidence metadata from extraction
-}
 
 // Helper function to convert a File object to a base64 string
 const fileToBase64 = (file: File): Promise<string> => {
@@ -579,7 +569,7 @@ Include retakes. Return exact values as shown on the document.`,
       const overallConfidence =
         semesterConfidences.length > 0
           ? semesterConfidences.reduce((sum, s) => sum + s.confidence, 0) /
-            semesterConfidences.length
+          semesterConfidences.length
           : 1;
 
       //console.log(`[Extraction] Complete - Overall confidence: ${(overallConfidence * 100).toFixed(1)}%`);

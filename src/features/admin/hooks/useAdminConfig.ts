@@ -160,7 +160,7 @@ export const useAdminConfig = () => {
     (branch: string) => {
       updateConfigAndSave((prev) => ({
         ...prev,
-        branches: [...prev.branches, branch],
+        branches: [...prev.branches, branch.trim().toUpperCase()],
       }));
     },
     [updateConfigAndSave]
@@ -170,7 +170,7 @@ export const useAdminConfig = () => {
     (index: number, branch: string) => {
       updateConfigAndSave((prev) => ({
         ...prev,
-        branches: prev.branches.map((b, i) => (i === index ? branch : b)),
+        branches: prev.branches.map((b, i) => (i === index ? branch.trim().toUpperCase() : b)),
       }));
     },
     [updateConfigAndSave]
