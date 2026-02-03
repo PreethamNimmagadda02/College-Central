@@ -54,13 +54,9 @@ const GradeAnalyticsEditor: React.FC = () => {
             snapshot.forEach(doc => {
                 const data = doc.data() as User;
 
-                // Include users if they are students OR if they are admins with grade data
-                // This ensures student-admins appear in the list
-                const hasGrades = data.gradesData && (data.gradesData.cgpa !== undefined || (data.gradesData.semesters && data.gradesData.semesters.length > 0));
-
-                if (data.role !== 'admin' || hasGrades) {
-                    fetchedUsers.push({ ...data, id: doc.id });
-                }
+                // Include all users to match User Analytics count
+                // The analytics processing will handle users without grades (showing N/A)
+                fetchedUsers.push({ ...data, id: doc.id });
             });
 
             setUsers(fetchedUsers);

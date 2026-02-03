@@ -34,6 +34,7 @@ interface UserData {
   socialLinks?: Record<string, string>;
   gradesData?: {
     gradeSheetUrl?: string;
+    cgpa?: number;
   };
 }
 
@@ -223,7 +224,7 @@ const AnalyticsEditor: React.FC = () => {
         // Profile completion
         if (user.profilePicture) usersWithPhoto++;
         if (user.bio && user.bio.trim().length > 0) usersWithBio++;
-        if (user.gradesData?.gradeSheetUrl) {
+        if (user.gradesData && typeof user.gradesData.cgpa !== 'undefined') {
           gradesheetsUploaded++;
         }
         if (user.socialLinks && Object.keys(user.socialLinks).length > 0) {
@@ -488,7 +489,7 @@ const AnalyticsEditor: React.FC = () => {
           <div className="admin-stat-value text-xl sm:text-3xl text-purple-400">
             {stats.gradesheetsUploaded}
           </div>
-          <div className="admin-stat-label text-xs">Gradesheets Uploaded</div>
+          <div className="admin-stat-label text-xs">Students with Grades</div>
         </div>
       </div>
 
