@@ -32,3 +32,8 @@
 **Vulnerability:** Attempting to restrict read access to specific documents (e.g., `superAdmins`) within a public collection (`appConfig`) can cause client-side applications to break if they fetch the entire collection (e.g., `db.collection('appConfig').onSnapshot()`).
 **Learning:** Firestore security rules filter data *before* returning it. If a client query requests a set of documents (like "all in collection") and *any* of them are denied by rules, the *entire query* fails with "Missing or insufficient permissions". You cannot rely on rules to simply "filter out" hidden documents from a broad query.
 **Prevention:** Structure data such that public and private data are in separate collections (e.g., `appConfig` vs `privateConfig`). If mixed, the client MUST use filtered queries (e.g., `.where('public', '==', true)`) matching the rule constraints.
+
+## 2025-10-30 - Client-Side Rate Limiting Strategy
+**Vulnerability:** The login endpoints lacked rate limiting, making them susceptible to brute-force attacks and abuse.
+**Learning:** In a serverless/Firebase architecture without custom Cloud Functions, implementing strict server-side rate limiting is difficult. Client-side rate limiting using `sessionStorage` provides a first line of defense against non-sophisticated attacks and UI spamming.
+**Prevention:** Implement `rateLimitCheck` utility wrapping sensitive actions (login, reset password). While bypassable by direct API calls, it significantly reduces noise and accidental abuse from the UI.

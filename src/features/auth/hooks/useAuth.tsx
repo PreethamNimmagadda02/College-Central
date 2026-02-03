@@ -9,6 +9,7 @@ import { ALLOWED_EMAIL_DOMAIN, HOSTED_DOMAIN } from '@lib/utils/constants';
 import { logActivity } from '@services/activityService';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
+import { rateLimitCheck } from '@lib/utils/security';
 
 type User = firebase.User;
 
@@ -44,6 +45,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string) => {
     try {
+      // 🛡️ Sentinel: Rate limiting to prevent brute force attacks (5 attempts/min)
+      if (!rateLimitCheck('login', 5, 60000)) {
+        throw new Error('Too many login attempts. Please try again later.');
+      }
+
       // Use compat API
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
       if (!userCredential.user) {
@@ -81,6 +87,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const loginWithGoogle = async () => {
     try {
+      // 🛡️ Sentinel: Rate limiting for Google login (5 attempts/min)
+      if (!rateLimitCheck('google_login', 5, 60000)) {
+        throw new Error('Too many login attempts. Please try again later.');
+      }
+
       let userCredential: firebase.auth.UserCredential;
 
       if (Capacitor.isNativePlatform()) {
@@ -131,6 +142,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const resetPassword = async (email: string) => {
     try {
+      // 🛡️ Sentinel: Rate limiting for password reset (3 attempts/min)
+      if (!rateLimitCheck('reset_password', 3, 60000)) {
+        throw new Error('Too many reset attempts. Please try again later.');
+      }
+
       await auth.sendPasswordResetEmail(email);
     } catch (error) {
       console.error('Password reset failed:', error);
