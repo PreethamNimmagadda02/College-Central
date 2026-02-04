@@ -32,3 +32,8 @@
 **Vulnerability:** Attempting to restrict read access to specific documents (e.g., `superAdmins`) within a public collection (`appConfig`) can cause client-side applications to break if they fetch the entire collection (e.g., `db.collection('appConfig').onSnapshot()`).
 **Learning:** Firestore security rules filter data *before* returning it. If a client query requests a set of documents (like "all in collection") and *any* of them are denied by rules, the *entire query* fails with "Missing or insufficient permissions". You cannot rely on rules to simply "filter out" hidden documents from a broad query.
 **Prevention:** Structure data such that public and private data are in separate collections (e.g., `appConfig` vs `privateConfig`). If mixed, the client MUST use filtered queries (e.g., `.where('public', '==', true)`) matching the rule constraints.
+
+## 2025-10-29 - Missing Rate Limiting Implementation
+**Vulnerability:** The codebase memory and documentation claimed client-side rate limiting was implemented in `useAuth.tsx`, but the actual code lacked these checks, leaving authentication endpoints vulnerable to high-volume brute force attempts.
+**Learning:** Documentation and "memory" can drift from the codebase state. Always verify security controls in the actual source code, not just in documentation.
+**Prevention:** Use automated tests to verify the existence and efficacy of security controls (like rate limiting) rather than assuming they are present.

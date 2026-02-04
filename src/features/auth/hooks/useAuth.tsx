@@ -6,6 +6,7 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { auth } from '@lib/firebase';
 import { ALLOWED_EMAIL_DOMAIN, HOSTED_DOMAIN } from '@lib/utils/constants';
+import { rateLimitCheck } from '@lib/utils/security';
 import { logActivity } from '@services/activityService';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
@@ -43,6 +44,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (email: string, password: string) => {
+    // Sentinel 🛡️: Rate limit login attempts to prevent brute force
+    if (!rateLimitCheck('login', 5, 60000)) {
+      throw new Error('Too many login attempts. Please try again in a minute.');
+    }
     try {
       // Use compat API
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
@@ -62,6 +67,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const register = async (email: string, password: string) => {
+    // Sentinel 🛡️: Rate limit registration to prevent spam
+    if (!rateLimitCheck('register', 3, 60000)) {
+      throw new Error('Too many registration attempts. Please try again in a minute.');
+    }
     try {
       const userCredential = await auth.createUserWithEmailAndPassword(email, password);
       if (!userCredential.user) {
@@ -80,6 +89,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const loginWithGoogle = async () => {
+    // Sentinel 🛡️: Rate limit Google login (mostly to prevent spam clicks)
+    if (!rateLimitCheck('google_login', 5, 60000)) {
+      throw new Error('Too many login attempts. Please try again in a minute.');
+    }
     try {
       let userCredential: firebase.auth.UserCredential;
 
@@ -130,6 +143,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const resetPassword = async (email: string) => {
+    // Sentinel 🛡️: Rate limit password resets
+    if (!rateLimitCheck('reset_password', 3, 60000)) {
+      throw new Error('Too many password reset attempts. Please try again in a minute.');
+    }
     try {
       await auth.sendPasswordResetEmail(email);
     } catch (error) {
