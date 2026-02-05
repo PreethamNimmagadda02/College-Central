@@ -102,20 +102,14 @@ service cloud.firestore {
                     && request.resource.data.role == 'user' // Cannot self-assign admin
                     && request.resource.data.email == request.auth.token.email;
       
-      // Update: Only own document, with field-level restrictions
+      // Update: Only own document, with strict field-level restrictions
+      // Users CANNOT modify their own role field
       allow update: if isAuthenticated() 
                     && request.auth.uid == userId
                     && isValidDataSize()
-                    && (
-                      isValidUserUpdate() ||
-                      (
-                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']) &&
-                        request.resource.data.role == 'admin' &&
-                        isAuthorizedAdminEmail(request.auth.token.email)
-                      )
-                    );
+                    && isValidUserUpdate();
       
-      // Admin can update any user's role
+      // Admin can update any user (including roles)
       allow update: if isAdmin() && isValidDataSize();
       
       // Delete: Admins only

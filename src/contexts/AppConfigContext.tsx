@@ -35,7 +35,6 @@ const generateDefaultConfig = (): AdminConfig => {
       location: { ...COLLEGE_INFO.location },
       heroImageUrl: undefined, // Uses default image when undefined
     },
-    adminEmails: [], // Empty by default, configure in Firestore
     appConstants: {
       greetingTimes: {
         morningEnd: GREETING_TIMES.MORNING_END,

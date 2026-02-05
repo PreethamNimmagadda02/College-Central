@@ -18,8 +18,8 @@ const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { currentUser, loading: authLoading } = useAuth();
-  const { user, loading: userLoading } = useUser();
-  const { config: appConfig, loading: configLoading } = useAppConfig();
+  const { loading: userLoading } = useUser();
+  const { loading: configLoading } = useAppConfig();
   const [role, setRole] = useState<'user' | 'admin'>('user');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,17 +32,30 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       // No authenticated user
-      if (!currentUser) {
+      if (!currentUser || !currentUser.email) {
         setRole('user');
         setIsLoading(false);
         return;
       }
 
-      // Sentinel 🛡️: Removed insecure client-side admin promotion.
-      // Roles are now strictly managed via Firestore 'users' collection.
-      if (user?.role === 'admin') {
-        setRole('admin');
-      } else {
+      try {
+        // Check if user's email is in the adminEmails collection
+        const adminEmailsDoc = await db.collection('privateConfig').doc('adminEmails').get();
+
+        if (adminEmailsDoc.exists) {
+          const adminEmails: string[] = adminEmailsDoc.data()?.items || [];
+          const userEmail = currentUser.email.toLowerCase();
+
+          if (adminEmails.map(e => e.toLowerCase()).includes(userEmail)) {
+            setRole('admin');
+          } else {
+            setRole('user');
+          }
+        } else {
+          setRole('user');
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
         setRole('user');
       }
 
@@ -50,7 +63,7 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     determineRole();
-  }, [currentUser, user, appConfig, authLoading, userLoading, configLoading]);
+  }, [currentUser, authLoading, userLoading, configLoading]);
 
   const contextValue = useMemo(
     () => ({

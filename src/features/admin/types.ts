@@ -120,7 +120,6 @@ export interface AdminGradeDefinition {
 
 export interface AdminConfig {
   collegeInfo: AdminCollegeInfo;
-  adminEmails: string[]; // List of admin email addresses
   appConstants: AdminAppConstants;
   branches: string[];
   hostels: string[];
