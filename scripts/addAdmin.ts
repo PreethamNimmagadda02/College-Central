@@ -52,7 +52,7 @@ const addAdminEmail = async (email: string) => {
   console.log(`\n🚀 Adding ${normalizedEmail} to admin list...`);
 
   try {
-    const configRef = db.collection('privateConfig').doc('adminEmails');
+    const configRef = db.collection('appConfig').doc('adminEmails');
 
     // Use transaction to ensure atomic update
     await db.runTransaction(async (transaction) => {

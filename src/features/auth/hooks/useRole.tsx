@@ -40,7 +40,7 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       try {
         // Check if user's email is in the adminEmails collection
-        const adminEmailsDoc = await db.collection('privateConfig').doc('adminEmails').get();
+        const adminEmailsDoc = await db.collection('appConfig').doc('adminEmails').get();
 
         if (adminEmailsDoc.exists) {
           const adminEmails: string[] = adminEmailsDoc.data()?.items || [];

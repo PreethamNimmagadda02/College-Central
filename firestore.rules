@@ -62,8 +62,8 @@ service cloud.firestore {
 
     // Check if email is authorized to be admin
     function isAuthorizedAdminEmail(email) {
-      return exists(/databases/$(database)/documents/privateConfig/adminEmails) &&
-             email in get(/databases/$(database)/documents/privateConfig/adminEmails).data.items;
+      return exists(/databases/$(database)/documents/appConfig/adminEmails) &&
+             email in get(/databases/$(database)/documents/appConfig/adminEmails).data.items;
     }
 
     // ============================================
