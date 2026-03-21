@@ -1891,6 +1891,7 @@ const Dashboard: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search links..."
+                  aria-label="Search quick links"
                   className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:border-primary dark:focus:border-secondary transition-all duration-200 placeholder-slate-400 dark:placeholder-slate-500"
                 />
                 <svg
@@ -1909,6 +1910,7 @@ const Dashboard: React.FC = () => {
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   >
                     <svg
@@ -2178,8 +2180,11 @@ const Dashboard: React.FC = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Link Name</label>
+                <label htmlFor="link-name" className="block text-sm font-medium mb-1">
+                  Link Name
+                </label>
                 <input
+                  id="link-name"
                   type="text"
                   value={newLink.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -2191,8 +2196,11 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">URL</label>
+                <label htmlFor="link-url" className="block text-sm font-medium mb-1">
+                  URL
+                </label>
                 <input
+                  id="link-url"
                   type="text"
                   value={newLink.href}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
