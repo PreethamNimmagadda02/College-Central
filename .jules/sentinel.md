@@ -33,7 +33,7 @@
 **Learning:** Firestore security rules filter data *before* returning it. If a client query requests a set of documents (like "all in collection") and *any* of them are denied by rules, the *entire query* fails with "Missing or insufficient permissions". You cannot rely on rules to simply "filter out" hidden documents from a broad query.
 **Prevention:** Structure data such that public and private data are in separate collections (e.g., `appConfig` vs `privateConfig`). If mixed, the client MUST use filtered queries (e.g., `.where('public', '==', true)`) matching the rule constraints.
 
-## 2025-10-30 - Identity Spoofing via Mutable Admission Number
-**Vulnerability:** Authenticated users could modify their own `admissionNumber` field in Firestore after account creation. Since the application's Directory feature links to profiles based on admission number lookups, a malicious user could "hijack" another student's identity by setting their admission number to match a target victim, redirecting directory clicks to the attacker's profile.
-**Learning:** Unique identifiers that are user-provided (like admission numbers or usernames) must be immutable after creation if the system relies on them for identity or routing. Trusting "Update" operations to be benign allows users to swap identities.
-**Prevention:** Enforce immutability of identity fields (like `admissionNumber` and `email`) in Firestore rules by adding them to a `protectedFields` list and checking `request.resource.data.diff(resource.data).affectedKeys()`.
+## 2025-10-30 - Client-Side Rate Limiting Strategy
+**Vulnerability:** The login endpoints lacked rate limiting, making them susceptible to brute-force attacks and abuse.
+**Learning:** In a serverless/Firebase architecture without custom Cloud Functions, implementing strict server-side rate limiting is difficult. Client-side rate limiting using `sessionStorage` provides a first line of defense against non-sophisticated attacks and UI spamming.
+**Prevention:** Implement `rateLimitCheck` utility wrapping sensitive actions (login, reset password). While bypassable by direct API calls, it significantly reduces noise and accidental abuse from the UI.
