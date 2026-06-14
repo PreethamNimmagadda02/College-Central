@@ -313,22 +313,24 @@ const GradeAnalyticsEditor: React.FC = () => {
                 {/* CGPA Distribution */}
                 <div className="admin-card">
                     <h3 className="text-lg font-semibold text-white mb-6">CGPA Distribution</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={stats.cgpaDistribution}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} />
-                            <XAxis dataKey="name" stroke="#94a3b8" />
-                            <YAxis stroke="#94a3b8" />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                                itemStyle={{ color: '#f8fafc' }}
-                            />
-                            <Bar dataKey="value" fill="#8884d8" name="Students">
-                                {stats.cgpaDistribution.map((_, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
+                    <div style={{ width: '100%', minHeight: 300 }}>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={stats.cgpaDistribution}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} />
+                                <XAxis dataKey="name" stroke="#94a3b8" />
+                                <YAxis stroke="#94a3b8" />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
+                                    itemStyle={{ color: '#f8fafc' }}
+                                />
+                                <Bar dataKey="value" fill="#8884d8" name="Students">
+                                    {stats.cgpaDistribution.map((_, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
 
                 {/* Branch / Batch Performance */}
@@ -448,7 +450,14 @@ const GradeAnalyticsEditor: React.FC = () => {
                                         <div>
                                             <span className="block text-slate-500 mb-0.5">Batch</span>
                                             <span className="font-medium text-slate-300">
-                                                {user.year || (user.email ? '20' + user.email.match(/^(\d{2})/)![1] : 'N/A')}
+                                                {(() => {
+                                                    if (user.year) return user.year;
+                                                    if (user.email) {
+                                                        const match = user.email.match(/^(\d{2})/);
+                                                        if (match) return '20' + match[1];
+                                                    }
+                                                    return 'N/A';
+                                                })()}
                                             </span>
                                         </div>
                                         <div>
@@ -533,7 +542,16 @@ const GradeAnalyticsEditor: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="p-4 text-sm text-gray-300 hidden md:table-cell">{user.branch || '-'}</td>
-                                        <td className="p-4 text-sm text-gray-300 hidden md:table-cell">{user.year || (user.email ? '20' + user.email.match(/^(\d{2})/)![1] : '-')}</td>
+                                        <td className="p-4 text-sm text-gray-300 hidden md:table-cell">
+                                            {(() => {
+                                                if (user.year) return user.year;
+                                                if (user.email) {
+                                                    const match = user.email.match(/^(\d{2})/);
+                                                    if (match) return '20' + match[1];
+                                                }
+                                                return '-';
+                                            })()}
+                                        </td>
                                         <td className="p-4">
                                             {typeof user.gradesData?.cgpa === 'number' ? (
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.gradesData.cgpa >= 8.5 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :

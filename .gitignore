@@ -15,10 +15,25 @@ dist-ssr
 # Environment variables
 .env
 .env.local
+.env.*
 .env.*.local
+!.env.example
+!*.env.example
+!*.env.template
 
 # Firebase Admin SDK credentials
 serviceAccountKey.json
+service-account*.json
+*-service-account*.json
+firebase-adminsdk*.json
+google-application-credentials*.json
+*.pem
+*.p12
+*.key
+
+# Generated platform config containing project API keys
+android/app/google-services.json
+ios/App/App/GoogleService-Info.plist
 
 # Editor directories and files
 .vscode/*
@@ -37,3 +52,5 @@ serviceAccountKey.json
 /test-results
 /playwright-report
 /playwright/.cache
+
+/graphify-out

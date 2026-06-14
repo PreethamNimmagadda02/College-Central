@@ -1,7 +1,7 @@
 /**
  * Script: Add Admin User
  * 
- * Adds an email address to the authorized admins list in Firestore.
+ * Adds an email address to the authorized admins list (privateConfig/adminEmails) in Firestore.
  * 
  * Usage:
  * npx ts-node scripts/addAdmin.ts [email]
@@ -52,48 +52,35 @@ const addAdminEmail = async (email: string) => {
   console.log(`\n🚀 Adding ${normalizedEmail} to admin list...`);
 
   try {
-    const configRef = db.collection('privateConfig').doc('adminEmails');
-    
+    const configRef = db.collection('appConfig').doc('adminEmails');
+
     // Use transaction to ensure atomic update
     await db.runTransaction(async (transaction) => {
       const doc = await transaction.get(configRef);
-      
+
       let currentEmails: string[] = [];
-      
+
       if (doc.exists) {
         const data = doc.data();
         if (data && Array.isArray(data.items)) {
           currentEmails = data.items;
         }
       }
-      
-      if (currentEmails.includes(normalizedEmail)) {
+
+      // Check if already in list (case-insensitive)
+      if (currentEmails.map(e => e.toLowerCase()).includes(normalizedEmail)) {
         console.log(`⚠️  ${normalizedEmail} is already an admin.`);
         return;
       }
-      
+
       const updatedEmails = [...currentEmails, normalizedEmail];
-      
-      // We store arrays in { items: [...] } format for appConfig
+
+      // Store in { items: [...] } format
       transaction.set(configRef, { items: updatedEmails }, { merge: true });
-      
-      console.log(`✅ Successfully added ${normalizedEmail} as an admin.`);
+
+      console.log(`✅ Successfully added ${normalizedEmail} as an admin!`);
       console.log(`   Current admins: ${updatedEmails.join(', ')}`);
     });
-
-    // Also try to update the user's document if it exists, to reflect the role immediately
-    // rather than waiting for them to login again (though useRole hook handles this too)
-    const usersRef = db.collection('users');
-    const userSnapshot = await usersRef.where('email', '==', normalizedEmail).get();
-    
-    if (!userSnapshot.empty) {
-      const batch = db.batch();
-      userSnapshot.forEach(doc => {
-        batch.update(doc.ref, { role: 'admin' });
-      });
-      await batch.commit();
-      console.log(`✅ Updated User role in "users" collection.`);
-    }
 
   } catch (error) {
     console.error('❌ Failed to update admin list:', error);

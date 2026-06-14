@@ -17,9 +17,139 @@ import { useAppConfig } from '@contexts/AppConfigContext';
 import { useUser } from '@contexts/UserContext';
 import { useWeather } from '@contexts/WeatherContext';
 import { useRole } from '@features/auth/hooks/useRole';
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import NotificationCenter from './NotificationCenter';
+
+// ============================================================================
+// QuickActionsPill - Expandable mobile quick actions
+// ============================================================================
+// A creative solution for mobile header clutter: a single pill that expands
+// to reveal weather, notifications, and theme toggle with smooth animations.
+// ============================================================================
+
+interface QuickActionsPillProps {
+  weather: { icon: string; temp: string; desc: string } | null;
+  weatherLoading: boolean;
+  setShowWeatherModal: (show: boolean) => void;
+  isDark: boolean;
+  toggleTheme: () => void;
+}
+
+const QuickActionsPill: React.FC<QuickActionsPillProps> = ({
+  weather,
+  weatherLoading,
+  setShowWeatherModal,
+  isDark,
+  toggleTheme,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const pillRef = useRef<HTMLDivElement>(null);
+
+  // Close when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pillRef.current && !pillRef.current.contains(event.target as Node)) {
+        setIsExpanded(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={pillRef} className="relative">
+      {/* Collapsed state: Single trigger button */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${isExpanded
+          ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/40 rotate-90'
+          : 'bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/70 border border-slate-200/50 dark:border-slate-700/50 hover:border-blue-500/40'
+          }`}
+        aria-label={isExpanded ? 'Collapse quick actions' : 'Expand quick actions'}
+      >
+        {/* Animated dots icon that morphs to X */}
+        <div className="relative w-5 h-5 flex items-center justify-center">
+          <span
+            className={`absolute w-1.5 h-1.5 rounded-full bg-blue-500 transition-all duration-300 ${isExpanded ? 'opacity-0 scale-0' : 'opacity-100 -translate-x-2'
+              }`}
+          />
+          <span
+            className={`absolute w-1.5 h-1.5 rounded-full bg-purple-500 transition-all duration-300 ${isExpanded ? 'opacity-0 scale-0' : 'opacity-100'
+              }`}
+          />
+          <span
+            className={`absolute w-1.5 h-1.5 rounded-full bg-pink-500 transition-all duration-300 ${isExpanded ? 'opacity-0 scale-0' : 'opacity-100 translate-x-2'
+              }`}
+          />
+          {/* X icon when expanded */}
+          <svg
+            className={`w-4 h-4 text-blue-500 transition-all duration-300 ${isExpanded ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-90'
+              }`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+      </button>
+
+      {/* Expanded state: Horizontal pill with all actions */}
+      <div
+        className={`absolute right-0 top-12 flex items-center gap-1 p-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 transition-all duration-300 origin-top-right ${isExpanded
+          ? 'opacity-100 scale-100 translate-y-0'
+          : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+          }`}
+      >
+        {/* Weather */}
+        <button
+          onClick={() => {
+            setShowWeatherModal(true);
+            setIsExpanded(false);
+          }}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-sky-500/10 to-blue-500/10 hover:from-sky-500/20 hover:to-blue-500/20 border border-sky-500/20 transition-all duration-200 hover:scale-105"
+          title="View weather"
+        >
+          {weatherLoading ? (
+            <span className="text-sm animate-pulse">⏳</span>
+          ) : weather ? (
+            <>
+              <span className="text-lg">{weather.icon}</span>
+              <span className="text-sm font-bold text-sky-700 dark:text-sky-300">{weather.temp}°</span>
+            </>
+          ) : (
+            <span className="text-sm text-slate-500">--°</span>
+          )}
+        </button>
+
+        {/* Notifications - Don't auto-close, let NotificationCenter manage its own dropdown */}
+        <NotificationCenter />
+
+        {/* Theme Toggle */}
+        <button
+          onClick={() => {
+            toggleTheme();
+            setIsExpanded(false);
+          }}
+          className="relative w-10 h-10 p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-blue-500/10 dark:to-purple-500/10 hover:from-amber-500/20 hover:to-orange-500/20 dark:hover:from-blue-500/20 dark:hover:to-purple-500/20 transition-all duration-200 hover:scale-105"
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          <div className="relative w-full h-full flex items-center justify-center">
+            <SunIcon
+              className={`absolute inset-0 w-full h-full text-amber-500 transition-all duration-500 ${isDark ? 'opacity-0 rotate-180 scale-0' : 'opacity-100 rotate-0 scale-100'
+                }`}
+            />
+            <MoonIcon
+              className={`absolute inset-0 w-full h-full text-blue-400 transition-all duration-500 ${isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-180 scale-0'
+                }`}
+            />
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 
 interface HeaderProps {
@@ -163,17 +293,29 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
               </Link>
             )}
 
-            {/* Weather Indicator - Click to Open Modal */}
+            {/* === MOBILE: Expandable Quick Actions Pill === */}
+            <div className="md:hidden relative">
+              <QuickActionsPill
+                weather={weather}
+                weatherLoading={weatherLoading}
+                setShowWeatherModal={setShowWeatherModal}
+                isDark={isDark}
+                toggleTheme={toggleTheme}
+              />
+            </div>
+
+            {/* === DESKTOP: Original inline layout === */}
+            {/* Weather Indicator - Desktop only */}
             <button
               onClick={() => setShowWeatherModal(true)}
-              className="flex items-center gap-2 px-2 py-2 sm:px-3 rounded-xl bg-gradient-to-r from-sky-500/10 to-blue-500/10 hover:from-sky-500/20 hover:to-blue-500/20 border border-sky-500/20 hover:border-sky-500/40 transition-all duration-300 group hover:shadow-md hover:scale-105"
+              className="hidden md:flex items-center gap-2 px-2 py-2 sm:px-3 rounded-xl bg-gradient-to-r from-sky-500/10 to-blue-500/10 hover:from-sky-500/20 hover:to-blue-500/20 border border-sky-500/20 hover:border-sky-500/40 transition-all duration-300 group hover:shadow-md hover:scale-105"
               title={weather ? `${weather.desc} - Click for full details` : 'Loading weather...'}
             >
               {weatherLoading ? (
                 <span className="text-sm animate-pulse">⏳</span>
               ) : weather ? (
                 <>
-                  <span className="hidden sm:inline text-base leading-none sm:text-lg group-hover:scale-110 transition-transform">
+                  <span className="text-base leading-none sm:text-lg group-hover:scale-110 transition-transform">
                     {weather.icon}
                   </span>
                   <span className="text-sm font-bold text-sky-700 dark:text-sky-300">
@@ -185,13 +327,15 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
               )}
             </button>
 
-            {/* Notification Center */}
-            <NotificationCenter />
+            {/* Notification Center - Desktop only */}
+            <div className="hidden md:block">
+              <NotificationCenter />
+            </div>
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle - Desktop only */}
             <button
               onClick={toggleTheme}
-              className="relative w-10 h-10 p-2 rounded-xl hover:bg-gradient-to-br hover:from-slate-100 hover:to-blue-50 dark:hover:from-slate-800 dark:hover:to-slate-800/70 focus:outline-none transition-all duration-300 group hover:shadow-md hover:scale-105 overflow-hidden"
+              className="hidden md:flex relative w-10 h-10 p-2 rounded-xl hover:bg-gradient-to-br hover:from-slate-100 hover:to-blue-50 dark:hover:from-slate-800 dark:hover:to-slate-800/70 focus:outline-none transition-all duration-300 group hover:shadow-md hover:scale-105 overflow-hidden"
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-blue-500/10 dark:to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -209,7 +353,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
             {user && (
               <Link
                 to="/profile"
-                className="flex items-center gap-3 group cursor-pointer px-3 py-1.5 rounded-xl hover:bg-gradient-to-br hover:from-slate-100 hover:to-blue-50 dark:hover:from-slate-800 dark:hover:to-slate-800/70 transition-all duration-300 hover:shadow-md hover:scale-105 relative overflow-hidden"
+                className="flex items-center gap-3 group cursor-pointer px-2 md:px-3 py-1.5 rounded-xl hover:bg-gradient-to-br hover:from-slate-100 hover:to-blue-50 dark:hover:from-slate-800 dark:hover:to-slate-800/70 transition-all duration-300 hover:shadow-md hover:scale-105 relative overflow-hidden"
                 title="View your profile"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
