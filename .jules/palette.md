@@ -11,3 +11,7 @@
 ## 2024-05-23 - Interactive Card Patterns
 **Learning:** Animated cards (using `motion.div`) often act as buttons but lack semantic HTML and keyboard accessibility. Refactoring to `motion.button` retains animation capabilities while providing native accessibility (focus, enter/space activation).
 **Action:** Replace clickable `div`s with `button`s in grid layouts, ensuring `w-full text-left` classes are added to maintain visual alignment.
+
+## 2025-02-12 - Implicit Labels in Date/Time Ranges
+**Learning:** When using a single visual label for a group of inputs (like "Time Range" for start/end times), the individual inputs lack accessible names for screen readers.
+**Action:** Always add explicit `aria-label` attributes (e.g., "Start time", "End time") to inputs that share a group label but lack individual visible labels.
