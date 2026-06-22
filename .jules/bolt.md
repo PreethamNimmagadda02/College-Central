@@ -41,3 +41,7 @@
 ## 2026-02-01 - [Blocking Search Input]
 **Learning:** `Directory.tsx` was filtering a large dataset on every keystroke, causing the main thread to block and the input to feel sluggish.
 **Action:** Used `useDeferredValue` to deprioritize the heavy filtering operation. This allows the input state to update immediately while the filtering happens in the background, keeping the UI responsive.
+
+## 2026-02-01 - [Dashboard Re-render Optimization (Quotes)]
+**Learning:** `Dashboard.tsx` was re-rendering every 30 seconds due to a state update for a rotating quote. This caused the entire Dashboard component tree to reconcile unnecessarily.
+**Action:** Extracted the quote display logic into a self-contained `QuoteSection` component with its own internal state and timer. This isolates the re-renders to the small component, leaving the rest of the Dashboard static.
