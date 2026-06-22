@@ -41,3 +41,7 @@
 ## 2026-02-01 - [Blocking Search Input]
 **Learning:** `Directory.tsx` was filtering a large dataset on every keystroke, causing the main thread to block and the input to feel sluggish.
 **Action:** Used `useDeferredValue` to deprioritize the heavy filtering operation. This allows the input state to update immediately while the filtering happens in the background, keeping the UI responsive.
+
+## 2026-02-02 - [Optimized Course Search]
+**Learning:** Combined sorting (O(N log N)) and filtering (O(N)) in a single `useMemo` causes the expensive sort to run on every search keystroke, degrading responsiveness.
+**Action:** Split data processing into two stages: 1. `sortedCourses` (O(N log N), runs only on data/selection change), 2. `filteredCourses` (O(N), runs on search). Also use `Set` for O(1) selection lookups.
