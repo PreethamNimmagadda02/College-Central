@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
 import {
   getCourseOptionFromAdmissionNumber,
   isValidCourseOptionForAdmission,
   getCourseOptionExplanation,
 } from '@lib/utils/courseUtils';
+import { describe, it, expect } from 'vitest';
 
 describe('courseUtils', () => {
   describe('getCourseOptionFromAdmissionNumber', () => {

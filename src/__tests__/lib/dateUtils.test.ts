@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import {
   toInputDateString,
   formatTime,
@@ -10,6 +9,7 @@ import {
   calculateDateProgress,
   formatDateRange,
 } from '@lib/utils/dateUtils';
+import { describe, it, expect } from 'vitest';
 
 describe('dateUtils', () => {
   describe('toInputDateString', () => {

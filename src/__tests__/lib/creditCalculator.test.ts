@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { calculateCreditsFromLTP, getCreditFormula } from '@lib/utils/creditCalculator';
+import { describe, it, expect } from 'vitest';
 
 describe('creditCalculator', () => {
   describe('calculateCreditsFromLTP (CBCS)', () => {

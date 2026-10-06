@@ -4,12 +4,12 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 // FIX: Use Firebase v9 compat API to match rest of codebase
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { auth } from '@lib/firebase';
 import { ALLOWED_EMAIL_DOMAIN, HOSTED_DOMAIN } from '@lib/utils/constants';
-import { logActivity } from '@services/activityService';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
-import { Capacitor } from '@capacitor/core';
 import { rateLimitCheck } from '@lib/utils/security';
+import { logActivity } from '@services/activityService';
 
 type User = firebase.User;
 

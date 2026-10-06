@@ -379,7 +379,7 @@ Include retakes. Return exact values as shown on the document.`,
       const MAX_RETRIES = 2;
       const SGPA_TOLERANCE = 0.15; // Stricter threshold
 
-      let allPasses: any[] = [];
+      const allPasses: any[] = [];
       let retryCount = 0;
       let bestResult: any = null;
       let consensusReached = false;
@@ -569,7 +569,7 @@ Include retakes. Return exact values as shown on the document.`,
       const overallConfidence =
         semesterConfidences.length > 0
           ? semesterConfidences.reduce((sum, s) => sum + s.confidence, 0) /
-          semesterConfidences.length
+            semesterConfidences.length
           : 1;
 
       //console.log(`[Extraction] Complete - Overall confidence: ${(overallConfidence * 100).toFixed(1)}%`);

@@ -1,12 +1,3 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  ReactNode,
-} from 'react';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import {
   detectCurrentZone,
@@ -17,6 +8,15 @@ import {
   updateUserLocationState,
   CampusZone,
 } from '@services/locationAnalyticsService';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  ReactNode,
+} from 'react';
 
 interface Location {
   lat: number;

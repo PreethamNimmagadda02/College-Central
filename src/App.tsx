@@ -1,25 +1,24 @@
 // Auth feature hooks
 
 // Context providers
-import { AppConfigProvider } from '@contexts/AppConfigContext';
+import { Capacitor } from '@capacitor/core';
+import AdminProtectedRoute from '@components/common/AdminProtectedRoute';
+import ErrorBoundary from '@components/common/ErrorBoundary';
 
 // Layout and common components
-import Layout from '@pages/Layout';
-import ErrorBoundary from '@components/common/ErrorBoundary';
-import ProtectedRoute from '@components/common/ProtectedRoute';
-import AdminProtectedRoute from '@components/common/AdminProtectedRoute';
-import UpdatePrompt from '@components/common/UpdatePrompt';
 import { InstallPrompt } from '@components/common/InstallPrompt';
+import { LocationRequirement } from '@components/common/LocationRequirement';
 import { OfflineIndicator } from '@components/common/OfflineIndicator';
+import ProtectedRoute from '@components/common/ProtectedRoute';
+import UpdatePrompt from '@components/common/UpdatePrompt';
+import WeatherModal from '@components/weather/WeatherModal';
+import { AppConfigProvider } from '@contexts/AppConfigContext';
 import { CalendarProvider } from '@contexts/CalendarContext';
 import { CampusMapProvider } from '@contexts/CampusMapContext';
-import { LocationProvider } from '@contexts/LocationContext';
-import { LocationRequirement } from '@components/common/LocationRequirement';
-import { WeatherProvider } from '@contexts/WeatherContext';
-import WeatherModal from '@components/weather/WeatherModal';
 import { FormsProvider } from '@contexts/FormsContext';
 import { GradesProvider } from '@contexts/GradesContext';
-import { ScheduleProvider } from '@contexts/ScheduleContext';
+import { LocationProvider } from '@contexts/LocationContext';
+import { WeatherProvider } from '@contexts/WeatherContext';
 import { UserProvider } from '@contexts/UserContext';
 import { AuthProvider } from '@features/auth/hooks/useAuth';
 import { RoleProvider } from '@features/auth/hooks/useRole';
@@ -27,11 +26,12 @@ import { RoleProvider } from '@features/auth/hooks/useRole';
 // Utilities
 import { lazyWithRetry } from '@lib/utils/lazyWithRetry';
 import { measurePageLoad } from '@lib/utils/performance';
+import Layout from '@pages/Layout';
 import React, { Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { Capacitor } from '@capacitor/core';
 import { NativeLocationProvider } from '@contexts/NativeLocationProvider';
+import { ScheduleProvider } from '@contexts/ScheduleContext';
 
 // Lazy load pages with automatic retry on chunk loading failure
 const Dashboard = lazyWithRetry(() => import('@pages/Dashboard'));

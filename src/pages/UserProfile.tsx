@@ -1,12 +1,12 @@
+import { doc, getDoc } from 'firebase/firestore';
+import { Loader2, ArrowLeft, Home } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { User } from '@/types';
-import { PublicProfile } from '@/features/profiles/components/PublicProfile';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { Loader2, ArrowLeft, Home } from 'lucide-react';
+import { PublicProfile } from '@/features/profiles/components/PublicProfile';
+import { db } from '@/lib/firebase';
+import { User } from '@/types';
 
 const UserProfile = () => {
   const { userId } = useParams<{ userId: string }>();

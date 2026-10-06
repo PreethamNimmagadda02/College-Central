@@ -1,6 +1,6 @@
-import React from 'react';
 import { useLocation } from '@contexts/LocationContext';
 import { MapPin, RefreshCw } from 'lucide-react';
+import React from 'react';
 
 export const LocationRequirement: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { permissionStatus, error, loading, location, retryLocation } = useLocation();

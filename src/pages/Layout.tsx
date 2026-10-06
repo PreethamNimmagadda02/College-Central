@@ -1,7 +1,7 @@
+import SessionGuard from '@components/common/SessionGuard';
 import Footer from '@components/layout/Footer';
 import Header from '@components/layout/Header';
 import Sidebar from '@components/layout/Sidebar';
-import SessionGuard from '@components/common/SessionGuard';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import React, { useState, useEffect } from 'react';
 import { useRef } from 'react';

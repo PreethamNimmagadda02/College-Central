@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   truncateText,
   formatFileSize,
@@ -11,6 +10,7 @@ import {
   getRandomItem,
   debounce,
 } from '@lib/utils/helpers';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 describe('helpers', () => {
   describe('truncateText', () => {

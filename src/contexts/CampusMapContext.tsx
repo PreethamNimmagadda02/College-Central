@@ -12,9 +12,9 @@ import 'firebase/firestore';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { db } from '@lib/firebase';
 import { logActivity } from '@services/activityService';
+import { getRealTimeCrowdLevels, LiveZoneStatus } from '@services/locationAnalyticsService';
 
 import { useAppConfig } from './AppConfigContext';
-import { getRealTimeCrowdLevels, LiveZoneStatus } from '@services/locationAnalyticsService';
 
 import { CampusLocation, QuickRoute } from '@/types';
 

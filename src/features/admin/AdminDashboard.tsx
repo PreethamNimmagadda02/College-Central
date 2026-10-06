@@ -3,31 +3,43 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import AnalyticsEditor from './components/AnalyticsEditor';
 import BranchesEditor from './components/BranchesEditor';
+import BroadcastEditor from './components/BroadcastEditor';
 import CalendarEditor from './components/CalendarEditor';
 import CampusMapEditor from './components/CampusMapEditor';
 import CollegeInfoEditor from './components/CollegeInfoEditor';
+import CoursesEditor from './components/CoursesEditor';
 import DirectoryEditor from './components/DirectoryEditor';
 import FormsEditor from './components/FormsEditor';
 import HostelsEditor from './components/HostelsEditor';
 import QuickLinksEditor from './components/QuickLinksEditor';
 import QuotesEditor from './components/QuotesEditor';
 import { useAdminConfig } from './hooks/useAdminConfig';
-import { useAuth } from '../auth/hooks/useAuth';
 import { AdminTab } from './types';
+import { useAuth } from '../auth/hooks/useAuth';
 import './styles.css';
 
-import CoursesEditor from './components/CoursesEditor';
 import StudentDirectoryEditor from './components/StudentDirectoryEditor';
 import SupportEditor from './components/SupportEditor';
 import GradingEditor from './components/GradingEditor';
 import LocationAnalyticsEditor from './components/LocationAnalyticsEditor';
 import AdminFooter from './components/AdminFooter';
 import AdminSearch from './components/AdminSearch';
-
-import BroadcastEditor from './components/BroadcastEditor';
 import GradeAnalyticsEditor from './components/GradeAnalyticsEditor';
-
-import { BuildingIcon, AcademicCapIcon, MapPinIcon, HomeIcon, LinkIcon, SparklesIcon, DocumentIcon, CalendarIcon, UsersIcon, BookOpenIcon, UserGroupIcon, ChartBarIcon, SpeakerphoneIcon } from './components/AdminIcons';
+import {
+  BuildingIcon,
+  AcademicCapIcon,
+  MapPinIcon,
+  HomeIcon,
+  LinkIcon,
+  SparklesIcon,
+  DocumentIcon,
+  CalendarIcon,
+  UsersIcon,
+  BookOpenIcon,
+  UserGroupIcon,
+  ChartBarIcon,
+  SpeakerphoneIcon,
+} from './components/AdminIcons';
 
 // Categorized menu sections
 const menuSections = {
@@ -99,7 +111,7 @@ const menuSections = {
       path: '/admin/broadcasts',
       label: 'Broadcasts',
       icon: <SpeakerphoneIcon />,
-    }
+    },
   ],
   monitoring: [
     {
@@ -278,7 +290,6 @@ const AdminDashboard: React.FC = () => {
                 <span className="hidden sm:inline">Unsaved Changes</span>
               </span>
             )}
-
 
             {/* Search Button */}
             <button

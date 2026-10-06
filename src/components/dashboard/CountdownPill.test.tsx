@@ -1,13 +1,14 @@
 import { render, screen, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import CountdownPill from './CountdownPill';
 import { BrowserRouter } from 'react-router-dom';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import CountdownPill from './CountdownPill';
+
 import { CalendarEvent } from '@/types';
-import React from 'react';
 
 // Mock getEventEmoji
 vi.mock('@lib/utils/eventUtils', () => ({
-  getEventEmoji: () => '📅'
+  getEventEmoji: () => '📅',
 }));
 
 describe('CountdownPill', () => {
@@ -16,8 +17,8 @@ describe('CountdownPill', () => {
       id: '1',
       date: new Date(Date.now() + 10000000).toISOString(), // Future date
       description: 'Future Event',
-      type: 'Other'
-    }
+      type: 'Other',
+    },
   ];
 
   beforeEach(() => {

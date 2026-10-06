@@ -1,7 +1,8 @@
+import { getEventEmoji } from '@lib/utils/eventUtils';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+
 import { CalendarEvent } from '@/types';
-import { getEventEmoji } from '@lib/utils/eventUtils';
 
 interface CountdownPillProps {
   events: CalendarEvent[];
@@ -46,8 +47,7 @@ const CountdownPill: React.FC<CountdownPillProps> = React.memo(({ events }) => {
     );
     const now = new Date();
     return (
-      sortedEvents.find((e) => new Date(e.date) > now) ||
-      sortedEvents[sortedEvents.length - 1]
+      sortedEvents.find((e) => new Date(e.date) > now) || sortedEvents[sortedEvents.length - 1]
     );
   }, [events]);
 
@@ -66,12 +66,13 @@ const CountdownPill: React.FC<CountdownPillProps> = React.memo(({ events }) => {
   return (
     <Link
       to="/academic-calendar"
-      className={`col-span-2 sm:col-span-1 w-full sm:w-auto group relative flex items-center justify-between sm:justify-start gap-3 pl-3 pr-4 py-2 sm:pr-5 sm:py-2.5 rounded-xl border shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 overflow-hidden ${isPast
+      className={`col-span-2 sm:col-span-1 w-full sm:w-auto group relative flex items-center justify-between sm:justify-start gap-3 pl-3 pr-4 py-2 sm:pr-5 sm:py-2.5 rounded-xl border shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105 overflow-hidden ${
+        isPast
           ? 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border-emerald-200 dark:border-emerald-700'
           : isUrgent
             ? 'bg-gradient-to-br from-rose-50 to-orange-50 dark:from-rose-900/30 dark:to-orange-900/30 border-rose-200 dark:border-rose-700'
             : 'bg-white dark:bg-slate-800/80 backdrop-blur-md border-slate-200 dark:border-slate-700'
-        }`}
+      }`}
     >
       {/* Urgency Progress Ring */}
       <div className="flex items-center gap-3">
@@ -105,10 +106,9 @@ const CountdownPill: React.FC<CountdownPillProps> = React.memo(({ events }) => {
         <div className="flex flex-col">
           <div className="flex items-center gap-2 mb-0.5">
             <span
-              className={`text-[10px] font-bold uppercase tracking-wider ${isUrgent
-                  ? 'text-rose-600 dark:text-rose-400'
-                  : 'text-slate-500 dark:text-slate-400'
-                }`}
+              className={`text-[10px] font-bold uppercase tracking-wider ${
+                isUrgent ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'
+              }`}
             >
               {isPast ? (isToday ? 'Happening' : 'Completed') : 'Next Up'}
             </span>
@@ -121,10 +121,9 @@ const CountdownPill: React.FC<CountdownPillProps> = React.memo(({ events }) => {
           </div>
 
           <span
-            className={`text-xs sm:text-sm font-bold truncate max-w-[120px] sm:max-w-[140px] ${isUrgent
-                ? 'text-slate-900 dark:text-white'
-                : 'text-slate-700 dark:text-slate-200'
-              }`}
+            className={`text-xs sm:text-sm font-bold truncate max-w-[120px] sm:max-w-[140px] ${
+              isUrgent ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'
+            }`}
           >
             {nextEvent.description}
           </span>
@@ -133,19 +132,17 @@ const CountdownPill: React.FC<CountdownPillProps> = React.memo(({ events }) => {
 
       {!isPast && (
         <div
-          className={`flex items-baseline text-sm font-black ${isUrgent
-              ? 'text-rose-500 dark:text-rose-400'
-              : 'text-purple-600 dark:text-purple-400'
-            }`}
+          className={`flex items-baseline text-sm font-black ${
+            isUrgent ? 'text-rose-500 dark:text-rose-400' : 'text-purple-600 dark:text-purple-400'
+          }`}
         >
           <span>{countdown.days}d</span>
-          <span className="text-[10px] ml-0.5 opacity-80 font-bold">
-            {countdown.hours}h
-          </span>
+          <span className="text-[10px] ml-0.5 opacity-80 font-bold">{countdown.hours}h</span>
         </div>
       )}
     </Link>
   );
 });
+CountdownPill.displayName = 'CountdownPill';
 
 export default CountdownPill;

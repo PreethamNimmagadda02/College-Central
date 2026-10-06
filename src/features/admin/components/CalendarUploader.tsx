@@ -457,10 +457,11 @@ const CalendarUploader: React.FC<Props> = ({ onImport, onClose }) => {
           <>
             {/* Upload Zone */}
             <div
-              className={`border-2 border-dashed rounded-xl p-12 text-center transition-all ${isDragging
+              className={`border-2 border-dashed rounded-xl p-12 text-center transition-all ${
+                isDragging
                   ? 'border-indigo-400 bg-indigo-500/10'
                   : 'border-indigo-500/30 hover:border-indigo-500/50'
-                }`}
+              }`}
               onDragOver={(e) => {
                 e.preventDefault();
                 setIsDragging(true);

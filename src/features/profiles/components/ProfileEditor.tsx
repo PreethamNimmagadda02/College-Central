@@ -1,6 +1,3 @@
-import React, { useState, useRef } from 'react';
-import { useUser } from '@/contexts/UserContext';
-import { User, SocialLinks } from '@/types';
 import {
   Loader2,
   Save,
@@ -12,6 +9,10 @@ import {
   X,
   Camera,
 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+
+import { useUser } from '@/contexts/UserContext';
+import { User, SocialLinks } from '@/types';
 
 interface ProfileEditorProps {
   initialData: User;
@@ -20,7 +21,7 @@ interface ProfileEditorProps {
 }
 
 export const ProfileEditor: React.FC<ProfileEditorProps> = ({ initialData, onClose, onSave }) => {
-  const { updateUser, uploadProfilePicture, loading: userLoading } = useUser();
+  const { updateUser, uploadProfilePicture } = useUser();
 
   // Form State
   const [bio, setBio] = useState(initialData.bio || '');
