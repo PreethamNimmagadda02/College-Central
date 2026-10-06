@@ -11,10 +11,9 @@ import React, {
 import { GradesData } from '@/types';
 
 import { useAuth } from '@features/auth/hooks/useAuth';
-import { db } from '@lib/firebase';
+import { db, getFirebaseAI } from '@lib/firebase';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/storage';
-import { getGoogleGenAI } from '@lib/utils/lazyImports';
 import { logActivity } from '@services/activityService';
 import useGradingScale from '@hooks/useGradingScale';
 
@@ -200,44 +199,52 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
       const base64Data = await fileToBase64(selectedFile);
 
-      // Lazy load Google GenAI
-      const { GoogleGenAI, Type } = await getGoogleGenAI();
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+      // Lazy load Gemini (Firebase AI Logic)
+      const { getModel, SchemaType } = await getFirebaseAI();
 
       const schema = {
-        type: Type.OBJECT,
+        type: SchemaType.OBJECT,
         properties: {
           cgpa: {
-            type: Type.NUMBER,
+            type: SchemaType.NUMBER,
             description: 'The overall CGPA as shown on the grade sheet.',
           },
           totalCredits: {
-            type: Type.NUMBER,
+            type: SchemaType.NUMBER,
             description: 'The total number of credits.',
           },
           semesters: {
-            type: Type.ARRAY,
+            type: SchemaType.ARRAY,
             description: 'An array of semesters, from latest to oldest.',
             items: {
-              type: Type.OBJECT,
+              type: SchemaType.OBJECT,
               properties: {
-                semester: { type: Type.NUMBER, description: 'The semester number.' },
+                semester: { type: SchemaType.NUMBER, description: 'The semester number.' },
                 sessionYear: {
-                  type: Type.STRING,
+                  type: SchemaType.STRING,
                   description: 'Academic session year (YYYY-YYYY).',
                 },
-                sessionType: { type: Type.STRING, description: 'Monsoon, Winter, or Summer.' },
-                sgpa: { type: Type.NUMBER, description: 'The SGPA for this semester.' },
-                cgpa: { type: Type.NUMBER, description: 'Cumulative CGPA up to this semester.' },
+                sessionType: {
+                  type: SchemaType.STRING,
+                  description: 'Monsoon, Winter, or Summer.',
+                },
+                sgpa: { type: SchemaType.NUMBER, description: 'The SGPA for this semester.' },
+                cgpa: {
+                  type: SchemaType.NUMBER,
+                  description: 'Cumulative CGPA up to this semester.',
+                },
                 grades: {
-                  type: Type.ARRAY,
+                  type: SchemaType.ARRAY,
                   items: {
-                    type: Type.OBJECT,
+                    type: SchemaType.OBJECT,
                     properties: {
-                      subjectCode: { type: Type.STRING, description: 'Course code.' },
-                      subjectName: { type: Type.STRING, description: 'Full course name.' },
-                      credits: { type: Type.NUMBER, description: 'Course credits.' },
-                      grade: { type: Type.STRING, description: 'Letter grade (e.g., A, B+, EX).' },
+                      subjectCode: { type: SchemaType.STRING, description: 'Course code.' },
+                      subjectName: { type: SchemaType.STRING, description: 'Full course name.' },
+                      credits: { type: SchemaType.NUMBER, description: 'Course credits.' },
+                      grade: {
+                        type: SchemaType.STRING,
+                        description: 'Letter grade (e.g., A, B+, EX).',
+                      },
                     },
                     required: ['subjectCode', 'subjectName', 'credits', 'grade'],
                   },
@@ -349,27 +356,17 @@ Extract ALL semesters with semester number, year, type, SGPA, CGPA, and all cour
 Include retakes. Return exact values as shown on the document.`,
         ];
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: {
-            parts: [
-              { text: promptVariations[passNumber % promptVariations.length] },
-              { inlineData: { mimeType: selectedFile.type, data: base64Data } },
-            ],
-          },
-          config: {
-            temperature: 0,
-            responseMimeType: 'application/json',
-            responseSchema: schema,
-          },
+        const model = getModel({
+          temperature: 0,
+          responseMimeType: 'application/json',
+          responseSchema: schema,
         });
+        const result = await model.generateContent([
+          { text: promptVariations[passNumber % promptVariations.length] ?? '' },
+          { inlineData: { mimeType: selectedFile.type, data: base64Data } },
+        ]);
 
-        interface AIResponse {
-          text?: string | (() => string);
-        }
-        const rawText = (response as AIResponse)?.text;
-        const text =
-          typeof rawText === 'string' ? rawText : typeof rawText === 'function' ? rawText() : '';
+        const text = result.response.text();
         if (!text) throw new Error('AI response was empty');
         return JSON.parse(text.trim());
       };
@@ -569,7 +566,7 @@ Include retakes. Return exact values as shown on the document.`,
       const overallConfidence =
         semesterConfidences.length > 0
           ? semesterConfidences.reduce((sum, s) => sum + s.confidence, 0) /
-          semesterConfidences.length
+            semesterConfidences.length
           : 1;
 
       //console.log(`[Extraction] Complete - Overall confidence: ${(overallConfidence * 100).toFixed(1)}%`);

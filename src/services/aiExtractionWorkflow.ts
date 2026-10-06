@@ -3,7 +3,7 @@
  * A robust multi-step workflow for extracting data from large files with maximum accuracy.
  */
 
-import { getGoogleGenAI } from '@lib/utils/lazyImports';
+import { getFirebaseAI } from '@lib/firebase';
 
 // ============================================================================
 // Types
@@ -130,11 +130,9 @@ async function extractFromChunk(
   chunk: string,
   chunkIndex: number,
   totalChunks: number,
-  schema: ExtractionSchema,
-  apiKey: string
+  schema: ExtractionSchema
 ): Promise<{ items: unknown[]; error?: string }> {
-  const { GoogleGenAI } = await getGoogleGenAI();
-  const ai = new GoogleGenAI({ apiKey });
+  const { getModel } = await getFirebaseAI();
 
   const prompt = `You are a precise data extractor. Extract ${schema.name} from the text below.
 
@@ -171,12 +169,9 @@ TEXT TO EXTRACT FROM:
 ${chunk}`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: prompt,
-    });
+    const result = await getModel().generateContent(prompt);
 
-    let responseText = response.text?.trim() || '';
+    let responseText = result.response.text().trim();
 
     // Remove markdown code blocks if present
     if (responseText.startsWith('```json')) {
@@ -252,16 +247,6 @@ export async function extractWithWorkflow<T>(
   onProgress?: (progress: ExtractionProgress) => void
 ): Promise<ExtractionResult<T>> {
   const errors: string[] = [];
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-  if (!apiKey) {
-    return {
-      success: false,
-      data: [],
-      stats: createEmptyStats(),
-      errors: ['Gemini API key not configured'],
-    };
-  }
 
   // Phase 1: Prepare chunks
   onProgress?.({
@@ -299,7 +284,7 @@ export async function extractWithWorkflow<T>(
       const chunkText = chunks[i];
       if (!chunkText) continue;
 
-      const result = await extractFromChunk(chunkText, i, totalChunks, config.schema, apiKey);
+      const result = await extractFromChunk(chunkText, i, totalChunks, config.schema);
 
       if (!result.error && result.items.length >= 0) {
         allItems.push(...result.items);
@@ -387,17 +372,5 @@ export async function extractWithWorkflow<T>(
     data: uniqueItems,
     stats,
     errors,
-  };
-}
-
-function createEmptyStats(): ExtractionStats {
-  return {
-    totalChunks: 0,
-    successfulChunks: 0,
-    failedChunks: 0,
-    rawItemCount: 0,
-    duplicatesRemoved: 0,
-    invalidItemsRemoved: 0,
-    finalItemCount: 0,
   };
 }
