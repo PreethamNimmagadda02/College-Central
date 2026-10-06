@@ -97,6 +97,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality
     if: github.event_name == 'pull_request'
+    # action-hosting-deploy creates a check run and comments the preview URL
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
