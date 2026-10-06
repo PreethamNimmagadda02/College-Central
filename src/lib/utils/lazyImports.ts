@@ -12,14 +12,6 @@ export async function getJsPDF() {
 }
 
 /**
- * Lazy load Google Gemini AI only when needed
- */
-export async function getGoogleGenAI() {
-  const { GoogleGenAI, Type } = await import('@google/genai');
-  return { GoogleGenAI, Type };
-}
-
-/**
  * Lazy load image compression only when needed
  */
 export async function getImageCompression() {

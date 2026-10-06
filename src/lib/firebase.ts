@@ -1,9 +1,14 @@
+import { Capacitor } from '@capacitor/core';
+import type { GenerationConfig } from 'firebase/ai';
 // FIX: Updated Firebase imports for v9 compatibility.
 // Only import core services - performance and analytics loaded on demand
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 import 'firebase/compat/storage';
+
+// Model used for all AI extraction. Supported models: https://firebase.google.com/docs/ai-logic/models
+const GEMINI_MODEL = 'gemini-3.8-flash';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -78,6 +83,41 @@ export async function getAnalytics(): Promise<FirebaseAnalytics | null> {
     }
   }
   return null;
+}
+
+// App Check proves a request comes from this app. Firebase AI Logic enforces it,
+// so it has to be active before the first Gemini call.
+let appCheckReady: Promise<void> | null = null;
+
+function initAppCheck(): Promise<void> {
+  const siteKey = import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY;
+  // reCAPTCHA cannot attest the native WebView (it runs on https://localhost)
+  if (!siteKey || typeof window === 'undefined' || Capacitor.isNativePlatform()) {
+    return Promise.resolve();
+  }
+  appCheckReady ??= import('firebase/compat/app-check').then(() => {
+    if (import.meta.env.DEV) {
+      // Logs a debug token to register under App Check > Manage debug tokens
+      Object.assign(self, { FIREBASE_APPCHECK_DEBUG_TOKEN: true });
+    }
+    firebase.appCheck().activate(new firebase.appCheck.ReCaptchaEnterpriseProvider(siteKey), true);
+  });
+  return appCheckReady;
+}
+
+// Helper to lazy load Gemini through Firebase AI Logic. Firebase holds the Gemini
+// API key server-side, so there is no key in the bundle - never add one as a VITE_ variable.
+export async function getFirebaseAI() {
+  const [{ getApp }, { getAI, getGenerativeModel, GoogleAIBackend, SchemaType }] =
+    await Promise.all([import('firebase/app'), import('firebase/ai')]);
+  await initAppCheck();
+  const ai = getAI(getApp(), { backend: new GoogleAIBackend() });
+
+  return {
+    SchemaType,
+    getModel: (generationConfig?: GenerationConfig) =>
+      getGenerativeModel(ai, { model: GEMINI_MODEL, generationConfig }),
+  };
 }
 
 export { auth, db, storage, perf, analytics };

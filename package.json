@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/check-bundle-secrets.js",
     "preview": "vite preview",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 300",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
@@ -21,7 +21,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.26",
@@ -33,7 +34,6 @@
     "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
     "@emailjs/browser": "^4.4.1",
     "@firebase/firestore": "^4.9.2",
-    "@google/genai": "^0.14.0",
     "@ionic/utils-terminal": "^2.3.5",
     "@vis.gl/react-google-maps": "^1.7.1",
     "browser-image-compression": "^2.0.2",

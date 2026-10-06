@@ -78,10 +78,8 @@ cd College-Central
 # Install dependencies
 npm install
 
-# Create .env.local file
-echo "VITE_GEMINI_API_KEY=your_gemini_api_key_here" > .env.local
-
-# Update src/lib/firebase.ts with your Firebase credentials
+# Create .env.local and fill in your Firebase values (never commit this file)
+cp .env.example .env.local
 
 # Run development server
 npm run dev
@@ -128,8 +126,12 @@ service cloud.firestore {
 ```
 
 ### Google Gemini API
-1. Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Add to `.env.local`: `VITE_GEMINI_API_KEY=your_api_key`
+Gemini is called through [Firebase AI Logic](https://firebase.google.com/docs/ai-logic), so the app holds no Gemini key.
+1. Firebase Console → AI Services → AI Logic → Get started → Gemini Developer API
+2. Firebase Console → Security → App Check → register the web app with reCAPTCHA Enterprise
+3. Add the site key to `.env.local`: `VITE_FIREBASE_APPCHECK_SITE_KEY=your_site_key`
+
+> Every `VITE_` variable ends up in the public JavaScript bundle. Never put a secret in one; `npm run build` fails if a credential reaches `dist/`.
 
 ### Domain Restriction
 App restricted to configured email domain (e.g., `@iitism.ac.in`). Set via `VITE_ALLOWED_EMAIL_DOMAIN` environment variable.
@@ -203,7 +205,7 @@ Actions → "Deploy to All Colleges" → Run workflow → Type "deploy-all"
 **Adding a new college:**
 1. Create Firebase project (see [COLLEGE_ONBOARDING.md](./docs/COLLEGE_ONBOARDING.md))
 2. Create `colleges/<college-id>/.env.production.template`
-3. Add GitHub secrets: `<COLLEGE>_FIREBASE_*`, `<COLLEGE>_GEMINI_API_KEY`
+3. Add GitHub secrets: `<COLLEGE>_FIREBASE_*`, `<COLLEGE>_APPCHECK_SITE_KEY`
 4. Update workflow files to include new college in options
 
 ---
