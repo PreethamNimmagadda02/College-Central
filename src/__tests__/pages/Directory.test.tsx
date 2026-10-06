@@ -1,10 +1,9 @@
-
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import Directory from '../../pages/Directory';
-import { useAppConfig } from '../../contexts/AppConfigContext';
 import { BrowserRouter } from 'react-router-dom';
-import React from 'react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import { useAppConfig } from '../../contexts/AppConfigContext';
+import Directory from '../../pages/Directory';
 
 // Mock contexts and hooks
 vi.mock('../../contexts/AppConfigContext', () => ({
@@ -25,21 +24,40 @@ vi.mock('@contexts/AppConfigContext', () => ({
 
 describe('Directory Page', () => {
   const mockFaculty = [
-    { id: '1', name: 'John Doe', department: 'CS', designation: 'Prof', email: 'john@example.com', phone: '1234567890' },
-    { id: '2', name: 'Jane Smith', department: 'EE', designation: 'Assoc Prof', email: 'jane@example.com', phone: '0987654321' },
-    { id: '3', name: 'John Doe', department: 'Math', designation: 'Lecturer', email: 'john.math@example.com', phone: '1122334455' }, // Same name, should be grouped
+    {
+      id: '1',
+      name: 'John Doe',
+      department: 'CS',
+      designation: 'Prof',
+      email: 'john@example.com',
+      phone: '1234567890',
+    },
+    {
+      id: '2',
+      name: 'Jane Smith',
+      department: 'EE',
+      designation: 'Assoc Prof',
+      email: 'jane@example.com',
+      phone: '0987654321',
+    },
+    {
+      id: '3',
+      name: 'John Doe',
+      department: 'Math',
+      designation: 'Lecturer',
+      email: 'john.math@example.com',
+      phone: '1122334455',
+    }, // Same name, should be grouped
   ];
 
-  const mockStudents = [
-    { id: 's1', admNo: '20JE001', name: 'Student One', branch: 'CS' },
-  ];
+  const mockStudents = [{ id: 's1', admNo: '20JE001', name: 'Student One', branch: 'CS' }];
 
   beforeEach(() => {
     // Reset mocks
     vi.clearAllMocks();
 
     // Setup default mock return
-    // @ts-ignore
+    // @ts-expect-error mockReturnValue is not on the real hook type
     useAppConfig.mockReturnValue({
       config: {
         directory: mockFaculty,
@@ -97,7 +115,7 @@ describe('Directory Page', () => {
   });
 
   it('filters faculty by search term (grouped)', () => {
-     render(
+    render(
       <BrowserRouter>
         <Directory />
       </BrowserRouter>

@@ -1,13 +1,13 @@
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useCampusMap } from '@contexts/CampusMapContext';
 import { useLocation } from '@contexts/LocationContext';
+import { useAuth } from '@features/auth/hooks/useAuth';
 import React, { useState, useRef, useMemo } from 'react';
 
-import { CampusLocation, CampusLocationCategory } from '@/types';
-import { useAuth } from '@features/auth/hooks/useAuth';
-import { getUserStats, UserStats } from '@/services/locationAnalyticsService';
 import MyStatsModal from '@/components/MyStatsModal';
 import PopularTimesChart from '@/components/PopularTimesChart';
+import { getUserStats, UserStats } from '@/services/locationAnalyticsService';
+import { CampusLocation, CampusLocationCategory } from '@/types';
 
 const CampusMap: React.FC = () => {
   const {

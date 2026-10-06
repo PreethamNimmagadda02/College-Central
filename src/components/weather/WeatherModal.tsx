@@ -1,5 +1,5 @@
-import React from 'react';
 import { useWeather, getWindDirection } from '@contexts/WeatherContext';
+import React from 'react';
 
 const WeatherModal: React.FC = () => {
   const {
@@ -27,7 +27,9 @@ const WeatherModal: React.FC = () => {
         <div className="sticky top-0 bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/40 dark:to-blue-900/40 backdrop-blur-sm border-b border-sky-200 dark:border-sky-700 p-3 sm:p-4 md:p-6 rounded-t-xl sm:rounded-t-2xl z-10">
           <div className="flex justify-between items-start gap-2">
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-              <div className="text-4xl sm:text-5xl md:text-6xl drop-shadow-lg">{detailedWeather.icon}</div>
+              <div className="text-4xl sm:text-5xl md:text-6xl drop-shadow-lg">
+                {detailedWeather.icon}
+              </div>
               <div className="min-w-0">
                 <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
                   {detailedWeather.temp}°C
@@ -43,7 +45,9 @@ const WeatherModal: React.FC = () => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span className="truncate">{selectedCity.name}, {selectedCity.state}</span>
+                  <span className="truncate">
+                    {selectedCity.name}, {selectedCity.state}
+                  </span>
                 </p>
               </div>
             </div>
@@ -51,7 +55,12 @@ const WeatherModal: React.FC = () => {
               onClick={() => setShowWeatherModal(false)}
               className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 sm:p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 flex-shrink-0"
             >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 sm:w-6 sm:h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -89,7 +98,9 @@ const WeatherModal: React.FC = () => {
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="text-xl sm:text-2xl md:text-3xl">💧</div>
                 <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">Humidity</p>
+                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">
+                    Humidity
+                  </p>
                   <p className="text-base sm:text-lg md:text-xl font-bold text-blue-600 dark:text-blue-400">
                     {detailedWeather.humidity}%
                   </p>
@@ -106,7 +117,8 @@ const WeatherModal: React.FC = () => {
                     Wind Speed
                   </p>
                   <p className="text-base sm:text-lg md:text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                    {detailedWeather.windSpeed.toFixed(1)} <span className="text-xs sm:text-sm">km/h</span>
+                    {detailedWeather.windSpeed.toFixed(1)}{' '}
+                    <span className="text-xs sm:text-sm">km/h</span>
                   </p>
                   <p className="text-[9px] sm:text-[10px] md:text-xs text-emerald-600/70 dark:text-emerald-400/70 truncate">
                     {getWindDirection(detailedWeather.windDirection)}
@@ -120,9 +132,12 @@ const WeatherModal: React.FC = () => {
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="text-xl sm:text-2xl md:text-3xl">🎚️</div>
                 <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">Pressure</p>
+                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">
+                    Pressure
+                  </p>
                   <p className="text-base sm:text-lg md:text-xl font-bold text-purple-600 dark:text-purple-400">
-                    {detailedWeather.pressure.toFixed(0)} <span className="text-xs sm:text-sm">hPa</span>
+                    {detailedWeather.pressure.toFixed(0)}{' '}
+                    <span className="text-xs sm:text-sm">hPa</span>
                   </p>
                 </div>
               </div>
@@ -133,7 +148,9 @@ const WeatherModal: React.FC = () => {
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="text-xl sm:text-2xl md:text-3xl">☀️</div>
                 <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">UV Index</p>
+                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">
+                    UV Index
+                  </p>
                   <p className="text-base sm:text-lg md:text-xl font-bold text-yellow-600 dark:text-yellow-400">
                     {detailedWeather.uvIndex.toFixed(1)}
                   </p>
@@ -159,7 +176,8 @@ const WeatherModal: React.FC = () => {
                     Precipitation
                   </p>
                   <p className="text-base sm:text-lg md:text-xl font-bold text-indigo-600 dark:text-indigo-400">
-                    {detailedWeather.precipitation.toFixed(1)} <span className="text-xs sm:text-sm">mm</span>
+                    {detailedWeather.precipitation.toFixed(1)}{' '}
+                    <span className="text-xs sm:text-sm">mm</span>
                   </p>
                 </div>
               </div>

@@ -1,8 +1,8 @@
-import React, { createContext, useEffect, useState, ReactNode } from 'react';
-import { BackgroundGeolocationPlugin } from '@capacitor-community/background-geolocation';
 import { registerPlugin } from '@capacitor/core';
+import { BackgroundGeolocationPlugin } from '@capacitor-community/background-geolocation';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { detectCurrentZone, updateUserLocation } from '@services/locationAnalyticsService';
+import React, { createContext, useEffect, useState, ReactNode } from 'react';
 
 const BackgroundGeolocationModule =
   registerPlugin<BackgroundGeolocationPlugin>('BackgroundGeolocation');

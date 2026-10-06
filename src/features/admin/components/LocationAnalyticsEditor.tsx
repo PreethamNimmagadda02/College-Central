@@ -15,6 +15,7 @@ import {
 
 import { AdminHeader } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
+
 import {
   getAggregatedAnalytics,
   getPeakAnalysis,
@@ -304,10 +305,11 @@ const LocationAnalyticsEditor: React.FC = () => {
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${dateRange === range
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                  dateRange === range
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
               >
                 {range === 'today' ? 'Today' : range === 'week' ? 'Last 7 Days' : 'Last 30 Days'}
               </button>
@@ -436,7 +438,9 @@ const LocationAnalyticsEditor: React.FC = () => {
                   tickFormatter={(val) => {
                     if (dateRange === 'today') return formatHour(Number(val));
                     if (dateRange === 'week') {
-                      return new Date(String(val)).toLocaleDateString('en-US', { weekday: 'short' });
+                      return new Date(String(val)).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                      });
                     }
                     return formatDate(String(val));
                   }}
@@ -448,7 +452,13 @@ const LocationAnalyticsEditor: React.FC = () => {
                   tick={{ fontSize: 12, fill: '#94a3b8' }}
                   stroke="#94a3b8"
                   axisLine={{ stroke: '#475569' }}
-                  label={{ value: 'Visits', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 12 }}
+                  label={{
+                    value: 'Visits',
+                    angle: -90,
+                    position: 'insideLeft',
+                    fill: '#94a3b8',
+                    fontSize: 12,
+                  }}
                   tickFormatter={(value) => Math.round(value).toString()}
                   allowDecimals={false}
                 />
@@ -461,9 +471,7 @@ const LocationAnalyticsEditor: React.FC = () => {
                   }}
                   formatter={(value) => [`${value ?? 0} visits`, 'Activity']}
                   labelFormatter={(label) =>
-                    dateRange === 'today'
-                      ? formatHour(Number(label))
-                      : formatDate(String(label))
+                    dateRange === 'today' ? formatHour(Number(label)) : formatDate(String(label))
                   }
                 />
                 <Line
@@ -692,16 +700,17 @@ const LocationAnalyticsEditor: React.FC = () => {
                     <p className="text-xs text-slate-500">visits</p>
                   </div>
                   <span
-                    className={`flex-shrink-0 px-2 py-1 text-xs font-medium rounded-full ${zone.category === 'academic'
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                      : zone.category === 'residential'
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : zone.category === 'facilities'
-                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                          : zone.category === 'dining'
-                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                            : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
-                      }`}
+                    className={`flex-shrink-0 px-2 py-1 text-xs font-medium rounded-full ${
+                      zone.category === 'academic'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        : zone.category === 'residential'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : zone.category === 'facilities'
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                            : zone.category === 'dining'
+                              ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                              : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                    }`}
                   >
                     {zone.category}
                   </span>
@@ -847,10 +856,7 @@ const LocationAnalyticsEditor: React.FC = () => {
                   <div className="w-12 flex-shrink-0"></div>
                   <div className="flex-1 grid grid-cols-24 gap-px">
                     {Array.from({ length: 24 }).map((_, hour) => (
-                      <div
-                        key={hour}
-                        className="text-[10px] text-slate-500 text-center"
-                      >
+                      <div key={hour} className="text-[10px] text-slate-500 text-center">
                         {hour % 3 === 0 ? formatHour(hour) : ''}
                       </div>
                     ))}
@@ -868,7 +874,7 @@ const LocationAnalyticsEditor: React.FC = () => {
                     const uniqueZones = new Set<string>();
                     const zoneNames = new Map<string, string>();
 
-                    heatmapComparison.currentPeriod.forEach(d => {
+                    heatmapComparison.currentPeriod.forEach((d) => {
                       if (d.zoneId) {
                         uniqueZones.add(d.zoneId);
                         zoneNames.set(d.zoneId, d.zoneName || d.zoneId);
@@ -877,22 +883,24 @@ const LocationAnalyticsEditor: React.FC = () => {
 
                     // Also add default zones if empty to show something
                     if (uniqueZones.size === 0 && analytics?.zoneAnalytics) {
-                      analytics.zoneAnalytics.slice(0, 5).forEach(z => {
+                      analytics.zoneAnalytics.slice(0, 5).forEach((z) => {
                         uniqueZones.add(z.zoneId);
                         zoneNames.set(z.zoneId, z.zoneName);
                       });
                     }
 
-                    rows = Array.from(uniqueZones).map(zoneId => ({
+                    rows = Array.from(uniqueZones).map((zoneId) => ({
                       label: zoneNames.get(zoneId) || zoneId,
-                      key: zoneId
+                      key: zoneId,
                     }));
                   } else {
                     // Standard Day rows
-                    rows = (['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const).map((dayName, index) => ({
-                      label: dayName,
-                      key: index
-                    }));
+                    rows = (['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const).map(
+                      (dayName, index) => ({
+                        label: dayName,
+                        key: index,
+                      })
+                    );
                   }
 
                   return rows.map((row) => (
@@ -910,21 +918,25 @@ const LocationAnalyticsEditor: React.FC = () => {
                           if (dateRange === 'today') {
                             // Match by ZoneId
                             const zoneId = row.key as string;
-                            currVal = heatmapComparison.currentPeriod.find(
-                              (d) => d.zoneId === zoneId && d.hour === hourIndex
-                            )?.value || 0;
-                            prevVal = heatmapComparison.previousPeriod.find(
-                              (d) => d.zoneId === zoneId && d.hour === hourIndex
-                            )?.value || 0;
+                            currVal =
+                              heatmapComparison.currentPeriod.find(
+                                (d) => d.zoneId === zoneId && d.hour === hourIndex
+                              )?.value || 0;
+                            prevVal =
+                              heatmapComparison.previousPeriod.find(
+                                (d) => d.zoneId === zoneId && d.hour === hourIndex
+                              )?.value || 0;
                           } else {
                             // Match by Day Index
                             const dayIndex = row.key as number;
-                            currVal = heatmapComparison.currentPeriod.find(
-                              (d) => d.day === dayIndex && d.hour === hourIndex
-                            )?.value || 0;
-                            prevVal = heatmapComparison.previousPeriod.find(
-                              (d) => d.day === dayIndex && d.hour === hourIndex
-                            )?.value || 0;
+                            currVal =
+                              heatmapComparison.currentPeriod.find(
+                                (d) => d.day === dayIndex && d.hour === hourIndex
+                              )?.value || 0;
+                            prevVal =
+                              heatmapComparison.previousPeriod.find(
+                                (d) => d.day === dayIndex && d.hour === hourIndex
+                              )?.value || 0;
                           }
 
                           const diff = currVal - prevVal;
@@ -1000,7 +1012,7 @@ const LocationAnalyticsEditor: React.FC = () => {
           </div>
         </div>
       </div>
-    </AdminPageLayout >
+    </AdminPageLayout>
   );
 };
 

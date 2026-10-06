@@ -1,6 +1,3 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { User, SocialLinks } from '@/types';
-import { validateUrl } from '@/lib/utils/security';
 import {
   Github,
   Linkedin,
@@ -14,8 +11,12 @@ import {
   X,
   Loader2,
 } from 'lucide-react';
-import { useUser } from '@/contexts/UserContext';
+import React, { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
+
+import { useUser } from '@/contexts/UserContext';
+import { validateUrl } from '@/lib/utils/security';
+import { User, SocialLinks } from '@/types';
 
 // 🛡️ Sentinel: Helper to sanitize URLs and prevent XSS
 const getSafeUrl = (url?: string) => {

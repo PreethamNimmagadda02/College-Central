@@ -138,8 +138,6 @@ const DocumentIcon = () => (
   </svg>
 );
 
-
-
 const AnalyticsEditor: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -492,8 +490,6 @@ const AnalyticsEditor: React.FC = () => {
           <div className="admin-stat-label text-xs">Students with Grades</div>
         </div>
       </div>
-
-
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -938,7 +934,7 @@ const AnalyticsEditor: React.FC = () => {
                       style={{
                         backgroundColor:
                           CHART_COLORS[
-                          (index + (currentPage - 1) * usersPerPage) % CHART_COLORS.length
+                            (index + (currentPage - 1) * usersPerPage) % CHART_COLORS.length
                           ],
                       }}
                     >
@@ -1001,10 +997,11 @@ const AnalyticsEditor: React.FC = () => {
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs sm:text-sm font-medium transition-colors ${currentPage === pageNum
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                          : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600'
-                          }`}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                          currentPage === pageNum
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                            : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600'
+                        }`}
                       >
                         {pageNum}
                       </button>

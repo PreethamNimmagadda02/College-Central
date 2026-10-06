@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import {
   isDefined,
   getSafeValue,
@@ -6,6 +5,7 @@ import {
   isNonEmptyArray,
   isValidUser,
 } from '@lib/utils/typeGuards';
+import { describe, it, expect } from 'vitest';
 
 describe('typeGuards', () => {
   describe('isDefined', () => {

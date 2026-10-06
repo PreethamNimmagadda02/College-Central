@@ -1,5 +1,5 @@
 import { useAppConfig } from '@contexts/AppConfigContext';
-import { useGrades, GradesData } from '@contexts/GradesContext';
+import { useGrades } from '@contexts/GradesContext';
 import { useSchedule } from '@contexts/ScheduleContext';
 import { useUser } from '@contexts/UserContext';
 import { useGradingScale } from '@hooks/useGradingScale';
@@ -17,7 +17,7 @@ import {
   ComposedChart,
 } from 'recharts';
 
-import { Grade, Semester, SavedScenario } from '@/types';
+import { Grade, GradesData, Semester, SavedScenario } from '@/types';
 
 // Animated Counter Component - counts up smoothly when value changes
 const AnimatedCounter: React.FC<{
@@ -476,10 +476,11 @@ const CGPAForecaster: React.FC = React.memo(() => {
               </div>
               <div className="flex items-end">
                 <div
-                  className={`w-full p-3 sm:p-4 rounded-lg text-center transition-all ${calculations.isTargetAchievable
+                  className={`w-full p-3 sm:p-4 rounded-lg text-center transition-all ${
+                    calculations.isTargetAchievable
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                       : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                    }`}
+                  }`}
                 >
                   {calculations.isTargetAchievable ? (
                     <div>
@@ -648,10 +649,11 @@ const CGPAForecaster: React.FC = React.memo(() => {
             <button
               onClick={() => setShowSaveModal(true)}
               disabled={savedScenarios.length >= 3}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-full shadow-md transition-all ${savedScenarios.length >= 3
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-full shadow-md transition-all ${
+                savedScenarios.length >= 3
                   ? 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white hover:shadow-lg'
-                }`}
+              }`}
               title={
                 savedScenarios.length >= 3
                   ? 'Maximum 3 scenarios allowed'
@@ -752,10 +754,11 @@ const CGPAForecaster: React.FC = React.memo(() => {
               {savedScenarios.length >= 2 && (
                 <button
                   onClick={() => setCompareMode(!compareMode)}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-full transition-all ${compareMode
+                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-full transition-all ${
+                    compareMode
                       ? 'bg-indigo-600 text-white shadow-md'
                       : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 border border-slate-200 dark:border-slate-600'
-                    }`}
+                  }`}
                 >
                   <svg
                     className="w-3.5 h-3.5"
@@ -823,12 +826,13 @@ const CGPAForecaster: React.FC = React.memo(() => {
                     disabled={
                       !selectedScenarios.includes(scenario.id) && selectedScenarios.length >= 3
                     }
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${selectedScenarios.includes(scenario.id)
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                      selectedScenarios.includes(scenario.id)
                         ? 'bg-indigo-600 text-white shadow-md'
                         : selectedScenarios.length >= 3 && !selectedScenarios.includes(scenario.id)
                           ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                           : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30'
-                      }`}
+                    }`}
                   >
                     {selectedScenarios.includes(scenario.id) && <span className="mr-1">✓</span>}
                     {scenario.name}
@@ -979,583 +983,614 @@ const CGPAForecaster: React.FC = React.memo(() => {
     </motion.div>
   );
 });
+CGPAForecaster.displayName = 'CGPAForecaster';
 
 /**
  * ImprovementExamForecaster allows students to modify their past grades
  * and see how improvement exams could affect their CGPA.
  */
-const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.memo(({ gradesData }) => {
-  const { gradeOptions, gradePoints, getGradeColor, getGradeOutlineStyle } = useGradingScale();
-  const [modifiedGrades, setModifiedGrades] = useState<{ [subjectCode: string]: string }>({});
-  const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
+const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.memo(
+  ({ gradesData }) => {
+    const { gradeOptions, gradePoints, getGradeColor, getGradeOutlineStyle } = useGradingScale();
+    const [modifiedGrades, setModifiedGrades] = useState<{ [subjectCode: string]: string }>({});
+    const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set());
+    const [searchQuery, setSearchQuery] = useState('');
 
-  // Get latest grades for each course (handles retakes)
-  const latestGrades = useMemo(() => {
-    const courseMap: { [subjectCode: string]: { grade: Grade; semester: number } } = {};
+    // Get latest grades for each course (handles retakes)
+    const latestGrades = useMemo(() => {
+      const courseMap: { [subjectCode: string]: { grade: Grade; semester: number } } = {};
 
-    gradesData.semesters.forEach((sem: Semester) => {
-      sem.grades.forEach((grade: Grade) => {
-        const existing = courseMap[grade.subjectCode];
-        if (!existing || sem.semester > existing.semester) {
-          courseMap[grade.subjectCode] = {
-            grade: { ...grade },
-            semester: sem.semester,
-          };
-        }
+      gradesData.semesters.forEach((sem: Semester) => {
+        sem.grades.forEach((grade: Grade) => {
+          const existing = courseMap[grade.subjectCode];
+          if (!existing || sem.semester > existing.semester) {
+            courseMap[grade.subjectCode] = {
+              grade: { ...grade },
+              semester: sem.semester,
+            };
+          }
+        });
       });
-    });
 
-    return courseMap;
-  }, [gradesData]);
+      return courseMap;
+    }, [gradesData]);
 
-  // Calculate new CGPA with modified grades
-  const projectedCalculations = useMemo(() => {
-    let totalPoints = 0;
-    let totalCredits = 0;
+    // Calculate new CGPA with modified grades
+    const projectedCalculations = useMemo(() => {
+      let totalPoints = 0;
+      let totalCredits = 0;
 
-    Object.entries(latestGrades).forEach(([subjectCode, { grade }]) => {
-      const currentGrade = modifiedGrades[subjectCode] || grade.grade;
-      // Include all courses in calculation - F grade contributes 0 points but credits still count
-      const points = gradePoints[currentGrade] || 0;
-      totalPoints += grade.credits * points;
-      totalCredits += grade.credits;
-    });
+      Object.entries(latestGrades).forEach(([subjectCode, { grade }]) => {
+        const currentGrade = modifiedGrades[subjectCode] || grade.grade;
+        // Include all courses in calculation - F grade contributes 0 points but credits still count
+        const points = gradePoints[currentGrade] || 0;
+        totalPoints += grade.credits * points;
+        totalCredits += grade.credits;
+      });
 
-    return {
-      cgpa: totalCredits > 0 ? totalPoints / totalCredits : 0,
-      totalCredits,
+      return {
+        cgpa: totalCredits > 0 ? totalPoints / totalCredits : 0,
+        totalCredits,
+      };
+    }, [latestGrades, modifiedGrades, gradePoints]);
+
+    const handleGradeChange = (subjectCode: string, newGrade: string, originalGrade: string) => {
+      if (newGrade === originalGrade) {
+        // Remove from modified if reset to original
+        setModifiedGrades((prev) => {
+          const updated = { ...prev };
+          delete updated[subjectCode];
+          return updated;
+        });
+      } else {
+        setModifiedGrades((prev) => ({ ...prev, [subjectCode]: newGrade }));
+      }
     };
-  }, [latestGrades, modifiedGrades, gradePoints]);
 
-  const handleGradeChange = (subjectCode: string, newGrade: string, originalGrade: string) => {
-    if (newGrade === originalGrade) {
-      // Remove from modified if reset to original
-      setModifiedGrades((prev) => {
-        const updated = { ...prev };
-        delete updated[subjectCode];
+    const resetAllModifications = () => {
+      setModifiedGrades({});
+    };
+
+    const toggleSemester = (semesterNum: number) => {
+      setExpandedSemesters((prev) => {
+        const updated = new Set(prev);
+        if (updated.has(semesterNum)) {
+          updated.delete(semesterNum);
+        } else {
+          updated.add(semesterNum);
+        }
         return updated;
       });
-    } else {
-      setModifiedGrades((prev) => ({ ...prev, [subjectCode]: newGrade }));
-    }
-  };
-
-  const resetAllModifications = () => {
-    setModifiedGrades({});
-  };
-
-  const toggleSemester = (semesterNum: number) => {
-    setExpandedSemesters((prev) => {
-      const updated = new Set(prev);
-      if (updated.has(semesterNum)) {
-        updated.delete(semesterNum);
-      } else {
-        updated.add(semesterNum);
-      }
-      return updated;
-    });
-  };
-
-  const expandAll = () => {
-    const allSemesters = new Set(gradesData.semesters.map((s) => s.semester));
-    setExpandedSemesters(allSemesters);
-  };
-
-  const collapseAll = () => {
-    setExpandedSemesters(new Set());
-  };
-
-  // Filter courses based on search
-  const filteredSemesters = useMemo(() => {
-    if (!searchQuery.trim()) return gradesData.semesters;
-
-    const query = searchQuery.toLowerCase();
-    return gradesData.semesters
-      .map((sem) => ({
-        ...sem,
-        grades: sem.grades.filter(
-          (g) =>
-            g.subjectCode.toLowerCase().includes(query) ||
-            g.subjectName.toLowerCase().includes(query)
-        ),
-      }))
-      .filter((sem) => sem.grades.length > 0);
-  }, [gradesData.semesters, searchQuery]);
-
-  const modifiedCount = Object.keys(modifiedGrades).length;
-  const cgpaDelta = projectedCalculations.cgpa - gradesData.cgpa;
-
-  // Calculate projected SGPA for a semester based on modified grades
-  const getProjectedSGPA = (semester: Semester): { sgpa: number; hasChanges: boolean } => {
-    let totalPoints = 0;
-    let totalCredits = 0;
-    let hasChanges = false;
-
-    semester.grades.forEach((grade) => {
-      const isLatest = latestGrades[grade.subjectCode]?.semester === semester.semester;
-      const modifiedGrade = modifiedGrades[grade.subjectCode];
-      // Only use modified grade if this is the latest attempt for the course
-      const currentGrade = isLatest && modifiedGrade ? modifiedGrade : grade.grade;
-
-      if (isLatest && modifiedGrade) {
-        hasChanges = true;
-      }
-
-      const points = gradePoints[currentGrade] || 0;
-      totalPoints += grade.credits * points;
-      totalCredits += grade.credits;
-    });
-
-    return {
-      sgpa: totalCredits > 0 ? totalPoints / totalCredits : 0,
-      hasChanges,
     };
-  };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-4 sm:space-y-6"
-    >
-      {/* Header Section */}
-      <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg overflow-hidden">
-        <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h3 className="text-base sm:text-lg font-semibold flex items-center">
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                Improvement Exam Forecaster
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-                Modify your past grades to see how improvement exams could affect your CGPA
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    const expandAll = () => {
+      const allSemesters = new Set(gradesData.semesters.map((s) => s.semester));
+      setExpandedSemesters(allSemesters);
+    };
 
-      {/* Comparison Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        {/* Original CGPA */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-blue-100 text-sm font-medium">Original CGPA</h4>
-              <svg
-                className="w-5 h-5 opacity-80 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-            <p className="text-2xl sm:text-3xl font-bold group-hover:scale-110 transition-transform origin-left">
-              {gradesData.cgpa.toFixed(2)}
-            </p>
-            <p className="text-blue-100 text-xs mt-1">Your current standing</p>
-          </div>
-        </div>
+    const collapseAll = () => {
+      setExpandedSemesters(new Set());
+    };
 
-        {/* Projected CGPA */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-green-100 text-sm font-medium">Projected CGPA</h4>
-              <svg
-                className="w-5 h-5 opacity-80 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                />
-              </svg>
-            </div>
-            <p className="text-2xl sm:text-3xl font-bold group-hover:scale-110 transition-transform origin-left">
-              {projectedCalculations.cgpa.toFixed(2)}
-            </p>
-            <div className="flex items-center gap-1 mt-1">
-              {cgpaDelta > 0.005 ? (
-                <>
+    // Filter courses based on search
+    const filteredSemesters = useMemo(() => {
+      if (!searchQuery.trim()) return gradesData.semesters;
+
+      const query = searchQuery.toLowerCase();
+      return gradesData.semesters
+        .map((sem) => ({
+          ...sem,
+          grades: sem.grades.filter(
+            (g) =>
+              g.subjectCode.toLowerCase().includes(query) ||
+              g.subjectName.toLowerCase().includes(query)
+          ),
+        }))
+        .filter((sem) => sem.grades.length > 0);
+    }, [gradesData.semesters, searchQuery]);
+
+    const modifiedCount = Object.keys(modifiedGrades).length;
+    const cgpaDelta = projectedCalculations.cgpa - gradesData.cgpa;
+
+    // Calculate projected SGPA for a semester based on modified grades
+    const getProjectedSGPA = (semester: Semester): { sgpa: number; hasChanges: boolean } => {
+      let totalPoints = 0;
+      let totalCredits = 0;
+      let hasChanges = false;
+
+      semester.grades.forEach((grade) => {
+        const isLatest = latestGrades[grade.subjectCode]?.semester === semester.semester;
+        const modifiedGrade = modifiedGrades[grade.subjectCode];
+        // Only use modified grade if this is the latest attempt for the course
+        const currentGrade = isLatest && modifiedGrade ? modifiedGrade : grade.grade;
+
+        if (isLatest && modifiedGrade) {
+          hasChanges = true;
+        }
+
+        const points = gradePoints[currentGrade] || 0;
+        totalPoints += grade.credits * points;
+        totalCredits += grade.credits;
+      });
+
+      return {
+        sgpa: totalCredits > 0 ? totalPoints / totalCredits : 0,
+        hasChanges,
+      };
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-4 sm:space-y-6"
+      >
+        {/* Header Section */}
+        <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold flex items-center">
                   <svg
-                    className="w-3 h-3 text-green-300 group-hover:scale-125 transition-transform"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+                    className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
                     <path
-                      fillRule="evenodd"
-                      d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                      clipRule="evenodd"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                     />
                   </svg>
-                  <span className="text-green-100 text-xs">+{cgpaDelta.toFixed(2)}</span>
-                </>
-              ) : cgpaDelta < -0.005 ? (
-                <>
-                  <svg
-                    className="w-3 h-3 text-red-400 group-hover:scale-125 transition-transform"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span className="text-red-200 text-xs">{cgpaDelta.toFixed(2)}</span>
-                </>
-              ) : (
-                <>
-                  <svg
-                    className="w-3 h-3 text-green-300 group-hover:scale-125 transition-transform"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span className="text-green-100 text-xs">+0.00</span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Courses Modified */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-purple-100 text-sm font-medium">Courses Modified</h4>
-              <svg
-                className="w-5 h-5 opacity-80 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                />
-              </svg>
-            </div>
-            <p className="text-2xl sm:text-3xl font-bold group-hover:scale-110 transition-transform origin-left">
-              {modifiedCount}
-            </p>
-            <p className="text-purple-100 text-xs mt-1">
-              of {Object.keys(latestGrades).length} courses
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Modify Courses Section */}
-      <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg overflow-hidden">
-        <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h3 className="text-base sm:text-lg font-semibold flex items-center">
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-                Modify Course Grades
-              </h3>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              {/* Search */}
-              <div className="relative flex-grow min-w-[150px] max-w-xs">
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search courses..."
-                  aria-label="Search courses"
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 dark:text-white text-sm"
-                />
+                  Improvement Exam Forecaster
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  Modify your past grades to see how improvement exams could affect your CGPA
+                </p>
               </div>
-              {/* Controls: Expand/Collapse Toggle, Clear All */}
-              <div className="flex gap-1">
-                <button
-                  onClick={expandedSemesters.size > 0 ? collapseAll : expandAll}
-                  className="px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105"
+            </div>
+          </div>
+        </div>
+
+        {/* Comparison Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          {/* Original CGPA */}
+          <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-blue-100 text-sm font-medium">Original CGPA</h4>
+                <svg
+                  className="w-5 h-5 opacity-80 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  {expandedSemesters.size > 0 ? 'Collapse All' : 'Expand All'}
-                </button>
-                {modifiedCount > 0 && (
-                  <button
-                    onClick={resetAllModifications}
-                    className="px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 animate-pulse"
-                  >
-                    Clear All ({modifiedCount})
-                  </button>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+              </div>
+              <p className="text-2xl sm:text-3xl font-bold group-hover:scale-110 transition-transform origin-left">
+                {gradesData.cgpa.toFixed(2)}
+              </p>
+              <p className="text-blue-100 text-xs mt-1">Your current standing</p>
+            </div>
+          </div>
+
+          {/* Projected CGPA */}
+          <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-green-100 text-sm font-medium">Projected CGPA</h4>
+                <svg
+                  className="w-5 h-5 opacity-80 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                  />
+                </svg>
+              </div>
+              <p className="text-2xl sm:text-3xl font-bold group-hover:scale-110 transition-transform origin-left">
+                {projectedCalculations.cgpa.toFixed(2)}
+              </p>
+              <div className="flex items-center gap-1 mt-1">
+                {cgpaDelta > 0.005 ? (
+                  <>
+                    <svg
+                      className="w-3 h-3 text-green-300 group-hover:scale-125 transition-transform"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="text-green-100 text-xs">+{cgpaDelta.toFixed(2)}</span>
+                  </>
+                ) : cgpaDelta < -0.005 ? (
+                  <>
+                    <svg
+                      className="w-3 h-3 text-red-400 group-hover:scale-125 transition-transform"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="text-red-200 text-xs">{cgpaDelta.toFixed(2)}</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-3 h-3 text-green-300 group-hover:scale-125 transition-transform"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="text-green-100 text-xs">+0.00</span>
+                  </>
                 )}
               </div>
             </div>
           </div>
+
+          {/* Courses Modified */}
+          <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-purple-100 text-sm font-medium">Courses Modified</h4>
+                <svg
+                  className="w-5 h-5 opacity-80 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                  />
+                </svg>
+              </div>
+              <p className="text-2xl sm:text-3xl font-bold group-hover:scale-110 transition-transform origin-left">
+                {modifiedCount}
+              </p>
+              <p className="text-purple-100 text-xs mt-1">
+                of {Object.keys(latestGrades).length} courses
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Semester Accordions */}
-        <div className="divide-y divide-slate-200 dark:divide-slate-700">
-          {[...filteredSemesters]
-            .sort((a, b) => b.semester - a.semester)
-            .map((semester) => {
-              const isExpanded = expandedSemesters.has(semester.semester);
-              const semesterModifiedCount = semester.grades.filter(
-                (g) => modifiedGrades[g.subjectCode]
-              ).length;
-              const projectedSGPA = getProjectedSGPA(semester);
-              const sgpaDelta = projectedSGPA.sgpa - semester.sgpa;
-
-              return (
-                <div key={semester.semester}>
-                  {/* Semester Header */}
-                  <button
-                    onClick={() => toggleSemester(semester.semester)}
-                    className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 dark:hover:from-slate-800/70 dark:hover:to-slate-800/30 transition-all duration-300"
+        {/* Modify Courses Section */}
+        <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold flex items-center">
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white bg-gradient-to-br from-primary to-indigo-600 shadow-md shadow-primary/30 group-hover:scale-110 transition-transform duration-300">
-                        {semester.semester}
-                      </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-slate-900 dark:text-white">
-                          Semester {semester.semester}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {semester.sessionType} {semester.sessionYear} •
-                          {projectedSGPA.hasChanges ? (
-                            <>
-                              {' '}
-                              SGPA:{' '}
-                              <span className="line-through opacity-60">
-                                {semester.sgpa.toFixed(2)}
-                              </span>{' '}
-                              <span className="font-semibold text-green-600 dark:text-green-400">
-                                {projectedSGPA.sgpa.toFixed(2)}
-                              </span>
-                              {sgpaDelta > 0 && (
-                                <span className="text-green-600 dark:text-green-400 ml-1">
-                                  (+{sgpaDelta.toFixed(2)})
-                                </span>
-                              )}
-                              {sgpaDelta < 0 && (
-                                <span className="text-red-600 dark:text-red-400 ml-1">
-                                  ({sgpaDelta.toFixed(2)})
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            <> SGPA: {semester.sgpa.toFixed(2)}</>
-                          )}{' '}
-                          • {semester.grades.length} courses
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {semesterModifiedCount > 0 && (
-                        <span className="px-2 py-1 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full">
-                          {semesterModifiedCount} modified
-                        </span>
-                      )}
-                      <svg
-                        className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''
-                          }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Modify Course Grades
+                </h3>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                {/* Search */}
+                <div className="relative flex-grow min-w-[150px] max-w-xs">
+                  <svg
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search courses..."
+                    aria-label="Search courses"
+                    className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-700 dark:text-white text-sm"
+                  />
+                </div>
+                {/* Controls: Expand/Collapse Toggle, Clear All */}
+                <div className="flex gap-1">
+                  <button
+                    onClick={expandedSemesters.size > 0 ? collapseAll : expandAll}
+                    className="px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105"
+                  >
+                    {expandedSemesters.size > 0 ? 'Collapse All' : 'Expand All'}
                   </button>
-
-                  {/* Semester Courses */}
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="px-4 sm:px-5 pb-4 sm:pb-5"
+                  {modifiedCount > 0 && (
+                    <button
+                      onClick={resetAllModifications}
+                      className="px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 hover:shadow-md hover:scale-105 animate-pulse"
                     >
-                      <div className="space-y-2 sm:space-y-3">
-                        {semester.grades.map((grade) => {
-                          const isLatest =
-                            latestGrades[grade.subjectCode]?.semester === semester.semester;
-                          const isModified = !!modifiedGrades[grade.subjectCode];
-                          const currentDisplayGrade =
-                            modifiedGrades[grade.subjectCode] || grade.grade;
-
-                          return (
-                            <div
-                              key={`${semester.semester}-${grade.subjectCode}`}
-                              className={`group relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg transition-all duration-300 gap-3 sm:gap-0 ${isModified
-                                  ? 'bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-900/30 dark:to-amber-900/10 border-2 border-amber-300 dark:border-amber-700 shadow-md shadow-amber-100 dark:shadow-amber-900/20'
-                                  : 'bg-slate-50 dark:bg-slate-800 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 dark:hover:from-slate-800 dark:hover:to-slate-700/50 hover:shadow-lg hover:-translate-y-0.5'
-                                }`}
-                            >
-                              <div className="flex-grow min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <p className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base truncate">
-                                    {grade.subjectCode}
-                                  </p>
-                                  {!isLatest && (
-                                    <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded">
-                                      Retaken
-                                    </span>
-                                  )}
-                                  {isModified && (
-                                    <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300 rounded animate-pulse">
-                                      Modified
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">
-                                  {grade.subjectName}
-                                </p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded-full">
-                                    {grade.credits} Credits
-                                  </span>
-                                  {isModified && (
-                                    <span className="text-[10px] sm:text-xs text-slate-500">
-                                      Original:{' '}
-                                      <span
-                                        className={`font-semibold ${getGradeColor(grade.grade)}`}
-                                      >
-                                        {grade.grade}
-                                      </span>
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 sm:gap-3">
-                                {isLatest ? (
-                                  <select
-                                    value={currentDisplayGrade}
-                                    onChange={(e) =>
-                                      handleGradeChange(
-                                        grade.subjectCode,
-                                        e.target.value,
-                                        grade.grade
-                                      )
-                                    }
-                                    className={`px-3 sm:px-4 py-1.5 sm:py-2 font-semibold rounded-lg border-2 focus:outline-none focus:ring-2 focus:scale-105 transition-all duration-200 hover:shadow-md cursor-pointer text-sm sm:text-base text-center ${getGradeColor(currentDisplayGrade)} ${getGradeOutlineStyle(currentDisplayGrade)}`}
-                                  >
-                                    {gradeOptions.map((g) => (
-                                      <option key={g} value={g}>
-                                        {g}
-                                      </option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  <span
-                                    className={`px-3 sm:px-4 py-1.5 sm:py-2 font-semibold rounded-lg text-sm sm:text-base ${getGradeColor(grade.grade)} opacity-60`}
-                                  >
-                                    {grade.grade}
-                                  </span>
-                                )}
-                                {isModified && (
-                                  <button
-                                    onClick={() =>
-                                      handleGradeChange(grade.subjectCode, grade.grade, grade.grade)
-                                    }
-                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all duration-200 hover:scale-110 hover:rotate-90"
-                                    title="Reset to original"
-                                  >
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M6 18L18 6M6 6l12 12"
-                                      />
-                                    </svg>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
+                      Clear All ({modifiedCount})
+                    </button>
                   )}
                 </div>
-              );
-            })}
+              </div>
+            </div>
+          </div>
+
+          {/* Semester Accordions */}
+          <div className="divide-y divide-slate-200 dark:divide-slate-700">
+            {[...filteredSemesters]
+              .sort((a, b) => b.semester - a.semester)
+              .map((semester) => {
+                const isExpanded = expandedSemesters.has(semester.semester);
+                const semesterModifiedCount = semester.grades.filter(
+                  (g) => modifiedGrades[g.subjectCode]
+                ).length;
+                const projectedSGPA = getProjectedSGPA(semester);
+                const sgpaDelta = projectedSGPA.sgpa - semester.sgpa;
+
+                return (
+                  <div key={semester.semester}>
+                    {/* Semester Header */}
+                    <button
+                      onClick={() => toggleSemester(semester.semester)}
+                      className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 dark:hover:from-slate-800/70 dark:hover:to-slate-800/30 transition-all duration-300"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white bg-gradient-to-br from-primary to-indigo-600 shadow-md shadow-primary/30 group-hover:scale-110 transition-transform duration-300">
+                          {semester.semester}
+                        </div>
+                        <div className="text-left">
+                          <p className="font-semibold text-slate-900 dark:text-white">
+                            Semester {semester.semester}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {semester.sessionType} {semester.sessionYear} •
+                            {projectedSGPA.hasChanges ? (
+                              <>
+                                {' '}
+                                SGPA:{' '}
+                                <span className="line-through opacity-60">
+                                  {semester.sgpa.toFixed(2)}
+                                </span>{' '}
+                                <span className="font-semibold text-green-600 dark:text-green-400">
+                                  {projectedSGPA.sgpa.toFixed(2)}
+                                </span>
+                                {sgpaDelta > 0 && (
+                                  <span className="text-green-600 dark:text-green-400 ml-1">
+                                    (+{sgpaDelta.toFixed(2)})
+                                  </span>
+                                )}
+                                {sgpaDelta < 0 && (
+                                  <span className="text-red-600 dark:text-red-400 ml-1">
+                                    ({sgpaDelta.toFixed(2)})
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <> SGPA: {semester.sgpa.toFixed(2)}</>
+                            )}{' '}
+                            • {semester.grades.length} courses
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {semesterModifiedCount > 0 && (
+                          <span className="px-2 py-1 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full">
+                            {semesterModifiedCount} modified
+                          </span>
+                        )}
+                        <svg
+                          className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${
+                            isExpanded ? 'rotate-180' : ''
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                    </button>
+
+                    {/* Semester Courses */}
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="px-4 sm:px-5 pb-4 sm:pb-5"
+                      >
+                        <div className="space-y-2 sm:space-y-3">
+                          {semester.grades.map((grade) => {
+                            const isLatest =
+                              latestGrades[grade.subjectCode]?.semester === semester.semester;
+                            const isModified = !!modifiedGrades[grade.subjectCode];
+                            const currentDisplayGrade =
+                              modifiedGrades[grade.subjectCode] || grade.grade;
+
+                            return (
+                              <div
+                                key={`${semester.semester}-${grade.subjectCode}`}
+                                className={`group relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg transition-all duration-300 gap-3 sm:gap-0 ${
+                                  isModified
+                                    ? 'bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-900/30 dark:to-amber-900/10 border-2 border-amber-300 dark:border-amber-700 shadow-md shadow-amber-100 dark:shadow-amber-900/20'
+                                    : 'bg-slate-50 dark:bg-slate-800 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 dark:hover:from-slate-800 dark:hover:to-slate-700/50 hover:shadow-lg hover:-translate-y-0.5'
+                                }`}
+                              >
+                                <div className="flex-grow min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base truncate">
+                                      {grade.subjectCode}
+                                    </p>
+                                    {!isLatest && (
+                                      <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded">
+                                        Retaken
+                                      </span>
+                                    )}
+                                    {isModified && (
+                                      <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300 rounded animate-pulse">
+                                        Modified
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">
+                                    {grade.subjectName}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded-full">
+                                      {grade.credits} Credits
+                                    </span>
+                                    {isModified && (
+                                      <span className="text-[10px] sm:text-xs text-slate-500">
+                                        Original:{' '}
+                                        <span
+                                          className={`font-semibold ${getGradeColor(grade.grade)}`}
+                                        >
+                                          {grade.grade}
+                                        </span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                  {isLatest ? (
+                                    <select
+                                      value={currentDisplayGrade}
+                                      onChange={(e) =>
+                                        handleGradeChange(
+                                          grade.subjectCode,
+                                          e.target.value,
+                                          grade.grade
+                                        )
+                                      }
+                                      className={`px-3 sm:px-4 py-1.5 sm:py-2 font-semibold rounded-lg border-2 focus:outline-none focus:ring-2 focus:scale-105 transition-all duration-200 hover:shadow-md cursor-pointer text-sm sm:text-base text-center ${getGradeColor(currentDisplayGrade)} ${getGradeOutlineStyle(currentDisplayGrade)}`}
+                                    >
+                                      {gradeOptions.map((g) => (
+                                        <option key={g} value={g}>
+                                          {g}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <span
+                                      className={`px-3 sm:px-4 py-1.5 sm:py-2 font-semibold rounded-lg text-sm sm:text-base ${getGradeColor(grade.grade)} opacity-60`}
+                                    >
+                                      {grade.grade}
+                                    </span>
+                                  )}
+                                  {isModified && (
+                                    <button
+                                      onClick={() =>
+                                        handleGradeChange(
+                                          grade.subjectCode,
+                                          grade.grade,
+                                          grade.grade
+                                        )
+                                      }
+                                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all duration-200 hover:scale-110 hover:rotate-90"
+                                      title="Reset to original"
+                                    >
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M6 18L18 6M6 6l12 12"
+                                        />
+                                      </svg>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+
+          {/* Empty State */}
+          {filteredSemesters.length === 0 && (
+            <div className="p-8 text-center">
+              <svg
+                className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <p className="text-slate-500 dark:text-slate-400">
+                No courses found matching "{searchQuery}"
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Empty State */}
-        {filteredSemesters.length === 0 && (
-          <div className="p-8 text-center">
+        {/* Info Note */}
+        <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+          <div className="flex gap-3">
             <svg
-              className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3"
+              className="w-5 h-5 text-primary flex-shrink-0 mt-0.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1564,562 +1599,545 @@ const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.me
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <p className="text-slate-500 dark:text-slate-400">
-              No courses found matching "{searchQuery}"
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Info Note */}
-      <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-        <div className="flex gap-3">
-          <svg
-            className="w-5 h-5 text-primary flex-shrink-0 mt-0.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <div>
-            <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-              About Improvement Exams
-            </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-              This forecaster shows how your CGPA would change if you improve specific course
-              grades. Only the latest attempt for each course counts towards your CGPA. Courses
-              marked as &quot;Retaken&quot; cannot be modified here as their grades have been
-              superseded.
-            </p>
+            <div>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                About Improvement Exams
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                This forecaster shows how your CGPA would change if you improve specific course
+                grades. Only the latest attempt for each course counts towards your CGPA. Courses
+                marked as &quot;Retaken&quot; cannot be modified here as their grades have been
+                superseded.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    </motion.div>
-  );
-});
+      </motion.div>
+    );
+  }
+);
+ImprovementExamForecaster.displayName = 'ImprovementExamForecaster';
 
 /**
  * PerformanceAnalytics displays grade analytics using only the latest grade for each course.
  * When a student retakes a course, only the most recent attempt is counted in analytics.
  */
-const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: string }> = React.memo(({
-  gradesData,
-  courseOption,
-}) => {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'distribution' | 'insights'>(
-    'overview'
-  );
-  const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
-  const { gradePoints, getGradeColor } = useGradingScale();
+const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: string }> = React.memo(
+  ({ gradesData, courseOption }) => {
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'distribution' | 'insights'>(
+      'overview'
+    );
+    const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
+    const { gradePoints, getGradeColor } = useGradingScale();
 
-  // Helper function to get latest grade for each course (handles retakes)
-  const getLatestGrades = useMemo(() => {
-    const courseMap: { [subjectCode: string]: { grade: Grade; semester: number } } = {};
+    // Helper function to get latest grade for each course (handles retakes)
+    const getLatestGrades = useMemo(() => {
+      const courseMap: { [subjectCode: string]: { grade: Grade; semester: number } } = {};
 
-    // Iterate through semesters to track the latest occurrence of each course
-    gradesData.semesters.forEach((sem: Semester) => {
-      sem.grades.forEach((grade: Grade) => {
-        const existing = courseMap[grade.subjectCode];
-        // If course doesn't exist or current semester is later, update it
-        if (!existing || sem.semester > existing.semester) {
-          courseMap[grade.subjectCode] = {
-            grade: { ...grade },
-            semester: sem.semester,
-          };
-        }
+      // Iterate through semesters to track the latest occurrence of each course
+      gradesData.semesters.forEach((sem: Semester) => {
+        sem.grades.forEach((grade: Grade) => {
+          const existing = courseMap[grade.subjectCode];
+          // If course doesn't exist or current semester is later, update it
+          if (!existing || sem.semester > existing.semester) {
+            courseMap[grade.subjectCode] = {
+              grade: { ...grade },
+              semester: sem.semester,
+            };
+          }
+        });
       });
-    });
 
-    // Return array of latest grades with semester info
-    return Object.values(courseMap).map((item) => ({
-      ...item.grade,
-      semester: item.semester,
-    }));
-  }, [gradesData]);
+      // Return array of latest grades with semester info
+      return Object.values(courseMap).map((item) => ({
+        ...item.grade,
+        semester: item.semester,
+      }));
+    }, [gradesData]);
 
-  // Calculate performance trends with enhanced metrics
-  const performanceTrend = useMemo(() => {
-    const sortedSemesters = gradesData.semesters;
-    return sortedSemesters.map((sem: Semester, index: number) => {
-      // Only count earned credits (passed courses where grade != 'F')
-      const earnedCredits = sem.grades.reduce(
-        (total: number, grade: Grade) => total + (grade.grade !== 'F' ? grade.credits || 0 : 0),
+    // Calculate performance trends with enhanced metrics
+    const performanceTrend = useMemo(() => {
+      const sortedSemesters = gradesData.semesters;
+      return sortedSemesters.map((sem: Semester, index: number) => {
+        // Only count earned credits (passed courses where grade != 'F')
+        const earnedCredits = sem.grades.reduce(
+          (total: number, grade: Grade) => total + (grade.grade !== 'F' ? grade.credits || 0 : 0),
+          0
+        );
+        const prevSem = sortedSemesters[index - 1];
+        const prevSgpa = index > 0 && prevSem ? prevSem.sgpa : sem.sgpa;
+        const delta = sem.sgpa - prevSgpa;
+        return {
+          semester: `Semester ${sem.semester}`,
+          semesterNum: sem.semester,
+          sgpa: sem.sgpa,
+          credits: earnedCredits, // Now only counts earned (passed) credits
+          delta: index > 0 ? delta : 0,
+          courseCount: sem.grades.length,
+        };
+      });
+    }, [gradesData]);
+
+    // Advanced Performance Metrics
+    const advancedMetrics = useMemo(() => {
+      const sortedSemesters = gradesData.semesters;
+
+      // 1. Consistency Score (lower std deviation = more consistent)
+      const sgpaValues = sortedSemesters.map((s) => s.sgpa);
+      const avgSgpa = sgpaValues.reduce((a, b) => a + b, 0) / sgpaValues.length;
+      const variance =
+        sgpaValues.reduce((sum, val) => sum + Math.pow(val - avgSgpa, 2), 0) / sgpaValues.length;
+      const stdDev = Math.sqrt(variance);
+      const consistencyScore = Math.max(0, 100 - stdDev * 20); // Higher is better
+
+      // 2. Performance Trajectory (linear regression slope)
+      let sumX = 0,
+        sumY = 0,
+        sumXY = 0,
+        sumX2 = 0;
+      const n = sortedSemesters.length;
+      sortedSemesters.forEach((sem, i) => {
+        sumX += i;
+        sumY += sem.sgpa;
+        sumXY += i * sem.sgpa;
+        sumX2 += i * i;
+      });
+      const slope = n > 1 ? (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX) : 0;
+      const trajectoryStatus = slope > 0.1 ? 'Improving' : slope < -0.1 ? 'Declining' : 'Stable';
+
+      // 3. Credit Efficiency (quality points per credit)
+      const totalQualityPoints = getLatestGrades.reduce(
+        (sum, g) => sum + (gradePoints[g.grade] || 0) * g.credits,
         0
       );
-      const prevSem = sortedSemesters[index - 1];
-      const prevSgpa = index > 0 && prevSem ? prevSem.sgpa : sem.sgpa;
-      const delta = sem.sgpa - prevSgpa;
+      const creditEfficiency =
+        gradesData.totalCredits > 0 ? totalQualityPoints / gradesData.totalCredits : 0;
+
+      // 4. High-Credit Performance (courses with 4+ credits)
+      const highCreditThreshold = courseOption === 'NEP' ? 3 : 9;
+      const highCreditCourses = getLatestGrades.filter((g) => g.credits >= highCreditThreshold);
+      const highCreditAvg =
+        highCreditCourses.length > 0
+          ? highCreditCourses.reduce((sum, g) => sum + (gradePoints[g.grade] || 0), 0) /
+            highCreditCourses.length
+          : 0;
+
+      // 5. Failure/Risk Analysis
+      const failedCourses = getLatestGrades.filter((g) => g.grade === 'F');
+      const atRiskCourses = getLatestGrades.filter((g) => ['D', 'F'].includes(g.grade));
+
+      // 6. Excellence Rate (A+ and A grades)
+      const excellentGrades = getLatestGrades.filter((g) => ['A+', 'A'].includes(g.grade));
+      const excellenceRate = (excellentGrades.length / getLatestGrades.length) * 100;
+
+      // 7. Academic Standing
+      let academicStanding = 'Good Standing';
+      if (gradesData.cgpa >= 9.0) academicStanding = "Dean's List";
+      else if (gradesData.cgpa >= 8.5) academicStanding = 'Distinguished';
+      else if (gradesData.cgpa >= 7.0) academicStanding = 'Good Standing';
+      else if (gradesData.cgpa >= 5.0) academicStanding = 'Satisfactory';
+      else academicStanding = 'Academic Probation';
+
+      // 8. Best and Worst Semesters
+      const firstSemester = sortedSemesters[0];
+      const bestSemester = firstSemester
+        ? sortedSemesters.reduce((best, sem) => (sem.sgpa > best.sgpa ? sem : best), firstSemester)
+        : { semester: 0, sgpa: 0, grades: [], sessionYear: '', sessionType: 'Monsoon' as const };
+      const worstSemester = firstSemester
+        ? sortedSemesters.reduce(
+            (worst, sem) => (sem.sgpa < worst.sgpa ? sem : worst),
+            firstSemester
+          )
+        : { semester: 0, sgpa: 0, grades: [], sessionYear: '', sessionType: 'Monsoon' as const };
+
+      // 9. Improvement Potential
+      const maxPossibleCGPA = 10.0;
+      const improvementPotential = maxPossibleCGPA - gradesData.cgpa;
+
+      // 10. Semester Workload Analysis
+      const avgCreditsPerSem =
+        sortedSemesters.length > 0 ? gradesData.totalCredits / sortedSemesters.length : 0;
+      const maxCreditsInSem =
+        sortedSemesters.length > 0
+          ? Math.max(...sortedSemesters.map((s) => s.grades.reduce((sum, g) => sum + g.credits, 0)))
+          : 0;
+
       return {
-        semester: `Semester ${sem.semester}`,
-        semesterNum: sem.semester,
-        sgpa: sem.sgpa,
-        credits: earnedCredits, // Now only counts earned (passed) credits
-        delta: index > 0 ? delta : 0,
-        courseCount: sem.grades.length,
+        consistencyScore,
+        stdDev,
+        trajectoryStatus,
+        slope,
+        creditEfficiency,
+        highCreditAvg,
+        failedCourses,
+        atRiskCourses,
+        excellenceRate,
+        academicStanding,
+        bestSemester,
+        worstSemester,
+        improvementPotential,
+        avgCreditsPerSem,
+        maxCreditsInSem,
+        avgSgpa,
       };
-    });
-  }, [gradesData]);
+    }, [gradesData, getLatestGrades]);
 
-  // Advanced Performance Metrics
-  const advancedMetrics = useMemo(() => {
-    const sortedSemesters = gradesData.semesters;
+    // Calculate grade distribution with courses (using latest grades only)
+    const gradeDistribution = useMemo(() => {
+      const distribution: {
+        [key: string]: { count: number; courses: any[]; totalCredits: number };
+      } = {};
 
-    // 1. Consistency Score (lower std deviation = more consistent)
-    const sgpaValues = sortedSemesters.map((s) => s.sgpa);
-    const avgSgpa = sgpaValues.reduce((a, b) => a + b, 0) / sgpaValues.length;
-    const variance =
-      sgpaValues.reduce((sum, val) => sum + Math.pow(val - avgSgpa, 2), 0) / sgpaValues.length;
-    const stdDev = Math.sqrt(variance);
-    const consistencyScore = Math.max(0, 100 - stdDev * 20); // Higher is better
-
-    // 2. Performance Trajectory (linear regression slope)
-    let sumX = 0,
-      sumY = 0,
-      sumXY = 0,
-      sumX2 = 0;
-    const n = sortedSemesters.length;
-    sortedSemesters.forEach((sem, i) => {
-      sumX += i;
-      sumY += sem.sgpa;
-      sumXY += i * sem.sgpa;
-      sumX2 += i * i;
-    });
-    const slope = n > 1 ? (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX) : 0;
-    const trajectoryStatus = slope > 0.1 ? 'Improving' : slope < -0.1 ? 'Declining' : 'Stable';
-
-    // 3. Credit Efficiency (quality points per credit)
-    const totalQualityPoints = getLatestGrades.reduce(
-      (sum, g) => sum + (gradePoints[g.grade] || 0) * g.credits,
-      0
-    );
-    const creditEfficiency =
-      gradesData.totalCredits > 0 ? totalQualityPoints / gradesData.totalCredits : 0;
-
-    // 4. High-Credit Performance (courses with 4+ credits)
-    const highCreditThreshold = courseOption === 'NEP' ? 3 : 9;
-    const highCreditCourses = getLatestGrades.filter((g) => g.credits >= highCreditThreshold);
-    const highCreditAvg =
-      highCreditCourses.length > 0
-        ? highCreditCourses.reduce((sum, g) => sum + (gradePoints[g.grade] || 0), 0) /
-        highCreditCourses.length
-        : 0;
-
-    // 5. Failure/Risk Analysis
-    const failedCourses = getLatestGrades.filter((g) => g.grade === 'F');
-    const atRiskCourses = getLatestGrades.filter((g) => ['D', 'F'].includes(g.grade));
-
-    // 6. Excellence Rate (A+ and A grades)
-    const excellentGrades = getLatestGrades.filter((g) => ['A+', 'A'].includes(g.grade));
-    const excellenceRate = (excellentGrades.length / getLatestGrades.length) * 100;
-
-    // 7. Academic Standing
-    let academicStanding = 'Good Standing';
-    if (gradesData.cgpa >= 9.0) academicStanding = "Dean's List";
-    else if (gradesData.cgpa >= 8.5) academicStanding = 'Distinguished';
-    else if (gradesData.cgpa >= 7.0) academicStanding = 'Good Standing';
-    else if (gradesData.cgpa >= 5.0) academicStanding = 'Satisfactory';
-    else academicStanding = 'Academic Probation';
-
-    // 8. Best and Worst Semesters
-    const firstSemester = sortedSemesters[0];
-    const bestSemester = firstSemester
-      ? sortedSemesters.reduce((best, sem) => (sem.sgpa > best.sgpa ? sem : best), firstSemester)
-      : { semester: 0, sgpa: 0, grades: [], sessionYear: '', sessionType: 'Monsoon' as const };
-    const worstSemester = firstSemester
-      ? sortedSemesters.reduce((worst, sem) => (sem.sgpa < worst.sgpa ? sem : worst), firstSemester)
-      : { semester: 0, sgpa: 0, grades: [], sessionYear: '', sessionType: 'Monsoon' as const };
-
-    // 9. Improvement Potential
-    const maxPossibleCGPA = 10.0;
-    const improvementPotential = maxPossibleCGPA - gradesData.cgpa;
-
-    // 10. Semester Workload Analysis
-    const avgCreditsPerSem =
-      sortedSemesters.length > 0 ? gradesData.totalCredits / sortedSemesters.length : 0;
-    const maxCreditsInSem =
-      sortedSemesters.length > 0
-        ? Math.max(...sortedSemesters.map((s) => s.grades.reduce((sum, g) => sum + g.credits, 0)))
-        : 0;
-
-    return {
-      consistencyScore,
-      stdDev,
-      trajectoryStatus,
-      slope,
-      creditEfficiency,
-      highCreditAvg,
-      failedCourses,
-      atRiskCourses,
-      excellenceRate,
-      academicStanding,
-      bestSemester,
-      worstSemester,
-      improvementPotential,
-      avgCreditsPerSem,
-      maxCreditsInSem,
-      avgSgpa,
-    };
-  }, [gradesData, getLatestGrades]);
-
-  // Calculate grade distribution with courses (using latest grades only)
-  const gradeDistribution = useMemo(() => {
-    const distribution: { [key: string]: { count: number; courses: any[]; totalCredits: number } } =
-      {};
-
-    getLatestGrades.forEach((gradeWithSem: any) => {
-      const gradeValue = gradeWithSem.grade;
-      if (!distribution[gradeValue]) {
-        distribution[gradeValue] = { count: 0, courses: [], totalCredits: 0 };
-      }
-      const gradeEntry = distribution[gradeValue];
-      if (gradeEntry) {
-        gradeEntry.count += 1;
-        gradeEntry.courses.push(gradeWithSem);
-        gradeEntry.totalCredits += gradeWithSem.credits || 0;
-      }
-    });
-
-    return distribution;
-  }, [getLatestGrades]);
-
-  const getGradeCourses = (grade: string) => {
-    return gradeDistribution[grade]?.courses || [];
-  };
-
-  // Calculate subject performance with courses (using latest grades only)
-  const subjectPerformance = useMemo(() => {
-    const subjects: {
-      [key: string]: { total: number; count: number; courses: any[]; totalCredits: number };
-    } = {};
-
-    getLatestGrades.forEach((gradeWithSem: any) => {
-      const category = gradeWithSem.subjectCode.substring(0, 2);
-      if (!subjects[category]) {
-        subjects[category] = { total: 0, count: 0, courses: [], totalCredits: 0 };
-      }
-      subjects[category].total += gradePoints[gradeWithSem.grade] || 0;
-      subjects[category].count += 1;
-      subjects[category].courses.push(gradeWithSem);
-      subjects[category].totalCredits += gradeWithSem.credits || 0;
-    });
-
-    return Object.entries(subjects)
-      .map(([category, data]) => ({
-        category,
-        average: (data.total / data.count).toFixed(2),
-        courses: data.courses,
-        totalCredits: data.totalCredits,
-      }))
-      .sort((a, b) => {
-        const avgDiff = parseFloat(b.average) - parseFloat(a.average);
-        if (avgDiff !== 0) return avgDiff;
-        // If averages are equal, sort by totalCredits (higher credits = better rank)
-        return b.totalCredits - a.totalCredits;
+      getLatestGrades.forEach((gradeWithSem: any) => {
+        const gradeValue = gradeWithSem.grade;
+        if (!distribution[gradeValue]) {
+          distribution[gradeValue] = { count: 0, courses: [], totalCredits: 0 };
+        }
+        const gradeEntry = distribution[gradeValue];
+        if (gradeEntry) {
+          gradeEntry.count += 1;
+          gradeEntry.courses.push(gradeWithSem);
+          gradeEntry.totalCredits += gradeWithSem.credits || 0;
+        }
       });
-  }, [getLatestGrades]);
 
-  const getCategoryCourses = (category: string) => {
-    const categoryData = subjectPerformance.find((s) => s.category === category);
-    return categoryData?.courses || [];
-  };
+      return distribution;
+    }, [getLatestGrades]);
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold flex items-center">
-          <svg
-            className="w-5 h-5 mr-2 text-primary"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-            />
-          </svg>
-          Performance Analytics
-        </h3>
-      </div>
+    const getGradeCourses = (grade: string) => {
+      return gradeDistribution[grade]?.courses || [];
+    };
 
-      {/* Tab Navigation */}
-      <div className="grid grid-cols-3 gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 sm:p-2 rounded-lg">
-        {[
-          { id: 'overview', label: 'Overview', shortLabel: 'Overview', icon: '📊' },
-          { id: 'trends', label: 'Performance Trends', shortLabel: 'Trends', icon: '📈' },
-          {
-            id: 'distribution',
-            label: 'Grade Distribution',
-            shortLabel: 'Distribution',
-            icon: '🎯',
-          },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`px-3 py-2.5 sm:px-4 sm:py-2 rounded-md font-medium transition-all text-sm sm:text-base transform hover:scale-105 hover:shadow-lg ${activeTab === tab.id
-                ? 'bg-white dark:bg-dark-card shadow text-primary'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+    // Calculate subject performance with courses (using latest grades only)
+    const subjectPerformance = useMemo(() => {
+      const subjects: {
+        [key: string]: { total: number; count: number; courses: any[]; totalCredits: number };
+      } = {};
+
+      getLatestGrades.forEach((gradeWithSem: any) => {
+        const category = gradeWithSem.subjectCode.substring(0, 2);
+        if (!subjects[category]) {
+          subjects[category] = { total: 0, count: 0, courses: [], totalCredits: 0 };
+        }
+        subjects[category].total += gradePoints[gradeWithSem.grade] || 0;
+        subjects[category].count += 1;
+        subjects[category].courses.push(gradeWithSem);
+        subjects[category].totalCredits += gradeWithSem.credits || 0;
+      });
+
+      return Object.entries(subjects)
+        .map(([category, data]) => ({
+          category,
+          average: (data.total / data.count).toFixed(2),
+          courses: data.courses,
+          totalCredits: data.totalCredits,
+        }))
+        .sort((a, b) => {
+          const avgDiff = parseFloat(b.average) - parseFloat(a.average);
+          if (avgDiff !== 0) return avgDiff;
+          // If averages are equal, sort by totalCredits (higher credits = better rank)
+          return b.totalCredits - a.totalCredits;
+        });
+    }, [getLatestGrades]);
+
+    const getCategoryCourses = (category: string) => {
+      const categoryData = subjectPerformance.find((s) => s.category === category);
+      return categoryData?.courses || [];
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6"
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold flex items-center">
+            <svg
+              className="w-5 h-5 mr-2 text-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
+            </svg>
+            Performance Analytics
+          </h3>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="grid grid-cols-3 gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 sm:p-2 rounded-lg">
+          {[
+            { id: 'overview', label: 'Overview', shortLabel: 'Overview', icon: '📊' },
+            { id: 'trends', label: 'Performance Trends', shortLabel: 'Trends', icon: '📈' },
+            {
+              id: 'distribution',
+              label: 'Grade Distribution',
+              shortLabel: 'Distribution',
+              icon: '🎯',
+            },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-3 py-2.5 sm:px-4 sm:py-2 rounded-md font-medium transition-all text-sm sm:text-base transform hover:scale-105 hover:shadow-lg ${
+                activeTab === tab.id
+                  ? 'bg-white dark:bg-dark-card shadow text-primary'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
-          >
-            <span className="mr-1.5 sm:mr-2">{tab.icon}</span>
-            <span className="hidden lg:inline">{tab.label}</span>
-            <span className="lg:hidden">{tab.shortLabel}</span>
-          </button>
-        ))}
-      </div>
+            >
+              <span className="mr-1.5 sm:mr-2">{tab.icon}</span>
+              <span className="hidden lg:inline">{tab.label}</span>
+              <span className="lg:hidden">{tab.shortLabel}</span>
+            </button>
+          ))}
+        </div>
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
-        <div className="space-y-4 sm:space-y-6">
-          {/* Key Performance Indicators */}
-          <motion.div
-            className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
-            variants={{
-              hidden: { opacity: 0 },
-              show: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.1,
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Key Performance Indicators */}
+            <motion.div
+              className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+              variants={{
+                hidden: { opacity: 0 },
+                show: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1,
+                  },
                 },
-              },
-            }}
-            initial="hidden"
-            animate="show"
-          >
-            <motion.button
-              type="button"
-              aria-expanded={selectedKPI === 'standing'}
-              aria-label="View details for Academic Standing"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
               }}
-              whileHover={{ y: -8, scale: 1.05 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              onClick={() => setSelectedKPI(selectedKPI === 'standing' ? null : 'standing')}
-              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-blue-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
+              initial="hidden"
+              animate="show"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent dark:from-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                  <h4 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Academic Standing
-                  </h4>
-                  <motion.span
-                    className="text-base sm:text-lg"
-                    whileHover={{ scale: 1.3, rotate: [0, -10, 10, 0] }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    🎓
-                  </motion.span>
-                </div>
-                <motion.p
-                  className="text-base sm:text-xl font-bold text-blue-600 truncate"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  {advancedMetrics.academicStanding}
-                </motion.p>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-[10px] sm:text-xs text-slate-500">CGPA</p>
-                  <AnimatedCounter
-                    value={gradesData.cgpa}
-                    decimals={2}
-                    className="text-[10px] sm:text-xs font-semibold text-blue-600"
-                  />
-                </div>
-              </div>
-            </motion.button>
-
-            <motion.button
-              type="button"
-              aria-expanded={selectedKPI === 'consistency'}
-              aria-label="View details for Consistency Score"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
-              whileHover={{ y: -8, scale: 1.05 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              onClick={() => setSelectedKPI(selectedKPI === 'consistency' ? null : 'consistency')}
-              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-green-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent dark:from-green-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                  <h4 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Consistency Score
-                  </h4>
-                  <motion.span
-                    className="text-base sm:text-lg"
-                    whileHover={{ scale: 1.3, rotate: 360 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    🎯
-                  </motion.span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <AnimatedCounter
-                    value={advancedMetrics.consistencyScore}
-                    decimals={0}
-                    className="text-base sm:text-xl font-bold text-green-600"
-                  />
-                  <span className="text-base sm:text-xl font-bold text-green-600">%</span>
-                  <ProgressRing
-                    progress={advancedMetrics.consistencyScore}
-                    size={24}
-                    strokeWidth={3}
-                    color="stroke-green-500"
-                    className="hidden xs:block"
-                  />
-                </div>
-                <p className="text-[10px] sm:text-xs text-slate-500 mt-1">
-                  σ = {advancedMetrics.stdDev.toFixed(3)}
-                </p>
-              </div>
-            </motion.button>
-
-            <motion.button
-              type="button"
-              aria-expanded={selectedKPI === 'efficiency'}
-              aria-label="View details for Credit Efficiency"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
-              whileHover={{ y: -8, scale: 1.05 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              onClick={() => setSelectedKPI(selectedKPI === 'efficiency' ? null : 'efficiency')}
-              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-purple-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent dark:from-purple-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                  <h4 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Credit Efficiency
-                  </h4>
-                  <motion.span
-                    className="text-base sm:text-lg"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  >
-                    ⚡
-                  </motion.span>
-                </div>
-                <AnimatedCounter
-                  value={advancedMetrics.creditEfficiency}
-                  decimals={2}
-                  className="text-base sm:text-xl font-bold text-purple-600 block"
-                />
-                <div className="flex items-center gap-1 mt-1">
-                  <p className="text-[10px] sm:text-xs text-slate-500">points/credit</p>
-                  {advancedMetrics.creditEfficiency >= 8.5 && (
+              <motion.button
+                type="button"
+                aria-expanded={selectedKPI === 'standing'}
+                aria-label="View details for Academic Standing"
+                variants={{
+                  hidden: { opacity: 0, y: 20, scale: 0.9 },
+                  show: { opacity: 1, y: 0, scale: 1 },
+                }}
+                whileHover={{ y: -8, scale: 1.05 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                onClick={() => setSelectedKPI(selectedKPI === 'standing' ? null : 'standing')}
+                className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-blue-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent dark:from-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                    <h4 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+                      Academic Standing
+                    </h4>
                     <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="text-[8px] px-1 bg-purple-100 text-purple-700 rounded"
+                      className="text-base sm:text-lg"
+                      whileHover={{ scale: 1.3, rotate: [0, -10, 10, 0] }}
+                      transition={{ duration: 0.5 }}
                     >
-                      Excellent
+                      🎓
                     </motion.span>
-                  )}
+                  </div>
+                  <motion.p
+                    className="text-base sm:text-xl font-bold text-blue-600 truncate"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    {advancedMetrics.academicStanding}
+                  </motion.p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-[10px] sm:text-xs text-slate-500">CGPA</p>
+                    <AnimatedCounter
+                      value={gradesData.cgpa}
+                      decimals={2}
+                      className="text-[10px] sm:text-xs font-semibold text-blue-600"
+                    />
+                  </div>
                 </div>
-              </div>
-            </motion.button>
+              </motion.button>
 
-            <motion.button
-              type="button"
-              aria-expanded={selectedKPI === 'trend'}
-              aria-label="View details for Performance Trend"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
-              whileHover={{ y: -8, scale: 1.05 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              onClick={() => setSelectedKPI(selectedKPI === 'trend' ? null : 'trend')}
-              className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-orange-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-transparent dark:from-orange-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                  <h4 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Performance Trend
-                  </h4>
-                  <motion.span
-                    className="text-base sm:text-lg"
-                    animate={
-                      advancedMetrics.trajectoryStatus === 'Improving'
-                        ? { y: [0, -5, 0] }
+              <motion.button
+                type="button"
+                aria-expanded={selectedKPI === 'consistency'}
+                aria-label="View details for Consistency Score"
+                variants={{
+                  hidden: { opacity: 0, y: 20, scale: 0.9 },
+                  show: { opacity: 1, y: 0, scale: 1 },
+                }}
+                whileHover={{ y: -8, scale: 1.05 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                onClick={() => setSelectedKPI(selectedKPI === 'consistency' ? null : 'consistency')}
+                className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-green-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent dark:from-green-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                    <h4 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+                      Consistency Score
+                    </h4>
+                    <motion.span
+                      className="text-base sm:text-lg"
+                      whileHover={{ scale: 1.3, rotate: 360 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      🎯
+                    </motion.span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <AnimatedCounter
+                      value={advancedMetrics.consistencyScore}
+                      decimals={0}
+                      className="text-base sm:text-xl font-bold text-green-600"
+                    />
+                    <span className="text-base sm:text-xl font-bold text-green-600">%</span>
+                    <ProgressRing
+                      progress={advancedMetrics.consistencyScore}
+                      size={24}
+                      strokeWidth={3}
+                      color="stroke-green-500"
+                      className="hidden xs:block"
+                    />
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-slate-500 mt-1">
+                    σ = {advancedMetrics.stdDev.toFixed(3)}
+                  </p>
+                </div>
+              </motion.button>
+
+              <motion.button
+                type="button"
+                aria-expanded={selectedKPI === 'efficiency'}
+                aria-label="View details for Credit Efficiency"
+                variants={{
+                  hidden: { opacity: 0, y: 20, scale: 0.9 },
+                  show: { opacity: 1, y: 0, scale: 1 },
+                }}
+                whileHover={{ y: -8, scale: 1.05 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                onClick={() => setSelectedKPI(selectedKPI === 'efficiency' ? null : 'efficiency')}
+                className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-purple-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent dark:from-purple-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                    <h4 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+                      Credit Efficiency
+                    </h4>
+                    <motion.span
+                      className="text-base sm:text-lg"
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ repeat: Infinity, duration: 2 }}
+                    >
+                      ⚡
+                    </motion.span>
+                  </div>
+                  <AnimatedCounter
+                    value={advancedMetrics.creditEfficiency}
+                    decimals={2}
+                    className="text-base sm:text-xl font-bold text-purple-600 block"
+                  />
+                  <div className="flex items-center gap-1 mt-1">
+                    <p className="text-[10px] sm:text-xs text-slate-500">points/credit</p>
+                    {advancedMetrics.creditEfficiency >= 8.5 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="text-[8px] px-1 bg-purple-100 text-purple-700 rounded"
+                      >
+                        Excellent
+                      </motion.span>
+                    )}
+                  </div>
+                </div>
+              </motion.button>
+
+              <motion.button
+                type="button"
+                aria-expanded={selectedKPI === 'trend'}
+                aria-label="View details for Performance Trend"
+                variants={{
+                  hidden: { opacity: 0, y: 20, scale: 0.9 },
+                  show: { opacity: 1, y: 0, scale: 1 },
+                }}
+                whileHover={{ y: -8, scale: 1.05 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                onClick={() => setSelectedKPI(selectedKPI === 'trend' ? null : 'trend')}
+                className="group relative overflow-hidden bg-white dark:bg-dark-card p-3 sm:p-5 rounded-xl shadow-xl border-l-4 border-orange-500 hover:shadow-2xl active:scale-[0.98] cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-card"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-transparent dark:from-orange-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                    <h4 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+                      Performance Trend
+                    </h4>
+                    <motion.span
+                      className="text-base sm:text-lg"
+                      animate={
+                        advancedMetrics.trajectoryStatus === 'Improving'
+                          ? { y: [0, -5, 0] }
+                          : advancedMetrics.trajectoryStatus === 'Declining'
+                            ? { y: [0, 5, 0] }
+                            : { x: [0, 5, 0] }
+                      }
+                      transition={{ repeat: Infinity, duration: 2 }}
+                    >
+                      {advancedMetrics.trajectoryStatus === 'Improving'
+                        ? '📈'
                         : advancedMetrics.trajectoryStatus === 'Declining'
-                          ? { y: [0, 5, 0] }
-                          : { x: [0, 5, 0] }
-                    }
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  >
-                    {advancedMetrics.trajectoryStatus === 'Improving'
-                      ? '📈'
-                      : advancedMetrics.trajectoryStatus === 'Declining'
-                        ? '📉'
-                        : '➡️'}
-                  </motion.span>
-                </div>
-                <motion.p
-                  className={`text-base sm:text-xl font-bold truncate ${advancedMetrics.trajectoryStatus === 'Improving'
-                      ? 'text-green-600'
-                      : advancedMetrics.trajectoryStatus === 'Declining'
-                        ? 'text-red-600'
-                        : 'text-orange-600'
-                    }`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  {advancedMetrics.trajectoryStatus}
-                </motion.p>
-                <p className="text-[10px] sm:text-xs text-slate-500 mt-1">
-                  <span
-                    className={
-                      advancedMetrics.slope > 0
+                          ? '📉'
+                          : '➡️'}
+                    </motion.span>
+                  </div>
+                  <motion.p
+                    className={`text-base sm:text-xl font-bold truncate ${
+                      advancedMetrics.trajectoryStatus === 'Improving'
                         ? 'text-green-600'
-                        : advancedMetrics.slope < 0
+                        : advancedMetrics.trajectoryStatus === 'Declining'
                           ? 'text-red-600'
-                          : 'text-slate-500'
-                    }
+                          : 'text-orange-600'
+                    }`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
                   >
-                    {advancedMetrics.slope > 0 ? '+' : ''}
-                    {(advancedMetrics.slope * 100).toFixed(1)}%
-                  </span>
-                  /sem
-                </p>
-              </div>
-            </motion.button>
-          </motion.div>
+                    {advancedMetrics.trajectoryStatus}
+                  </motion.p>
+                  <p className="text-[10px] sm:text-xs text-slate-500 mt-1">
+                    <span
+                      className={
+                        advancedMetrics.slope > 0
+                          ? 'text-green-600'
+                          : advancedMetrics.slope < 0
+                            ? 'text-red-600'
+                            : 'text-slate-500'
+                      }
+                    >
+                      {advancedMetrics.slope > 0 ? '+' : ''}
+                      {(advancedMetrics.slope * 100).toFixed(1)}%
+                    </span>
+                    /sem
+                  </p>
+                </div>
+              </motion.button>
+            </motion.div>
 
-          {/* KPI Explanation Panel */}
-          {(selectedKPI === 'standing' ||
-            selectedKPI === 'consistency' ||
-            selectedKPI === 'efficiency' ||
-            selectedKPI === 'trend') && (
+            {/* KPI Explanation Panel */}
+            {(selectedKPI === 'standing' ||
+              selectedKPI === 'consistency' ||
+              selectedKPI === 'efficiency' ||
+              selectedKPI === 'trend') && (
               <motion.div
                 initial={{ opacity: 0, height: 0, marginTop: 0 }}
                 animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
@@ -2135,8 +2153,8 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                           <span className="text-blue-500">🎓</span> Academic Standing
                         </h4>
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
-                          Your academic standing is determined by your CGPA and indicates your overall
-                          performance level.
+                          Your academic standing is determined by your CGPA and indicates your
+                          overall performance level.
                         </p>
                         <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
                           <p className="text-xs font-medium mb-2">Classification:</p>
@@ -2357,170 +2375,170 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               </motion.div>
             )}
 
-          {/* Performance Summary Cards */}
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
-            variants={{
-              hidden: { opacity: 0 },
-              show: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.1,
+            {/* Performance Summary Cards */}
+            <motion.div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
+              variants={{
+                hidden: { opacity: 0 },
+                show: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1,
+                  },
                 },
-              },
-            }}
-            initial="hidden"
-            animate="show"
-          >
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                show: { opacity: 1, y: 0 },
               }}
-              whileHover={{ y: -4, scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              onClick={() => setSelectedKPI(selectedKPI === 'excellence' ? null : 'excellence')}
-              className="group bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
+              initial="hidden"
+              animate="show"
             >
-              <h4 className="font-semibold mb-2 sm:mb-3 text-emerald-700 dark:text-emerald-400 text-sm sm:text-base">
-                Excellence Metrics
-              </h4>
-              <div className="space-y-1.5 sm:space-y-2">
-                <div className="flex justify-between items-center p-1.5 rounded hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 transition-colors">
-                  <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                    Excellence Rate
-                  </span>
-                  <AnimatedCounter
-                    value={advancedMetrics.excellenceRate}
-                    decimals={1}
-                    className="font-semibold text-sm sm:text-base text-emerald-700 dark:text-emerald-400"
-                  />
-                </div>
-                <div className="flex justify-between items-center p-1.5 rounded hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 transition-colors">
-                  <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                    Best Semester
-                  </span>
-                  <span className="font-semibold text-sm sm:text-base">
-                    Sem {advancedMetrics.bestSemester.semester} (
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  show: { opacity: 1, y: 0 },
+                }}
+                whileHover={{ y: -4, scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setSelectedKPI(selectedKPI === 'excellence' ? null : 'excellence')}
+                className="group bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
+              >
+                <h4 className="font-semibold mb-2 sm:mb-3 text-emerald-700 dark:text-emerald-400 text-sm sm:text-base">
+                  Excellence Metrics
+                </h4>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex justify-between items-center p-1.5 rounded hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 transition-colors">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                      Excellence Rate
+                    </span>
                     <AnimatedCounter
-                      value={advancedMetrics.bestSemester.sgpa}
-                      decimals={2}
-                      className="inline"
+                      value={advancedMetrics.excellenceRate}
+                      decimals={1}
+                      className="font-semibold text-sm sm:text-base text-emerald-700 dark:text-emerald-400"
                     />
-                    )
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-1.5 rounded hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 transition-colors">
-                  <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                    High-Credit Avg
-                  </span>
-                  <AnimatedCounter
-                    value={advancedMetrics.highCreditAvg}
-                    decimals={2}
-                    className="font-semibold text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                show: { opacity: 1, y: 0 },
-              }}
-              whileHover={{ y: -4, scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              onClick={() => setSelectedKPI(selectedKPI === 'workload' ? null : 'workload')}
-              className="group bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
-            >
-              <h4 className="font-semibold mb-2 sm:mb-3 text-blue-700 dark:text-blue-400 text-sm sm:text-base">
-                Workload Analysis
-              </h4>
-              <div className="space-y-1.5 sm:space-y-2">
-                <div className="flex justify-between items-center p-1.5 rounded hover:bg-blue-100/70 dark:hover:bg-blue-900/40 transition-colors">
-                  <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                    Avg Credits/Sem
-                  </span>
-                  <AnimatedCounter
-                    value={advancedMetrics.avgCreditsPerSem}
-                    decimals={1}
-                    className="font-semibold text-sm sm:text-base text-blue-700 dark:text-blue-400"
-                  />
-                </div>
-                <div className="flex justify-between items-center p-1.5 rounded hover:bg-blue-100/70 dark:hover:bg-blue-900/40 transition-colors">
-                  <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                    Max Credits
-                  </span>
-                  <AnimatedInteger
-                    value={advancedMetrics.maxCreditsInSem}
-                    className="font-semibold text-sm sm:text-base"
-                  />
-                </div>
-                <div className="flex justify-between items-center p-1.5 rounded hover:bg-blue-100/70 dark:hover:bg-blue-900/40 transition-colors">
-                  <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                    Total Courses
-                  </span>
-                  <AnimatedInteger
-                    value={getLatestGrades.length}
-                    className="font-semibold text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                show: { opacity: 1, y: 0 },
-              }}
-              whileHover={{ y: -4, scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              onClick={() => setSelectedKPI(selectedKPI === 'risk' ? null : 'risk')}
-              className="group bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-4 sm:p-5 rounded-xl sm:col-span-2 lg:col-span-1 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
-            >
-              <h4 className="font-semibold mb-2 sm:mb-3 text-amber-700 dark:text-amber-400 text-sm sm:text-base">
-                Risk Assessment
-              </h4>
-              <div className="space-y-1.5 sm:space-y-2">
-                <div className="flex justify-between items-center p-1.5 rounded hover:bg-amber-100/70 dark:hover:bg-amber-900/40 transition-colors">
-                  <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                    Failed Courses
-                  </span>
-                  <AnimatedInteger
-                    value={advancedMetrics.failedCourses.length}
-                    className={`font-semibold text-sm sm:text-base ${advancedMetrics.failedCourses.length > 0 ? 'text-red-600' : 'text-green-600'}`}
-                  />
-                </div>
-                <div className="flex justify-between items-center p-1.5 rounded hover:bg-amber-100/70 dark:hover:bg-amber-900/40 transition-colors">
-                  <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                    At-Risk (D/F)
-                  </span>
-                  <AnimatedInteger
-                    value={advancedMetrics.atRiskCourses.length}
-                    className={`font-semibold text-sm sm:text-base ${advancedMetrics.atRiskCourses.length > 0 ? 'text-orange-600' : 'text-green-600'}`}
-                  />
-                </div>
-                <div className="flex justify-between items-center p-1.5 rounded hover:bg-amber-100/70 dark:hover:bg-amber-900/40 transition-colors">
-                  <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                    Improvement
-                  </span>
-                  <span className="font-semibold text-sm sm:text-base">
+                  </div>
+                  <div className="flex justify-between items-center p-1.5 rounded hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 transition-colors">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                      Best Semester
+                    </span>
+                    <span className="font-semibold text-sm sm:text-base">
+                      Sem {advancedMetrics.bestSemester.semester} (
+                      <AnimatedCounter
+                        value={advancedMetrics.bestSemester.sgpa}
+                        decimals={2}
+                        className="inline"
+                      />
+                      )
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-1.5 rounded hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 transition-colors">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                      High-Credit Avg
+                    </span>
                     <AnimatedCounter
-                      value={advancedMetrics.improvementPotential}
+                      value={advancedMetrics.highCreditAvg}
                       decimals={2}
-                      className="inline"
-                    />{' '}
-                    pts
-                  </span>
+                      className="font-semibold text-sm sm:text-base"
+                    />
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          </motion.div>
+              </motion.div>
 
-          {/* Excellence/Workload/Risk Explanation Panel */}
-          {(selectedKPI === 'excellence' ||
-            selectedKPI === 'workload' ||
-            selectedKPI === 'risk') && (
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  show: { opacity: 1, y: 0 },
+                }}
+                whileHover={{ y: -4, scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setSelectedKPI(selectedKPI === 'workload' ? null : 'workload')}
+                className="group bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
+              >
+                <h4 className="font-semibold mb-2 sm:mb-3 text-blue-700 dark:text-blue-400 text-sm sm:text-base">
+                  Workload Analysis
+                </h4>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex justify-between items-center p-1.5 rounded hover:bg-blue-100/70 dark:hover:bg-blue-900/40 transition-colors">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                      Avg Credits/Sem
+                    </span>
+                    <AnimatedCounter
+                      value={advancedMetrics.avgCreditsPerSem}
+                      decimals={1}
+                      className="font-semibold text-sm sm:text-base text-blue-700 dark:text-blue-400"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center p-1.5 rounded hover:bg-blue-100/70 dark:hover:bg-blue-900/40 transition-colors">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                      Max Credits
+                    </span>
+                    <AnimatedInteger
+                      value={advancedMetrics.maxCreditsInSem}
+                      className="font-semibold text-sm sm:text-base"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center p-1.5 rounded hover:bg-blue-100/70 dark:hover:bg-blue-900/40 transition-colors">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                      Total Courses
+                    </span>
+                    <AnimatedInteger
+                      value={getLatestGrades.length}
+                      className="font-semibold text-sm sm:text-base"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  show: { opacity: 1, y: 0 },
+                }}
+                whileHover={{ y: -4, scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setSelectedKPI(selectedKPI === 'risk' ? null : 'risk')}
+                className="group bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-4 sm:p-5 rounded-xl sm:col-span-2 lg:col-span-1 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
+              >
+                <h4 className="font-semibold mb-2 sm:mb-3 text-amber-700 dark:text-amber-400 text-sm sm:text-base">
+                  Risk Assessment
+                </h4>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <div className="flex justify-between items-center p-1.5 rounded hover:bg-amber-100/70 dark:hover:bg-amber-900/40 transition-colors">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                      Failed Courses
+                    </span>
+                    <AnimatedInteger
+                      value={advancedMetrics.failedCourses.length}
+                      className={`font-semibold text-sm sm:text-base ${advancedMetrics.failedCourses.length > 0 ? 'text-red-600' : 'text-green-600'}`}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center p-1.5 rounded hover:bg-amber-100/70 dark:hover:bg-amber-900/40 transition-colors">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                      At-Risk (D/F)
+                    </span>
+                    <AnimatedInteger
+                      value={advancedMetrics.atRiskCourses.length}
+                      className={`font-semibold text-sm sm:text-base ${advancedMetrics.atRiskCourses.length > 0 ? 'text-orange-600' : 'text-green-600'}`}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center p-1.5 rounded hover:bg-amber-100/70 dark:hover:bg-amber-900/40 transition-colors">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                      Improvement
+                    </span>
+                    <span className="font-semibold text-sm sm:text-base">
+                      <AnimatedCounter
+                        value={advancedMetrics.improvementPotential}
+                        decimals={2}
+                        className="inline"
+                      />{' '}
+                      pts
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Excellence/Workload/Risk Explanation Panel */}
+            {(selectedKPI === 'excellence' ||
+              selectedKPI === 'workload' ||
+              selectedKPI === 'risk') && (
               <motion.div
                 initial={{ opacity: 0, height: 0, marginTop: 0 }}
                 animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
@@ -2536,8 +2554,8 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                           <span className="text-emerald-500">🏆</span> Excellence Metrics
                         </h4>
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
-                          Measures your top performance indicators including rate of excellent grades
-                          and performance in high-credit courses.
+                          Measures your top performance indicators including rate of excellent
+                          grades and performance in high-credit courses.
                         </p>
                         <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg space-y-3">
                           <div>
@@ -2546,8 +2564,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                               (A+ & A grades count / Total courses) × 100
                             </code>
                             <p className="text-xs text-slate-500 mt-1">
-                              Your rate: <strong>{advancedMetrics.excellenceRate.toFixed(1)}%</strong>{' '}
-                              of courses are A+ or A
+                              Your rate:{' '}
+                              <strong>{advancedMetrics.excellenceRate.toFixed(1)}%</strong> of
+                              courses are A+ or A
                             </p>
                           </div>
                           <div>
@@ -2578,7 +2597,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                         </p>
                         <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg space-y-3">
                           <div>
-                            <p className="text-xs font-medium mb-1">Average Credits per Semester:</p>
+                            <p className="text-xs font-medium mb-1">
+                              Average Credits per Semester:
+                            </p>
                             <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
                               Total Credits / Number of Semesters
                             </code>
@@ -2590,7 +2611,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs font-medium mb-1">Maximum Credits in a Semester:</p>
+                            <p className="text-xs font-medium mb-1">
+                              Maximum Credits in a Semester:
+                            </p>
                             <p className="text-xs text-slate-500">
                               Heaviest semester had{' '}
                               <strong>{advancedMetrics.maxCreditsInSem} credits</strong>
@@ -2687,262 +2710,19 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               </motion.div>
             )}
 
-          {/* Subject Category Performance */}
-          <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-start justify-between mb-3 sm:mb-4">
-              <h4 className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default inline-block">
-                Subject Category Performance (Ranked)
-              </h4>
-              <button
-                onClick={() =>
-                  setSelectedGrade(
-                    selectedGrade === 'info-subject-category' ? null : 'info-subject-category'
-                  )
-                }
-                className="ml-2 text-slate-400 hover:text-primary transition-colors"
-                title="Click for details"
-              >
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {selectedGrade === 'info-subject-category' && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-4 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
-              >
-                <h5 className="font-semibold text-sm mb-2 text-amber-900 dark:text-amber-300">
-                  📚 What is Subject Category Performance?
-                </h5>
-                <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-200 mb-3">
-                  This ranks your performance across different departments based on average grade
-                  points, helping you identify your academic strengths and weaknesses.
-                </p>
-                <div className="space-y-2 text-xs sm:text-sm">
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
-                      Understanding the ranking:
-                    </p>
-                    <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                      <li>
-                        <strong>🥇 1st Place</strong>: Gold highlight - Your strongest subject area
-                      </li>
-                      <li>
-                        <strong>🥈 2nd Place</strong>: Silver highlight - Second-best performance
-                      </li>
-                      <li>
-                        <strong>🥉 3rd Place</strong>: Bronze highlight - Third-best performance
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
-                      How average is calculated:
-                    </p>
-                    <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
-                      Category Average = Σ(Grade Points) / Number of Courses in Category
-                    </code>
-                    <p className="text-slate-700 dark:text-slate-300 text-xs">
-                      <em>
-                        Example: Courses with grades A (9), A+ (10), B+ (8) → Average = (9+10+8)/3 =
-                        9.0
-                      </em>
-                    </p>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
-                      Why this matters:
-                    </p>
-                    <p className="text-slate-700 dark:text-slate-300">
-                      Identifying your strongest and weakest subject categories helps you make
-                      informed decisions about electives, specializations, and career paths. It also
-                      reveals where you might need extra support or tutoring. Click on any category
-                      to see individual course details.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-            <motion.div
-              className="space-y-2 sm:space-y-3"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
-              initial="hidden"
-              animate="show"
-            >
-              {subjectPerformance.map((subject, index) => (
-                <motion.div
-                  key={index}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <div
-                    onClick={() =>
-                      setSelectedCategory(
-                        selectedCategory === subject.category ? null : subject.category
-                      )
-                    }
-                    className={`group relative overflow-hidden flex justify-between items-center p-3 rounded-lg hover:shadow-md transition-all duration-300 cursor-pointer transform hover:scale-[1.02] hover:-translate-y-0.5 ${index === 0
-                        ? 'bg-[#FFD700]/20 dark:bg-[#FFD700]/10 border-l-4 border-[#FFD700]'
-                        : index === 1
-                          ? 'bg-slate-200 dark:bg-slate-700/60 border-l-4 border-slate-500'
-                          : index === 2
-                            ? 'bg-orange-100 dark:bg-orange-900/40 border-l-4 border-orange-400'
-                            : 'bg-slate-50 dark:bg-slate-800'
-                      }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index === 0
-                            ? 'bg-[#FFD700] text-yellow-900 dark:bg-[#FFD700]/80 dark:text-yellow-950'
-                            : index === 1
-                              ? 'bg-slate-300 text-slate-800 dark:bg-slate-600 dark:text-slate-100'
-                              : index === 2
-                                ? 'bg-orange-200 text-orange-800 dark:bg-orange-700 dark:text-orange-100'
-                                : 'bg-slate-50 text-slate-600'
-                          }`}
-                      >
-                        {index + 1}
-                      </span>
-                      <div>
-                        <span className={`font-medium ${index < 3 ? 'font-semibold' : ''}`}>
-                          {subject.category} Courses
-                        </span>
-                        <p className="text-xs text-slate-500">
-                          {subject.courses.length} courses • {subject.totalCredits} credits
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <span
-                          className={`text-lg font-semibold ${index === 0
-                              ? 'text-yellow-700 dark:text-[#FFD700]'
-                              : index === 1
-                                ? 'text-slate-600 dark:text-slate-300'
-                                : index === 2
-                                  ? 'text-orange-600 dark:text-orange-400'
-                                  : 'text-primary'
-                            }`}
-                        >
-                          {subject.average}
-                        </span>
-                        <p className="text-xs text-slate-500">avg grade points</p>
-                      </div>
-                      <svg
-                        className={`w-5 h-5 text-slate-400 transition-transform transform ${selectedCategory === subject.category ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {selectedCategory === subject.category && (
-                    <motion.div
-                      className="mt-2 ml-4 space-y-2"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                    >
-                      {getCategoryCourses(subject.category).map(
-                        (course: any, courseIndex: number) => (
-                          <div
-                            key={courseIndex}
-                            className="flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">{course.subjectCode}</span>
-                                <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-600 rounded-full">
-                                  Semester {course.semester}
-                                </span>
-                              </div>
-                              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                                {course.subjectName}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs text-slate-500">
-                                {course.credits} credits
-                              </span>
-                              <span
-                                className={`px-3 py-1 rounded-full text-sm font-bold ${getGradeColor(course.grade)}`}
-                              >
-                                {course.grade}
-                              </span>
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </motion.div>
-                  )}
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
-      )}
-      {/* Trends Tab */}
-      {activeTab === 'trends' && (
-        <div className="space-y-4 sm:space-y-6">
-          {/* SGPA & CGPA Line Chart */}
-          <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 sm:mb-6">
-              <div className="flex items-center gap-2">
-                <h4 className="font-semibold text-base sm:text-lg flex items-center gap-2 text-slate-800 dark:text-white">
-                  <svg
-                    className="w-5 h-5 text-primary"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
-                    />
-                  </svg>
-                  Academic Performance Graph
+            {/* Subject Category Performance */}
+            <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <h4 className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default inline-block">
+                  Subject Category Performance (Ranked)
                 </h4>
                 <button
                   onClick={() =>
                     setSelectedGrade(
-                      selectedGrade === 'info-performance-graph' ? null : 'info-performance-graph'
+                      selectedGrade === 'info-subject-category' ? null : 'info-subject-category'
                     )
                   }
-                  className="text-slate-400 hover:text-primary transition-colors"
+                  className="ml-2 text-slate-400 hover:text-primary transition-colors"
                   title="Click for details"
                 >
                   <svg
@@ -2960,1117 +2740,1375 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   </svg>
                 </button>
               </div>
-              <div className="flex items-center gap-4 sm:gap-6">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ background: 'linear-gradient(135deg, #10b981 0%, #22c55e 100%)' }}
-                  ></div>
-                  <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
-                    SGPA
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}
-                  ></div>
-                  <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
-                    CGPA
-                  </span>
-                </div>
-              </div>
-            </div>
 
-            {/* Info Box */}
-            {selectedGrade === 'info-performance-graph' && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-4 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
-              >
-                <h5 className="font-semibold text-sm mb-2 text-blue-900 dark:text-blue-300">
-                  📊 Understanding the Performance Graph
-                </h5>
-                <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 mb-3">
-                  This graph visualizes your academic performance across all semesters, showing both
-                  SGPA (Semester GPA) and CGPA (Cumulative GPA) trends.
-                </p>
-                <div className="space-y-2 text-xs sm:text-sm">
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
-                      What you're seeing:
-                    </p>
-                    <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                      <li>
-                        <strong className="text-emerald-600">Green line (SGPA)</strong>: Your grade
-                        point average for each individual semester
-                      </li>
-                      <li>
-                        <strong className="text-blue-600">Blue line (CGPA)</strong>: Your cumulative
-                        GPA from semester 1 up to that point
-                      </li>
-                      <li>
-                        <strong>Hover on points</strong>: See exact values, credits, and course
-                        count for each semester
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
-                      How to interpret:
-                    </p>
-                    <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                      <li>
-                        CGPA is always more stable than SGPA as it averages all your semesters
-                      </li>
-                      <li>
-                        A rising CGPA indicates consistent improvement in your overall performance
-                      </li>
-                      <li>
-                        Summary cards below show your Best SGPA, Current CGPA, Average SGPA, and
-                        total semesters
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Recharts Line Chart */}
-            {(() => {
-              // Use extracted SGPA and CGPA values directly from the gradesheet
-              const sortedSemesters = [...gradesData.semesters].sort(
-                (a, b) => a.semester - b.semester
-              );
-
-              const chartData = sortedSemesters.map((sem) => {
-                // Calculate earned credits for this semester (passed courses only)
-                const semCredits = sem.grades.reduce(
-                  (total, grade) => total + (grade.grade !== 'F' ? grade.credits || 0 : 0),
-                  0
-                );
-
-                return {
-                  name: `Sem ${sem.semester}`,
-                  semester: sem.semester,
-                  SGPA: parseFloat(sem.sgpa.toFixed(2)), // Use extracted SGPA directly
-                  CGPA: parseFloat((sem.cgpa || sem.sgpa).toFixed(2)), // Use extracted CGPA directly (fallback to SGPA for older data)
-                  credits: semCredits,
-                  courses: sem.grades.length,
-                };
-              });
-
-              // Custom tooltip component
-              const CustomTooltip = ({ active, payload, label }: any) => {
-                if (active && payload && payload.length) {
-                  // Skip first 2 entries (Area components), show only Line entries
-                  const linePayload = payload.slice(2);
-
-                  return (
-                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700">
-                      <p className="font-bold text-slate-800 dark:text-white mb-2 text-sm">
-                        {label}
-                      </p>
-                      <div className="space-y-1.5">
-                        {linePayload.map((entry: any, index: number) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <div
-                              className="w-2.5 h-2.5 rounded-full"
-                              style={{ backgroundColor: entry.color }}
-                            />
-                            <span className="text-xs font-medium" style={{ color: entry.color }}>
-                              {entry.name}:{' '}
-                              <span className="font-bold">{entry.value.toFixed(2)}</span>
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      {payload[0]?.payload && (
-                        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-600">
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                            {payload[0].payload.credits} credits • {payload[0].payload.courses}{' '}
-                            courses
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-                return null;
-              };
-
-              return (
+              {selectedGrade === 'info-subject-category' && (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-4 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
                 >
-                  {/* Responsive chart container */}
-                  <div className="w-full outline-none focus:outline-none [&_svg]:outline-none [&_svg]:focus:outline-none [&_*]:outline-none">
-                    <ResponsiveContainer width="100%" height={250}>
-                      <ComposedChart
-                        data={chartData.map((d) => ({
-                          ...d,
-                          // Use shorter labels on mobile
-                          displayName: d.name,
-                        }))}
-                        margin={{
-                          top: 15,
-                          right: 20,
-                          left: 5,
-                          bottom: 10,
-                        }}
-                      >
-                        <defs>
-                          <linearGradient id="sgpaGradientFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
-                          </linearGradient>
-                          <linearGradient id="cgpaGradientFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="#e2e8f0"
-                          className="dark:opacity-20"
-                          vertical={false}
-                        />
-                        <XAxis
-                          dataKey="name"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: '#64748b', fontSize: 10 }}
-                          dy={5}
-                          interval={0}
-                          tickFormatter={(value) => {
-                            // Use shorter format on mobile: S1 instead of Sem 1
-                            const semNum = value.replace('Sem ', '');
-                            return window.innerWidth < 640 ? `S${semNum}` : value;
-                          }}
-                        />
-                        <YAxis
-                          domain={[0, 10]}
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: '#64748b', fontSize: 10 }}
-                          ticks={[0, 5, 10]}
-                          width={25}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-
-                        {/* Area fills */}
-                        <Area
-                          type="monotone"
-                          dataKey="CGPA"
-                          fill="url(#cgpaGradientFill)"
-                          stroke="none"
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="SGPA"
-                          fill="url(#sgpaGradientFill)"
-                          stroke="none"
-                        />
-
-                        {/* Lines - thinner on mobile */}
-                        <Line
-                          type="monotone"
-                          dataKey="CGPA"
-                          stroke="#3b82f6"
-                          strokeWidth={2}
-                          dot={{
-                            fill: '#3b82f6',
-                            strokeWidth: 2,
-                            r: 4,
-                            stroke: '#fff',
-                          }}
-                          activeDot={{
-                            r: 6,
-                            fill: '#3b82f6',
-                            stroke: '#fff',
-                            strokeWidth: 2,
-                          }}
-                          animationDuration={1500}
-                          animationEasing="ease-in-out"
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="SGPA"
-                          stroke="#10b981"
-                          strokeWidth={2}
-                          dot={{
-                            fill: '#10b981',
-                            strokeWidth: 2,
-                            r: 4,
-                            stroke: '#fff',
-                          }}
-                          activeDot={{
-                            r: 6,
-                            fill: '#10b981',
-                            stroke: '#fff',
-                            strokeWidth: 2,
-                          }}
-                          animationDuration={1500}
-                          animationEasing="ease-in-out"
-                        />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* Summary Stats - more compact on mobile */}
-                  <motion.div
-                    className="mt-3 sm:mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3"
-                    variants={{
-                      hidden: { opacity: 0 },
-                      show: {
-                        opacity: 1,
-                        transition: { staggerChildren: 0.1 },
-                      },
-                    }}
-                    initial="hidden"
-                    animate="show"
-                  >
-                    <motion.div
-                      className="group relative overflow-hidden bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl p-2.5 sm:p-3 border border-emerald-100 dark:border-emerald-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
-                      whileHover={{
-                        y: -4,
-                        scale: 1.03,
-                        boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.25)',
-                      }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="text-[9px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
-                          Best SGPA
-                        </p>
-                        <motion.span
-                          className="text-sm sm:text-base"
-                          whileHover={{ scale: 1.2, rotate: 10 }}
-                        >
-                          ⭐
-                        </motion.span>
-                      </div>
-                      <p className="text-lg sm:text-2xl font-bold text-emerald-700 dark:text-emerald-300 group-hover:scale-105 transition-transform origin-left">
-                        {chartData.length > 0
-                          ? Math.max(...chartData.map((d) => d.SGPA)).toFixed(2)
-                          : '0.00'}
+                  <h5 className="font-semibold text-sm mb-2 text-amber-900 dark:text-amber-300">
+                    📚 What is Subject Category Performance?
+                  </h5>
+                  <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-200 mb-3">
+                    This ranks your performance across different departments based on average grade
+                    points, helping you identify your academic strengths and weaknesses.
+                  </p>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
+                        Understanding the ranking:
                       </p>
-                    </motion.div>
-
-                    <motion.div
-                      className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-2.5 sm:p-3 border border-blue-100 dark:border-blue-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
-                      whileHover={{
-                        y: -4,
-                        scale: 1.03,
-                        boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.25)',
-                      }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="text-[9px] sm:text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
-                          Current CGPA
-                        </p>
-                        <motion.span
-                          className="text-sm sm:text-base"
-                          whileHover={{ scale: 1.2, rotate: -10 }}
-                        >
-                          📊
-                        </motion.span>
-                      </div>
-                      <p className="text-lg sm:text-2xl font-bold text-blue-700 dark:text-blue-300 group-hover:scale-105 transition-transform origin-left">
-                        {chartData.length > 0
-                          ? chartData[chartData.length - 1]?.CGPA?.toFixed(2) || '0.00'
-                          : '0.00'}
-                      </p>
-                    </motion.div>
-
-                    <motion.div
-                      className="group relative overflow-hidden bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-xl p-2.5 sm:p-3 border border-purple-100 dark:border-purple-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
-                      whileHover={{
-                        y: -4,
-                        scale: 1.03,
-                        boxShadow: '0 10px 25px -5px rgba(139, 92, 246, 0.25)',
-                      }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="text-[9px] sm:text-xs font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide">
-                          Avg SGPA
-                        </p>
-                        <motion.span
-                          className="text-sm sm:text-base"
-                          whileHover={{ scale: 1.2, rotate: 10 }}
-                        >
-                          📈
-                        </motion.span>
-                      </div>
-                      <p className="text-lg sm:text-2xl font-bold text-purple-700 dark:text-purple-300 group-hover:scale-105 transition-transform origin-left">
-                        {chartData.length > 0
-                          ? (
-                            chartData.reduce((sum, d) => sum + d.SGPA, 0) / chartData.length
-                          ).toFixed(2)
-                          : '0.00'}
-                      </p>
-                    </motion.div>
-
-                    <motion.div
-                      className="group relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-2.5 sm:p-3 border border-amber-100 dark:border-amber-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
-                      whileHover={{
-                        y: -4,
-                        scale: 1.03,
-                        boxShadow: '0 10px 25px -5px rgba(245, 158, 11, 0.25)',
-                      }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="text-[9px] sm:text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wide">
-                          Semesters
-                        </p>
-                        <motion.span
-                          className="text-sm sm:text-base"
-                          whileHover={{ scale: 1.2, rotate: -10 }}
-                        >
-                          📚
-                        </motion.span>
-                      </div>
-                      <p className="text-lg sm:text-2xl font-bold text-amber-700 dark:text-amber-300 group-hover:scale-105 transition-transform origin-left">
-                        {chartData.length}
-                      </p>
-                    </motion.div>
-                  </motion.div>
-                </motion.div>
-              );
-            })()}
-          </div>
-
-          {/* SGPA Trend with Delta */}
-          <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-start justify-between mb-3 sm:mb-4">
-              <h4 className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default inline-block">
-                Semester Grade Point Average Trend
-              </h4>
-              <button
-                onClick={() =>
-                  setSelectedGrade(selectedGrade === 'info-sgpa-trend' ? null : 'info-sgpa-trend')
-                }
-                className="ml-2 text-slate-400 hover:text-primary transition-colors"
-                title="Click for details"
-              >
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {selectedGrade === 'info-sgpa-trend' && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-4 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
-              >
-                <h5 className="font-semibold text-sm mb-2 text-green-900 dark:text-green-300">
-                  📈 What is SGPA Trend?
-                </h5>
-                <p className="text-xs sm:text-sm text-green-800 dark:text-green-200 mb-3">
-                  This chart shows your Semester Grade Point Average (SGPA) for each semester,
-                  helping you track your academic performance over time.
-                </p>
-                <div className="space-y-2 text-xs sm:text-sm">
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-green-900 dark:text-green-300 mb-1">
-                      What you're seeing:
-                    </p>
-                    <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                      <li>
-                        <strong>Bar length</strong>: Represents SGPA on a scale of 0-10
-                      </li>
-                      <li>
-                        <strong>Delta arrows</strong>: Show change from previous semester (↑
-                        improvement, ↓ decline)
-                      </li>
-                      <li>
-                        <strong>Bar color</strong>: Green if above average SGPA, Orange if below
-                        average
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-green-900 dark:text-green-300 mb-1">
-                      How SGPA is calculated:
-                    </p>
-                    <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
-                      SGPA = Σ(Grade Points × Credits) / Total Credits in Semester
-                    </code>
-                    <p className="text-slate-700 dark:text-slate-300 text-xs">
-                      <em>
-                        Example: If you scored A (9 pts) in a 4-credit course and B+ (8 pts) in a
-                        3-credit course: SGPA = (9×4 + 8×3) / (4+3) = 60/7 = 8.57
-                      </em>
-                    </p>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-green-900 dark:text-green-300 mb-1">
-                      Why this matters:
-                    </p>
-                    <p className="text-slate-700 dark:text-slate-300">
-                      SGPA trends reveal your academic momentum and consistency. An upward trend
-                      shows improvement and adaptation to academic challenges, while a downward
-                      trend signals the need to adjust study strategies. Unlike CGPA (which averages
-                      all semesters), SGPA lets you see performance variations semester by semester,
-                      helping you identify what works and what doesn't.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-            <motion.div
-              className="space-y-3 sm:space-y-4"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
-              initial="hidden"
-              animate="show"
-            >
-              {performanceTrend.map((item, index: number) => (
-                <motion.div
-                  key={index}
-                  className="space-y-1.5 sm:space-y-2"
-                  variants={{
-                    hidden: { opacity: 0, x: -20 },
-                    show: { opacity: 1, x: 0 },
-                  }}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <span className="text-xs sm:text-sm font-medium w-14 sm:w-16">
-                        {item.semester}
-                      </span>
-                      {item.delta !== 0 && (
-                        <span
-                          className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-semibold ${item.delta > 0
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-red-100 text-red-700'
-                            }`}
-                        >
-                          {item.delta > 0 ? '↑' : '↓'} {Math.abs(item.delta).toFixed(2)}
-                        </span>
-                      )}
+                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                        <li>
+                          <strong>🥇 1st Place</strong>: Gold highlight - Your strongest subject
+                          area
+                        </li>
+                        <li>
+                          <strong>🥈 2nd Place</strong>: Silver highlight - Second-best performance
+                        </li>
+                        <li>
+                          <strong>🥉 3rd Place</strong>: Bronze highlight - Third-best performance
+                        </li>
+                      </ul>
                     </div>
-                    <span className="text-[10px] sm:text-sm text-slate-500">
-                      {item.credits} credits • {item.courseCount} courses
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="group flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-8 sm:h-10 relative overflow-visible cursor-pointer">
-                      <motion.div
-                        className={`absolute left-0 top-0 h-full flex items-center justify-end pr-2 sm:pr-3 rounded-full ${item.sgpa >= advancedMetrics.avgSgpa
-                            ? 'bg-gradient-to-r from-green-500 to-emerald-500'
-                            : 'bg-gradient-to-r from-amber-500 to-orange-500'
-                          }`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(item.sgpa / 10) * 100}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut', delay: index * 0.15 }}
-                        whileHover={{
-                          scale: 1.03,
-                          y: -2,
-                          boxShadow: '0 6px 16px -4px rgba(0, 0, 0, 0.2)',
-                          transition: { duration: 0.15, ease: 'easeOut' },
-                        }}
-                      >
-                        <span className="text-white text-xs sm:text-sm font-bold group-hover:scale-110 transition-transform">
-                          {item.sgpa.toFixed(2)}
-                        </span>
-                      </motion.div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
+                        How average is calculated:
+                      </p>
+                      <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
+                        Category Average = Σ(Grade Points) / Number of Courses in Category
+                      </code>
+                      <p className="text-slate-700 dark:text-slate-300 text-xs">
+                        <em>
+                          Example: Courses with grades A (9), A+ (10), B+ (8) → Average = (9+10+8)/3
+                          = 9.0
+                        </em>
+                      </p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
+                        Why this matters:
+                      </p>
+                      <p className="text-slate-700 dark:text-slate-300">
+                        Identifying your strongest and weakest subject categories helps you make
+                        informed decisions about electives, specializations, and career paths. It
+                        also reveals where you might need extra support or tutoring. Click on any
+                        category to see individual course details.
+                      </p>
                     </div>
                   </div>
                 </motion.div>
-              ))}
-            </motion.div>
-            <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                <span className="font-semibold">Average SGPA:</span>{' '}
-                {advancedMetrics.avgSgpa.toFixed(2)} •
-                <span className="font-semibold ml-2">Trend:</span>{' '}
-                {advancedMetrics.trajectoryStatus} ({advancedMetrics.slope > 0 ? '+' : ''}
-                {(advancedMetrics.slope * 100).toFixed(2)}% per semester)
-              </p>
-            </div>
-          </div>
-
-          {/* Cumulative Performance */}
-          <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-start justify-between mb-3 sm:mb-4">
-              <h4 className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default inline-block">
-                Cumulative Credit Progression
-              </h4>
-              <button
-                onClick={() =>
-                  setSelectedGrade(
-                    selectedGrade === 'info-credit-progression' ? null : 'info-credit-progression'
-                  )
-                }
-                className="ml-2 text-slate-400 hover:text-primary transition-colors"
-                title="Click for details"
-              >
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {selectedGrade === 'info-credit-progression' && (
+              )}
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-4 p-3 sm:p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800"
-              >
-                <h5 className="font-semibold text-sm mb-2 text-indigo-900 dark:text-indigo-300">
-                  📚 What is Cumulative Credit Progression?
-                </h5>
-                <p className="text-xs sm:text-sm text-indigo-800 dark:text-indigo-200 mb-3">
-                  This chart tracks how your total earned credits accumulate over time, showing your
-                  progress toward degree completion.
-                </p>
-                <div className="space-y-2 text-xs sm:text-sm">
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
-                      Understanding the visualization:
-                    </p>
-                    <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                      <li>
-                        <strong>Bar length</strong>: Shows cumulative credits earned up to that
-                        semester
-                      </li>
-                      <li>
-                        <strong>+X credits</strong>: New credits earned in that specific semester
-                      </li>
-                      <li>
-                        <strong>Total</strong>: Running total of all credits earned so far
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
-                      How it's calculated:
-                    </p>
-                    <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
-                      Cumulative Credits = Previous Total + Current Semester Credits
-                    </code>
-                    <p className="text-slate-700 dark:text-slate-300 text-xs">
-                      <em>
-                        Example: Sem 1 (20 credits) → Sem 2 (+22 credits) = 42 total → Sem 3 (+20
-                        credits) = 62 total
-                      </em>
-                    </p>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
-                      Why this matters:
-                    </p>
-                    <p className="text-slate-700 dark:text-slate-300">
-                      Tracking credit accumulation helps you monitor degree progress and ensures
-                      you're on pace to meet graduation requirements. Consistent credit progression
-                      indicates steady academic advancement.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-            <motion.div
-              className="space-y-3"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
+                className="space-y-2 sm:space-y-3"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1,
+                    },
                   },
-                },
-              }}
-              initial="hidden"
-              animate="show"
-            >
-              {(() => {
-                // Track unique courses to avoid counting retakes multiple times
-                const seenCourses = new Set<string>();
-                const sortedSemesters = [...gradesData.semesters].sort(
-                  (a, b) => a.semester - b.semester
-                );
-
-                // Calculate new unique earned credits per semester
-                const creditProgressionData = sortedSemesters.map((sem) => {
-                  let newUniqueCredits = 0;
-
-                  sem.grades.forEach((grade) => {
-                    // Only count if: course not seen before AND passed (grade != 'F')
-                    if (!seenCourses.has(grade.subjectCode) && grade.grade !== 'F') {
-                      newUniqueCredits += grade.credits || 0;
-                      seenCourses.add(grade.subjectCode);
-                    }
-                  });
-
-                  return {
-                    semester: `Semester ${sem.semester}`,
-                    semesterNum: sem.semester,
-                    newCredits: newUniqueCredits,
-                  };
-                });
-
-                // Calculate cumulative totals
-                let cumulative = 0;
-                const dataWithCumulative = creditProgressionData.map((item) => {
-                  cumulative += item.newCredits;
-                  return { ...item, cumulative };
-                });
-
-                const totalEarnedCredits = gradesData.earnedCredits || gradesData.totalCredits;
-
-                return dataWithCumulative.map((item, index) => (
+                }}
+                initial="hidden"
+                animate="show"
+              >
+                {subjectPerformance.map((subject, index) => (
                   <motion.div
                     key={index}
-                    className="flex items-center gap-3"
                     variants={{
-                      hidden: { opacity: 0, x: -20 },
-                      show: { opacity: 1, x: 0 },
+                      hidden: { opacity: 0, y: 20 },
+                      show: { opacity: 1, y: 0 },
                     }}
                   >
-                    <span className="text-sm font-medium w-16">{item.semester}</span>
-                    <div className="group flex-1 cursor-pointer">
-                      <div className="flex justify-between text-xs text-slate-500 mb-1">
-                        <span>+{item.newCredits} credits</span>
-                        <span className="group-hover:text-primary transition-colors">
-                          Total: {item.cumulative} credits
+                    <div
+                      onClick={() =>
+                        setSelectedCategory(
+                          selectedCategory === subject.category ? null : subject.category
+                        )
+                      }
+                      className={`group relative overflow-hidden flex justify-between items-center p-3 rounded-lg hover:shadow-md transition-all duration-300 cursor-pointer transform hover:scale-[1.02] hover:-translate-y-0.5 ${
+                        index === 0
+                          ? 'bg-[#FFD700]/20 dark:bg-[#FFD700]/10 border-l-4 border-[#FFD700]'
+                          : index === 1
+                            ? 'bg-slate-200 dark:bg-slate-700/60 border-l-4 border-slate-500'
+                            : index === 2
+                              ? 'bg-orange-100 dark:bg-orange-900/40 border-l-4 border-orange-400'
+                              : 'bg-slate-50 dark:bg-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                            index === 0
+                              ? 'bg-[#FFD700] text-yellow-900 dark:bg-[#FFD700]/80 dark:text-yellow-950'
+                              : index === 1
+                                ? 'bg-slate-300 text-slate-800 dark:bg-slate-600 dark:text-slate-100'
+                                : index === 2
+                                  ? 'bg-orange-200 text-orange-800 dark:bg-orange-700 dark:text-orange-100'
+                                  : 'bg-slate-50 text-slate-600'
+                          }`}
+                        >
+                          {index + 1}
                         </span>
+                        <div>
+                          <span className={`font-medium ${index < 3 ? 'font-semibold' : ''}`}>
+                            {subject.category} Courses
+                          </span>
+                          <p className="text-xs text-slate-500">
+                            {subject.courses.length} courses • {subject.totalCredits} credits
+                          </p>
+                        </div>
                       </div>
-                      <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-4 relative overflow-visible">
-                        <motion.div
-                          className="absolute left-0 top-0 h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{
-                            width: `${(item.cumulative / totalEarnedCredits) * 100}%`,
-                          }}
-                          transition={{ duration: 1, ease: 'easeOut' }}
-                          whileHover={{
-                            scale: 1.05,
-                            y: -2,
-                            boxShadow: '0 4px 12px -3px rgba(99, 102, 241, 0.3)',
-                            transition: { duration: 0.15, ease: 'easeOut' },
-                          }}
-                        />
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <span
+                            className={`text-lg font-semibold ${
+                              index === 0
+                                ? 'text-yellow-700 dark:text-[#FFD700]'
+                                : index === 1
+                                  ? 'text-slate-600 dark:text-slate-300'
+                                  : index === 2
+                                    ? 'text-orange-600 dark:text-orange-400'
+                                    : 'text-primary'
+                            }`}
+                          >
+                            {subject.average}
+                          </span>
+                          <p className="text-xs text-slate-500">avg grade points</p>
+                        </div>
+                        <svg
+                          className={`w-5 h-5 text-slate-400 transition-transform transform ${selectedCategory === subject.category ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
                       </div>
                     </div>
-                  </motion.div>
-                ));
-              })()}
-            </motion.div>
-          </div>
-        </div>
-      )}
 
-      {/* Distribution Tab */}
-      {activeTab === 'distribution' && (
-        <div className="space-y-4 sm:space-y-6">
-          {/* Grade Distribution with Credit Weighting */}
-          <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-start justify-between mb-3 sm:mb-4">
-              <h4 className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default inline-block">
-                Grade Distribution (Credit-Weighted)
-              </h4>
-              <button
-                onClick={() =>
-                  setSelectedGrade(
-                    selectedGrade === 'info-distribution' ? null : 'info-distribution'
-                  )
-                }
-                className="ml-2 text-slate-400 hover:text-primary transition-colors"
-                title="Click for details"
-              >
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {selectedGrade === 'info-distribution' && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-4 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
-              >
-                <h5 className="font-semibold text-sm mb-2 text-blue-900 dark:text-blue-300">
-                  📊 What is Grade Distribution?
-                </h5>
-                <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 mb-3">
-                  This shows how your grades are spread across different grade categories (A+, A,
-                  B+, etc.). Each card displays courses that share the same grade.
-                </p>
-                <div className="space-y-2 text-xs sm:text-sm">
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
-                      What the numbers mean:
-                    </p>
-                    <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                      <li>
-                        <strong>Count</strong>: Number of courses with that grade
-                      </li>
-                      <li>
-                        <strong>Credits</strong>: Total credits from those courses
-                      </li>
-                      <li>
-                        <strong>Percentage</strong>: (Total credits with that grade ÷ Total credits
-                        earned) × 100
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
-                      Why credit-weighted?
-                    </p>
-                    <p className="text-slate-700 dark:text-slate-300">
-                      Higher credit courses impact your CGPA more than lower credit courses. The
-                      percentage reflects this by showing what portion of your total credits each
-                      grade represents.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-            <motion.div
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
-              initial="hidden"
-              animate="show"
-            >
-              {Object.entries(gradeDistribution)
-                .sort(([a], [b]) => (gradePoints[b] || 0) - (gradePoints[a] || 0))
-                .map(([grade, data]) => (
-                  <motion.div
-                    key={grade}
-                    onClick={() => setSelectedGrade(selectedGrade === grade ? null : grade)}
-                    className={`group relative overflow-hidden text-center p-3 sm:p-4 rounded-xl shadow-xl cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-110 active:scale-95 ${selectedGrade === grade
-                        ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-slate-900'
-                        : ''
-                      } ${getGradeColor(grade)}`}
-                    variants={{
-                      hidden: { opacity: 0, scale: 0.8, y: 20 },
-                      show: { opacity: 1, scale: 1, y: 0 },
-                    }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="relative z-10">
-                      <AnimatedInteger
-                        value={data.count}
-                        className="text-2xl sm:text-3xl font-bold group-hover:scale-125 transition-transform duration-300 block"
-                      />
-                      <p className="text-base sm:text-lg font-semibold group-hover:font-black transition-all">
-                        {grade}
-                      </p>
-                      <p className="text-[10px] sm:text-xs mt-1 opacity-75 group-hover:opacity-100 transition-opacity">
-                        <AnimatedInteger value={data.totalCredits} className="inline" /> credits
-                      </p>
-                      <p className="text-[10px] sm:text-xs opacity-60 group-hover:opacity-100 group-hover:font-semibold transition-all">
-                        <AnimatedCounter
-                          value={(data.totalCredits / gradesData.totalCredits) * 100}
-                          decimals={1}
-                          className="inline"
-                        />
-                        %
-                      </p>
-                    </div>
+                    {selectedCategory === subject.category && (
+                      <motion.div
+                        className="mt-2 ml-4 space-y-2"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                      >
+                        {getCategoryCourses(subject.category).map(
+                          (course: any, courseIndex: number) => (
+                            <div
+                              key={courseIndex}
+                              className="flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600"
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">{course.subjectCode}</span>
+                                  <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-600 rounded-full">
+                                    Semester {course.semester}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                                  {course.subjectName}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-slate-500">
+                                  {course.credits} credits
+                                </span>
+                                <span
+                                  className={`px-3 py-1 rounded-full text-sm font-bold ${getGradeColor(course.grade)}`}
+                                >
+                                  {course.grade}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </motion.div>
+                    )}
                   </motion.div>
                 ))}
-            </motion.div>
-
-            {selectedGrade && !selectedGrade.startsWith('info-') && (
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between mb-3 px-2">
-                  <h5 className="font-semibold">Courses with grade {selectedGrade}</h5>
-                  <button
-                    onClick={() => setSelectedGrade(null)}
-                    className="text-slate-400 hover:text-slate-600"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              </motion.div>
+            </div>
+          </div>
+        )}
+        {/* Trends Tab */}
+        {activeTab === 'trends' && (
+          <div className="space-y-4 sm:space-y-6">
+            {/* SGPA & CGPA Line Chart */}
+            <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 sm:mb-6">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-base sm:text-lg flex items-center gap-2 text-slate-800 dark:text-white">
+                    <svg
+                      className="w-5 h-5 text-primary"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
+                        d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+                      />
+                    </svg>
+                    Academic Performance Graph
+                  </h4>
+                  <button
+                    onClick={() =>
+                      setSelectedGrade(
+                        selectedGrade === 'info-performance-graph' ? null : 'info-performance-graph'
+                      )
+                    }
+                    className="text-slate-400 hover:text-primary transition-colors"
+                    title="Click for details"
+                  >
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
                   </button>
                 </div>
-                {getGradeCourses(selectedGrade).map((course: any, courseIndex: number) => (
-                  <div
-                    key={courseIndex}
-                    className="group relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between p-2.5 sm:p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-300 gap-2 sm:gap-0"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="relative z-10 flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                        <span className="font-medium text-xs sm:text-sm truncate group-hover:text-primary transition-colors">
-                          {course.subjectCode}
-                        </span>
-                        <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded-full whitespace-nowrap group-hover:bg-primary/20 transition-colors">
-                          Sem {course.semester}
-                        </span>
-                      </div>
-                      <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-0.5 truncate">
-                        {course.subjectName}
-                      </p>
-                    </div>
-                    <div className="relative z-10 flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
-                      <span className="text-[10px] sm:text-xs text-slate-500">
-                        {course.credits} credits
-                      </span>
-                      <span
-                        className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold group-hover:scale-110 transition-transform ${getGradeColor(course.grade)}`}
-                      >
-                        {course.grade}
-                      </span>
-                    </div>
+                <div className="flex items-center gap-4 sm:gap-6">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ background: 'linear-gradient(135deg, #10b981 0%, #22c55e 100%)' }}
+                    ></div>
+                    <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+                      SGPA
+                    </span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Performance Tiers */}
-          <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-start justify-between mb-3 sm:mb-4">
-              <h4 className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default inline-block">
-                Performance Tier Breakdown
-              </h4>
-              <button
-                onClick={() =>
-                  setSelectedGrade(selectedGrade === 'info-tiers' ? null : 'info-tiers')
-                }
-                className="ml-2 text-slate-400 hover:text-primary transition-colors"
-                title="Click for details"
-              >
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {selectedGrade === 'info-tiers' && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-4 p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
-              >
-                <h5 className="font-semibold text-sm mb-2 text-purple-900 dark:text-purple-300">
-                  🎯 What is Performance Tier Breakdown?
-                </h5>
-                <p className="text-xs sm:text-sm text-purple-800 dark:text-purple-200 mb-3">
-                  This groups your grades into 4 performance categories, making it easy to see the
-                  overall quality distribution of your academic performance.
-                </p>
-                <div className="space-y-2 text-xs sm:text-sm">
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
-                      The Four Tiers:
-                    </p>
-                    <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                      <li>
-                        <strong>Excellent</strong> (A+, A): Outstanding performance, 9-10 grade
-                        points
-                      </li>
-                      <li>
-                        <strong>Good</strong> (B+, B): Above average performance, 7-8 grade points
-                      </li>
-                      <li>
-                        <strong>Average</strong> (C+, C): Satisfactory performance, 5-6 grade points
-                      </li>
-                      <li>
-                        <strong>Below Average</strong> (D, F): Needs improvement, 0-4 grade points
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
-                      How percentages are calculated:
-                    </p>
-                    <p className="text-slate-700 dark:text-slate-300 mb-2">
-                      <strong>Bar Percentage</strong>: (Number of courses in tier ÷ Total number of
-                      courses) × 100
-                    </p>
-                    <p className="text-slate-700 dark:text-slate-300 text-xs">
-                      <em>
-                        Example: If you have 20 total courses and 8 are in the "Excellent" tier, the
-                        bar shows 40%
-                      </em>
-                    </p>
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                    <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
-                      Why this matters:
-                    </p>
-                    <p className="text-slate-700 dark:text-slate-300">
-                      While CGPA gives you a single number, tier breakdown shows the distribution of
-                      your performance. A higher concentration in "Excellent" and "Good" tiers
-                      indicates consistent strong performance.
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}
+                    ></div>
+                    <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
+                      CGPA
+                    </span>
                   </div>
                 </div>
-              </motion.div>
-            )}
-            <motion.div
-              className="space-y-3 sm:space-y-4"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
-              initial="hidden"
-              animate="show"
-            >
-              {[
-                { tier: 'Excellent', grades: ['A+', 'A'], color: 'green' },
-                { tier: 'Good', grades: ['B+', 'B'], color: 'blue' },
-                { tier: 'Average', grades: ['C+', 'C'], color: 'yellow' },
-                { tier: 'Below Average', grades: ['D', 'F'], color: 'red' },
-              ].map((tierInfo) => {
-                const tierCourses = getLatestGrades.filter((g) =>
-                  tierInfo.grades.includes(g.grade)
+              </div>
+
+              {/* Info Box */}
+              {selectedGrade === 'info-performance-graph' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-4 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+                >
+                  <h5 className="font-semibold text-sm mb-2 text-blue-900 dark:text-blue-300">
+                    📊 Understanding the Performance Graph
+                  </h5>
+                  <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 mb-3">
+                    This graph visualizes your academic performance across all semesters, showing
+                    both SGPA (Semester GPA) and CGPA (Cumulative GPA) trends.
+                  </p>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
+                        What you're seeing:
+                      </p>
+                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                        <li>
+                          <strong className="text-emerald-600">Green line (SGPA)</strong>: Your
+                          grade point average for each individual semester
+                        </li>
+                        <li>
+                          <strong className="text-blue-600">Blue line (CGPA)</strong>: Your
+                          cumulative GPA from semester 1 up to that point
+                        </li>
+                        <li>
+                          <strong>Hover on points</strong>: See exact values, credits, and course
+                          count for each semester
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
+                        How to interpret:
+                      </p>
+                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                        <li>
+                          CGPA is always more stable than SGPA as it averages all your semesters
+                        </li>
+                        <li>
+                          A rising CGPA indicates consistent improvement in your overall performance
+                        </li>
+                        <li>
+                          Summary cards below show your Best SGPA, Current CGPA, Average SGPA, and
+                          total semesters
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Recharts Line Chart */}
+              {(() => {
+                // Use extracted SGPA and CGPA values directly from the gradesheet
+                const sortedSemesters = [...gradesData.semesters].sort(
+                  (a, b) => a.semester - b.semester
                 );
-                const tierCredits = tierCourses.reduce((sum, g) => sum + g.credits, 0);
-                const percentage = (tierCourses.length / getLatestGrades.length) * 100;
+
+                const chartData = sortedSemesters.map((sem) => {
+                  // Calculate earned credits for this semester (passed courses only)
+                  const semCredits = sem.grades.reduce(
+                    (total, grade) => total + (grade.grade !== 'F' ? grade.credits || 0 : 0),
+                    0
+                  );
+
+                  return {
+                    name: `Sem ${sem.semester}`,
+                    semester: sem.semester,
+                    SGPA: parseFloat(sem.sgpa.toFixed(2)), // Use extracted SGPA directly
+                    CGPA: parseFloat((sem.cgpa || sem.sgpa).toFixed(2)), // Use extracted CGPA directly (fallback to SGPA for older data)
+                    credits: semCredits,
+                    courses: sem.grades.length,
+                  };
+                });
+
+                // Custom tooltip component
+                const CustomTooltip = ({ active, payload, label }: any) => {
+                  if (active && payload && payload.length) {
+                    // Skip first 2 entries (Area components), show only Line entries
+                    const linePayload = payload.slice(2);
+
+                    return (
+                      <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700">
+                        <p className="font-bold text-slate-800 dark:text-white mb-2 text-sm">
+                          {label}
+                        </p>
+                        <div className="space-y-1.5">
+                          {linePayload.map((entry: any, index: number) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <div
+                                className="w-2.5 h-2.5 rounded-full"
+                                style={{ backgroundColor: entry.color }}
+                              />
+                              <span className="text-xs font-medium" style={{ color: entry.color }}>
+                                {entry.name}:{' '}
+                                <span className="font-bold">{entry.value.toFixed(2)}</span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        {payload[0]?.payload && (
+                          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-600">
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                              {payload[0].payload.credits} credits • {payload[0].payload.courses}{' '}
+                              courses
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                };
 
                 return (
                   <motion.div
-                    key={tierInfo.tier}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {/* Responsive chart container */}
+                    <div className="w-full outline-none focus:outline-none [&_svg]:outline-none [&_svg]:focus:outline-none [&_*]:outline-none">
+                      <ResponsiveContainer width="100%" height={250}>
+                        <ComposedChart
+                          data={chartData.map((d) => ({
+                            ...d,
+                            // Use shorter labels on mobile
+                            displayName: d.name,
+                          }))}
+                          margin={{
+                            top: 15,
+                            right: 20,
+                            left: 5,
+                            bottom: 10,
+                          }}
+                        >
+                          <defs>
+                            <linearGradient id="sgpaGradientFill" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                            </linearGradient>
+                            <linearGradient id="cgpaGradientFill" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#e2e8f0"
+                            className="dark:opacity-20"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#64748b', fontSize: 10 }}
+                            dy={5}
+                            interval={0}
+                            tickFormatter={(value) => {
+                              // Use shorter format on mobile: S1 instead of Sem 1
+                              const semNum = value.replace('Sem ', '');
+                              return window.innerWidth < 640 ? `S${semNum}` : value;
+                            }}
+                          />
+                          <YAxis
+                            domain={[0, 10]}
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#64748b', fontSize: 10 }}
+                            ticks={[0, 5, 10]}
+                            width={25}
+                          />
+                          <Tooltip content={<CustomTooltip />} />
+
+                          {/* Area fills */}
+                          <Area
+                            type="monotone"
+                            dataKey="CGPA"
+                            fill="url(#cgpaGradientFill)"
+                            stroke="none"
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="SGPA"
+                            fill="url(#sgpaGradientFill)"
+                            stroke="none"
+                          />
+
+                          {/* Lines - thinner on mobile */}
+                          <Line
+                            type="monotone"
+                            dataKey="CGPA"
+                            stroke="#3b82f6"
+                            strokeWidth={2}
+                            dot={{
+                              fill: '#3b82f6',
+                              strokeWidth: 2,
+                              r: 4,
+                              stroke: '#fff',
+                            }}
+                            activeDot={{
+                              r: 6,
+                              fill: '#3b82f6',
+                              stroke: '#fff',
+                              strokeWidth: 2,
+                            }}
+                            animationDuration={1500}
+                            animationEasing="ease-in-out"
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="SGPA"
+                            stroke="#10b981"
+                            strokeWidth={2}
+                            dot={{
+                              fill: '#10b981',
+                              strokeWidth: 2,
+                              r: 4,
+                              stroke: '#fff',
+                            }}
+                            activeDot={{
+                              r: 6,
+                              fill: '#10b981',
+                              stroke: '#fff',
+                              strokeWidth: 2,
+                            }}
+                            animationDuration={1500}
+                            animationEasing="ease-in-out"
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Summary Stats - more compact on mobile */}
+                    <motion.div
+                      className="mt-3 sm:mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3"
+                      variants={{
+                        hidden: { opacity: 0 },
+                        show: {
+                          opacity: 1,
+                          transition: { staggerChildren: 0.1 },
+                        },
+                      }}
+                      initial="hidden"
+                      animate="show"
+                    >
+                      <motion.div
+                        className="group relative overflow-hidden bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl p-2.5 sm:p-3 border border-emerald-100 dark:border-emerald-800/50 cursor-pointer"
+                        variants={{
+                          hidden: { opacity: 0, y: 20, scale: 0.9 },
+                          show: { opacity: 1, y: 0, scale: 1 },
+                        }}
+                        whileHover={{
+                          y: -4,
+                          scale: 1.03,
+                          boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.25)',
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-[9px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                            Best SGPA
+                          </p>
+                          <motion.span
+                            className="text-sm sm:text-base"
+                            whileHover={{ scale: 1.2, rotate: 10 }}
+                          >
+                            ⭐
+                          </motion.span>
+                        </div>
+                        <p className="text-lg sm:text-2xl font-bold text-emerald-700 dark:text-emerald-300 group-hover:scale-105 transition-transform origin-left">
+                          {chartData.length > 0
+                            ? Math.max(...chartData.map((d) => d.SGPA)).toFixed(2)
+                            : '0.00'}
+                        </p>
+                      </motion.div>
+
+                      <motion.div
+                        className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-2.5 sm:p-3 border border-blue-100 dark:border-blue-800/50 cursor-pointer"
+                        variants={{
+                          hidden: { opacity: 0, y: 20, scale: 0.9 },
+                          show: { opacity: 1, y: 0, scale: 1 },
+                        }}
+                        whileHover={{
+                          y: -4,
+                          scale: 1.03,
+                          boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.25)',
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-[9px] sm:text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+                            Current CGPA
+                          </p>
+                          <motion.span
+                            className="text-sm sm:text-base"
+                            whileHover={{ scale: 1.2, rotate: -10 }}
+                          >
+                            📊
+                          </motion.span>
+                        </div>
+                        <p className="text-lg sm:text-2xl font-bold text-blue-700 dark:text-blue-300 group-hover:scale-105 transition-transform origin-left">
+                          {chartData.length > 0
+                            ? chartData[chartData.length - 1]?.CGPA?.toFixed(2) || '0.00'
+                            : '0.00'}
+                        </p>
+                      </motion.div>
+
+                      <motion.div
+                        className="group relative overflow-hidden bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-xl p-2.5 sm:p-3 border border-purple-100 dark:border-purple-800/50 cursor-pointer"
+                        variants={{
+                          hidden: { opacity: 0, y: 20, scale: 0.9 },
+                          show: { opacity: 1, y: 0, scale: 1 },
+                        }}
+                        whileHover={{
+                          y: -4,
+                          scale: 1.03,
+                          boxShadow: '0 10px 25px -5px rgba(139, 92, 246, 0.25)',
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-[9px] sm:text-xs font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide">
+                            Avg SGPA
+                          </p>
+                          <motion.span
+                            className="text-sm sm:text-base"
+                            whileHover={{ scale: 1.2, rotate: 10 }}
+                          >
+                            📈
+                          </motion.span>
+                        </div>
+                        <p className="text-lg sm:text-2xl font-bold text-purple-700 dark:text-purple-300 group-hover:scale-105 transition-transform origin-left">
+                          {chartData.length > 0
+                            ? (
+                                chartData.reduce((sum, d) => sum + d.SGPA, 0) / chartData.length
+                              ).toFixed(2)
+                            : '0.00'}
+                        </p>
+                      </motion.div>
+
+                      <motion.div
+                        className="group relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-2.5 sm:p-3 border border-amber-100 dark:border-amber-800/50 cursor-pointer"
+                        variants={{
+                          hidden: { opacity: 0, y: 20, scale: 0.9 },
+                          show: { opacity: 1, y: 0, scale: 1 },
+                        }}
+                        whileHover={{
+                          y: -4,
+                          scale: 1.03,
+                          boxShadow: '0 10px 25px -5px rgba(245, 158, 11, 0.25)',
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-[9px] sm:text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+                            Semesters
+                          </p>
+                          <motion.span
+                            className="text-sm sm:text-base"
+                            whileHover={{ scale: 1.2, rotate: -10 }}
+                          >
+                            📚
+                          </motion.span>
+                        </div>
+                        <p className="text-lg sm:text-2xl font-bold text-amber-700 dark:text-amber-300 group-hover:scale-105 transition-transform origin-left">
+                          {chartData.length}
+                        </p>
+                      </motion.div>
+                    </motion.div>
+                  </motion.div>
+                );
+              })()}
+            </div>
+
+            {/* SGPA Trend with Delta */}
+            <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <h4 className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default inline-block">
+                  Semester Grade Point Average Trend
+                </h4>
+                <button
+                  onClick={() =>
+                    setSelectedGrade(selectedGrade === 'info-sgpa-trend' ? null : 'info-sgpa-trend')
+                  }
+                  className="ml-2 text-slate-400 hover:text-primary transition-colors"
+                  title="Click for details"
+                >
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {selectedGrade === 'info-sgpa-trend' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-4 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
+                >
+                  <h5 className="font-semibold text-sm mb-2 text-green-900 dark:text-green-300">
+                    📈 What is SGPA Trend?
+                  </h5>
+                  <p className="text-xs sm:text-sm text-green-800 dark:text-green-200 mb-3">
+                    This chart shows your Semester Grade Point Average (SGPA) for each semester,
+                    helping you track your academic performance over time.
+                  </p>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-green-900 dark:text-green-300 mb-1">
+                        What you're seeing:
+                      </p>
+                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                        <li>
+                          <strong>Bar length</strong>: Represents SGPA on a scale of 0-10
+                        </li>
+                        <li>
+                          <strong>Delta arrows</strong>: Show change from previous semester (↑
+                          improvement, ↓ decline)
+                        </li>
+                        <li>
+                          <strong>Bar color</strong>: Green if above average SGPA, Orange if below
+                          average
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-green-900 dark:text-green-300 mb-1">
+                        How SGPA is calculated:
+                      </p>
+                      <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
+                        SGPA = Σ(Grade Points × Credits) / Total Credits in Semester
+                      </code>
+                      <p className="text-slate-700 dark:text-slate-300 text-xs">
+                        <em>
+                          Example: If you scored A (9 pts) in a 4-credit course and B+ (8 pts) in a
+                          3-credit course: SGPA = (9×4 + 8×3) / (4+3) = 60/7 = 8.57
+                        </em>
+                      </p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-green-900 dark:text-green-300 mb-1">
+                        Why this matters:
+                      </p>
+                      <p className="text-slate-700 dark:text-slate-300">
+                        SGPA trends reveal your academic momentum and consistency. An upward trend
+                        shows improvement and adaptation to academic challenges, while a downward
+                        trend signals the need to adjust study strategies. Unlike CGPA (which
+                        averages all semesters), SGPA lets you see performance variations semester
+                        by semester, helping you identify what works and what doesn't.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              <motion.div
+                className="space-y-3 sm:space-y-4"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1,
+                    },
+                  },
+                }}
+                initial="hidden"
+                animate="show"
+              >
+                {performanceTrend.map((item, index: number) => (
+                  <motion.div
+                    key={index}
+                    className="space-y-1.5 sm:space-y-2"
                     variants={{
                       hidden: { opacity: 0, x: -20 },
                       show: { opacity: 1, x: 0 },
                     }}
                   >
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1.5 sm:mb-2 gap-0.5 sm:gap-0">
-                      <div>
-                        <span className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default">
-                          {tierInfo.tier}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="text-xs sm:text-sm font-medium w-14 sm:w-16">
+                          {item.semester}
                         </span>
-                        <span className="text-[10px] sm:text-xs text-slate-500 ml-1.5 sm:ml-2">
-                          ({tierInfo.grades.join(', ')})
-                        </span>
+                        {item.delta !== 0 && (
+                          <span
+                            className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-semibold ${
+                              item.delta > 0
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {item.delta > 0 ? '↑' : '↓'} {Math.abs(item.delta).toFixed(2)}
+                          </span>
+                        )}
                       </div>
-                      <span className="text-xs sm:text-sm font-semibold">
-                        {tierCourses.length} courses • {tierCredits} credits
+                      <span className="text-[10px] sm:text-sm text-slate-500">
+                        {item.credits} credits • {item.courseCount} courses
                       </span>
                     </div>
-                    <div className="group bg-slate-200 dark:bg-slate-700 rounded-full h-5 sm:h-6 relative overflow-hidden cursor-pointer hover:shadow-inner transition-shadow">
-                      {tierCourses.length > 0 && (
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="group flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-8 sm:h-10 relative overflow-visible cursor-pointer">
                         <motion.div
-                          className={`absolute left-0 top-0 h-full flex items-center px-2 sm:px-3 bg-${tierInfo.color}-500 group-hover:brightness-110 transition-all`}
+                          className={`absolute left-0 top-0 h-full flex items-center justify-end pr-2 sm:pr-3 rounded-full ${
+                            item.sgpa >= advancedMetrics.avgSgpa
+                              ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                              : 'bg-gradient-to-r from-amber-500 to-orange-500'
+                          }`}
                           initial={{ width: 0 }}
-                          animate={{ width: `${percentage}%` }}
-                          transition={{ duration: 1, ease: 'easeOut' }}
-                          whileHover={{ scaleY: 1.15 }}
+                          animate={{ width: `${(item.sgpa / 10) * 100}%` }}
+                          transition={{ duration: 0.8, ease: 'easeOut', delay: index * 0.15 }}
+                          whileHover={{
+                            scale: 1.03,
+                            y: -2,
+                            boxShadow: '0 6px 16px -4px rgba(0, 0, 0, 0.2)',
+                            transition: { duration: 0.15, ease: 'easeOut' },
+                          }}
                         >
-                          {percentage > 10 && (
-                            <span className="text-white text-[10px] sm:text-xs font-semibold group-hover:scale-110 transition-transform">
-                              {percentage.toFixed(1)}%
-                            </span>
-                          )}
+                          <span className="text-white text-xs sm:text-sm font-bold group-hover:scale-110 transition-transform">
+                            {item.sgpa.toFixed(2)}
+                          </span>
                         </motion.div>
-                      )}
+                      </div>
                     </div>
                   </motion.div>
-                );
-              })}
-            </motion.div>
+                ))}
+              </motion.div>
+              <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  <span className="font-semibold">Average SGPA:</span>{' '}
+                  {advancedMetrics.avgSgpa.toFixed(2)} •
+                  <span className="font-semibold ml-2">Trend:</span>{' '}
+                  {advancedMetrics.trajectoryStatus} ({advancedMetrics.slope > 0 ? '+' : ''}
+                  {(advancedMetrics.slope * 100).toFixed(2)}% per semester)
+                </p>
+              </div>
+            </div>
+
+            {/* Cumulative Performance */}
+            <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <h4 className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default inline-block">
+                  Cumulative Credit Progression
+                </h4>
+                <button
+                  onClick={() =>
+                    setSelectedGrade(
+                      selectedGrade === 'info-credit-progression' ? null : 'info-credit-progression'
+                    )
+                  }
+                  className="ml-2 text-slate-400 hover:text-primary transition-colors"
+                  title="Click for details"
+                >
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {selectedGrade === 'info-credit-progression' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-4 p-3 sm:p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800"
+                >
+                  <h5 className="font-semibold text-sm mb-2 text-indigo-900 dark:text-indigo-300">
+                    📚 What is Cumulative Credit Progression?
+                  </h5>
+                  <p className="text-xs sm:text-sm text-indigo-800 dark:text-indigo-200 mb-3">
+                    This chart tracks how your total earned credits accumulate over time, showing
+                    your progress toward degree completion.
+                  </p>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
+                        Understanding the visualization:
+                      </p>
+                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                        <li>
+                          <strong>Bar length</strong>: Shows cumulative credits earned up to that
+                          semester
+                        </li>
+                        <li>
+                          <strong>+X credits</strong>: New credits earned in that specific semester
+                        </li>
+                        <li>
+                          <strong>Total</strong>: Running total of all credits earned so far
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
+                        How it's calculated:
+                      </p>
+                      <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
+                        Cumulative Credits = Previous Total + Current Semester Credits
+                      </code>
+                      <p className="text-slate-700 dark:text-slate-300 text-xs">
+                        <em>
+                          Example: Sem 1 (20 credits) → Sem 2 (+22 credits) = 42 total → Sem 3 (+20
+                          credits) = 62 total
+                        </em>
+                      </p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
+                        Why this matters:
+                      </p>
+                      <p className="text-slate-700 dark:text-slate-300">
+                        Tracking credit accumulation helps you monitor degree progress and ensures
+                        you're on pace to meet graduation requirements. Consistent credit
+                        progression indicates steady academic advancement.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              <motion.div
+                className="space-y-3"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1,
+                    },
+                  },
+                }}
+                initial="hidden"
+                animate="show"
+              >
+                {(() => {
+                  // Track unique courses to avoid counting retakes multiple times
+                  const seenCourses = new Set<string>();
+                  const sortedSemesters = [...gradesData.semesters].sort(
+                    (a, b) => a.semester - b.semester
+                  );
+
+                  // Calculate new unique earned credits per semester
+                  const creditProgressionData = sortedSemesters.map((sem) => {
+                    let newUniqueCredits = 0;
+
+                    sem.grades.forEach((grade) => {
+                      // Only count if: course not seen before AND passed (grade != 'F')
+                      if (!seenCourses.has(grade.subjectCode) && grade.grade !== 'F') {
+                        newUniqueCredits += grade.credits || 0;
+                        seenCourses.add(grade.subjectCode);
+                      }
+                    });
+
+                    return {
+                      semester: `Semester ${sem.semester}`,
+                      semesterNum: sem.semester,
+                      newCredits: newUniqueCredits,
+                    };
+                  });
+
+                  // Calculate cumulative totals
+                  let cumulative = 0;
+                  const dataWithCumulative = creditProgressionData.map((item) => {
+                    cumulative += item.newCredits;
+                    return { ...item, cumulative };
+                  });
+
+                  const totalEarnedCredits = gradesData.earnedCredits || gradesData.totalCredits;
+
+                  return dataWithCumulative.map((item, index) => (
+                    <motion.div
+                      key={index}
+                      className="flex items-center gap-3"
+                      variants={{
+                        hidden: { opacity: 0, x: -20 },
+                        show: { opacity: 1, x: 0 },
+                      }}
+                    >
+                      <span className="text-sm font-medium w-16">{item.semester}</span>
+                      <div className="group flex-1 cursor-pointer">
+                        <div className="flex justify-between text-xs text-slate-500 mb-1">
+                          <span>+{item.newCredits} credits</span>
+                          <span className="group-hover:text-primary transition-colors">
+                            Total: {item.cumulative} credits
+                          </span>
+                        </div>
+                        <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-4 relative overflow-visible">
+                          <motion.div
+                            className="absolute left-0 top-0 h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{
+                              width: `${(item.cumulative / totalEarnedCredits) * 100}%`,
+                            }}
+                            transition={{ duration: 1, ease: 'easeOut' }}
+                            whileHover={{
+                              scale: 1.05,
+                              y: -2,
+                              boxShadow: '0 4px 12px -3px rgba(99, 102, 241, 0.3)',
+                              transition: { duration: 0.15, ease: 'easeOut' },
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  ));
+                })()}
+              </motion.div>
+            </div>
           </div>
-        </div>
-      )}
-    </motion.div>
-  );
-});
+        )}
+
+        {/* Distribution Tab */}
+        {activeTab === 'distribution' && (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Grade Distribution with Credit Weighting */}
+            <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <h4 className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default inline-block">
+                  Grade Distribution (Credit-Weighted)
+                </h4>
+                <button
+                  onClick={() =>
+                    setSelectedGrade(
+                      selectedGrade === 'info-distribution' ? null : 'info-distribution'
+                    )
+                  }
+                  className="ml-2 text-slate-400 hover:text-primary transition-colors"
+                  title="Click for details"
+                >
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {selectedGrade === 'info-distribution' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-4 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+                >
+                  <h5 className="font-semibold text-sm mb-2 text-blue-900 dark:text-blue-300">
+                    📊 What is Grade Distribution?
+                  </h5>
+                  <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 mb-3">
+                    This shows how your grades are spread across different grade categories (A+, A,
+                    B+, etc.). Each card displays courses that share the same grade.
+                  </p>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
+                        What the numbers mean:
+                      </p>
+                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                        <li>
+                          <strong>Count</strong>: Number of courses with that grade
+                        </li>
+                        <li>
+                          <strong>Credits</strong>: Total credits from those courses
+                        </li>
+                        <li>
+                          <strong>Percentage</strong>: (Total credits with that grade ÷ Total
+                          credits earned) × 100
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
+                        Why credit-weighted?
+                      </p>
+                      <p className="text-slate-700 dark:text-slate-300">
+                        Higher credit courses impact your CGPA more than lower credit courses. The
+                        percentage reflects this by showing what portion of your total credits each
+                        grade represents.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              <motion.div
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1,
+                    },
+                  },
+                }}
+                initial="hidden"
+                animate="show"
+              >
+                {Object.entries(gradeDistribution)
+                  .sort(([a], [b]) => (gradePoints[b] || 0) - (gradePoints[a] || 0))
+                  .map(([grade, data]) => (
+                    <motion.div
+                      key={grade}
+                      onClick={() => setSelectedGrade(selectedGrade === grade ? null : grade)}
+                      className={`group relative overflow-hidden text-center p-3 sm:p-4 rounded-xl shadow-xl cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-110 active:scale-95 ${
+                        selectedGrade === grade
+                          ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-slate-900'
+                          : ''
+                      } ${getGradeColor(grade)}`}
+                      variants={{
+                        hidden: { opacity: 0, scale: 0.8, y: 20 },
+                        show: { opacity: 1, scale: 1, y: 0 },
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="relative z-10">
+                        <AnimatedInteger
+                          value={data.count}
+                          className="text-2xl sm:text-3xl font-bold group-hover:scale-125 transition-transform duration-300 block"
+                        />
+                        <p className="text-base sm:text-lg font-semibold group-hover:font-black transition-all">
+                          {grade}
+                        </p>
+                        <p className="text-[10px] sm:text-xs mt-1 opacity-75 group-hover:opacity-100 transition-opacity">
+                          <AnimatedInteger value={data.totalCredits} className="inline" /> credits
+                        </p>
+                        <p className="text-[10px] sm:text-xs opacity-60 group-hover:opacity-100 group-hover:font-semibold transition-all">
+                          <AnimatedCounter
+                            value={(data.totalCredits / gradesData.totalCredits) * 100}
+                            decimals={1}
+                            className="inline"
+                          />
+                          %
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+              </motion.div>
+
+              {selectedGrade && !selectedGrade.startsWith('info-') && (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between mb-3 px-2">
+                    <h5 className="font-semibold">Courses with grade {selectedGrade}</h5>
+                    <button
+                      onClick={() => setSelectedGrade(null)}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  {getGradeCourses(selectedGrade).map((course: any, courseIndex: number) => (
+                    <div
+                      key={courseIndex}
+                      className="group relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between p-2.5 sm:p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-300 gap-2 sm:gap-0"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="relative z-10 flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                          <span className="font-medium text-xs sm:text-sm truncate group-hover:text-primary transition-colors">
+                            {course.subjectCode}
+                          </span>
+                          <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded-full whitespace-nowrap group-hover:bg-primary/20 transition-colors">
+                            Sem {course.semester}
+                          </span>
+                        </div>
+                        <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-0.5 truncate">
+                          {course.subjectName}
+                        </p>
+                      </div>
+                      <div className="relative z-10 flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+                        <span className="text-[10px] sm:text-xs text-slate-500">
+                          {course.credits} credits
+                        </span>
+                        <span
+                          className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold group-hover:scale-110 transition-transform ${getGradeColor(course.grade)}`}
+                        >
+                          {course.grade}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Performance Tiers */}
+            <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <h4 className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default inline-block">
+                  Performance Tier Breakdown
+                </h4>
+                <button
+                  onClick={() =>
+                    setSelectedGrade(selectedGrade === 'info-tiers' ? null : 'info-tiers')
+                  }
+                  className="ml-2 text-slate-400 hover:text-primary transition-colors"
+                  title="Click for details"
+                >
+                  <svg
+                    className="w-4 h-4 sm:w-5 sm:h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {selectedGrade === 'info-tiers' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-4 p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
+                >
+                  <h5 className="font-semibold text-sm mb-2 text-purple-900 dark:text-purple-300">
+                    🎯 What is Performance Tier Breakdown?
+                  </h5>
+                  <p className="text-xs sm:text-sm text-purple-800 dark:text-purple-200 mb-3">
+                    This groups your grades into 4 performance categories, making it easy to see the
+                    overall quality distribution of your academic performance.
+                  </p>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
+                        The Four Tiers:
+                      </p>
+                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                        <li>
+                          <strong>Excellent</strong> (A+, A): Outstanding performance, 9-10 grade
+                          points
+                        </li>
+                        <li>
+                          <strong>Good</strong> (B+, B): Above average performance, 7-8 grade points
+                        </li>
+                        <li>
+                          <strong>Average</strong> (C+, C): Satisfactory performance, 5-6 grade
+                          points
+                        </li>
+                        <li>
+                          <strong>Below Average</strong> (D, F): Needs improvement, 0-4 grade points
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
+                        How percentages are calculated:
+                      </p>
+                      <p className="text-slate-700 dark:text-slate-300 mb-2">
+                        <strong>Bar Percentage</strong>: (Number of courses in tier ÷ Total number
+                        of courses) × 100
+                      </p>
+                      <p className="text-slate-700 dark:text-slate-300 text-xs">
+                        <em>
+                          Example: If you have 20 total courses and 8 are in the "Excellent" tier,
+                          the bar shows 40%
+                        </em>
+                      </p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                      <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
+                        Why this matters:
+                      </p>
+                      <p className="text-slate-700 dark:text-slate-300">
+                        While CGPA gives you a single number, tier breakdown shows the distribution
+                        of your performance. A higher concentration in "Excellent" and "Good" tiers
+                        indicates consistent strong performance.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              <motion.div
+                className="space-y-3 sm:space-y-4"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1,
+                    },
+                  },
+                }}
+                initial="hidden"
+                animate="show"
+              >
+                {[
+                  { tier: 'Excellent', grades: ['A+', 'A'], color: 'green' },
+                  { tier: 'Good', grades: ['B+', 'B'], color: 'blue' },
+                  { tier: 'Average', grades: ['C+', 'C'], color: 'yellow' },
+                  { tier: 'Below Average', grades: ['D', 'F'], color: 'red' },
+                ].map((tierInfo) => {
+                  const tierCourses = getLatestGrades.filter((g) =>
+                    tierInfo.grades.includes(g.grade)
+                  );
+                  const tierCredits = tierCourses.reduce((sum, g) => sum + g.credits, 0);
+                  const percentage = (tierCourses.length / getLatestGrades.length) * 100;
+
+                  return (
+                    <motion.div
+                      key={tierInfo.tier}
+                      variants={{
+                        hidden: { opacity: 0, x: -20 },
+                        show: { opacity: 1, x: 0 },
+                      }}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1.5 sm:mb-2 gap-0.5 sm:gap-0">
+                        <div>
+                          <span className="font-medium text-sm sm:text-base hover:text-primary transition-colors cursor-default">
+                            {tierInfo.tier}
+                          </span>
+                          <span className="text-[10px] sm:text-xs text-slate-500 ml-1.5 sm:ml-2">
+                            ({tierInfo.grades.join(', ')})
+                          </span>
+                        </div>
+                        <span className="text-xs sm:text-sm font-semibold">
+                          {tierCourses.length} courses • {tierCredits} credits
+                        </span>
+                      </div>
+                      <div className="group bg-slate-200 dark:bg-slate-700 rounded-full h-5 sm:h-6 relative overflow-hidden cursor-pointer hover:shadow-inner transition-shadow">
+                        {tierCourses.length > 0 && (
+                          <motion.div
+                            className={`absolute left-0 top-0 h-full flex items-center px-2 sm:px-3 bg-${tierInfo.color}-500 group-hover:brightness-110 transition-all`}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${percentage}%` }}
+                            transition={{ duration: 1, ease: 'easeOut' }}
+                            whileHover={{ scaleY: 1.15 }}
+                          >
+                            {percentage > 10 && (
+                              <span className="text-white text-[10px] sm:text-xs font-semibold group-hover:scale-110 transition-transform">
+                                {percentage.toFixed(1)}%
+                              </span>
+                            )}
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    );
+  }
+);
+PerformanceAnalytics.displayName = 'PerformanceAnalytics';
 
 const Grades: React.FC = () => {
   const {
@@ -4244,10 +4282,11 @@ const Grades: React.FC = () => {
 
           {/* Upload Section */}
           <div
-            className={`relative border-2 border-dashed rounded-xl p-4 sm:p-6 md:p-8 text-center transition-all duration-300 ${isDragging
+            className={`relative border-2 border-dashed rounded-xl p-4 sm:p-6 md:p-8 text-center transition-all duration-300 ${
+              isDragging
                 ? 'border-primary bg-primary/10 dark:bg-primary/20 scale-[1.02] shadow-lg'
                 : 'border-slate-300 dark:border-slate-600 hover:border-primary/50 dark:hover:border-primary/50'
-              }`}
+            }`}
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
@@ -4705,10 +4744,11 @@ const Grades: React.FC = () => {
             if (showForecaster) setShowForecaster(false);
             if (showImprovementForecaster) setShowImprovementForecaster(false);
           }}
-          className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${showAnalytics
+          className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
+            showAnalytics
               ? 'bg-primary text-white shadow-lg'
               : 'bg-white dark:bg-dark-card hover:shadow-md'
-            }`}
+          }`}
         >
           <svg
             className="w-4 h-4 sm:w-5 sm:h-5"
@@ -4733,10 +4773,11 @@ const Grades: React.FC = () => {
             if (showAnalytics) setShowAnalytics(false);
             if (showImprovementForecaster) setShowImprovementForecaster(false);
           }}
-          className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${showForecaster
+          className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
+            showForecaster
               ? 'bg-primary text-white shadow-lg'
               : 'bg-white dark:bg-dark-card hover:shadow-md'
-            }`}
+          }`}
         >
           <svg
             className="w-4 h-4 sm:w-5 sm:h-5"
@@ -4763,10 +4804,11 @@ const Grades: React.FC = () => {
             if (showForecaster) setShowForecaster(false);
             if (showAnalytics) setShowAnalytics(false);
           }}
-          className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${showImprovementForecaster
+          className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
+            showImprovementForecaster
               ? 'bg-primary text-white shadow-lg'
               : 'bg-white dark:bg-dark-card hover:shadow-md'
-            }`}
+          }`}
         >
           <svg
             className="w-4 h-4 sm:w-5 sm:h-5"
@@ -4838,8 +4880,9 @@ const Grades: React.FC = () => {
                           Semester {semester.semester}
                         </h4>
                         <svg
-                          className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-300 group-hover:scale-110 ${isSelected ? 'rotate-180' : ''
-                            }`}
+                          className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-300 group-hover:scale-110 ${
+                            isSelected ? 'rotate-180' : ''
+                          }`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -4876,14 +4919,15 @@ const Grades: React.FC = () => {
                         {/* Mini progress bar for SGPA */}
                         <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mt-2">
                           <div
-                            className={`h-full rounded-full transition-all duration-1000 ${semester.sgpa >= 8.5
+                            className={`h-full rounded-full transition-all duration-1000 ${
+                              semester.sgpa >= 8.5
                                 ? 'bg-green-500'
                                 : semester.sgpa >= 7
                                   ? 'bg-blue-500'
                                   : semester.sgpa >= 5
                                     ? 'bg-amber-500'
                                     : 'bg-red-500'
-                              }`}
+                            }`}
                             style={{ width: `${(semester.sgpa / 10) * 100}%` }}
                           />
                         </div>

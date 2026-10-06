@@ -1,7 +1,8 @@
-import { City, cities } from '@/data/cities';
-import { getWeatherAdvice } from '@/data/weatherAdvice';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+
+import { City, cities } from '@/data/cities';
+import { getWeatherAdvice } from '@/data/weatherAdvice';
 
 // --- Types ---
 

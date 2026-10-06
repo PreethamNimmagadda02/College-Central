@@ -2,8 +2,8 @@
 // Each config section is stored in a separate document within the appConfig collection
 import { AdminConfig } from '@features/admin/types';
 import { db } from '@lib/firebase';
-import firebase from 'firebase/compat/app';
 import { cache, CACHE_KEYS, CACHE_TTL } from '@lib/utils/cache';
+import firebase from 'firebase/compat/app';
 
 const CONFIG_COLLECTION = 'appConfig';
 

@@ -1,9 +1,5 @@
 import { generateDefaultConfig } from '@contexts/AppConfigContext';
-import {
-  updateConfig as updateFirestoreConfig,
-  updateConfigSection,
-  subscribeToConfig,
-} from '@services/configService';
+import { updateConfigSection, subscribeToConfig } from '@services/configService';
 import { useState, useEffect, useCallback } from 'react';
 
 import {
@@ -64,7 +60,9 @@ export const useAdminConfig = () => {
       setSaving(true);
       setError(null);
       try {
-        const promises = sections.map((section) => updateConfigSection(section, newConfig[section]));
+        const promises = sections.map((section) =>
+          updateConfigSection(section, newConfig[section])
+        );
         const results = await Promise.all(promises);
 
         if (results.every((r) => r)) {

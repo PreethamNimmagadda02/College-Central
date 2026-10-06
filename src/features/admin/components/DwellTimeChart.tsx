@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+
 import { DwellTimeInsights } from '@/services/locationAnalyticsService';
 
 interface DwellTimeChartProps {
