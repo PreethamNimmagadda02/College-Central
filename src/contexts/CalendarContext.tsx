@@ -162,6 +162,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
 
     loadPreferences();
+    return undefined;
   }, [currentUser, isGuest]);
 
   // Reminder keys live in the demo store for guests and in Firestore for everyone else
