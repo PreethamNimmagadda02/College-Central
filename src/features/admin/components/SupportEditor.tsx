@@ -14,7 +14,8 @@ import {
   Send,
   Shield,
 } from 'lucide-react';
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+
 import { AdminHeader, AdminPageLayout } from './ui';
 
 // Types
@@ -213,7 +214,6 @@ const categories: CategoryOption[] = [
 
 const SupportEditor: React.FC = () => {
   const { currentUser } = useAuth();
-  const formRef = useRef<HTMLFormElement>(null);
   const [formState, setFormState] = useState<FormState>({
     category: '',
     subject: '',
@@ -258,18 +258,10 @@ const SupportEditor: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   }, [formState]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormState((prev) => ({ ...prev, [name]: value }));
     // Clear error when user starts typing
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -356,7 +348,6 @@ const SupportEditor: React.FC = () => {
       {/* Contact Form */}
       <div className="relative">
         <form
-          ref={formRef}
           onSubmit={handleSubmit}
           className="relative bg-slate-900/50 backdrop-blur-xl p-6 md:p-8 rounded-2xl border border-slate-700 shadow-xl space-y-6"
         >
@@ -455,7 +446,7 @@ const SupportEditor: React.FC = () => {
             id="subject"
             name="subject"
             value={formState.subject}
-            onChange={handleInputChange}
+            onChange={handleChange}
             label="Subject"
             icon={MessageSquare}
             error={errors.subject}
@@ -467,7 +458,7 @@ const SupportEditor: React.FC = () => {
             id="message"
             name="message"
             value={formState.message}
-            onChange={handleTextareaChange}
+            onChange={handleChange}
             label="Your Message"
             icon={MessageSquare}
             error={errors.message}
