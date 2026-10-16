@@ -160,14 +160,13 @@ const AnimatedMetricCard: React.FC<{
   );
 };
 
-const Login: React.FC = () => {
+const LoginLanding: React.FC = () => {
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [scrollY, setScrollY] = useState(0);
-  const { loginWithGoogle, enterGuestMode, isAuthenticated, loading: authLoading } = useAuth();
+  const { loginWithGoogle, enterGuestMode } = useAuth();
   const { config: appConfig } = useAppConfig();
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
-  const navigate = useNavigate();
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [typedText, setTypedText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
@@ -235,13 +234,6 @@ const Login: React.FC = () => {
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      // Redirect to auth-redirect for role-based routing
-      navigate('/auth-redirect', { replace: true });
-    }
-  }, [authLoading, isAuthenticated, navigate]);
 
   // Smooth parallax scroll effect with requestAnimationFrame
   useEffect(() => {
@@ -357,16 +349,8 @@ const Login: React.FC = () => {
   const handleGuestAccess = () => {
     setError('');
     enterGuestMode();
-    // The isAuthenticated effect above then routes the guest to the dashboard
+    // Login's isAuthenticated effect then routes the guest to the dashboard
   };
-
-  if (authLoading || isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-light-bg dark:bg-dark-bg">
-        <div className="w-16 h-16 border-4 border-t-transparent border-primary rounded-full animate-spin"></div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -1306,6 +1290,30 @@ const Login: React.FC = () => {
       </div>
     </>
   );
+};
+
+const Login: React.FC = () => {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      // Redirect to auth-redirect for role-based routing
+      navigate('/auth-redirect', { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate]);
+
+  // The landing page's scroll animations need their sections in the DOM when they
+  // mount, so it only mounts once auth has settled
+  if (authLoading || isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-light-bg dark:bg-dark-bg">
+        <div className="w-16 h-16 border-4 border-t-transparent border-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return <LoginLanding />;
 };
 
 export default Login;
