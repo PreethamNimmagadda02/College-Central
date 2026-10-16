@@ -7,6 +7,9 @@ export const DEMO_UID = 'demo-guest';
 export const DEMO_EMAIL = 'guest@demo.local';
 export const DEMO_DISPLAY_NAME = 'Aarav Mehta';
 
+/** Shown wherever a guest tries to change their photo, which needs Firebase Storage. */
+export const DEMO_PHOTO_UNAVAILABLE = "Profile pictures can't be changed in the demo.";
+
 const SESSION_KEY = 'cc_demo_session';
 
 // Keeps the demo alive in this tab when localStorage is blocked or full

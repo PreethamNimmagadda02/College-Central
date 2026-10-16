@@ -15,7 +15,7 @@ import 'firebase/compat/auth';
 import { STUDENT_DIRECTORY } from '@config/studentDirectory';
 import { auth, db, storage } from '@lib/firebase';
 import { useAuth } from '@features/auth/hooks/useAuth';
-import { DEMO_UID } from '@features/demo/demoSession';
+import { DEMO_PHOTO_UNAVAILABLE, DEMO_UID } from '@features/demo/demoSession';
 import { subscribeDemoState, updateDemoProfile } from '@features/demo/demoStore';
 import {
   MAX_FILE_SIZE_BYTES,
@@ -217,7 +217,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const uploadProfilePicture = useCallback(
     async (file: File) => {
       if (isGuest) {
-        throw new Error("Profile pictures can't be changed in the demo.");
+        throw new Error(DEMO_PHOTO_UNAVAILABLE);
       }
       const currentUser = auth.currentUser;
       if (!currentUser || !user) throw new Error('Not authenticated or user data not loaded');

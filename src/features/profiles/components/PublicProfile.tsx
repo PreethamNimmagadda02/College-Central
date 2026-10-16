@@ -15,6 +15,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { DEMO_PHOTO_UNAVAILABLE } from '@/features/demo/demoSession';
 import { toast } from 'sonner';
 
 // 🛡️ Sentinel: Helper to sanitize URLs and prevent XSS
@@ -94,6 +96,7 @@ export const PublicProfile: React.FC<PublicProfileProps> = ({
   onCancel,
 }) => {
   const { updateUser, uploadProfilePicture } = useUser();
+  const { isGuest } = useAuth();
 
   // Local state for editing form
   const [bio, setBio] = useState(user.bio || '');
@@ -138,6 +141,13 @@ export const PublicProfile: React.FC<PublicProfileProps> = ({
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (isGuest) {
+      // Uploading needs Firebase Storage, so say why instead of showing a failure
+      toast.error(DEMO_PHOTO_UNAVAILABLE);
+      e.target.value = '';
+      return;
+    }
 
     const objectUrl = URL.createObjectURL(file);
     setPreviewImage(objectUrl);
