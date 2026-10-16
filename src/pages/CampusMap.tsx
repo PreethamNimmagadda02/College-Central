@@ -94,7 +94,6 @@ const CampusMap: React.FC = () => {
     location: userLocation,
     error: locationError,
     permissionStatus,
-    analyticsConsent,
   } = useLocation();
   const { config: appConfig } = useAppConfig();
 
@@ -114,7 +113,7 @@ const CampusMap: React.FC = () => {
   // Handle opening stats modal
   const handleOpenStats = async () => {
     setShowStatsModal(true);
-    if (currentUser && analyticsConsent) {
+    if (currentUser) {
       setLoadingStats(true);
       try {
         const stats = await getUserStats(currentUser.uid);

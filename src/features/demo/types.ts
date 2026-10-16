@@ -1,18 +1,14 @@
 import type {
   ActivityItem,
   CalendarEvent,
-  ClassSchedule,
   Notification,
   StudentDirectoryEntry,
   User,
   UserFormsData,
 } from '@/types';
 
-/** The guest's users/{uid} document, including fields the app stores outside the User type. */
-export type DemoProfile = User & {
-  scheduleData?: ClassSchedule[];
-  savedCampusPlaces?: string[];
-};
+/** The guest's users/{uid} document. */
+export type DemoProfile = User;
 
 export interface DemoState {
   /** DEMO_STATE_VERSION at seeding time; a stored state with another version is reseeded. */

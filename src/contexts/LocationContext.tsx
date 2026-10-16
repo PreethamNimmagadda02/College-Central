@@ -31,7 +31,6 @@ interface LocationContextType {
   loading: boolean;
   permissionStatus: PermissionState | 'unknown';
   currentZone: CampusZone | null;
-  analyticsConsent: boolean | null;
   retryLocation: () => void;
 }
 
@@ -223,7 +222,6 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
         loading,
         permissionStatus,
         currentZone,
-        analyticsConsent: true, // Implicit: the browser's location permission is the only gate
         retryLocation,
       }}
     >

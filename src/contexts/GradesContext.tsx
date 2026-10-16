@@ -7,6 +7,7 @@ import { db } from '@lib/firebase';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/storage';
 import { logActivity } from '@services/activityService';
+import { getLatestGrades } from '@lib/utils/gradeUtils';
 import { updateDemoProfile } from '@features/demo/demoStore';
 import useGradingScale from '@hooks/useGradingScale';
 
@@ -505,26 +506,10 @@ Include retakes. Return exact values as shown on the document.`,
       //console.log(`[Extraction] Low confidence grades: ${lowConfidenceGrades.length}`);
 
       // ===== FINALIZE RESULT =====
-      // Get latest grades for each course (handles retakes)
-      interface CourseData {
-        grade: { subjectCode: string; credits: number; grade: string };
-        semester: number;
-      }
-      const courseMap: { [subjectCode: string]: CourseData } = {};
-      bestResult.semesters.forEach((sem: any) => {
-        sem.grades.forEach((grade: any) => {
-          const existing = courseMap[grade.subjectCode];
-          if (!existing || sem.semester > existing.semester) {
-            courseMap[grade.subjectCode] = { grade, semester: sem.semester };
-          }
-        });
-      });
-
-      // Calculate credits
+      // Count only the latest attempt of each course (handles retakes)
       let totalCredits = 0;
       let earnedCredits = 0;
-      Object.values(courseMap).forEach((courseData) => {
-        const grade = courseData.grade;
+      Object.values(getLatestGrades(bestResult.semesters)).forEach((grade) => {
         const credits = grade.credits || 0;
         totalCredits += credits;
         if (grade.grade !== 'F') {
