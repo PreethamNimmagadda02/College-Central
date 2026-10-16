@@ -276,52 +276,28 @@ const LocationAnalyticsEditor: React.FC = () => {
     );
   }
 
-  const peakRows =
-    dateRange === 'today'
-      ? [
-          {
-            label: 'Peak Hour',
-            value: formatHour(peakAnalysis?.peakHour || 0),
-            visits: peakAnalysis?.peakHourVisits,
-            tone: TONES.orange,
-          },
-          {
-            label: 'Quietest Hour',
-            value: formatHour(peakAnalysis?.quietHour || 0),
-            visits: peakAnalysis?.quietHourVisits,
-            tone: TONES.green,
-          },
-        ]
-      : dateRange === 'month'
-        ? [
-            {
-              label: 'Busiest Date',
-              value: formatDate(peakAnalysis?.peakDate || '') || 'N/A',
-              visits: peakAnalysis?.peakDateVisits,
-              tone: TONES.red,
-            },
-            {
-              label: 'Quietest Date',
-              value: formatDate(peakAnalysis?.quietestDate || '') || 'N/A',
-              visits: peakAnalysis?.quietestDateVisits,
-              tone: TONES.emerald,
-            },
-          ]
-        : [
-            {
-              label: 'Busiest Day',
-              value: peakAnalysis?.peakDay || 'N/A',
-              visits: peakAnalysis?.peakDayVisits,
-              tone: TONES.red,
-            },
-            {
-              label: 'Quietest Day',
-              value: peakAnalysis?.quietestDay || 'N/A',
-              visits: peakAnalysis?.quietestDayVisits,
-              tone: TONES.emerald,
-            },
-          ];
-
+  const p = peakAnalysis;
+  // [label, value, visits, tone] for the busiest and quietest slot of each range
+  const peakRowsByRange: Record<DateRange, [string, string, number | undefined, string[]][]> = {
+    today: [
+      ['Peak Hour', formatHour(p?.peakHour || 0), p?.peakHourVisits, TONES.orange],
+      ['Quietest Hour', formatHour(p?.quietHour || 0), p?.quietHourVisits, TONES.green],
+    ],
+    week: [
+      ['Busiest Day', p?.peakDay || 'N/A', p?.peakDayVisits, TONES.red],
+      ['Quietest Day', p?.quietestDay || 'N/A', p?.quietestDayVisits, TONES.emerald],
+    ],
+    month: [
+      ['Busiest Date', formatDate(p?.peakDate || '') || 'N/A', p?.peakDateVisits, TONES.red],
+      [
+        'Quietest Date',
+        formatDate(p?.quietestDate || '') || 'N/A',
+        p?.quietestDateVisits,
+        TONES.emerald,
+      ],
+    ],
+  };
+  const peakRows = peakRowsByRange[dateRange];
   const busiest = peakRows[0];
 
   return (
@@ -377,9 +353,9 @@ const LocationAnalyticsEditor: React.FC = () => {
             labelColor="text-purple-100"
           />
           <SummaryCard
-            label={busiest?.label ?? ''}
+            label={busiest?.[0] ?? ''}
             info="The specific time or day with the highest traffic volume."
-            value={dateRange === 'today' ? formatHour(analytics?.peakHour || 0) : busiest?.value}
+            value={dateRange === 'today' ? formatHour(analytics?.peakHour || 0) : busiest?.[1]}
             icon={dateRange === 'today' ? Clock : Calendar}
             gradient="from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-800"
             labelColor="text-orange-100"
@@ -460,20 +436,15 @@ const LocationAnalyticsEditor: React.FC = () => {
             <MetricInfo text="Insights into the busiest and quietest times to help with resource allocation." />
           </h3>
           <div className="space-y-4">
-            {peakRows.map(
-              ({ label, value, visits, tone: [bg, labelColor, valueColor, visitsColor] }) => (
-                <div
-                  key={label}
-                  className={`flex items-center justify-between p-3 ${bg} rounded-lg`}
-                >
-                  <div>
-                    <p className={`text-sm ${labelColor} font-medium`}>{label}</p>
-                    <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
-                  </div>
-                  <p className={`text-xs ${visitsColor}`}>{visits || 0} visits</p>
+            {peakRows.map(([label, value, visits, [bg, labelColor, valueColor, visitsColor]]) => (
+              <div key={label} className={`flex items-center justify-between p-3 ${bg} rounded-lg`}>
+                <div>
+                  <p className={`text-sm ${labelColor} font-medium`}>{label}</p>
+                  <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
                 </div>
-              )
-            )}
+                <p className={`text-xs ${visitsColor}`}>{visits || 0} visits</p>
+              </div>
+            ))}
           </div>
         </div>
 

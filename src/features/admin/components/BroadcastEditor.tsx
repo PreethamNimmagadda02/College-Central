@@ -11,33 +11,14 @@ import { NotificationFilter } from '@/types';
 
 type BroadcastType = 'info' | 'warning' | 'success' | 'error' | 'event';
 
-const TYPE_OPTIONS: { value: BroadcastType; label: string; preview: string }[] = [
-  {
-    value: 'info',
-    label: 'Information (Blue)',
-    preview: 'bg-blue-500/10 border-blue-500/20 text-blue-100',
-  },
-  {
-    value: 'warning',
-    label: 'Warning (Yellow)',
-    preview: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-100',
-  },
-  {
-    value: 'error',
-    label: 'Urgent/Error (Red)',
-    preview: 'bg-red-500/10 border-red-500/20 text-red-100',
-  },
-  {
-    value: 'success',
-    label: 'Success (Green)',
-    preview: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-100',
-  },
-  {
-    value: 'event',
-    label: 'Event (Purple)',
-    preview: 'bg-purple-500/10 border-purple-500/20 text-purple-100',
-  },
-];
+// [option label, preview classes]
+const TYPES: Record<BroadcastType, [string, string]> = {
+  info: ['Information (Blue)', 'bg-blue-500/10 border-blue-500/20 text-blue-100'],
+  warning: ['Warning (Yellow)', 'bg-yellow-500/10 border-yellow-500/20 text-yellow-100'],
+  error: ['Urgent/Error (Red)', 'bg-red-500/10 border-red-500/20 text-red-100'],
+  success: ['Success (Green)', 'bg-emerald-500/10 border-emerald-500/20 text-emerald-100'],
+  event: ['Event (Purple)', 'bg-purple-500/10 border-purple-500/20 text-purple-100'],
+};
 
 // Mock data for dropdowns (ideally fetched from config)
 const BRANCHES = [
@@ -176,9 +157,9 @@ const BroadcastEditor: React.FC = () => {
                     onChange={(e) => setType(e.target.value as BroadcastType)}
                     className={fieldClass}
                   >
-                    {TYPE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
+                    {Object.entries(TYPES).map(([value, [label]]) => (
+                      <option key={value} value={value}>
+                        {label}
                       </option>
                     ))}
                   </select>
@@ -294,9 +275,7 @@ const BroadcastEditor: React.FC = () => {
             <h3 className="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wider">
               Preview
             </h3>
-            <div
-              className={`p-4 rounded-xl border ${TYPE_OPTIONS.find((t) => t.value === type)?.preview}`}
-            >
+            <div className={`p-4 rounded-xl border ${TYPES[type][1]}`}>
               <h4 className="font-semibold mb-1">{title || 'Message Title'}</h4>
               <p className="text-sm opacity-90">{body || 'Message body will appear here...'}</p>
               {link && <div className="mt-2 text-xs opacity-75 underline truncate">{link}</div>}
