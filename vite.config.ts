@@ -7,6 +7,7 @@ import fs from 'fs';
 const injectBuildTime = (): Plugin => {
   return {
     name: 'inject-build-time',
+    apply: 'build', // closeBundle also fires when a dev server closes
     closeBundle() {
       const swPath = path.resolve(__dirname, 'dist/sw.js');
       if (fs.existsSync(swPath)) {

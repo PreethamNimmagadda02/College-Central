@@ -13,7 +13,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
     "type-check": "tsc --noEmit",
     "validate": "npm run type-check && npm run lint && npm run build",
-    "add-admin": "ts-node scripts/addAdmin.ts",
+    "seed:firestore": "node scripts/seedFirestore.mjs",
     "deploy:college": "./scripts/deploy-college.sh",
     "deploy:iitism": "./scripts/deploy-college.sh iitism",
     "test": "vitest",

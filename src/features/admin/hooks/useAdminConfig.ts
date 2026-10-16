@@ -1,4 +1,4 @@
-import { generateDefaultConfig } from '@contexts/AppConfigContext';
+import { generateDefaultConfig } from '@config/defaultConfig';
 import { updateConfigSection, subscribeToConfig } from '@services/configService';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 

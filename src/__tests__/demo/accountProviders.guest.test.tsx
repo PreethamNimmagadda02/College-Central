@@ -1,6 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const firebaseMock = vi.hoisted(() => ({
   db: { collection: vi.fn(), runTransaction: vi.fn(), batch: vi.fn() },
@@ -24,11 +23,13 @@ vi.mock('@lib/firebase', () => firebaseMock);
 vi.mock('@services/configService', () => configServiceMock);
 vi.mock('@features/auth/hooks/useAuth', () => ({ useAuth: () => authMock.value }));
 
+import { generateDefaultConfig } from '@config/defaultConfig';
 import { STUDENT_DIRECTORY } from '@config/studentDirectory';
-import { AppConfigProvider, generateDefaultConfig, useAppConfig } from '@contexts/AppConfigContext';
+import { AppConfigProvider, useAppConfig } from '@contexts/AppConfigContext';
 import { UserProvider, useUser } from '@contexts/UserContext';
 import { RoleProvider, useRole } from '@features/auth/hooks/useRole';
 import { getDemoState, resetDemoStoreForTests } from '@features/demo/demoStore';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <AppConfigProvider>

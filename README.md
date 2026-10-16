@@ -99,7 +99,7 @@ npm run dev
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
 | `npm run lint` | Run ESLint |
-| `npm run add-admin` | Add admin user to Firestore |
+| `npm run seed:firestore -- --admin <email>` | Seed a new project's config and grant admin |
 
 ---
 
@@ -109,8 +109,8 @@ npm run dev
 1. Create project at [Firebase Console](https://console.firebase.google.com/)
 2. Enable: Authentication (Google), Firestore, Storage, Hosting, Cloud Functions
 3. Update `src/lib/firebase.ts` with your credentials
-4. Configure Firestore security rules (see below)
-5. Add your email to `adminEmails` in Firestore `config/app` document
+4. Deploy the security rules: `firebase deploy --only firestore,storage`
+5. Seed the config and your admin account: `npm run seed:firestore -- --admin you@college.edu` (sign in once, then run it again to set your role)
 
 **Firestore Security Rules:**
 ```javascript
