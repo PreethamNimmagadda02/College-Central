@@ -1,6 +1,3 @@
-// Auth feature hooks
-
-// Context providers
 import { Capacitor } from '@capacitor/core';
 import ErrorBoundary from '@components/common/ErrorBoundary';
 import { InstallPrompt } from '@components/common/InstallPrompt';
@@ -8,8 +5,6 @@ import { LocationRequirement } from '@components/common/LocationRequirement';
 import { NativeLocationTracker } from '@components/common/NativeLocationTracker';
 import { OfflineIndicator } from '@components/common/OfflineIndicator';
 import ProtectedRoute from '@components/common/ProtectedRoute';
-
-// Layout and common components
 import UpdatePrompt from '@components/common/UpdatePrompt';
 import { CampusMapProvider } from '@contexts/CampusMapContext';
 import { LocationProvider } from '@contexts/LocationContext';
@@ -24,33 +19,33 @@ import { UserProvider } from '@contexts/UserContext';
 import { AuthProvider } from '@features/auth/hooks/useAuth';
 import { RoleProvider } from '@features/auth/hooks/useRole';
 import { GuestBoundary } from '@features/demo/GuestBoundary';
+import { lazyPage } from '@lib/utils/lazyPage';
 import Layout from '@pages/Layout';
 
-// Utilities
-import React, { lazy, Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
 // Lazy load pages (main.tsx reloads once if a chunk from an old deploy is gone)
-const Dashboard = lazy(() => import('@pages/Dashboard'));
-const Grades = lazy(() => import('@pages/Grades'));
-const Schedule = lazy(() => import('@pages/Schedule'));
-const Directory = lazy(() => import('@pages/Directory'));
-const Profile = lazy(() => import('@pages/Profile'));
-const NotFound = lazy(() => import('@pages/NotFound'));
-const CampusMap = lazy(() => import('@pages/CampusMap'));
-const CollegeForms = lazy(() => import('@pages/CollegeForms'));
-const AcademicCalendar = lazy(() => import('@pages/AcademicCalendar'));
-const Login = lazy(() => import('@pages/Login'));
-const PrivacyPolicy = lazy(() => import('@pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('@pages/TermsOfService'));
-const OfflinePage = lazy(() => import('@pages/OfflinePage'));
-const UserProfile = lazy(() => import('@pages/UserProfile'));
+const Dashboard = lazyPage(() => import('@pages/Dashboard'));
+const Grades = lazyPage(() => import('@pages/Grades'));
+const Schedule = lazyPage(() => import('@pages/Schedule'));
+const Directory = lazyPage(() => import('@pages/Directory'));
+const Profile = lazyPage(() => import('@pages/Profile'));
+const NotFound = lazyPage(() => import('@pages/NotFound'));
+const CampusMap = lazyPage(() => import('@pages/CampusMap'));
+const CollegeForms = lazyPage(() => import('@pages/CollegeForms'));
+const AcademicCalendar = lazyPage(() => import('@pages/AcademicCalendar'));
+const Login = lazyPage(() => import('@pages/Login'));
+const PrivacyPolicy = lazyPage(() => import('@pages/PrivacyPolicy'));
+const TermsOfService = lazyPage(() => import('@pages/TermsOfService'));
+const OfflinePage = lazyPage(() => import('@pages/OfflinePage'));
+const UserProfile = lazyPage(() => import('@pages/UserProfile'));
 
 // Admin Dashboard - available for admin users in all environments
-const AdminDashboard = lazy(() => import('@features/admin/AdminDashboard'));
+const AdminDashboard = lazyPage(() => import('@features/admin/AdminDashboard'));
 // Auth redirect page for role-based routing
-const AuthRedirect = lazy(() => import('@pages/AuthRedirect'));
+const AuthRedirect = lazyPage(() => import('@pages/AuthRedirect'));
 
 // Loading fallback component
 const PageLoader = React.memo(() => (

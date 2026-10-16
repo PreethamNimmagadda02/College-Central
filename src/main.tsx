@@ -12,15 +12,6 @@ if (import.meta.env.PROD) {
   getPerformance();
 }
 
-// After a deploy, an open tab can ask for page chunks that no longer exist: reload once to get
-// the new build. Within 30s of that reload, let the error boundary show instead of looping.
-window.addEventListener('vite:preloadError', () => {
-  const lastReload = Number(sessionStorage.getItem('chunk-reload-at'));
-  if (Date.now() - lastReload < 30_000) return;
-  sessionStorage.setItem('chunk-reload-at', String(Date.now()));
-  window.location.reload();
-});
-
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
