@@ -5,6 +5,7 @@ import { generalForms, ugForms } from '@config/forms';
 import { NEP_TIMETABLE_DATA } from '@config/nepCourseData';
 import { getCourseOptionFromAdmissionNumber } from '@lib/utils/courseUtils';
 import { calculateCreditsFromLTP } from '@lib/utils/creditCalculator';
+import { getEventKey } from '@lib/utils/eventUtils';
 
 import type {
   ActivityItem,
@@ -468,10 +469,7 @@ export function createDemoSeed(now: Date): DemoState {
     profile,
     userForms,
     userEvents,
-    // Same key format as CalendarContext.getEventKey
-    reminderEventKeys: userEvents
-      .filter((e) => e.remindMe)
-      .map((e) => `${e.date}-${e.description}`),
+    reminderEventKeys: userEvents.filter((e) => e.remindMe).map(getEventKey),
     notifications: buildNotifications(nowMs),
     activity: buildActivity(nowMs, userForms),
     classmates,

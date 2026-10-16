@@ -1,52 +1,9 @@
-import { useUser } from '@contexts/UserContext';
 import { useCalendar } from '@contexts/CalendarContext';
 import { formatDateRange, formatDateWithMonthName } from '@lib/utils/dateUtils';
+import { getCountdownEvents, getEventEmoji, getUpcomingEvents } from '@lib/utils/eventUtils';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 
 import { CalendarEvent, CalendarEventType } from '@/types';
-
-// Helper function to get emoji for calendar event type
-const getEventTypeIcon = (event: CalendarEvent): string => {
-  const desc = event.description.toLowerCase();
-  const type = event.type;
-
-  // Check event type first
-  if (type === 'Mid-Semester Exams' || type === 'End-Semester Exams') {
-    return '📝';
-  }
-  if (type === 'Start of Semester') {
-    return '🎓';
-  }
-  if (type === 'Holiday') {
-    // Check for specific holidays
-    if (desc.includes('diwali') || desc.includes('deepavali')) return '🪔';
-    if (desc.includes('holi')) return '🎨';
-    if (desc.includes('christmas')) return '🎄';
-    if (desc.includes('new year')) return '🎊';
-    if (desc.includes('independence') || desc.includes('republic')) return '🇮🇳';
-    if (desc.includes('dussehra') || desc.includes('durga')) return '🙏';
-    if (desc.includes('eid')) return '🌙';
-    if (desc.includes('gandhi')) return '🕊️';
-    return '🎉';
-  }
-
-  // Check description for specific keywords
-  if (desc.includes('exam') || desc.includes('test')) return '📝';
-  if (desc.includes('registration') || desc.includes('enroll')) return '📋';
-  if (desc.includes('vacation') || desc.includes('break')) return '🏖️';
-  if (desc.includes('convocation') || desc.includes('graduation')) return '🎓';
-  if (desc.includes('orientation')) return '🧭';
-  if (desc.includes('sports') || desc.includes('athletics')) return '🏆';
-  if (desc.includes('cultural') || desc.includes('fest')) return '🎭';
-  if (desc.includes('technical') || desc.includes('hackathon')) return '💻';
-  if (desc.includes('workshop') || desc.includes('seminar')) return '📚';
-  if (desc.includes('deadline') || desc.includes('submission')) return '⏰';
-  if (desc.includes('meeting')) return '👥';
-  if (desc.includes('timetable') || desc.includes('schedule')) return '📅';
-
-  // Default based on type
-  return '📌';
-};
 
 const getEventTypeColor = (type: CalendarEventType) => {
   switch (type) {
@@ -63,8 +20,157 @@ const getEventTypeColor = (type: CalendarEventType) => {
   }
 };
 
+const getDaysUntil = (date: string) => {
+  const eventDate = new Date(date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  eventDate.setHours(0, 0, 0, 0);
+  const diffTime = eventDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+};
+
+// Where an event stands relative to today, for its badges and highlight
+const getEventStatus = (event: CalendarEvent) => {
+  const daysUntil = getDaysUntil(event.date);
+  const eventEndDate = new Date(event.endDate || event.date);
+  eventEndDate.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const eventStartDate = new Date(event.date);
+  eventStartDate.setHours(0, 0, 0, 0);
+  const isOngoing = eventStartDate < today && eventEndDate >= today;
+  return {
+    daysUntil,
+    isPast: getDaysUntil(event.endDate || event.date) < 0,
+    isOngoing,
+    isUrgent: daysUntil >= 0 && daysUntil <= 3 && !isOngoing,
+    isUpcoming: daysUntil > 3 && daysUntil <= 7,
+  };
+};
+
+const inputClass =
+  'w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800';
+const labelClass = 'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2';
+
+// One form for adding a new event and for editing one of the user's own events
+const EventFormModal: React.FC<{
+  mode: 'add' | 'edit';
+  event: Partial<CalendarEvent>;
+  onChange: (changes: Partial<CalendarEvent>) => void;
+  onSubmit: () => void;
+  onClose: () => void;
+}> = ({ mode, event, onChange, onSubmit, onClose }) => {
+  const isAdd = mode === 'add';
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            {isAdd ? 'Add New Event' : 'Edit Event'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className={labelClass}>
+              {isAdd ? 'Event Description *' : 'Event Description'}
+            </label>
+            <input
+              type="text"
+              value={event.description}
+              onChange={(e) => onChange({ description: e.target.value })}
+              className={inputClass}
+              placeholder={isAdd ? 'e.g., Project Submission Deadline' : undefined}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>{isAdd ? 'Start Date *' : 'Start Date'}</label>
+            <input
+              type="date"
+              value={event.date}
+              min="2020-01-01"
+              max="2099-12-31"
+              onChange={(e) => onChange({ date: e.target.value })}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>End Date (optional)</label>
+            <input
+              type="date"
+              value={event.endDate || ''}
+              min="2020-01-01"
+              max="2099-12-31"
+              onChange={(e) => onChange({ endDate: e.target.value })}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Event Type</label>
+            <select
+              value={event.type}
+              onChange={(e) => onChange({ type: e.target.value as CalendarEventType })}
+              className={inputClass}
+            >
+              <option value="Other">Other</option>
+              <option value="Start of Semester">Start of Semester</option>
+              <option value="Mid-Semester Exams">Mid-Semester Exams</option>
+              <option value="End-Semester Exams">End-Semester Exams</option>
+              <option value="Holiday">Holiday</option>
+            </select>
+          </div>
+          {isAdd && (
+            <div className="flex items-center space-x-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <input
+                type="checkbox"
+                id="remindMe"
+                checked={event.remindMe || false}
+                onChange={(e) => onChange({ remindMe: e.target.checked })}
+                className="w-4 h-4 text-purple-600 bg-white border-slate-300 rounded focus:ring-purple-500"
+              />
+              <label
+                htmlFor="remindMe"
+                className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+              >
+                🔔 Remind me about this event
+              </label>
+            </div>
+          )}
+          <div className="flex space-x-3 pt-4">
+            <button
+              onClick={onSubmit}
+              className="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white font-medium rounded-lg hover:shadow-lg transition-all"
+            >
+              {isAdd ? 'Add Event' : 'Save Changes'}
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AcademicCalendar: React.FC = () => {
-  useUser(); // Component may still need user context for other features
   const {
     calendarData,
     loading: calendarLoading,
@@ -82,7 +188,6 @@ const AcademicCalendar: React.FC = () => {
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [selectedEventIndex, setSelectedEventIndex] = useState<number | null>(null);
   const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
@@ -122,23 +227,10 @@ const AcademicCalendar: React.FC = () => {
   }, []);
 
   // Get events with reminders enabled (automatically show countdown for these)
-  const getCountdownEvents = useMemo(() => {
-    if (!calendarData) return [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return reminderPreferences
-      .map((key) => calendarData.events.find((e) => getEventKey(e) === key))
-      .filter((e): e is CalendarEvent => {
-        if (!e) return false;
-        // Only show future events (not past)
-        const eventDate = new Date(e.date);
-        eventDate.setHours(0, 0, 0, 0);
-        return eventDate >= today;
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 3); // Limit to 3 countdown events
-  }, [reminderPreferences, calendarData, getEventKey]);
+  const countdownEvents = useMemo(
+    () => (calendarData ? getCountdownEvents(calendarData.events, reminderPreferences) : []),
+    [calendarData, reminderPreferences]
+  );
 
   const getCountdown = useCallback(
     (dateStr: string) => {
@@ -206,47 +298,10 @@ const AcademicCalendar: React.FC = () => {
     );
   }, [paginatedEvents]);
 
-  const upcomingEvents = useMemo(() => {
-    if (!calendarData) return [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Calculate one week from today
-    const oneWeekFromToday = new Date(today);
-    oneWeekFromToday.setDate(oneWeekFromToday.getDate() + 7);
-
-    // Filter events that are ongoing (started in the past but not yet ended) OR will start within the next week
-    const allUpcomingEvents = calendarData.events.filter((event) => {
-      const eventStartDate = new Date(event.date);
-      const eventEndDate = new Date(event.endDate || event.date);
-      eventStartDate.setHours(0, 0, 0, 0);
-      eventEndDate.setHours(0, 0, 0, 0);
-
-      // Event is ongoing if it has already started but hasn't ended yet
-      const isOngoing = eventStartDate < today && eventEndDate >= today;
-
-      // Event is upcoming if it starts within the next week
-      const isUpcomingThisWeek = eventStartDate >= today && eventStartDate <= oneWeekFromToday;
-
-      return isOngoing || isUpcomingThisWeek;
-    });
-
-    // Sort events by their start date to get the soonest ones first
-    allUpcomingEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    // Return all events in the next week
-    return allUpcomingEvents;
-  }, [calendarData]);
-
-  const getDaysUntil = (date: string) => {
-    const eventDate = new Date(date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    eventDate.setHours(0, 0, 0, 0);
-    const diffTime = eventDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
+  const upcomingEvents = useMemo(
+    () => (calendarData ? getUpcomingEvents(calendarData.events) : []),
+    [calendarData]
+  );
 
   const handleExportPDF = () => {
     if (!calendarData) return;
@@ -332,10 +387,6 @@ const AcademicCalendar: React.FC = () => {
     printWindow.document.close();
   };
 
-  // Removed unused handleSyncGoogleCalendar
-
-  // (Deprecated) handleSetReminders was removed as it was unused
-
   const handleAddEvent = async () => {
     if (!newEvent.date || !newEvent.description) {
       alert('Please fill in all required fields.');
@@ -366,7 +417,6 @@ const AcademicCalendar: React.FC = () => {
       await updateUserEvent(selectedEvent.id, selectedEvent);
       setShowEditEventModal(false);
       setSelectedEvent(null);
-      setSelectedEventIndex(null);
     } catch (error) {
       console.error('Error updating event:', error);
       alert('Failed to update event. Please try again.');
@@ -422,8 +472,6 @@ const AcademicCalendar: React.FC = () => {
     }
   };
 
-  // (Deprecated) handleSetEventReminderOld was removed as it was unused
-
   const handleAddToPersonalCalendar = (event: CalendarEvent) => {
     const startDateStr = event.date.replace(/-/g, '');
     // DTEND must be exclusive: one day after the end (or start if single-day)
@@ -457,15 +505,13 @@ const AcademicCalendar: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleShowEventDetails = (event: CalendarEvent, index: number) => {
+  const handleShowEventDetails = (event: CalendarEvent) => {
     setSelectedEvent(event);
-    setSelectedEventIndex(index);
     setShowEventDetailsModal(true);
   };
 
-  const openEditModal = (event: CalendarEvent, index: number) => {
+  const openEditModal = (event: CalendarEvent) => {
     setSelectedEvent({ ...event });
-    setSelectedEventIndex(index);
     setShowEditEventModal(true);
     setShowEventDetailsModal(false);
   };
@@ -632,7 +678,7 @@ const AcademicCalendar: React.FC = () => {
       </div>
 
       {/* Countdown Section - Shows events with reminders */}
-      {getCountdownEvents.length > 0 && (
+      {countdownEvents.length > 0 && (
         <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-md p-4 md:p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
           <h3 className="text-base md:text-lg font-semibold mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -640,11 +686,11 @@ const AcademicCalendar: React.FC = () => {
               <span className="text-slate-800 dark:text-slate-100">Your Countdowns</span>
             </div>
             <span className="text-xs font-medium px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300">
-              {getCountdownEvents.length} reminder{getCountdownEvents.length !== 1 ? 's' : ''}
+              {countdownEvents.length} reminder{countdownEvents.length !== 1 ? 's' : ''}
             </span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {getCountdownEvents.map((event) => {
+            {countdownEvents.map((event) => {
               const countdown = getCountdown(event.date);
               const eventKey = getEventKey(event);
               const isToday = new Date(event.date).toDateString() === new Date().toDateString();
@@ -715,7 +761,7 @@ const AcademicCalendar: React.FC = () => {
                         />
                       </svg>
                       <span className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl drop-shadow-md">
-                        {getEventTypeIcon(event)}
+                        {getEventEmoji(event)}
                       </span>
                     </div>
 
@@ -808,13 +854,6 @@ const AcademicCalendar: React.FC = () => {
           <div className="space-y-3">
             {upcomingEvents.map((event, index) => {
               const daysUntil = getDaysUntil(event.date);
-              // Find the global index for this event in filteredEvents
-              const globalIndex = filteredEvents.findIndex(
-                (e) =>
-                  e.date === event.date &&
-                  e.description === event.description &&
-                  e.type === event.type
-              );
               return (
                 <div
                   key={index}
@@ -823,10 +862,10 @@ const AcademicCalendar: React.FC = () => {
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div
                     className="relative z-10 flex items-center space-x-3 flex-1 min-w-0"
-                    onClick={() => handleShowEventDetails(event, globalIndex)}
+                    onClick={() => handleShowEventDetails(event)}
                   >
                     <span className="text-2xl md:text-3xl group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
-                      {getEventTypeIcon(event)}
+                      {getEventEmoji(event)}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm md:text-base group-hover:text-primary transition-colors truncate">
@@ -968,29 +1007,13 @@ const AcademicCalendar: React.FC = () => {
                 </h3>
                 <div className="space-y-4">
                   {(events as CalendarEvent[]).map((event, monthIndex) => {
-                    const daysUntil = getDaysUntil(event.date);
-                    const eventEndDate = new Date(event.endDate || event.date);
-                    eventEndDate.setHours(0, 0, 0, 0);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const eventStartDate = new Date(event.date);
-                    eventStartDate.setHours(0, 0, 0, 0);
-                    const isOngoing = eventStartDate < today && eventEndDate >= today;
-                    const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !isOngoing;
-                    const isUpcoming = daysUntil > 3 && daysUntil <= 7;
+                    const { daysUntil, isOngoing, isUrgent, isUpcoming } = getEventStatus(event);
                     const hasReminder = reminderPreferences.includes(getEventKey(event));
-                    // Find the global index for this event
-                    const globalIndex = filteredEvents.findIndex(
-                      (e) =>
-                        e.date === event.date &&
-                        e.description === event.description &&
-                        e.type === event.type
-                    );
 
                     return (
                       <div
                         key={`${month}-${monthIndex}`}
-                        onClick={() => handleShowEventDetails(event, globalIndex)}
+                        onClick={() => handleShowEventDetails(event)}
                         className={`
                                                     relative flex flex-col sm:flex-row group cursor-pointer
                                                     bg-gradient-to-br from-white to-slate-50/50
@@ -1069,7 +1092,7 @@ const AcademicCalendar: React.FC = () => {
                               <div className="flex items-start gap-2 sm:gap-3 mb-2">
                                 <div className="flex-shrink-0 hidden sm:block">
                                   <span className="text-2xl md:text-3xl group-hover:scale-110 transition-transform duration-200 inline-block">
-                                    {getEventTypeIcon(event)}
+                                    {getEventEmoji(event)}
                                   </span>
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -1178,22 +1201,13 @@ const AcademicCalendar: React.FC = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredEvents.map((event: CalendarEvent, index: number) => {
-                const daysUntil = getDaysUntil(event.date);
-                const eventEndDate = new Date(event.endDate || event.date);
-                eventEndDate.setHours(0, 0, 0, 0);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const eventStartDate = new Date(event.date);
-                eventStartDate.setHours(0, 0, 0, 0);
-                const isOngoing = eventStartDate < today && eventEndDate >= today;
-                const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !isOngoing;
-                const isUpcoming = daysUntil > 3 && daysUntil <= 7;
+                const { daysUntil, isOngoing, isUrgent, isUpcoming } = getEventStatus(event);
                 const hasReminder = reminderPreferences.includes(getEventKey(event));
 
                 return (
                   <div
                     key={index}
-                    onClick={() => handleShowEventDetails(event, index)}
+                    onClick={() => handleShowEventDetails(event)}
                     className={`
                                             relative overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-800/30
                                             rounded-xl p-5 shadow-md hover:shadow-2xl
@@ -1236,7 +1250,7 @@ const AcademicCalendar: React.FC = () => {
                     <div className="relative z-10">
                       <div className="flex items-start justify-between mb-4">
                         <div className="text-4xl group-hover:scale-110 transition-transform duration-300">
-                          {getEventTypeIcon(event)}
+                          {getEventEmoji(event)}
                         </div>
                         <span
                           className={`text-xs font-semibold py-1 px-3 rounded-full shadow-sm ${getEventTypeColor(event.type)}`}
@@ -1347,23 +1361,13 @@ const AcademicCalendar: React.FC = () => {
             {/* Mobile Card View */}
             <div className="block md:hidden space-y-3">
               {filteredEvents.map((event: CalendarEvent, index: number) => {
-                const daysUntil = getDaysUntil(event.date);
-                const isPast = getDaysUntil(event.endDate || event.date) < 0;
-                const eventEndDate = new Date(event.endDate || event.date);
-                eventEndDate.setHours(0, 0, 0, 0);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const eventStartDate = new Date(event.date);
-                eventStartDate.setHours(0, 0, 0, 0);
-                const isOngoing = eventStartDate < today && eventEndDate >= today;
-                const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !isOngoing;
-                const isUpcoming = daysUntil > 3 && daysUntil <= 7;
+                const { daysUntil, isPast, isOngoing, isUrgent, isUpcoming } = getEventStatus(event);
                 const hasReminder = reminderPreferences.includes(getEventKey(event));
 
                 return (
                   <div
                     key={index}
-                    onClick={() => handleShowEventDetails(event, index)}
+                    onClick={() => handleShowEventDetails(event)}
                     className={`
                                             bg-white dark:bg-slate-900/30 rounded-xl p-4 border-2 cursor-pointer
                                             hover:shadow-lg transition-all duration-200 active:scale-[0.98]
@@ -1388,7 +1392,7 @@ const AcademicCalendar: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xl">{getEventTypeIcon(event)}</span>
+                          <span className="text-xl">{getEventEmoji(event)}</span>
                           <p className="font-bold text-slate-900 dark:text-white text-sm line-clamp-2">
                             {event.description}
                           </p>
@@ -1474,23 +1478,14 @@ const AcademicCalendar: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                   {filteredEvents.map((event: CalendarEvent, index: number) => {
-                    const daysUntil = getDaysUntil(event.date);
-                    const isPast = getDaysUntil(event.endDate || event.date) < 0;
-                    const eventEndDate = new Date(event.endDate || event.date);
-                    eventEndDate.setHours(0, 0, 0, 0);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const eventStartDate = new Date(event.date);
-                    eventStartDate.setHours(0, 0, 0, 0);
-                    const isOngoing = eventStartDate < today && eventEndDate >= today;
-                    const isUrgent = daysUntil >= 0 && daysUntil <= 3 && !isOngoing;
-                    const isUpcoming = daysUntil > 3 && daysUntil <= 7;
+                    const { daysUntil, isPast, isOngoing, isUrgent, isUpcoming } =
+                      getEventStatus(event);
                     const hasReminder = reminderPreferences.includes(getEventKey(event));
 
                     return (
                       <tr
                         key={index}
-                        onClick={() => handleShowEventDetails(event, index)}
+                        onClick={() => handleShowEventDetails(event)}
                         className={`
                                                     group cursor-pointer
                                                     bg-white dark:bg-slate-900/30
@@ -1537,7 +1532,7 @@ const AcademicCalendar: React.FC = () => {
                         <td className="py-4 lg:py-5 px-4 lg:px-6">
                           <div className="flex items-center gap-2 lg:gap-3">
                             <span className="text-2xl lg:text-3xl group-hover:scale-125 transition-transform duration-300">
-                              {getEventTypeIcon(event)}
+                              {getEventEmoji(event)}
                             </span>
                             <div className="flex-1 min-w-0">
                               <p className="font-bold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors line-clamp-2 text-sm lg:text-base">
@@ -1621,7 +1616,7 @@ const AcademicCalendar: React.FC = () => {
                             <button
                               onClick={(e: React.MouseEvent) => {
                                 e.stopPropagation();
-                                handleShowEventDetails(event, index);
+                                handleShowEventDetails(event);
                               }}
                               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-md hover:shadow-lg transition-all group/btn"
                             >
@@ -1684,236 +1679,33 @@ const AcademicCalendar: React.FC = () => {
         </div>
       )}
 
-      {/* Add Event Modal */}
       {showAddEventModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Add New Event</h2>
-              <button
-                onClick={() => setShowAddEventModal(false)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Event Description *
-                </label>
-                <input
-                  type="text"
-                  value={newEvent.description}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setNewEvent({ ...newEvent, description: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                  placeholder="e.g., Project Submission Deadline"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Start Date *
-                </label>
-                <input
-                  type="date"
-                  value={newEvent.date}
-                  min="2020-01-01"
-                  max="2099-12-31"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setNewEvent({ ...newEvent, date: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  End Date (optional)
-                </label>
-                <input
-                  type="date"
-                  value={newEvent.endDate || ''}
-                  min="2020-01-01"
-                  max="2099-12-31"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setNewEvent({ ...newEvent, endDate: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Event Type
-                </label>
-                <select
-                  value={newEvent.type}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    setNewEvent({ ...newEvent, type: e.target.value as CalendarEventType })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                >
-                  <option value="Other">Other</option>
-                  <option value="Start of Semester">Start of Semester</option>
-                  <option value="Mid-Semester Exams">Mid-Semester Exams</option>
-                  <option value="End-Semester Exams">End-Semester Exams</option>
-                  <option value="Holiday">Holiday</option>
-                </select>
-              </div>
-              <div className="flex items-center space-x-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                <input
-                  type="checkbox"
-                  id="remindMe"
-                  checked={newEvent.remindMe || false}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setNewEvent({ ...newEvent, remindMe: e.target.checked })
-                  }
-                  className="w-4 h-4 text-purple-600 bg-white border-slate-300 rounded focus:ring-purple-500"
-                />
-                <label
-                  htmlFor="remindMe"
-                  className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
-                >
-                  🔔 Remind me about this event
-                </label>
-              </div>
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={handleAddEvent}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white font-medium rounded-lg hover:shadow-lg transition-all"
-                >
-                  Add Event
-                </button>
-                <button
-                  onClick={() => setShowAddEventModal(false)}
-                  className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <EventFormModal
+          mode="add"
+          event={newEvent}
+          onChange={(changes) => setNewEvent({ ...newEvent, ...changes })}
+          onSubmit={handleAddEvent}
+          onClose={() => setShowAddEventModal(false)}
+        />
       )}
 
-      {/* Edit Event Modal */}
       {showEditEventModal && selectedEvent && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Edit Event</h2>
-              <button
-                onClick={() => setShowEditEventModal(false)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Event Description
-                </label>
-                <input
-                  type="text"
-                  value={selectedEvent.description}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSelectedEvent({ ...selectedEvent, description: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  value={selectedEvent.date}
-                  min="2020-01-01"
-                  max="2099-12-31"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSelectedEvent({ ...selectedEvent, date: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  End Date (optional)
-                </label>
-                <input
-                  type="date"
-                  value={selectedEvent.endDate || ''}
-                  min="2020-01-01"
-                  max="2099-12-31"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSelectedEvent({ ...selectedEvent, endDate: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Event Type
-                </label>
-                <select
-                  value={selectedEvent.type}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    setSelectedEvent({
-                      ...selectedEvent,
-                      type: e.target.value as CalendarEventType,
-                    })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                >
-                  <option value="Other">Other</option>
-                  <option value="Start of Semester">Start of Semester</option>
-                  <option value="Mid-Semester Exams">Mid-Semester Exams</option>
-                  <option value="End-Semester Exams">End-Semester Exams</option>
-                  <option value="Holiday">Holiday</option>
-                </select>
-              </div>
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={handleEditEvent}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white font-medium rounded-lg hover:shadow-lg transition-all"
-                >
-                  Save Changes
-                </button>
-                <button
-                  onClick={() => setShowEditEventModal(false)}
-                  className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <EventFormModal
+          mode="edit"
+          event={selectedEvent}
+          onChange={(changes) => setSelectedEvent({ ...selectedEvent, ...changes })}
+          onSubmit={handleEditEvent}
+          onClose={() => setShowEditEventModal(false)}
+        />
       )}
 
       {/* Event Details Modal */}
-      {showEventDetailsModal && selectedEvent && selectedEventIndex !== null && (
+      {showEventDetailsModal && selectedEvent && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl max-w-lg w-full p-6">
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <span className="text-4xl">{getEventTypeIcon(selectedEvent)}</span>
+                <span className="text-4xl">{getEventEmoji(selectedEvent)}</span>
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                     {selectedEvent.description}
@@ -2063,7 +1855,7 @@ const AcademicCalendar: React.FC = () => {
               </button>
 
               <button
-                onClick={() => openEditModal(selectedEvent, selectedEventIndex)}
+                onClick={() => openEditModal(selectedEvent)}
                 disabled={!selectedEvent.userId}
                 className={`flex items-center justify-center space-x-2 py-2.5 px-4 font-medium rounded-lg transition-all ${selectedEvent.userId
                     ? 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 cursor-pointer'
