@@ -12,6 +12,7 @@ import 'firebase/firestore';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { db } from '@lib/firebase';
 import { logActivity } from '@services/activityService';
+import { subscribeDemoState, updateDemoProfile } from '@features/demo/demoStore';
 
 import { useAppConfig } from './AppConfigContext';
 import { getRealTimeCrowdLevels, LiveZoneStatus } from '@services/locationAnalyticsService';
@@ -39,7 +40,7 @@ const CampusMapContext = createContext<CampusMapContextType | undefined>(undefin
 // QuickRoutes moved to config/campusMap.ts
 
 export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, isGuest } = useAuth();
   const { config, loading: configLoading } = useAppConfig();
 
   // Use locations from config, fall back to empty array if not loaded yet
@@ -92,6 +93,13 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       return;
     }
 
+    if (isGuest) {
+      return subscribeDemoState((state) => {
+        setSavedPlaces(state.profile.savedCampusPlaces ?? []);
+        setLoading(false);
+      });
+    }
+
     setLoading(true);
     let unsubscribe: (() => void) | null = null;
 
@@ -123,7 +131,7 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [currentUser]);
+  }, [currentUser, isGuest]);
 
   // Toggle saved place (sync with Firebase)
   const toggleSavePlace = useCallback(
@@ -141,10 +149,14 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
       setSavedPlaces(newSaved);
 
       try {
-        const userDocRef = db.collection('users').doc(currentUser.uid);
-        await userDocRef.update({
-          savedCampusPlaces: newSaved,
-        });
+        if (isGuest) {
+          updateDemoProfile({ savedCampusPlaces: newSaved });
+        } else {
+          const userDocRef = db.collection('users').doc(currentUser.uid);
+          await userDocRef.update({
+            savedCampusPlaces: newSaved,
+          });
+        }
 
         const location = locations.find((loc) => loc.id === locationId);
         if (location) {
@@ -164,7 +176,7 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
         setSavedPlaces(savedPlaces);
       }
     },
-    [currentUser, savedPlaces, locations]
+    [currentUser, isGuest, savedPlaces, locations]
   );
 
   // Get directions URL for Google Maps

@@ -16,6 +16,7 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/storage';
 import { getGoogleGenAI } from '@lib/utils/lazyImports';
 import { logActivity } from '@services/activityService';
+import { subscribeDemoState, updateDemoProfile } from '@features/demo/demoStore';
 import useGradingScale from '@hooks/useGradingScale';
 
 /**
@@ -64,10 +65,13 @@ interface GradesContextType {
   resetGradesState: () => Promise<void>;
 }
 
+const DEMO_SCAN_UNAVAILABLE =
+  "Grade-sheet scanning isn't available in the demo. You can still edit your grades by hand.";
+
 const GradesContext = createContext<GradesContextType | undefined>(undefined);
 
 export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, isGuest } = useAuth();
   const { gradePoints: adminGradePoints, gradeOptions } = useGradingScale();
   const [gradesData, setGradesDataState] = useState<GradesData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,6 +83,13 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isGuest) {
+      return subscribeDemoState((state) => {
+        setGradesDataState(state.profile.gradesData ?? null);
+        setLoading(false);
+      });
+    }
+
     let unsubscribe: (() => void) | null = null;
     if (currentUser) {
       setLoading(true);
@@ -130,10 +141,14 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [currentUser]);
+  }, [currentUser, isGuest]);
 
   const setGradesData = useCallback(
     async (data: GradesData | null) => {
+      if (isGuest) {
+        updateDemoProfile({ gradesData: data ?? undefined });
+        return;
+      }
       if (currentUser) {
         try {
           const userDocRef = db.collection('users').doc(currentUser.uid);
@@ -145,7 +160,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
       }
     },
-    [currentUser]
+    [currentUser, isGuest]
   );
 
   const selectFile = useCallback((file: File | null) => {
@@ -168,6 +183,11 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, []);
 
   const processGrades = useCallback(async () => {
+    if (isGuest) {
+      // Scanning uploads to Storage and calls Gemini, so it stays off in the demo
+      setError(DEMO_SCAN_UNAVAILABLE);
+      return;
+    }
     if (!selectedFile || !currentUser) {
       setError('Please select a file first.');
       return;
@@ -638,6 +658,7 @@ Include retakes. Return exact values as shown on the document.`,
       setIsProcessing(false);
     }
   }, [
+    isGuest,
     selectedFile,
     currentUser,
     gradesData,

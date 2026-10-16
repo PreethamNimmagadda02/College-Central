@@ -1,5 +1,6 @@
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { db } from '@lib/firebase';
+import { subscribeDemoState, updateDemoProfile } from '@features/demo/demoStore';
 import React, {
   createContext,
   useContext,
@@ -22,12 +23,20 @@ interface ScheduleContextType {
 const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
 
 export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, isGuest } = useAuth();
   const [scheduleData, setScheduleDataState] = useState<ClassSchedule[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (isGuest) {
+      return subscribeDemoState((state) => {
+        setScheduleDataState(state.profile.scheduleData ?? null);
+        setError(null);
+        setLoading(false);
+      });
+    }
+
     let unsubscribe: (() => void) | null = null;
     if (currentUser) {
       setLoading(true);
@@ -82,10 +91,15 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [currentUser]);
+  }, [currentUser, isGuest]);
 
   const setScheduleData = useCallback(
     async (data: ClassSchedule[] | null) => {
+      if (isGuest) {
+        updateDemoProfile({ scheduleData: data ?? undefined });
+        setError(null);
+        return;
+      }
       if (currentUser) {
         try {
           const userDocRef = db.collection('users').doc(currentUser.uid);
@@ -99,7 +113,7 @@ export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
       }
     },
-    [currentUser]
+    [currentUser, isGuest]
   );
 
   const contextValue = useMemo(
