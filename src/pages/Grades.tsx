@@ -5,7 +5,14 @@ import { useUser } from '@contexts/UserContext';
 import { useGradingScale } from '@hooks/useGradingScale';
 import { calculateCreditsFromLTP } from '@lib/utils/creditCalculator';
 import { getLatestGrades } from '@lib/utils/gradeUtils';
-import { motion, useInView, useSpring, useTransform } from 'framer-motion';
+import {
+  motion,
+  useInView,
+  useMotionValueEvent,
+  useSpring,
+  useTransform,
+  Variants,
+} from 'framer-motion';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Line,
@@ -20,8 +27,20 @@ import {
 
 import { Grade, GradesData, Semester, SavedScenario } from '@/types';
 
-// Animated Counter Component - counts up smoothly when value changes
-const AnimatedCounter: React.FC<{
+// Shared entrance variants: a container that staggers its children, and child entrances
+const STAGGER: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+const FADE_UP: Variants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
+const POP_UP: Variants = {
+  hidden: { opacity: 0, y: 20, scale: 0.9 },
+  show: { opacity: 1, y: 0, scale: 1 },
+};
+const SLIDE_IN: Variants = { hidden: { opacity: 0, x: -20 }, show: { opacity: 1, x: 0 } };
+
+// Counts up smoothly to `value` (shown with `decimals` places) when scrolled into view
+const AnimatedNumber: React.FC<{
   value: number;
   decimals?: number;
   duration?: number;
@@ -32,51 +51,13 @@ const AnimatedCounter: React.FC<{
   const spring = useSpring(0, { duration: duration * 1000, bounce: 0 });
   const display = useTransform(spring, (current) => current.toFixed(decimals));
   const [displayValue, setDisplayValue] = useState(value.toFixed(decimals));
+  useMotionValueEvent(display, 'change', setDisplayValue);
 
   useEffect(() => {
     if (isInView) {
       spring.set(value);
     }
   }, [value, isInView, spring]);
-
-  useEffect(() => {
-    const unsubscribe = display.on('change', (latest) => {
-      setDisplayValue(latest);
-    });
-    return unsubscribe;
-  }, [display]);
-
-  return (
-    <span ref={ref} className={className}>
-      {displayValue}
-    </span>
-  );
-};
-
-// Animated Integer Counter - for whole numbers
-const AnimatedInteger: React.FC<{ value: number; duration?: number; className?: string }> = ({
-  value,
-  duration = 1.5,
-  className = '',
-}) => {
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: false, margin: '-50px' });
-  const spring = useSpring(0, { duration: duration * 1000, bounce: 0 });
-  const display = useTransform(spring, (current) => Math.round(current).toString());
-  const [displayValue, setDisplayValue] = useState(value.toString());
-
-  useEffect(() => {
-    if (isInView) {
-      spring.set(value);
-    }
-  }, [value, isInView, spring]);
-
-  useEffect(() => {
-    const unsubscribe = display.on('change', (latest) => {
-      setDisplayValue(latest);
-    });
-    return unsubscribe;
-  }, [display]);
 
   return (
     <span ref={ref} className={className}>
@@ -103,19 +84,13 @@ const ProgressRing: React.FC<{
     (val) => circumference - (val / 100) * circumference
   );
   const [offset, setOffset] = useState(circumference);
+  useMotionValueEvent(strokeDashoffset, 'change', setOffset);
 
   useEffect(() => {
     if (isInView) {
       spring.set(Math.min(progress, 100));
     }
   }, [progress, isInView, spring]);
-
-  useEffect(() => {
-    const unsubscribe = strokeDashoffset.on('change', (latest) => {
-      setOffset(latest);
-    });
-    return unsubscribe;
-  }, [strokeDashoffset]);
 
   return (
     <svg ref={ref} width={size} height={size} className={`transform -rotate-90 ${className}`}>
@@ -1859,15 +1834,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
           {/* Key Performance Indicators */}
           <motion.div
             className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
-            variants={{
-              hidden: { opacity: 0 },
-              show: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.1,
-                },
-              },
-            }}
+            variants={STAGGER}
             initial="hidden"
             animate="show"
           >
@@ -1875,10 +1842,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               type="button"
               aria-expanded={selectedKPI === 'standing'}
               aria-label="View details for Academic Standing"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
+              variants={POP_UP}
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'standing' ? null : 'standing')}
@@ -1908,7 +1872,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 </motion.p>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-[10px] sm:text-xs text-slate-500">CGPA</p>
-                  <AnimatedCounter
+                  <AnimatedNumber
                     value={gradesData.cgpa}
                     decimals={2}
                     className="text-[10px] sm:text-xs font-semibold text-blue-600"
@@ -1921,10 +1885,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               type="button"
               aria-expanded={selectedKPI === 'consistency'}
               aria-label="View details for Consistency Score"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
+              variants={POP_UP}
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'consistency' ? null : 'consistency')}
@@ -1945,7 +1906,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   </motion.span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <AnimatedCounter
+                  <AnimatedNumber
                     value={advancedMetrics.consistencyScore}
                     decimals={0}
                     className="text-base sm:text-xl font-bold text-green-600"
@@ -1969,10 +1930,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               type="button"
               aria-expanded={selectedKPI === 'efficiency'}
               aria-label="View details for Credit Efficiency"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
+              variants={POP_UP}
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'efficiency' ? null : 'efficiency')}
@@ -1992,7 +1950,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     ⚡
                   </motion.span>
                 </div>
-                <AnimatedCounter
+                <AnimatedNumber
                   value={advancedMetrics.creditEfficiency}
                   decimals={2}
                   className="text-base sm:text-xl font-bold text-purple-600 block"
@@ -2016,10 +1974,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               type="button"
               aria-expanded={selectedKPI === 'trend'}
               aria-label="View details for Performance Trend"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
+              variants={POP_UP}
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'trend' ? null : 'trend')}
@@ -2326,23 +2281,12 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
           {/* Performance Summary Cards */}
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
-            variants={{
-              hidden: { opacity: 0 },
-              show: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.1,
-                },
-              },
-            }}
+            variants={STAGGER}
             initial="hidden"
             animate="show"
           >
             <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                show: { opacity: 1, y: 0 },
-              }}
+              variants={FADE_UP}
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => setSelectedKPI(selectedKPI === 'excellence' ? null : 'excellence')}
@@ -2356,7 +2300,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     Excellence Rate
                   </span>
-                  <AnimatedCounter
+                  <AnimatedNumber
                     value={advancedMetrics.excellenceRate}
                     decimals={1}
                     className="font-semibold text-sm sm:text-base text-emerald-700 dark:text-emerald-400"
@@ -2368,7 +2312,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   </span>
                   <span className="font-semibold text-sm sm:text-base">
                     Sem {advancedMetrics.bestSemester.semester} (
-                    <AnimatedCounter
+                    <AnimatedNumber
                       value={advancedMetrics.bestSemester.sgpa}
                       decimals={2}
                       className="inline"
@@ -2380,7 +2324,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     High-Credit Avg
                   </span>
-                  <AnimatedCounter
+                  <AnimatedNumber
                     value={advancedMetrics.highCreditAvg}
                     decimals={2}
                     className="font-semibold text-sm sm:text-base"
@@ -2390,10 +2334,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             </motion.div>
 
             <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                show: { opacity: 1, y: 0 },
-              }}
+              variants={FADE_UP}
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => setSelectedKPI(selectedKPI === 'workload' ? null : 'workload')}
@@ -2407,7 +2348,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     Avg Credits/Sem
                   </span>
-                  <AnimatedCounter
+                  <AnimatedNumber
                     value={advancedMetrics.avgCreditsPerSem}
                     decimals={1}
                     className="font-semibold text-sm sm:text-base text-blue-700 dark:text-blue-400"
@@ -2417,8 +2358,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     Max Credits
                   </span>
-                  <AnimatedInteger
+                  <AnimatedNumber
                     value={advancedMetrics.maxCreditsInSem}
+                    decimals={0}
                     className="font-semibold text-sm sm:text-base"
                   />
                 </div>
@@ -2426,8 +2368,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     Total Courses
                   </span>
-                  <AnimatedInteger
+                  <AnimatedNumber
                     value={latestGrades.length}
+                    decimals={0}
                     className="font-semibold text-sm sm:text-base"
                   />
                 </div>
@@ -2435,10 +2378,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             </motion.div>
 
             <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                show: { opacity: 1, y: 0 },
-              }}
+              variants={FADE_UP}
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => setSelectedKPI(selectedKPI === 'risk' ? null : 'risk')}
@@ -2452,8 +2392,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     Failed Courses
                   </span>
-                  <AnimatedInteger
+                  <AnimatedNumber
                     value={advancedMetrics.failedCourses.length}
+                    decimals={0}
                     className={`font-semibold text-sm sm:text-base ${advancedMetrics.failedCourses.length > 0 ? 'text-red-600' : 'text-green-600'}`}
                   />
                 </div>
@@ -2461,8 +2402,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     At-Risk (D/F)
                   </span>
-                  <AnimatedInteger
+                  <AnimatedNumber
                     value={advancedMetrics.atRiskCourses.length}
+                    decimals={0}
                     className={`font-semibold text-sm sm:text-base ${advancedMetrics.atRiskCourses.length > 0 ? 'text-orange-600' : 'text-green-600'}`}
                   />
                 </div>
@@ -2471,7 +2413,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     Improvement
                   </span>
                   <span className="font-semibold text-sm sm:text-base">
-                    <AnimatedCounter
+                    <AnimatedNumber
                       value={advancedMetrics.improvementPotential}
                       decimals={2}
                       className="inline"
@@ -2745,25 +2687,14 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             )}
             <motion.div
               className="space-y-2 sm:space-y-3"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
+              variants={STAGGER}
               initial="hidden"
               animate="show"
             >
               {subjectPerformance.map((subject, index) => (
                 <motion.div
                   key={index}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    show: { opacity: 1, y: 0 },
-                  }}
+                  variants={FADE_UP}
                 >
                   <div
                     onClick={() =>
@@ -3190,22 +3121,13 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   {/* Summary Stats - more compact on mobile */}
                   <motion.div
                     className="mt-3 sm:mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3"
-                    variants={{
-                      hidden: { opacity: 0 },
-                      show: {
-                        opacity: 1,
-                        transition: { staggerChildren: 0.1 },
-                      },
-                    }}
+                    variants={STAGGER}
                     initial="hidden"
                     animate="show"
                   >
                     <motion.div
                       className="group relative overflow-hidden bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl p-2.5 sm:p-3 border border-emerald-100 dark:border-emerald-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
+                      variants={POP_UP}
                       whileHover={{
                         y: -4,
                         scale: 1.03,
@@ -3234,10 +3156,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
                     <motion.div
                       className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-2.5 sm:p-3 border border-blue-100 dark:border-blue-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
+                      variants={POP_UP}
                       whileHover={{
                         y: -4,
                         scale: 1.03,
@@ -3266,10 +3185,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
                     <motion.div
                       className="group relative overflow-hidden bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-xl p-2.5 sm:p-3 border border-purple-100 dark:border-purple-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
+                      variants={POP_UP}
                       whileHover={{
                         y: -4,
                         scale: 1.03,
@@ -3300,10 +3216,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
                     <motion.div
                       className="group relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-2.5 sm:p-3 border border-amber-100 dark:border-amber-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
+                      variants={POP_UP}
                       whileHover={{
                         y: -4,
                         scale: 1.03,
@@ -3426,15 +3339,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             )}
             <motion.div
               className="space-y-3 sm:space-y-4"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
+              variants={STAGGER}
               initial="hidden"
               animate="show"
             >
@@ -3442,10 +3347,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 <motion.div
                   key={index}
                   className="space-y-1.5 sm:space-y-2"
-                  variants={{
-                    hidden: { opacity: 0, x: -20 },
-                    show: { opacity: 1, x: 0 },
-                  }}
+                  variants={SLIDE_IN}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
                     <div className="flex items-center gap-2 sm:gap-3">
@@ -3596,15 +3498,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             )}
             <motion.div
               className="space-y-3"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
+              variants={STAGGER}
               initial="hidden"
               animate="show"
             >
@@ -3647,10 +3541,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <motion.div
                     key={index}
                     className="flex items-center gap-3"
-                    variants={{
-                      hidden: { opacity: 0, x: -20 },
-                      show: { opacity: 1, x: 0 },
-                    }}
+                    variants={SLIDE_IN}
                   >
                     <span className="text-sm font-medium w-16">{item.semester}</span>
                     <div className="group flex-1 cursor-pointer">
@@ -3766,15 +3657,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             )}
             <motion.div
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
+              variants={STAGGER}
               initial="hidden"
               animate="show"
             >
@@ -3795,18 +3678,20 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10">
-                      <AnimatedInteger
+                      <AnimatedNumber
                         value={data.count}
+                        decimals={0}
                         className="text-2xl sm:text-3xl font-bold group-hover:scale-125 transition-transform duration-300 block"
                       />
                       <p className="text-base sm:text-lg font-semibold group-hover:font-black transition-all">
                         {grade}
                       </p>
                       <p className="text-[10px] sm:text-xs mt-1 opacity-75 group-hover:opacity-100 transition-opacity">
-                        <AnimatedInteger value={data.totalCredits} className="inline" /> credits
+                        <AnimatedNumber value={data.totalCredits} decimals={0} className="inline" />{' '}
+                        credits
                       </p>
                       <p className="text-[10px] sm:text-xs opacity-60 group-hover:opacity-100 group-hover:font-semibold transition-all">
-                        <AnimatedCounter
+                        <AnimatedNumber
                           value={(data.totalCredits / gradesData.totalCredits) * 100}
                           decimals={1}
                           className="inline"
@@ -3965,15 +3850,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             )}
             <motion.div
               className="space-y-3 sm:space-y-4"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
+              variants={STAGGER}
               initial="hidden"
               animate="show"
             >
@@ -3992,10 +3869,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 return (
                   <motion.div
                     key={tierInfo.tier}
-                    variants={{
-                      hidden: { opacity: 0, x: -20 },
-                      show: { opacity: 1, x: 0 },
-                    }}
+                    variants={SLIDE_IN}
                   >
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1.5 sm:mb-2 gap-0.5 sm:gap-0">
                       <div>
