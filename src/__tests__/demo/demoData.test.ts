@@ -1,15 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
-
-// generateDefaultConfig lives in AppConfigContext, which pulls in Firebase and useAuth
-vi.mock('@lib/firebase', () => ({ db: {}, auth: {}, storage: {} }));
-vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => false } }));
-vi.mock('@codetrix-studio/capacitor-google-auth', () => ({ GoogleAuth: { initialize: vi.fn() } }));
 
 import { CAMPUS_LOCATIONS } from '@config/campusMap';
+import { generateDefaultConfig } from '@config/defaultConfig';
 import { allForms } from '@config/forms';
 import { NEP_TIMETABLE_DATA } from '@config/nepCourseData';
 import { STUDENT_DIRECTORY } from '@config/studentDirectory';
-import { generateDefaultConfig } from '@contexts/AppConfigContext';
 import {
   createDemoSeed,
   DEMO_GRADE_POINTS,
@@ -17,6 +11,7 @@ import {
   pickDemoCourses,
 } from '@features/demo/demoData';
 import { DEMO_UID } from '@features/demo/demoSession';
+import { describe, expect, it } from 'vitest';
 
 const NOW = new Date(2026, 9, 16, 11, 0); // 16 October 2026, 11:00 local time
 

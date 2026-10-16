@@ -3,40 +3,7 @@
 import { AdminConfig } from '@features/admin/types';
 import { db } from '@lib/firebase';
 
-const CONFIG_COLLECTION = 'appConfig';
-
-// Document IDs for each config section
-const CONFIG_DOCS = {
-  collegeInfo: 'collegeInfo',
-  appConstants: 'appConstants',
-  branches: 'branches',
-  hostels: 'hostels',
-  quotes: 'quotes',
-  quickLinks: 'quickLinks',
-  forms: 'forms',
-  calendar: 'calendar',
-  directory: 'directory',
-  courses: 'courses',
-  students: 'students',
-  campusMap: 'campusMap',
-  quickRoutes: 'quickRoutes',
-  gradingScale: 'gradingScale',
-} as const;
-
-// Config sections that are arrays and need to be wrapped in { items: [...] }
-const ARRAY_CONFIG_KEYS = [
-  'branches',
-  'hostels',
-  'quotes',
-  'quickLinks',
-  'forms',
-  'directory',
-  'courses',
-  'students',
-  'campusMap',
-  'quickRoutes',
-  'gradingScale',
-] as const;
+import { ARRAY_CONFIG_KEYS, CONFIG_COLLECTION, CONFIG_DOCS, toConfigDocData } from './configDocs';
 
 /**
  * Update a specific section of the app configuration
@@ -50,7 +17,7 @@ export const updateConfigSection = async <K extends keyof AdminConfig>(
     const docRef = db.collection(CONFIG_COLLECTION).doc(docId);
 
     // For array-based configs, wrap in { items: [...] }
-    if (ARRAY_CONFIG_KEYS.includes(section as any)) {
+    if (ARRAY_CONFIG_KEYS.includes(section)) {
       await docRef.set({ items: data }, { merge: true });
     } else {
       // For object configs, replace entirely to ensure nested values sync
@@ -80,9 +47,7 @@ export const subscribeToConfig = (callback: (config: AdminConfig | null) => void
       snapshot.forEach((doc) => {
         if (!validDocIds.includes(doc.id)) return;
         const data = doc.data();
-        (config as any)[doc.id] = ARRAY_CONFIG_KEYS.includes(doc.id as any)
-          ? data.items || []
-          : data;
+        (config as any)[doc.id] = ARRAY_CONFIG_KEYS.includes(doc.id) ? data.items || [] : data;
       });
 
       lastConfig = Object.keys(config).length > 0 ? (config as AdminConfig) : null;
@@ -121,15 +86,8 @@ export const initializeConfig = async (defaultConfig: AdminConfig): Promise<bool
     const batch = db.batch();
 
     missingEntries.forEach(([key, docId]) => {
-      const docRef = collectionRef.doc(docId);
-      const data = defaultConfig[key as keyof AdminConfig];
-
-      // For array-based configs, wrap in { items: [...] }
-      if (ARRAY_CONFIG_KEYS.includes(key as any)) {
-        batch.set(docRef, { items: data });
-      } else {
-        batch.set(docRef, data);
-      }
+      const section = key as keyof AdminConfig;
+      batch.set(collectionRef.doc(docId), toConfigDocData(section, defaultConfig[section]));
     });
 
     await batch.commit();
