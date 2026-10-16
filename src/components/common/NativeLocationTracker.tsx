@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState, ReactNode } from 'react';
+import React, { useEffect } from 'react';
 import { BackgroundGeolocationPlugin } from '@capacitor-community/background-geolocation';
 import { registerPlugin } from '@capacitor/core';
 import { useAuth } from '@features/auth/hooks/useAuth';
@@ -7,22 +7,9 @@ import { detectCurrentZone, updateUserLocation } from '@services/locationAnalyti
 const BackgroundGeolocationModule =
   registerPlugin<BackgroundGeolocationPlugin>('BackgroundGeolocation');
 
-interface NativeLocationContextType {
-  isTracking: boolean;
-  startTracking: () => Promise<void>;
-  stopTracking: () => Promise<void>;
-}
-
-const NativeLocationContext = createContext<NativeLocationContextType | undefined>(undefined);
-
-export const NativeLocationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+/** Streams background location to location analytics while signed in on a native build. */
+export const NativeLocationTracker: React.FC = () => {
   const { currentUser } = useAuth();
-  const [isTracking, setIsTracking] = useState(false);
-  // We can reuse the existing LocationContext logic or bypass it.
-  // Ideally, we feed data INTO the existing LocationProvider via a bridge,
-  // OR we allow this provider to run independently for background tasks.
-
-  // For now, let's implement the background tracking logic:
 
   useEffect(() => {
     let watcherId: string | undefined;
@@ -87,16 +74,12 @@ export const NativeLocationProvider: React.FC<{ children: ReactNode }> = ({ chil
             }
           }
         );
-
-        setIsTracking(true);
       } catch (err) {
         console.error('Error starting background geolocation:', err);
       }
     };
 
-    if (currentUser) {
-      initBackgroundLocation();
-    }
+    initBackgroundLocation();
 
     return () => {
       if (watcherId) {
@@ -105,17 +88,5 @@ export const NativeLocationProvider: React.FC<{ children: ReactNode }> = ({ chil
     };
   }, [currentUser]);
 
-  const startTracking = async () => {
-    // Implementation for manual start if needed
-  };
-
-  const stopTracking = async () => {
-    // Implementation for manual stop if needed
-  };
-
-  return (
-    <NativeLocationContext.Provider value={{ isTracking, startTracking, stopTracking }}>
-      {children}
-    </NativeLocationContext.Provider>
-  );
+  return null;
 };

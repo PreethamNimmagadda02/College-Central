@@ -7,7 +7,6 @@ import { AppConfigProvider } from '@contexts/AppConfigContext';
 import Layout from '@pages/Layout';
 import ErrorBoundary from '@components/common/ErrorBoundary';
 import ProtectedRoute from '@components/common/ProtectedRoute';
-import AdminProtectedRoute from '@components/common/AdminProtectedRoute';
 import UpdatePrompt from '@components/common/UpdatePrompt';
 import { InstallPrompt } from '@components/common/InstallPrompt';
 import { OfflineIndicator } from '@components/common/OfflineIndicator';
@@ -26,33 +25,32 @@ import { GuestBoundary } from '@features/demo/GuestBoundary';
 import { RoleProvider } from '@features/auth/hooks/useRole';
 
 // Utilities
-import { lazyWithRetry } from '@lib/utils/lazyWithRetry';
-import React, { Suspense, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { Capacitor } from '@capacitor/core';
-import { NativeLocationProvider } from '@contexts/NativeLocationProvider';
+import { NativeLocationTracker } from '@components/common/NativeLocationTracker';
 
-// Lazy load pages with automatic retry on chunk loading failure
-const Dashboard = lazyWithRetry(() => import('@pages/Dashboard'));
-const Grades = lazyWithRetry(() => import('@pages/Grades'));
-const Schedule = lazyWithRetry(() => import('@pages/Schedule'));
-const Directory = lazyWithRetry(() => import('@pages/Directory'));
-const Profile = lazyWithRetry(() => import('@pages/Profile'));
-const NotFound = lazyWithRetry(() => import('@pages/NotFound'));
-const CampusMap = lazyWithRetry(() => import('@pages/CampusMap'));
-const CollegeForms = lazyWithRetry(() => import('@pages/CollegeForms'));
-const AcademicCalendar = lazyWithRetry(() => import('@pages/AcademicCalendar'));
-const Login = lazyWithRetry(() => import('@pages/Login'));
-const PrivacyPolicy = lazyWithRetry(() => import('@pages/PrivacyPolicy'));
-const TermsOfService = lazyWithRetry(() => import('@pages/TermsOfService'));
-const OfflinePage = lazyWithRetry(() => import('@pages/OfflinePage'));
-const UserProfile = lazyWithRetry(() => import('@pages/UserProfile'));
+// Lazy load pages (main.tsx reloads once if a chunk from an old deploy is gone)
+const Dashboard = lazy(() => import('@pages/Dashboard'));
+const Grades = lazy(() => import('@pages/Grades'));
+const Schedule = lazy(() => import('@pages/Schedule'));
+const Directory = lazy(() => import('@pages/Directory'));
+const Profile = lazy(() => import('@pages/Profile'));
+const NotFound = lazy(() => import('@pages/NotFound'));
+const CampusMap = lazy(() => import('@pages/CampusMap'));
+const CollegeForms = lazy(() => import('@pages/CollegeForms'));
+const AcademicCalendar = lazy(() => import('@pages/AcademicCalendar'));
+const Login = lazy(() => import('@pages/Login'));
+const PrivacyPolicy = lazy(() => import('@pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('@pages/TermsOfService'));
+const OfflinePage = lazy(() => import('@pages/OfflinePage'));
+const UserProfile = lazy(() => import('@pages/UserProfile'));
 
 // Admin Dashboard - available for admin users in all environments
-const AdminDashboard = lazyWithRetry(() => import('@features/admin/AdminDashboard'));
+const AdminDashboard = lazy(() => import('@features/admin/AdminDashboard'));
 // Auth redirect page for role-based routing
-const AuthRedirect = lazyWithRetry(() => import('@pages/AuthRedirect'));
+const AuthRedirect = lazy(() => import('@pages/AuthRedirect'));
 
 // Loading fallback component
 const PageLoader = React.memo(() => (
@@ -70,11 +68,11 @@ const router = createHashRouter([
   {
     path: '/admin',
     element: (
-      <AdminProtectedRoute>
+      <ProtectedRoute requireAdmin>
         <Suspense fallback={<PageLoader />}>
           <AdminDashboard />
         </Suspense>
-      </AdminProtectedRoute>
+      </ProtectedRoute>
     ),
     children: [
       { index: true, element: null }, // Default to college-info
@@ -234,8 +232,6 @@ const router = createHashRouter([
   },
 ]);
 
-// ... existing imports
-
 const App: React.FC = () => {
   const isNative = Capacitor.isNativePlatform();
 
@@ -265,18 +261,9 @@ const App: React.FC = () => {
                           <CampusMapProvider>
                             <LocationProvider>
                               <LocationRequirement>
-                                {isNative && (
-                                  <NativeLocationProvider>
-                                    <RouterProvider router={router} />
-                                    <WeatherModal />
-                                  </NativeLocationProvider>
-                                )}
-                                {!isNative && (
-                                  <>
-                                    <RouterProvider router={router} />
-                                    <WeatherModal />
-                                  </>
-                                )}
+                                {isNative && <NativeLocationTracker />}
+                                <RouterProvider router={router} />
+                                <WeatherModal />
                               </LocationRequirement>
                             </LocationProvider>
                           </CampusMapProvider>
