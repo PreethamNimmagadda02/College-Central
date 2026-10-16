@@ -1,5 +1,18 @@
 import { db } from '@lib/firebase';
-import React, { useState, useEffect } from 'react';
+import {
+  AlertCircle,
+  BarChart3,
+  Calendar,
+  FileText,
+  RefreshCw,
+  Search,
+  Trash2,
+  TrendingUp,
+  TriangleAlert,
+  Users,
+  X,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -13,377 +26,209 @@ import {
   CartesianGrid,
 } from 'recharts';
 
-import { AdminHeader, ChartBarIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AXIS_COLOR, CHART_COLORS, GRID_COLOR, TOOLTIP_STYLE } from '../chartTheme';
+import { useAllUsers } from '../hooks/useAllUsers';
+import { usePagination } from '../hooks/usePagination';
+import { admissionYear } from '../utils';
+import { AdminHeader, AdminPageLayout, Pagination } from './ui';
 
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  branch: string;
-  hostel: string;
-  year?: string;
-  semester?: number;
-  courseOption?: 'CBCS' | 'NEP';
-  createdAt?: any;
-  profilePicture?: string;
-  bio?: string;
-  bannerGradient?: string;
-  profileFrame?: string;
+import { User } from '@/types';
 
-  socialLinks?: Record<string, string>;
-  gradesData?: {
-    gradeSheetUrl?: string;
-    cgpa?: number;
-  };
-}
+type Count = { name: string; count: number };
 
-interface AnalyticsStats {
-  totalUsers: number;
-  newUsersThisWeek: number;
-  newUsersThisMonth: number;
-  profileCompletionRate: number;
-  profileCompleteCount: number;
-  usersWithPhoto: number;
-  usersWithBio: number;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const USERS_PER_PAGE = 10;
 
-  gradesheetsUploaded: number;
-  usersWithSocialLinks: number;
-
-  branchDistribution: { name: string; count: number }[];
-  yearDistribution: { name: string; count: number }[];
-  courseOptionDistribution: { name: string; count: number }[];
-  emailDomains: { name: string; count: number }[];
-  recentUsers: UserData[];
-  allUsers: UserData[];
-}
-
-// Vibrant color palette matching admin theme
-const CHART_COLORS = [
-  '#60a5fa', // blue
-  '#a78bfa', // purple
-  '#f472b6', // pink
-  '#34d399', // emerald
-  '#fcd34d', // yellow
-  '#fb923c', // orange
-  '#22d3ee', // cyan
-  '#f87171', // red
-  '#a3e635', // lime
-  '#e879f9', // fuchsia
-];
-
-// Helper function to convert text to Title Case for uniform display
-const toTitleCase = (str: string): string => {
-  if (!str) return str;
-  return str
+// Title Case so "COMPUTER SCIENCE" and "computer science" group together
+const toTitleCase = (str: string) =>
+  str
     .toLowerCase()
     .split(' ')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+
+// Firestore Timestamp (or a plain {seconds}) → Date
+const toDate = (createdAt: User['createdAt']): Date | null => {
+  if (!createdAt) return null;
+  try {
+    return createdAt.toDate?.() || new Date(createdAt.seconds * 1000);
+  } catch {
+    return null;
+  }
 };
 
-// Icons
-const UsersIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-    />
-  </svg>
-);
+const yearOf = (user: User) => admissionYear(user.email) ?? 'Other';
 
-const RefreshIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-    />
-  </svg>
-);
+const countBy = (users: User[], key: (user: User) => string): Count[] => {
+  const counts: Record<string, number> = {};
+  users.forEach((user) => {
+    const k = key(user);
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  return Object.entries(counts).map(([name, count]) => ({ name, count }));
+};
 
-const TrendUpIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-    />
-  </svg>
-);
-
-const CalendarIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-    />
-  </svg>
-);
-
-const DocumentIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-    />
-  </svg>
-);
-
-
+const CountBarCard: React.FC<{
+  title: string;
+  data: Count[];
+  emptyText: string;
+  labelWidth: number;
+  fontSize: number;
+  gradient: [string, string];
+  onSelect: (name: string) => void;
+}> = ({ title, data, emptyText, labelWidth, fontSize, gradient, onSelect }) => {
+  const gradientId = `${title.replace(/\W/g, '')}-gradient`;
+  return (
+    <div className="admin-card">
+      <h3 className="text-base sm:text-lg font-semibold text-white mb-4">{title}</h3>
+      {data.length > 0 ? (
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={data} layout="vertical">
+            <XAxis type="number" stroke={AXIS_COLOR} />
+            <YAxis
+              type="category"
+              dataKey="name"
+              stroke={AXIS_COLOR}
+              width={labelWidth}
+              tick={{ fontSize }}
+            />
+            <Tooltip contentStyle={TOOLTIP_STYLE} />
+            <Bar
+              dataKey="count"
+              fill={`url(#${gradientId})`}
+              radius={[0, 4, 4, 0]}
+              cursor="pointer"
+              onClick={(entry) => entry.name && onSelect(entry.name)}
+            />
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor={gradient[0]} />
+                <stop offset="100%" stopColor={gradient[1]} />
+              </linearGradient>
+            </defs>
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <p className="text-indigo-400 text-center py-8">{emptyText}</p>
+      )}
+    </div>
+  );
+};
 
 const AnalyticsEditor: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<AnalyticsStats | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [selectedFilter, setSelectedFilter] = useState<{ title: string; users: UserData[] } | null>(
+  const { users: rawUsers, loading, error, refresh } = useAllUsers();
+  const [selectedFilter, setSelectedFilter] = useState<{ title: string; users: User[] } | null>(
     null
   );
-  const [currentPage, setCurrentPage] = useState(1);
-  const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [branchFilter, setBranchFilter] = useState('all');
   const [yearFilter, setYearFilter] = useState('all');
-  const usersPerPage = 10;
 
-  const fetchAnalytics = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const usersSnapshot = await db.collection('users').get();
-      const users: UserData[] = [];
-
-      usersSnapshot.forEach((doc) => {
-        const data = doc.data();
-        users.push({
-          id: doc.id,
-          name: data.name || data.fullName || 'Unknown',
-          email: data.email || '',
-          branch: data.branch || 'Unknown',
-          hostel: data.hostel || 'Unknown',
-          year: data.year,
-          semester: data.semester,
-          courseOption: data.courseOption,
-          createdAt: data.createdAt,
-          profilePicture: data.profilePicture,
-          bio: data.bio,
-          bannerGradient: data.bannerGradient,
-          profileFrame: data.profileFrame,
-          socialLinks: data.socialLinks,
-          gradesData: data.gradesData,
-        });
-      });
-
-      // Get current date info
-      const now = new Date();
-      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-      // Calculate engagement metrics
-      let newThisWeek = 0;
-      let newThisMonth = 0;
-      let usersWithPhoto = 0;
-      let usersWithBio = 0;
-
-      let gradesheetsUploaded = 0;
-      let usersWithSocialLinks = 0;
-
-      const branchCounts: Record<string, number> = {};
-      const yearCounts: Record<string, number> = {};
-      const courseOptionCounts: Record<string, number> = { CBCS: 0, NEP: 0 };
-      const emailDomainCounts: Record<string, number> = {};
-
-      users.forEach((user) => {
-        // Parse createdAt
-        let createdDate: Date | null = null;
-        if (user.createdAt) {
-          try {
-            createdDate = user.createdAt.toDate?.() || new Date(user.createdAt.seconds * 1000);
-          } catch {
-            createdDate = null;
-          }
-        }
-
-        // New users metrics
-        if (createdDate) {
-          if (createdDate >= oneWeekAgo) newThisWeek++;
-          if (createdDate >= oneMonthAgo) newThisMonth++;
-        }
-
-        // Profile completion
-        if (user.profilePicture) usersWithPhoto++;
-        if (user.bio && user.bio.trim().length > 0) usersWithBio++;
-        if (user.gradesData && typeof user.gradesData.cgpa !== 'undefined') {
-          gradesheetsUploaded++;
-        }
-        if (user.socialLinks && Object.keys(user.socialLinks).length > 0) {
-          usersWithSocialLinks++;
-        }
-
-        // Branch - normalize to Title Case for uniform display
-        const normalizedBranch = toTitleCase(user.branch);
-        branchCounts[normalizedBranch] = (branchCounts[normalizedBranch] || 0) + 1;
-
-        // Admission Year - extract from email prefix (e.g., 23JE0653 → 2023)
-        if (user.email) {
-          const emailPrefix = user.email.split('@')[0] || '';
-          const match = emailPrefix.match(/^(\d{2})/);
-          if (match && match[1]) {
-            const yearNum = parseInt(match[1], 10);
-            // Convert 2-digit year to full year (23 → 2023, 24 → 2024)
-            const fullYear = yearNum < 50 ? 2000 + yearNum : 1900 + yearNum;
-            const yearLabel = String(fullYear);
-            yearCounts[yearLabel] = (yearCounts[yearLabel] || 0) + 1;
-          } else {
-            yearCounts['Other'] = (yearCounts['Other'] || 0) + 1;
-          }
-        } else {
-          yearCounts['Other'] = (yearCounts['Other'] || 0) + 1;
-        }
-
-        // Course option
-        if (user.courseOption === 'CBCS') {
-          courseOptionCounts['CBCS'] = (courseOptionCounts['CBCS'] || 0) + 1;
-        } else if (user.courseOption === 'NEP') {
-          courseOptionCounts['NEP'] = (courseOptionCounts['NEP'] || 0) + 1;
-        }
-
-        // Email domain
-        if (user.email && user.email.includes('@')) {
-          const domain = user.email.split('@')[1] || 'Unknown';
-          emailDomainCounts[domain] = (emailDomainCounts[domain] || 0) + 1;
-        }
-      });
-
-      // Profile completion rate (has photo + has bio)
-      const profileComplete = users.filter(
-        (u) => u.profilePicture && u.bio && u.bio.trim().length > 0
-      ).length;
-      const profileCompletionRate =
-        users.length > 0 ? Math.round((profileComplete / users.length) * 100) : 0;
-
-      // Sort users by createdAt for recent list
-      const sortedUsers = [...users].sort((a, b) => {
-        const aTime = a.createdAt?.toMillis?.() || a.createdAt?.seconds * 1000 || 0;
-        const bTime = b.createdAt?.toMillis?.() || b.createdAt?.seconds * 1000 || 0;
-        return bTime - aTime;
-      });
-
-      setStats({
-        totalUsers: users.length,
-        newUsersThisWeek: newThisWeek,
-        newUsersThisMonth: newThisMonth,
-        profileCompletionRate,
-        profileCompleteCount: profileComplete,
-        usersWithPhoto,
-        usersWithBio,
-
-        gradesheetsUploaded,
-        usersWithSocialLinks,
-
-        branchDistribution: Object.entries(branchCounts)
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count),
-        yearDistribution: Object.entries(yearCounts)
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => {
-            // Sort batches by year (Batch 2021, Batch 2022, etc.)
-            const aYear = parseInt(a.name.replace(/\D/g, '')) || 0;
-            const bYear = parseInt(b.name.replace(/\D/g, '')) || 0;
-            return aYear - bYear;
-          }),
-        courseOptionDistribution: Object.entries(courseOptionCounts)
-          .filter(([, count]) => count > 0)
-          .map(([name, count]) => ({ name, count })),
-        emailDomains: Object.entries(emailDomainCounts)
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 5),
-        recentUsers: sortedUsers.slice(0, 8),
-        allUsers: users,
-      });
-
-      setLastUpdated(new Date());
-    } catch (err) {
-      console.error('Failed to fetch analytics:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch analytics data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const users = useMemo(
+    () =>
+      rawUsers.map((u) => ({
+        ...u,
+        name: u.name || u.fullName || 'Unknown',
+        email: u.email || '',
+        branch: u.branch || 'Unknown',
+      })),
+    [rawUsers]
+  );
+  const [lastUpdated, setLastUpdated] = useState(new Date());
   useEffect(() => {
-    fetchAnalytics();
-  }, []);
+    if (!loading) setLastUpdated(new Date());
+  }, [loading]);
 
-  const formatDate = (timestamp: any): string => {
-    if (!timestamp) return 'Unknown';
-    try {
-      const date = timestamp.toDate?.() || new Date(timestamp.seconds * 1000);
-      return date.toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      });
-    } catch {
-      return 'Unknown';
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const newSince = (days: number) =>
+      users.filter((u) => (toDate(u.createdAt)?.getTime() ?? 0) >= now - days * DAY_MS).length;
+    return {
+      newThisWeek: newSince(7),
+      newThisMonth: newSince(30),
+      gradesheetsUploaded: users.filter((u) => typeof u.gradesData?.cgpa !== 'undefined').length,
+      branchDistribution: countBy(users, (u) => toTitleCase(u.branch)).sort(
+        (a, b) => b.count - a.count
+      ),
+      // "Other" sorts first
+      yearDistribution: countBy(users, yearOf).sort(
+        (a, b) => (Number(a.name) || 0) - (Number(b.name) || 0)
+      ),
+    };
+  }, [users]);
+
+  const growthData = useMemo(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * DAY_MS);
+    const dayKey = (date: Date) =>
+      date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+    const signupsByDate: Record<string, number> = {};
+    for (let i = 29; i >= 0; i--) {
+      signupsByDate[dayKey(new Date(now.getTime() - i * DAY_MS))] = 0;
     }
-  };
-
-  // Filter functions for charts
-
-  const closeModal = () => setSelectedFilter(null);
-
-  // Filter functions for charts
-  const filterByBranch = (branchName: string) => {
-    if (!stats) return;
-    if (branchName === 'Other') {
-      // Get the exact branches shown in top 5 of the chart (normalized for comparison)
-      const top5BranchNames = new Set(
-        stats.branchDistribution.slice(0, 5).map((b) => (b.name || '').trim().toLowerCase())
-      );
-      // Filter users whose branch is NOT in top 5
-      const filtered = stats.allUsers.filter((u) => {
-        const userBranch = (u.branch || '').trim().toLowerCase();
-        return !top5BranchNames.has(userBranch);
-      });
-      setSelectedFilter({ title: 'Users in Other Branches', users: filtered });
-    } else {
-      // Normalize comparison for exact match
-      const normalizedSearch = branchName.trim().toLowerCase();
-      const filtered = stats.allUsers.filter(
-        (u) => (u.branch || '').trim().toLowerCase() === normalizedSearch
-      );
-      setSelectedFilter({ title: `Users in ${branchName}`, users: filtered });
-    }
-  };
-
-  const filterByYear = (year: string) => {
-    if (!stats) return;
-    const filtered = stats.allUsers.filter((u) => {
-      if (!u.email) return year === 'Other';
-      const prefix = u.email.split('@')[0] || '';
-      const match = prefix.match(/^(\d{2})/);
-      if (match && match[1]) {
-        const yearNum = parseInt(match[1], 10);
-        const fullYear = yearNum < 50 ? 2000 + yearNum : 1900 + yearNum;
-        return String(fullYear) === year;
+    users.forEach((user) => {
+      const created = toDate(user.createdAt);
+      if (created && created >= thirtyDaysAgo && created <= now) {
+        const key = dayKey(created);
+        if (signupsByDate[key] !== undefined) signupsByDate[key]++;
       }
-      return year === 'Other';
     });
-    setSelectedFilter({ title: `Users from ${year}`, users: filtered });
+
+    let total = users.length - Object.values(signupsByDate).reduce((a, b) => a + b, 0);
+    return Object.entries(signupsByDate).map(([date, signups]) => {
+      total += signups;
+      return { date, signups, total };
+    });
+  }, [users]);
+  const maxSignups = Math.max(...growthData.map((d) => d.signups), 1);
+
+  const isFiltered = !!searchQuery || branchFilter !== 'all' || yearFilter !== 'all';
+  const filteredUsers = users
+    .filter((user) => {
+      const query = searchQuery.toLowerCase();
+      return (
+        (!query ||
+          user.name.toLowerCase().includes(query) ||
+          user.email.toLowerCase().includes(query)) &&
+        // Case-insensitive to match the chart's Title Case grouping
+        (branchFilter === 'all' || user.branch.toLowerCase() === branchFilter.toLowerCase()) &&
+        (yearFilter === 'all' || yearOf(user) === yearFilter)
+      );
+    })
+    .sort((a, b) => (toDate(b.createdAt)?.getTime() || 0) - (toDate(a.createdAt)?.getTime() || 0));
+  const pager = usePagination(filteredUsers, USERS_PER_PAGE);
+
+  const branchChartData = useMemo(() => {
+    const top5 = stats.branchDistribution.slice(0, 5);
+    const otherCount = stats.branchDistribution.slice(5).reduce((sum, b) => sum + b.count, 0);
+    return otherCount > 0 ? [...top5, { name: 'Other', count: otherCount }] : top5;
+  }, [stats.branchDistribution]);
+
+  const filterByBranch = (branchName: string) => {
+    const normalize = (branch: string) => branch.trim().toLowerCase();
+    if (branchName === 'Other') {
+      // Everyone outside the top 5 bars
+      const top5 = new Set(stats.branchDistribution.slice(0, 5).map((b) => normalize(b.name)));
+      setSelectedFilter({
+        title: 'Users in Other Branches',
+        users: users.filter((u) => !top5.has(normalize(u.branch))),
+      });
+    } else {
+      setSelectedFilter({
+        title: `Users in ${branchName}`,
+        users: users.filter((u) => normalize(u.branch) === normalize(branchName)),
+      });
+    }
   };
+
+  const filterByYear = (year: string) =>
+    setSelectedFilter({
+      title: `Users from ${year}`,
+      users: users.filter((u) => yearOf(u) === year),
+    });
 
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
@@ -391,8 +236,7 @@ const AnalyticsEditor: React.FC = () => {
     try {
       await db.collection('users').doc(userToDelete.id).delete();
       setUserToDelete(null);
-      // Refresh analytics after deletion
-      await fetchAnalytics();
+      await refresh();
     } catch (err) {
       console.error('Failed to delete user:', err);
       alert('Failed to delete user. Please try again.');
@@ -416,191 +260,100 @@ const AnalyticsEditor: React.FC = () => {
     return (
       <div className="admin-card bg-red-500/10 border-red-500/30">
         <div className="flex items-center gap-3 text-red-400">
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+          <AlertCircle className="w-6 h-6" />
           <div>
             <p className="font-medium">Failed to load analytics</p>
             <p className="text-sm text-red-300">{error}</p>
           </div>
         </div>
-        <button onClick={fetchAnalytics} className="admin-btn admin-btn-secondary mt-4">
-          <RefreshIcon /> Try Again
+        <button onClick={refresh} className="admin-btn admin-btn-secondary mt-4">
+          <RefreshCw className="w-5 h-5" /> Try Again
         </button>
       </div>
     );
   }
 
-  if (!stats) return null;
+  const kpis = [
+    {
+      icon: Users,
+      color: 'text-blue-400',
+      valueColor: '',
+      value: users.length,
+      label: 'Total Users',
+    },
+    {
+      icon: TrendingUp,
+      color: 'text-emerald-400',
+      valueColor: 'text-emerald-400',
+      value: `+${stats.newThisWeek}`,
+      label: 'This Week',
+    },
+    {
+      icon: Calendar,
+      color: 'text-cyan-400',
+      valueColor: 'text-cyan-400',
+      value: `+${stats.newThisMonth}`,
+      label: 'This Month',
+    },
+    {
+      icon: FileText,
+      color: 'text-purple-400',
+      valueColor: 'text-purple-400',
+      value: stats.gradesheetsUploaded,
+      label: 'Students with Grades',
+    },
+  ];
+  const filterSelect =
+    'px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-600 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
 
   return (
     <AdminPageLayout>
-      {/* Header */}
       <AdminHeader
-        icon={<ChartBarIcon />}
+        icon={BarChart3}
         title="User Analytics"
-        subtitle={lastUpdated ? `Last updated: ${lastUpdated.toLocaleTimeString()}` : ''}
+        subtitle={`Last updated: ${lastUpdated.toLocaleTimeString()}`}
       >
-        <button
-          onClick={fetchAnalytics}
-          className="admin-btn admin-btn-secondary text-xs sm:text-sm"
-        >
-          <RefreshIcon />
+        <button onClick={refresh} className="admin-btn admin-btn-secondary text-xs sm:text-sm">
+          <RefreshCw className="w-5 h-5" />
           <span className="hidden xs:inline">Refresh</span>
         </button>
       </AdminHeader>
 
-      {/* Key Metrics - Row 1 */}
+      {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <div className="admin-stat-card p-3 sm:p-6">
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 text-blue-400">
-            <UsersIcon />
+        {kpis.map(({ icon: Icon, color, valueColor, value, label }) => (
+          <div key={label} className="admin-stat-card p-3 sm:p-6">
+            <div className={`flex items-center justify-center gap-2 mb-2 ${color}`}>
+              <Icon className="w-6 h-6" />
+            </div>
+            <div className={`admin-stat-value text-xl sm:text-3xl ${valueColor}`}>{value}</div>
+            <div className="admin-stat-label text-xs">{label}</div>
           </div>
-          <div className="admin-stat-value text-xl sm:text-3xl">{stats.totalUsers}</div>
-          <div className="admin-stat-label text-xs">Total Users</div>
-        </div>
-        <div className="admin-stat-card p-3 sm:p-6">
-          <div className="flex items-center justify-center gap-2 mb-2 text-emerald-400">
-            <TrendUpIcon />
-          </div>
-          <div className="admin-stat-value text-xl sm:text-3xl text-emerald-400">
-            +{stats.newUsersThisWeek}
-          </div>
-          <div className="admin-stat-label text-xs">This Week</div>
-        </div>
-        <div className="admin-stat-card p-3 sm:p-6">
-          <div className="flex items-center justify-center gap-2 mb-2 text-cyan-400">
-            <CalendarIcon />
-          </div>
-          <div className="admin-stat-value text-xl sm:text-3xl text-cyan-400">
-            +{stats.newUsersThisMonth}
-          </div>
-          <div className="admin-stat-label text-xs">This Month</div>
-        </div>
-        <div className="admin-stat-card p-3 sm:p-6">
-          <div className="flex items-center justify-center gap-2 mb-2 text-purple-400">
-            <DocumentIcon />
-          </div>
-          <div className="admin-stat-value text-xl sm:text-3xl text-purple-400">
-            {stats.gradesheetsUploaded}
-          </div>
-          <div className="admin-stat-label text-xs">Students with Grades</div>
-        </div>
+        ))}
       </div>
 
-
-
-      {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Branch Distribution */}
-        <div className="admin-card">
-          <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Users by Branch</h3>
-          {stats.branchDistribution.length > 0 ? (
-            <div style={{ width: '100%', minHeight: 280 }}>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart
-                  data={(() => {
-                    const top5 = stats.branchDistribution.slice(0, 5);
-                    const otherCount = stats.branchDistribution
-                      .slice(5)
-                      .reduce((sum, b) => sum + b.count, 0);
-                    if (otherCount > 0) {
-                      return [...top5, { name: 'Other', count: otherCount }];
-                    }
-                    return top5;
-                  })()}
-                  layout="vertical"
-                >
-                  <XAxis type="number" stroke="#94a3b8" />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    stroke="#94a3b8"
-                    width={130}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1e293b',
-                      border: '1px solid rgba(96, 165, 250, 0.3)',
-                      borderRadius: '12px',
-                      color: '#f8fafc',
-                    }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill="url(#branchGradient)"
-                    radius={[0, 4, 4, 0]}
-                    cursor="pointer"
-                    onClick={(data) => data.name && filterByBranch(data.name)}
-                  />
-                  <defs>
-                    <linearGradient id="branchGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#3b82f6" />
-                      <stop offset="100%" stopColor="#8b5cf6" />
-                    </linearGradient>
-                  </defs>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="text-indigo-400 text-center py-8">No branch data available</p>
-          )}
-        </div>
-
-        {/* Year Distribution */}
-        <div className="admin-card">
-          <h3 className="text-base sm:text-lg font-semibold text-white mb-4">
-            Users by Admission Year
-          </h3>
-          {stats.yearDistribution.length > 0 ? (
-            <div style={{ width: '100%', minHeight: 280 }}>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={stats.yearDistribution} layout="vertical">
-                  <XAxis type="number" stroke="#94a3b8" />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    stroke="#94a3b8"
-                    width={60}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1e293b',
-                      border: '1px solid rgba(96, 165, 250, 0.3)',
-                      borderRadius: '12px',
-                      color: '#f8fafc',
-                    }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill="url(#yearGradient)"
-                    radius={[0, 4, 4, 0]}
-                    cursor="pointer"
-                    onClick={(data) => data.name && filterByYear(data.name)}
-                  />
-                  <defs>
-                    <linearGradient id="yearGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#f472b6" />
-                      <stop offset="100%" stopColor="#a78bfa" />
-                    </linearGradient>
-                  </defs>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="text-indigo-400 text-center py-8">No year data available</p>
-          )}
-        </div>
+        <CountBarCard
+          title="Users by Branch"
+          data={branchChartData}
+          emptyText="No branch data available"
+          labelWidth={130}
+          fontSize={10}
+          gradient={['#3b82f6', '#8b5cf6']}
+          onSelect={filterByBranch}
+        />
+        <CountBarCard
+          title="Users by Admission Year"
+          data={stats.yearDistribution}
+          emptyText="No year data available"
+          labelWidth={60}
+          fontSize={12}
+          gradient={['#f472b6', '#a78bfa']}
+          onSelect={filterByYear}
+        />
       </div>
 
-      {/* User Growth Chart - Full Width */}
+      {/* User Growth Chart */}
       <div className="admin-card">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
           <h3 className="text-base sm:text-lg font-semibold text-white">
@@ -617,224 +370,155 @@ const AnalyticsEditor: React.FC = () => {
             </div>
           </div>
         </div>
-        {(() => {
-          // Generate data for last 30 days
-          const now = new Date();
-          const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-          // Create a map of dates to signup counts
-          const signupsByDate: Record<string, number> = {};
-
-          // Initialize all dates with 0
-          for (let i = 29; i >= 0; i--) {
-            const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-            const dateKey = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            signupsByDate[dateKey] = 0;
-          }
-
-          // Count signups per day
-          stats.allUsers.forEach((user) => {
-            if (user.createdAt) {
-              const createdDate = user.createdAt?.toDate
-                ? user.createdAt.toDate()
-                : new Date(user.createdAt.seconds * 1000);
-              if (createdDate >= thirtyDaysAgo && createdDate <= now) {
-                const dateKey = createdDate.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                });
-                if (signupsByDate[dateKey] !== undefined) {
-                  signupsByDate[dateKey]++;
-                }
-              }
-            }
-          });
-
-          // Create cumulative growth data
-          let cumulativeTotal =
-            stats.totalUsers - Object.values(signupsByDate).reduce((a, b) => a + b, 0);
-          const growthData = Object.entries(signupsByDate).map(([date, count]) => {
-            cumulativeTotal += count;
-            return {
-              date,
-              signups: count,
-              total: cumulativeTotal,
-            };
-          });
-
-          const hasData = growthData.some((d) => d.signups > 0);
-          const maxSignups = Math.max(...growthData.map((d) => d.signups), 1);
-
-          return hasData ? (
-            <div style={{ width: '100%', minHeight: 320 }}>
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={growthData} margin={{ top: 5, right: 30, left: 0, bottom: 25 }}>
-                  <defs>
-                    <linearGradient id="growthLineGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#22d3ee" />
-                      <stop offset="100%" stopColor="#a78bfa" />
-                    </linearGradient>
-                    <linearGradient id="growthAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.4} />
-                      <stop offset="50%" stopColor="#a78bfa" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="#a78bfa" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="rgba(148, 163, 184, 0.15)"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="date"
-                    stroke="#94a3b8"
-                    tick={{ fontSize: 10, fill: '#94a3b8' }}
-                    tickLine={{ stroke: '#475569' }}
-                    axisLine={{ stroke: '#475569' }}
-                    interval="preserveStartEnd"
-                    tickFormatter={(value, index) => (index % 5 === 0 ? value : '')}
-                    dy={10}
-                  />
-                  <YAxis
-                    yAxisId="left"
-                    stroke="#475569"
-                    allowDecimals={false}
-                    tick={{ fontSize: 11, fill: '#22d3ee' }}
-                    tickLine={{ stroke: '#475569' }}
-                    axisLine={{ stroke: '#475569' }}
-                    width={45}
-                  />
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    stroke="#34d399"
-                    allowDecimals={false}
-                    tick={{ fontSize: 11, fill: '#34d399' }}
-                    tickLine={{ stroke: '#475569' }}
-                    axisLine={{ stroke: '#475569' }}
-                    domain={[0, Math.max(maxSignups * 2, 5)]}
-                    width={35}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                      border: '1px solid rgba(96, 165, 250, 0.4)',
-                      borderRadius: '12px',
-                      color: '#f8fafc',
-                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-                      padding: '12px 16px',
-                    }}
-                    labelStyle={{ color: '#94a3b8', marginBottom: '8px', fontWeight: 600 }}
-                    cursor={{ stroke: 'rgba(148, 163, 184, 0.3)', strokeWidth: 1 }}
-                    formatter={(value, name) => {
-                      const numValue = value ?? 0;
-                      const strName = name ?? '';
-                      if (strName === 'total')
-                        return [`${Number(numValue).toLocaleString()} users`, 'Total Users'];
-                      return [`+${numValue} ${numValue === 1 ? 'signup' : 'signups'}`, 'New Today'];
-                    }}
-                    animationDuration={200}
-                  />
-                  <Area
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="total"
-                    stroke="none"
-                    fill="url(#growthAreaGradient)"
-                    animationDuration={1500}
-                    animationEasing="ease-out"
-                    legendType="none"
-                    tooltipType="none"
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="signups"
-                    stroke="#34d399"
-                    strokeWidth={2}
-                    dot={{ fill: '#34d399', strokeWidth: 0, r: 3 }}
-                    activeDot={{
-                      fill: '#10b981',
-                      strokeWidth: 3,
-                      stroke: 'rgba(52, 211, 153, 0.3)',
-                      r: 6,
-                      style: { filter: 'drop-shadow(0 0 6px rgba(52, 211, 153, 0.5))' },
-                    }}
-                    animationDuration={1500}
-                    animationEasing="ease-out"
-                  />
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="total"
-                    stroke="#22d3ee"
-                    strokeWidth={3}
-                    dot={false}
-                    activeDot={{
-                      fill: '#22d3ee',
-                      strokeWidth: 3,
-                      stroke: 'rgba(34, 211, 238, 0.3)',
-                      r: 8,
-                      style: { filter: 'drop-shadow(0 0 8px rgba(34, 211, 238, 0.5))' },
-                    }}
-                    animationDuration={2000}
-                    animationEasing="ease-out"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="text-indigo-400 text-center py-8">
-              No recent signups in the last 30 days
-            </p>
-          );
-        })()}
+        {growthData.some((d) => d.signups > 0) ? (
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={growthData} margin={{ top: 5, right: 30, left: 0, bottom: 25 }}>
+              <defs>
+                <linearGradient id="growthAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.4} />
+                  <stop offset="50%" stopColor="#a78bfa" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#a78bfa" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
+              <XAxis
+                dataKey="date"
+                stroke={AXIS_COLOR}
+                tick={{ fontSize: 10, fill: AXIS_COLOR }}
+                tickLine={{ stroke: '#475569' }}
+                axisLine={{ stroke: '#475569' }}
+                interval="preserveStartEnd"
+                tickFormatter={(value, index) => (index % 5 === 0 ? value : '')}
+                dy={10}
+              />
+              <YAxis
+                yAxisId="left"
+                stroke="#475569"
+                allowDecimals={false}
+                tick={{ fontSize: 11, fill: '#22d3ee' }}
+                tickLine={{ stroke: '#475569' }}
+                axisLine={{ stroke: '#475569' }}
+                width={45}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                stroke="#34d399"
+                allowDecimals={false}
+                tick={{ fontSize: 11, fill: '#34d399' }}
+                tickLine={{ stroke: '#475569' }}
+                axisLine={{ stroke: '#475569' }}
+                domain={[0, Math.max(maxSignups * 2, 5)]}
+                width={35}
+              />
+              <Tooltip
+                contentStyle={{
+                  ...TOOLTIP_STYLE,
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                  padding: '12px 16px',
+                }}
+                labelStyle={{ color: AXIS_COLOR, marginBottom: '8px', fontWeight: 600 }}
+                cursor={{ stroke: 'rgba(148, 163, 184, 0.3)', strokeWidth: 1 }}
+                formatter={(value, name) => {
+                  const count = value ?? 0;
+                  if (name === 'total')
+                    return [`${Number(count).toLocaleString()} users`, 'Total Users'];
+                  return [`+${count} ${count === 1 ? 'signup' : 'signups'}`, 'New Today'];
+                }}
+                animationDuration={200}
+              />
+              <Area
+                yAxisId="left"
+                type="monotone"
+                dataKey="total"
+                stroke="none"
+                fill="url(#growthAreaGradient)"
+                animationDuration={1500}
+                animationEasing="ease-out"
+                legendType="none"
+                tooltipType="none"
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="signups"
+                stroke="#34d399"
+                strokeWidth={2}
+                dot={{ fill: '#34d399', strokeWidth: 0, r: 3 }}
+                activeDot={{
+                  fill: '#10b981',
+                  strokeWidth: 3,
+                  stroke: 'rgba(52, 211, 153, 0.3)',
+                  r: 6,
+                  style: { filter: 'drop-shadow(0 0 6px rgba(52, 211, 153, 0.5))' },
+                }}
+                animationDuration={1500}
+                animationEasing="ease-out"
+              />
+              <Line
+                yAxisId="left"
+                type="monotone"
+                dataKey="total"
+                stroke="#22d3ee"
+                strokeWidth={3}
+                dot={false}
+                activeDot={{
+                  fill: '#22d3ee',
+                  strokeWidth: 3,
+                  stroke: 'rgba(34, 211, 238, 0.3)',
+                  r: 8,
+                  style: { filter: 'drop-shadow(0 0 8px rgba(34, 211, 238, 0.5))' },
+                }}
+                animationDuration={2000}
+                animationEasing="ease-out"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-indigo-400 text-center py-8">No recent signups in the last 30 days</p>
+        )}
       </div>
 
-      {/* All Users - Paginated */}
+      {/* All Users */}
       <div className="admin-card">
         <div className="flex flex-col gap-4 mb-4">
           <div className="flex justify-between items-center">
             <h3 className="text-base sm:text-lg font-semibold text-white">All Users</h3>
+            {isFiltered && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setBranchFilter('all');
+                  setYearFilter('all');
+                }}
+                className="text-xs sm:text-sm text-blue-400 hover:text-blue-300"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
 
-          {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
             <div className="relative flex-1">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-400" />
               <input
                 type="text"
                 placeholder="Search by name or email..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
-                  setCurrentPage(1);
+                  pager.setPage(1);
                 }}
                 className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-800/50 border border-slate-600 text-white placeholder-indigo-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
-
-            {/* Branch Filter */}
             <select
               value={branchFilter}
               onChange={(e) => {
                 setBranchFilter(e.target.value);
-                setCurrentPage(1);
+                pager.setPage(1);
               }}
-              className="px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-600 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className={filterSelect}
             >
               <option value="all">All Branches</option>
               {stats.branchDistribution.map((b) => (
@@ -843,15 +527,13 @@ const AnalyticsEditor: React.FC = () => {
                 </option>
               ))}
             </select>
-
-            {/* Year Filter */}
             <select
               value={yearFilter}
               onChange={(e) => {
                 setYearFilter(e.target.value);
-                setCurrentPage(1);
+                pager.setPage(1);
               }}
-              className="px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-600 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className={filterSelect}
             >
               <option value="all">All Years</option>
               {stats.yearDistribution.map((y) => (
@@ -863,178 +545,61 @@ const AnalyticsEditor: React.FC = () => {
           </div>
         </div>
 
-        {(() => {
-          // Apply filters
-          const filteredUsers = stats.allUsers
-            .filter((user) => {
-              // Search filter
-              if (searchQuery) {
-                const query = searchQuery.toLowerCase();
-                if (
-                  !user.name.toLowerCase().includes(query) &&
-                  !user.email.toLowerCase().includes(query)
-                ) {
-                  return false;
-                }
-              }
-              // Branch filter - use case-insensitive comparison to match chart grouping
-              if (
-                branchFilter !== 'all' &&
-                user.branch.toLowerCase() !== branchFilter.toLowerCase()
-              ) {
-                return false;
-              }
-              // Year filter
-              if (yearFilter !== 'all') {
-                if (!user.email) return yearFilter === 'Other';
-                const prefix = user.email.split('@')[0] || '';
-                const match = prefix.match(/^(\d{2})/);
-                if (match && match[1]) {
-                  const yearNum = parseInt(match[1], 10);
-                  const fullYear = yearNum < 50 ? 2000 + yearNum : 1900 + yearNum;
-                  if (String(fullYear) !== yearFilter && yearFilter !== 'Other') return false;
-                } else if (yearFilter !== 'Other') {
-                  return false;
-                }
-              }
-              return true;
-            })
-            .sort((a, b) => {
-              const aTime = a.createdAt?.toMillis?.() || a.createdAt?.seconds * 1000 || 0;
-              const bTime = b.createdAt?.toMillis?.() || b.createdAt?.seconds * 1000 || 0;
-              return bTime - aTime;
-            });
-
-          const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-          const paginatedUsers = filteredUsers.slice(
-            (currentPage - 1) * usersPerPage,
-            currentPage * usersPerPage
-          );
-
-          return filteredUsers.length > 0 ? (
-            <>
-              <div className="text-xs sm:text-sm text-indigo-400 mb-3">
-                Showing {(currentPage - 1) * usersPerPage + 1}-
-                {Math.min(currentPage * usersPerPage, filteredUsers.length)} of{' '}
-                {filteredUsers.length} users
-                {(searchQuery || branchFilter !== 'all' || yearFilter !== 'all') && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery('');
-                      setBranchFilter('all');
-                      setYearFilter('all');
-                    }}
-                    className="ml-2 text-blue-400 hover:text-blue-300"
-                  >
-                    Clear filters
-                  </button>
-                )}
-              </div>
-              <div className="space-y-3">
-                {paginatedUsers.map((user, index) => (
-                  <div key={user.id} className="admin-list-item flex items-center gap-3 sm:gap-4">
-                    <div
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold shrink-0 text-sm sm:text-base"
-                      style={{
-                        backgroundColor:
-                          CHART_COLORS[
-                          (index + (currentPage - 1) * usersPerPage) % CHART_COLORS.length
-                          ],
-                      }}
-                    >
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium truncate text-sm sm:text-base">
-                        {user.name}
-                      </p>
-                      <p className="text-indigo-400 text-xs sm:text-sm truncate">{user.email}</p>
-                    </div>
-                    <div className="text-right hidden sm:block">
-                      <p className="text-indigo-300 text-sm">{user.branch}</p>
-                      <p className="text-indigo-500 text-xs">{formatDate(user.createdAt)}</p>
-                    </div>
-                    <button
-                      onClick={() => setUserToDelete(user)}
-                      className="p-1.5 sm:p-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors"
-                      title="Remove user"
-                    >
-                      <svg
-                        className="w-4 h-4 sm:w-5 sm:h-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-              {/* Pagination Controls */}
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-6 pt-4 border-t border-slate-700">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="admin-btn admin-btn-secondary text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+        {filteredUsers.length > 0 ? (
+          <div className="space-y-3">
+            {pager.pageItems.map((user, index) => (
+              <div key={user.id} className="admin-list-item flex items-center gap-3 sm:gap-4">
+                <div
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold shrink-0 text-sm sm:text-base"
+                  style={{
+                    backgroundColor:
+                      CHART_COLORS[
+                        ((pager.page - 1) * USERS_PER_PAGE + index) % CHART_COLORS.length
+                      ],
+                  }}
                 >
-                  ← Previous
-                </button>
-                <div className="flex items-center gap-1 sm:gap-2">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs sm:text-sm font-medium transition-colors ${currentPage === pageNum
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                          : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600'
-                          }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium truncate text-sm sm:text-base">
+                    {user.name}
+                  </p>
+                  <p className="text-indigo-400 text-xs sm:text-sm truncate">{user.email}</p>
+                </div>
+                <div className="text-right hidden sm:block">
+                  <p className="text-indigo-300 text-sm">{user.branch}</p>
+                  <p className="text-indigo-500 text-xs">
+                    {toDate(user.createdAt)?.toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    }) ?? 'Unknown'}
+                  </p>
                 </div>
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage >= totalPages}
-                  className="admin-btn admin-btn-secondary text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+                  onClick={() => setUserToDelete(user)}
+                  className="p-1.5 sm:p-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors"
+                  title="Remove user"
                 >
-                  Next →
+                  <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
-            </>
-          ) : (
-            <p className="text-indigo-400 text-center py-8">
-              {searchQuery || branchFilter !== 'all' || yearFilter !== 'all'
-                ? 'No users match your filters'
-                : 'No registered users yet'}
-            </p>
-          );
-        })()}
+            ))}
+          </div>
+        ) : (
+          <p className="text-indigo-400 text-center py-8">
+            {isFiltered ? 'No users match your filters' : 'No registered users yet'}
+          </p>
+        )}
       </div>
+
+      <Pagination {...pager} label="users" />
 
       {/* Users Modal */}
       {selectedFilter && (
         <div
           className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={closeModal}
+          onClick={() => setSelectedFilter(null)}
         >
           <div
             className="admin-card max-w-2xl w-full max-h-[80vh] overflow-hidden"
@@ -1046,17 +611,10 @@ const AnalyticsEditor: React.FC = () => {
                 <p className="text-indigo-400 text-sm">{selectedFilter.users.length} users</p>
               </div>
               <button
-                onClick={closeModal}
+                onClick={() => setSelectedFilter(null)}
                 className="text-slate-400 hover:text-white transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-6 h-6" />
               </button>
             </div>
             <div className="overflow-y-auto max-h-[60vh] space-y-2">
@@ -1094,19 +652,7 @@ const AnalyticsEditor: React.FC = () => {
           <div className="admin-card max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-red-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+                <TriangleAlert className="w-8 h-8 text-red-400" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Remove User?</h3>
               <p className="text-indigo-300 mb-6">
