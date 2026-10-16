@@ -23,7 +23,7 @@ import {
   PROFILE_PICTURES_PATH,
 } from '@lib/utils/constants';
 import { getCourseOptionFromAdmissionNumber } from '@lib/utils/courseUtils';
-import { getImageCompression } from '@lib/utils/lazyImports';
+import { isFirebaseError } from '@lib/utils/helpers';
 import { logActivity, cleanupOldActivities } from '@services/activityService';
 
 import { User } from '@/types';
@@ -121,20 +121,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         const userDocRef = db.collection('users').doc(authUser.uid); // Use compat API
 
-        // OPTIMIZATION: First load from Firestore cache for instant UI
-        userDocRef
-          .get({ source: 'cache' })
-          .then((snapshot) => {
-            if (snapshot.exists) {
-              setUser({ id: snapshot.id, ...snapshot.data() } as User);
-              setLoading(false); // Show cached data immediately
-            }
-          })
-          .catch(() => {
-            // Cache miss expected on first load
-          });
-
-        // Then subscribe for real-time updates
         unsubscribeFromFirestore = userDocRef.onSnapshot(
           { includeMetadataChanges: false }, // Reduce unnecessary triggers
           async (snapshot) => {
@@ -237,7 +223,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Only compress if file is larger than 1MB
         if (file.size > 1024 * 1024) {
           // Lazy load image compression library
-          const imageCompression = await getImageCompression();
+          const { default: imageCompression } = await import('browser-image-compression');
 
           const options = {
             maxSizeMB: 1, // Maximum file size in MB
@@ -290,9 +276,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   await oldImageRef.delete();
                 } catch (deleteError: unknown) {
                   // Non-blocking error: It's okay if the old file doesn't exist.
-                  const isFirebaseError = (err: unknown): err is { code: string } => {
-                    return typeof err === 'object' && err !== null && 'code' in err;
-                  };
                   if (
                     isFirebaseError(deleteError) &&
                     deleteError.code !== 'storage/object-not-found'

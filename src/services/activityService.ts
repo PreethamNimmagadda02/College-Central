@@ -7,6 +7,7 @@ import { addDemoActivity } from '@features/demo/demoStore';
 
 import { ActivityType } from '@/types';
 
+import { isFirebaseError } from '@lib/utils/helpers';
 import { retryOnlyIfRetryable } from '@lib/utils/retryLogic';
 import {
   ACTIVITY_LOG_MAX_RETRIES,
@@ -52,9 +53,6 @@ export const logActivity = async (userId: string, activity: ActivityLog) => {
     );
   } catch (error: unknown) {
     console.error('Error logging activity: ', error);
-    const isFirebaseError = (err: unknown): err is { code: string } => {
-      return typeof err === 'object' && err !== null && 'code' in err;
-    };
     if (isFirebaseError(error) && error.code === 'permission-denied') {
       console.error(
         'Firestore Security Rules Error: The current user does not have permission to write to their own activity log. ' +

@@ -20,3 +20,9 @@ export const getGreeting = (): { emoji: string; text: string } => {
 export const getRandomItem = <T>(array: readonly T[]): T => {
   return array[Math.floor(Math.random() * array.length)]!;
 };
+
+/**
+ * True for Firebase-style errors that carry a `code` (e.g. 'permission-denied')
+ */
+export const isFirebaseError = (err: unknown): err is { code: string } =>
+  typeof err === 'object' && err !== null && 'code' in err;
