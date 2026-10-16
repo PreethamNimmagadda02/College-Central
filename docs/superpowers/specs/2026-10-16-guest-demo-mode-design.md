@@ -28,7 +28,7 @@ We also considered swapping the exported `db` for an in-memory fake, which would
 
 ### Safety property
 
-Guests have no auth token, so a guest branch that gets missed **fails closed**: Firestore and Storage rules deny the call and no data leaks. The only Firebase request a guest makes is the public, unauthenticated read of `appConfig/*`, which the login page already makes for every visitor.
+Guests have no auth token, so a guest branch that gets missed **fails closed**: Firestore and Storage rules deny the call and no data leaks. A guest makes no Firebase requests at all. Even the app config comes from the bundled defaults (see `AppConfigContext` below), not from Firestore.
 
 ## Components
 
@@ -55,7 +55,8 @@ interface DemoState {
   reminderEventKeys: string[];
   notifications: Notification[];
   activity: ActivityItem[];        // newest first, capped at 30 (mirrors cleanupOldActivities)
-  classmates: User[];              // public profiles for /u/:id
+  classmates: User[];              // the 6 classmates with full public profiles (/u/:id)
+  directory: StudentDirectoryEntry[]; // guest + ~30 fictional classmates, shown in the Directory
 }
 ```
 
@@ -67,7 +68,7 @@ interface DemoState {
   - plus small helpers such as `addDemoActivity(item)`
 - Writes notify subscribers synchronously, which mirrors `onSnapshot`.
 - If stored JSON is corrupt or its version doesn't match, the store reseeds. If localStorage is unavailable, the state lives in memory for the tab's lifetime.
-- **Timestamps:** stored as `{ seconds, nanoseconds }`. They are turned back into `firebase.firestore.Timestamp` on read, using the pure client class with no network, so consumers that call `.toDate()` / `.toMillis()` keep working.
+- **Timestamps:** stored as plain `{ seconds, nanoseconds }`. Every consumer (activity feed, notification list) reads only `.seconds`, so no conversion to a Firestore `Timestamp` is needed.
 
 ### `demoData.ts`
 
@@ -89,7 +90,7 @@ interface DemoState {
 
 ### `DemoBanner.tsx`
 
-- A slim, dismissible-per-session bar that renders inside `Layout` when `isGuest` is true.
+- A slim bar that renders inside `Layout` whenever `isGuest` is true. It is never hidden, so guests always know the data is sample data.
 - Text: "You're exploring College Central with sample data." Actions: **Reset demo** (confirm, then `resetDemoState()`) and **Exit demo** (`logout()`).
 
 ## Changes to existing code
@@ -104,14 +105,14 @@ interface DemoState {
 | `contexts/CalendarContext.tsx` | Guest: `userEvents` and reminder preferences come from the store, and add/update/delete/toggle mutate the store. |
 | `contexts/FormsContext.tsx` | Guest: `userForms` comes from the store. |
 | `contexts/CampusMapContext.tsx` | Guest: `savedCampusPlaces` comes from the store. Live crowd levels use the existing mock data from `locationAnalyticsService`, not Firestore. |
-| `contexts/AppConfigContext.tsx` | Guest: the config is unchanged except `students`, which is replaced by the classmates' directory entries. Courses, campus map, calendar, forms, quick links and the faculty/office directory stay real, because the institute publishes them. |
+| `contexts/AppConfigContext.tsx` | Guest: uses the bundled `generateDefaultConfig()` instead of subscribing to Firestore, with `students` replaced by the demo `directory`. Courses, campus map, calendar, forms, quick links and the faculty/office directory stay real, because the institute publishes them. Using the bundled config keeps the demo timetable consistent with the course list, and it means guests make no Firebase calls at all. |
 | `features/auth/hooks/useRole.tsx` | Guest: `role = 'user'` without reading Firestore, so `/admin` is unreachable. |
 | `services/activityService.ts` | `logActivity` / `cleanupOldActivities`: if `isDemoActive()`, they write to or trim the store's `activity` and return. |
 | `pages/Profile.tsx` | Guest: the activity feed subscribes to the store. |
 | `components/layout/NotificationCenter.tsx` | Guest: notifications come from the store, and mark-read / mark-all-read mutate the store. |
 | `pages/Directory.tsx` | Guest: `handleViewProfile` looks up classmates by `admissionNumber` in the store. |
 | `pages/UserProfile.tsx` | Guest: `/u/:id` resolves to the guest's own profile or a classmate from the store, and otherwise shows "User not found". |
-| `contexts/LocationContext.tsx`, `contexts/NativeLocationProvider.tsx` | Guest: no analytics or location writes. If geolocation is denied or unavailable, the location falls back to the campus centre from config, so weather still works. |
+| `services/locationAnalyticsService.ts` | Functions that take a uid return early for `DEMO_UID` (`getUserLocationState`, `updateUserLocationState`, `recordLocationVisit`, `updateUserLocation`, `getUserStats`), so `LocationContext`, `NativeLocationProvider` and the CampusMap page need no changes. `getRealTimeCrowdLevels` and `getZonePopularTimes` return sample data while the demo is active. Weather is unaffected because it uses a city the user picks, not geolocation. |
 | `components/common/LocationRequirement.tsx` | Applies **only to signed-in, non-guest users**. Unauthenticated visitors reach `/login` without granting location, and guests are never gated. (Behaviour change: real students now see the location requirement after signing in rather than before.) |
 | `pages/Layout.tsx` / `components/common/SessionGuard.tsx` | Guests are exempt from the idle and max-session logouts, since there is nothing sensitive to protect. `DemoBanner` renders here. |
 
@@ -126,6 +127,7 @@ interface DemoState {
 ## Error handling
 
 - **Corrupt or old stored state:** reseed, with no error shown to the user.
+- **Guest denies location:** nothing breaks. Weather uses the selected city, and the map simply shows no "you are here" marker.
 - **localStorage unavailable** (private mode, blocked storage): the store and flag are in-memory and the demo works for that tab.
 - **Features that need the backend** (profile-picture upload, grade-sheet scanning): show the existing error or toast UI with "Not available in the demo."
 - **A missed guest branch:** the rules deny the Firestore call. This shows up as an empty widget plus a console error, never as leaked data. The tests below are designed to catch these cases.
