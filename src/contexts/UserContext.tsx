@@ -191,8 +191,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             });
           }
         } catch (e) {
+          // Callers report write failures; `error` stays a load error so pages that read the
+          // profile (grades, timetable, saved places) don't break after a failed save
           console.error('Failed to update user:', e);
-          setError(e instanceof Error ? e : new Error('Failed to update profile.'));
           throw e;
         }
       }
