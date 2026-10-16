@@ -152,5 +152,4 @@ export type AdminTab =
   | 'grade-analytics'
   | 'location-analytics'
   | 'support'
-  | 'broadcasts'
-  | 'export';
+  | 'broadcasts';
