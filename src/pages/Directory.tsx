@@ -14,6 +14,8 @@ import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@features/auth/hooks/useAuth';
+import { getDemoUserByAdmissionNumber } from '@features/demo/demoStore';
 
 import { DirectoryEntry, StudentDirectoryEntry } from '@/types';
 
@@ -48,6 +50,7 @@ const isValidIndianPhoneNumber = (phone: string): boolean => {
 
 const Directory = () => {
   const { config, loading: configLoading } = useAppConfig();
+  const { isGuest } = useAuth();
 
   // Get directory data from config
   const facultyDirectory = useMemo<DirectoryEntry[]>(
@@ -255,12 +258,17 @@ const Directory = () => {
     if (!admissionNumber) return;
     setCheckingProfile(admissionNumber);
     try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('admissionNumber', '==', admissionNumber));
-      const querySnapshot = await getDocs(q);
+      let userId: string | undefined;
+      if (isGuest) {
+        userId = getDemoUserByAdmissionNumber(admissionNumber)?.id;
+      } else {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('admissionNumber', '==', admissionNumber));
+        const querySnapshot = await getDocs(q);
+        userId = querySnapshot.docs[0]?.id;
+      }
 
-      if (!querySnapshot.empty) {
-        const userId = querySnapshot.docs[0]!.id;
+      if (userId) {
         navigate(`/u/${userId}`);
       } else {
         setNotification({

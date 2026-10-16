@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getDemoUserById } from '@features/demo/demoStore';
 import { User } from '@/types';
 import { PublicProfile } from '@/features/profiles/components/PublicProfile';
 
@@ -11,7 +12,7 @@ import { Loader2, ArrowLeft, Home } from 'lucide-react';
 const UserProfile = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { currentUser, isGuest } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +20,17 @@ const UserProfile = () => {
 
   const fetchUser = async () => {
     if (!userId) return;
+    if (isGuest) {
+      // Guests only see the demo's own people; any other uid is simply not found
+      const demoUser = getDemoUserById(userId);
+      if (demoUser) {
+        setUser(demoUser);
+      } else {
+        setError('User not found');
+      }
+      setLoading(false);
+      return;
+    }
     // Don't set loading to true on refetch to avoid flicker
     if (!user) setLoading(true);
     try {

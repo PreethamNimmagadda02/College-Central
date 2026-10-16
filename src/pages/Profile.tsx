@@ -10,6 +10,7 @@ import { useForms } from '@contexts/FormsContext';
 import { useUser } from '@contexts/UserContext';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { db } from '@lib/firebase';
+import { subscribeDemoState } from '@features/demo/demoStore';
 import 'firebase/firestore';
 import { X, Download, Calendar, Bell, MapPin, Check, Edit2, Globe, RotateCcw } from 'lucide-react';
 
@@ -33,7 +34,7 @@ const formatTimeAgo = (timestamp: { seconds: number; nanoseconds: number } | nul
 
 const Profile: React.FC = () => {
   const { user, updateUser, uploadProfilePicture, loading } = useUser();
-  const { currentUser } = useAuth();
+  const { currentUser, isGuest } = useAuth();
   const { userFormsData, addRecentDownload } = useForms();
   const { savedPlaces, locations } = useCampusMap();
   const { reminderPreferences, calendarData, getEventKey } = useCalendar();
@@ -199,6 +200,13 @@ const Profile: React.FC = () => {
       return;
     }
 
+    if (isGuest) {
+      return subscribeDemoState((state) => {
+        setActivity(state.activity);
+        setActivityLoading(false);
+      });
+    }
+
     const activityQuery = db
       .collection('users')
       .doc(currentUser.uid)
@@ -231,7 +239,7 @@ const Profile: React.FC = () => {
     );
 
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [currentUser, isGuest]);
 
   useEffect(() => {
     if (user) {

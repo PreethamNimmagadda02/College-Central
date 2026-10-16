@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useUser } from '@contexts/UserContext';
+import { useAuth } from '@features/auth/hooks/useAuth';
+import { subscribeDemoState, updateDemoState } from '@features/demo/demoStore';
 import { db } from '@lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { Notification } from '@/types';
@@ -8,6 +10,7 @@ import { Link } from 'react-router-dom';
 
 const NotificationCenter: React.FC = () => {
     const { user } = useUser();
+    const { isGuest } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -30,6 +33,13 @@ const NotificationCenter: React.FC = () => {
     useEffect(() => {
         if (!user) return;
 
+        if (isGuest) {
+            return subscribeDemoState((state) => {
+                setNotifications(state.notifications);
+                setUnreadCount(state.notifications.filter((n) => !n.read).length);
+            });
+        }
+
         const q = query(
             collection(db, `users/${user.id}/notifications`),
             orderBy('createdAt', 'desc'),
@@ -47,10 +57,19 @@ const NotificationCenter: React.FC = () => {
         });
 
         return () => unsubscribe();
-    }, [user]);
+    }, [user, isGuest]);
 
     const markAsRead = async (notificationId: string) => {
         if (!user) return;
+        if (isGuest) {
+            updateDemoState((state) => ({
+                ...state,
+                notifications: state.notifications.map((n) =>
+                    n.id === notificationId ? { ...n, read: true } : n
+                ),
+            }));
+            return;
+        }
         try {
             const notifRef = doc(db, `users/${user.id}/notifications`, notificationId);
             await updateDoc(notifRef, { read: true });
@@ -61,6 +80,13 @@ const NotificationCenter: React.FC = () => {
 
     const markAllAsRead = async () => {
         if (!user || unreadCount === 0) return;
+        if (isGuest) {
+            updateDemoState((state) => ({
+                ...state,
+                notifications: state.notifications.map((n) => ({ ...n, read: true })),
+            }));
+            return;
+        }
         try {
             const batch = writeBatch(db);
             notifications.filter(n => !n.read).forEach(n => {

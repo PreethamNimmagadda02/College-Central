@@ -16,6 +16,11 @@ vi.mock('../../lib/firebase', () => ({
   db: {},
 }));
 
+// Directory checks for guest mode; these tests cover signed-in students
+vi.mock('@features/auth/hooks/useAuth', () => ({
+  useAuth: () => ({ isGuest: false }),
+}));
+
 // Mock AppConfigContext module
 vi.mock('@contexts/AppConfigContext', () => ({
   useAppConfig: vi.fn(),
