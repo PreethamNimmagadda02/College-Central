@@ -41,6 +41,7 @@ import {
   getWeekNumber,
   parseDateString,
 } from '@lib/utils/dateUtils';
+import { getCountdownEvents, getUpcomingEvents } from '@lib/utils/eventUtils';
 import { getGreeting, getRandomItem } from '@lib/utils/helpers';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -244,12 +245,7 @@ const Dashboard: React.FC = () => {
   const { user, loading: userLoading, updateUser } = useUser();
   const { gradesData, loading: gradesLoading } = useGrades();
   const { scheduleData, loading: scheduleLoading } = useSchedule();
-  const {
-    calendarData,
-    loading: calendarLoading,
-    reminderPreferences,
-    getEventKey,
-  } = useCalendar();
+  const { calendarData, loading: calendarLoading, reminderPreferences } = useCalendar();
 
   // Get quotes from config
   const configQuotes = useMemo(() => {
@@ -261,33 +257,10 @@ const Dashboard: React.FC = () => {
     ];
   }, [appConfig?.quotes]);
 
-  const upcomingEventsCount = useMemo(() => {
-    if (!calendarData) return 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Calculate one week from today
-    const oneWeekFromToday = new Date(today);
-    oneWeekFromToday.setDate(oneWeekFromToday.getDate() + 7);
-
-    // Filter events that are ongoing (started in the past but not yet ended) OR will start within the next week
-    const upcomingEvents = calendarData.events.filter((event) => {
-      const eventStartDate = new Date(event.date);
-      const eventEndDate = new Date(event.endDate || event.date);
-      eventStartDate.setHours(0, 0, 0, 0);
-      eventEndDate.setHours(0, 0, 0, 0);
-
-      // Event is ongoing if it has already started but hasn't ended yet
-      const isOngoing = eventStartDate < today && eventEndDate >= today;
-
-      // Event is upcoming if it starts within the next week
-      const isUpcomingThisWeek = eventStartDate >= today && eventStartDate <= oneWeekFromToday;
-
-      return isOngoing || isUpcomingThisWeek;
-    });
-
-    return upcomingEvents.length;
-  }, [calendarData]);
+  const upcomingEventsCount = useMemo(
+    () => (calendarData ? getUpcomingEvents(calendarData.events).length : 0),
+    [calendarData]
+  );
 
   // Quick Links state management
   const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
@@ -304,25 +277,11 @@ const Dashboard: React.FC = () => {
   const [draggedLinkId, setDraggedLinkId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
 
-  // === Smart Countdown: Events with Reminders (synced with Calendar) ===
-
-  // Get events with reminders enabled (automatically show countdown for these)
-  const getCountdownEvents = useMemo(() => {
-    if (!calendarData) return [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return reminderPreferences
-      .map((key) => calendarData.events.find((e) => getEventKey(e) === key))
-      .filter((e): e is CalendarEvent => {
-        if (!e) return false;
-        const eventDate = new Date(e.date);
-        eventDate.setHours(0, 0, 0, 0);
-        return eventDate >= today;
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 3);
-  }, [reminderPreferences, calendarData, getEventKey]);
+  // Events with reminders enabled get a countdown (synced with Calendar)
+  const countdownEvents = useMemo(
+    () => (calendarData ? getCountdownEvents(calendarData.events, reminderPreferences) : []),
+    [calendarData, reminderPreferences]
+  );
 
   // Date navigation handlers
   const handleResetToToday = useCallback(() => setSelectedDate(new Date()), []);
@@ -892,9 +851,7 @@ const Dashboard: React.FC = () => {
               </div>
 
               {/* Smart Countdown Pill - Visual Enhanced */}
-              {getCountdownEvents.length > 0 && (
-                <CountdownPill events={getCountdownEvents} />
-              )}
+              {countdownEvents.length > 0 && <CountdownPill events={countdownEvents} />}
             </div>
           </div>
 

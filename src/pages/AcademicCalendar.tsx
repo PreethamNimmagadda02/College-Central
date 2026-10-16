@@ -1,6 +1,7 @@
 import { useUser } from '@contexts/UserContext';
 import { useCalendar } from '@contexts/CalendarContext';
 import { formatDateRange, formatDateWithMonthName } from '@lib/utils/dateUtils';
+import { getCountdownEvents, getUpcomingEvents } from '@lib/utils/eventUtils';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 
 import { CalendarEvent, CalendarEventType } from '@/types';
@@ -122,23 +123,10 @@ const AcademicCalendar: React.FC = () => {
   }, []);
 
   // Get events with reminders enabled (automatically show countdown for these)
-  const getCountdownEvents = useMemo(() => {
-    if (!calendarData) return [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return reminderPreferences
-      .map((key) => calendarData.events.find((e) => getEventKey(e) === key))
-      .filter((e): e is CalendarEvent => {
-        if (!e) return false;
-        // Only show future events (not past)
-        const eventDate = new Date(e.date);
-        eventDate.setHours(0, 0, 0, 0);
-        return eventDate >= today;
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 3); // Limit to 3 countdown events
-  }, [reminderPreferences, calendarData, getEventKey]);
+  const countdownEvents = useMemo(
+    () => (calendarData ? getCountdownEvents(calendarData.events, reminderPreferences) : []),
+    [calendarData, reminderPreferences]
+  );
 
   const getCountdown = useCallback(
     (dateStr: string) => {
@@ -206,37 +194,10 @@ const AcademicCalendar: React.FC = () => {
     );
   }, [paginatedEvents]);
 
-  const upcomingEvents = useMemo(() => {
-    if (!calendarData) return [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Calculate one week from today
-    const oneWeekFromToday = new Date(today);
-    oneWeekFromToday.setDate(oneWeekFromToday.getDate() + 7);
-
-    // Filter events that are ongoing (started in the past but not yet ended) OR will start within the next week
-    const allUpcomingEvents = calendarData.events.filter((event) => {
-      const eventStartDate = new Date(event.date);
-      const eventEndDate = new Date(event.endDate || event.date);
-      eventStartDate.setHours(0, 0, 0, 0);
-      eventEndDate.setHours(0, 0, 0, 0);
-
-      // Event is ongoing if it has already started but hasn't ended yet
-      const isOngoing = eventStartDate < today && eventEndDate >= today;
-
-      // Event is upcoming if it starts within the next week
-      const isUpcomingThisWeek = eventStartDate >= today && eventStartDate <= oneWeekFromToday;
-
-      return isOngoing || isUpcomingThisWeek;
-    });
-
-    // Sort events by their start date to get the soonest ones first
-    allUpcomingEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    // Return all events in the next week
-    return allUpcomingEvents;
-  }, [calendarData]);
+  const upcomingEvents = useMemo(
+    () => (calendarData ? getUpcomingEvents(calendarData.events) : []),
+    [calendarData]
+  );
 
   const getDaysUntil = (date: string) => {
     const eventDate = new Date(date);
@@ -632,7 +593,7 @@ const AcademicCalendar: React.FC = () => {
       </div>
 
       {/* Countdown Section - Shows events with reminders */}
-      {getCountdownEvents.length > 0 && (
+      {countdownEvents.length > 0 && (
         <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-md p-4 md:p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
           <h3 className="text-base md:text-lg font-semibold mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -640,11 +601,11 @@ const AcademicCalendar: React.FC = () => {
               <span className="text-slate-800 dark:text-slate-100">Your Countdowns</span>
             </div>
             <span className="text-xs font-medium px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300">
-              {getCountdownEvents.length} reminder{getCountdownEvents.length !== 1 ? 's' : ''}
+              {countdownEvents.length} reminder{countdownEvents.length !== 1 ? 's' : ''}
             </span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {getCountdownEvents.map((event) => {
+            {countdownEvents.map((event) => {
               const countdown = getCountdown(event.date);
               const eventKey = getEventKey(event);
               const isToday = new Date(event.date).toDateString() === new Date().toDateString();
