@@ -1,5 +1,5 @@
 import { useAppConfig } from '@contexts/AppConfigContext';
-import { useGrades, GradesData } from '@contexts/GradesContext';
+import { useGrades } from '@contexts/GradesContext';
 import { useSchedule } from '@contexts/ScheduleContext';
 import { useUser } from '@contexts/UserContext';
 import { useGradingScale } from '@hooks/useGradingScale';
@@ -17,7 +17,7 @@ import {
   ComposedChart,
 } from 'recharts';
 
-import { Grade, Semester, SavedScenario } from '@/types';
+import { Grade, GradesData, Semester, SavedScenario } from '@/types';
 
 // Animated Counter Component - counts up smoothly when value changes
 const AnimatedCounter: React.FC<{
@@ -165,7 +165,7 @@ const getCGPAStatus = (cgpa: number) => {
   };
 };
 
-const CGPAForecaster: React.FC = React.memo(() => {
+const CGPAForecaster: React.FC = React.memo(function CGPAForecaster() {
   const { gradesData } = useGrades();
   const { scheduleData } = useSchedule();
   const { user, updateUser } = useUser();
@@ -984,7 +984,7 @@ const CGPAForecaster: React.FC = React.memo(() => {
  * ImprovementExamForecaster allows students to modify their past grades
  * and see how improvement exams could affect their CGPA.
  */
-const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.memo(({ gradesData }) => {
+const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.memo(function ImprovementExamForecaster({ gradesData }) {
   const { gradeOptions, gradePoints, getGradeColor, getGradeOutlineStyle } = useGradingScale();
   const [modifiedGrades, setModifiedGrades] = useState<{ [subjectCode: string]: string }>({});
   const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set());
@@ -1611,10 +1611,10 @@ const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.me
  * PerformanceAnalytics displays grade analytics using only the latest grade for each course.
  * When a student retakes a course, only the most recent attempt is counted in analytics.
  */
-const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: string }> = React.memo(({
+const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: string }> = React.memo(function PerformanceAnalytics({
   gradesData,
   courseOption,
-}) => {
+}) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'distribution' | 'insights'>(
