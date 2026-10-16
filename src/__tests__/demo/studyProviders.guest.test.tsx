@@ -27,16 +27,19 @@ import { AppConfigProvider } from '@contexts/AppConfigContext';
 import { CampusMapProvider, useCampusMap } from '@contexts/CampusMapContext';
 import { GradesProvider, useGrades } from '@contexts/GradesContext';
 import { ScheduleProvider, useSchedule } from '@contexts/ScheduleContext';
+import { UserProvider } from '@contexts/UserContext';
 import { endDemo, startDemo } from '@features/demo/demoSession';
 import { getDemoState, resetDemoStoreForTests } from '@features/demo/demoStore';
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <AppConfigProvider>
-    <GradesProvider>
-      <ScheduleProvider>
-        <CampusMapProvider>{children}</CampusMapProvider>
-      </ScheduleProvider>
-    </GradesProvider>
+    <UserProvider>
+      <GradesProvider>
+        <ScheduleProvider>
+          <CampusMapProvider>{children}</CampusMapProvider>
+        </ScheduleProvider>
+      </GradesProvider>
+    </UserProvider>
   </AppConfigProvider>
 );
 
