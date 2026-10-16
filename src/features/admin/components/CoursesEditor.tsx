@@ -1,23 +1,60 @@
-import {
-  BookOpen,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Edit,
-  Plus,
-  Search,
-  Trash2,
-  Upload,
-  X,
-} from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronUp, Clock, Edit, Trash2, X } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
-import { AdminCourse } from '../types';
+import { usePagination } from '../hooks/usePagination';
+import { AdminCourse, AdminCourseSlot } from '../types';
 import CourseUploader from './CourseUploader';
-import { AdminHeader, AdminPageLayout } from './ui';
+import { AdminHeader, AdminPageLayout, BulkActions, Pagination, SearchInput } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'courses' | 'importCourses'>;
+
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const EMPTY_SLOT: AdminCourseSlot = { day: 'Monday', startTime: '', endTime: '', venue: '' };
+
+const TYPE_BADGE: Record<AdminCourse['courseType'], string> = {
+  CBCS: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+  NEP: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+};
+
+// Day / start / end / venue inputs, shared by the "edit slot" and "new slot" rows
+const SlotFields: React.FC<{
+  slot: AdminCourseSlot;
+  onChange: (patch: Partial<AdminCourseSlot>) => void;
+}> = ({ slot, onChange }) => (
+  <>
+    <select
+      value={slot.day}
+      onChange={(e) => onChange({ day: e.target.value })}
+      className="admin-select text-sm py-2 col-span-1 xs:col-span-2"
+    >
+      {DAYS.map((d) => (
+        <option key={d} value={d}>
+          {d}
+        </option>
+      ))}
+    </select>
+    <input
+      type="time"
+      value={slot.startTime}
+      onChange={(e) => onChange({ startTime: e.target.value })}
+      className="admin-input text-sm py-2"
+    />
+    <input
+      type="time"
+      value={slot.endTime}
+      onChange={(e) => onChange({ endTime: e.target.value })}
+      className="admin-input text-sm py-2"
+    />
+    <input
+      type="text"
+      placeholder="Venue (optional)"
+      value={slot.venue}
+      onChange={(e) => onChange({ venue: e.target.value })}
+      className="admin-input text-sm py-2 col-span-1 xs:col-span-2"
+    />
+  </>
+);
 
 const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,51 +62,38 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
   const [editingCourse, setEditingCourse] = useState<AdminCourse | null>(null);
-  const [editingSlots, setEditingSlots] = useState<
-    { day: string; startTime: string; endTime: string; venue: string }[]
-  >([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [editingSlots, setEditingSlots] = useState<AdminCourseSlot[]>([]);
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
-  const itemsPerPage = 20;
-
-  // Filter courses
-  const filteredCourses = useMemo(() => {
-    return config.courses.filter((course) => {
-      const matchesSearch =
-        course.courseCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.courseName.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesType = typeFilter === 'All' || course.courseType === typeFilter;
-
-      return matchesSearch && matchesType;
-    });
-  }, [config.courses, searchTerm, typeFilter]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
-  const paginatedCourses = filteredCourses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  /* New State for Controlled Inputs */
-  const [newSlot, setNewSlot] = useState({
-    day: 'Monday',
-    startTime: '',
-    endTime: '',
-    venue: '',
-  });
+  const [newSlot, setNewSlot] = useState(EMPTY_SLOT);
   const [editingSlotIndex, setEditingSlotIndex] = useState<number | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
+  const filteredCourses = useMemo(() => {
+    const query = searchTerm.toLowerCase();
+    return config.courses.filter(
+      (course) =>
+        (course.courseCode.toLowerCase().includes(query) ||
+          course.courseName.toLowerCase().includes(query)) &&
+        (typeFilter === 'All' || course.courseType === typeFilter)
+    );
+  }, [config.courses, searchTerm, typeFilter]);
+  const pager = usePagination(filteredCourses, 20);
 
-    // Validate L-T-P format
+  const openModal = (course: AdminCourse | null) => {
+    setEditingCourse(course);
+    setEditingSlots(course?.slots || []);
+    setShowAddModal(true);
+  };
+  const closeModal = () => {
+    setShowAddModal(false);
+    setEditingCourse(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
     const ltp = formData.get('ltp') as string;
-    const ltpRegex = /^\d+-\d+-\d+$/;
-    if (!ltpRegex.test(ltp)) {
+    if (!/^\d+-\d+-\d+$/.test(ltp)) {
       alert('Invalid L-T-P format. Please use the format: 3-0-0 (Lecture-Tutorial-Practical)');
       return;
     }
@@ -77,123 +101,90 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
     const courseData = {
       courseCode: formData.get('courseCode') as string,
       courseName: formData.get('courseName') as string,
-      ltp: ltp,
+      ltp,
       credits: parseInt(formData.get('credits') as string),
       courseType: formData.get('courseType') as 'CBCS' | 'NEP',
       slots: editingSlots,
     };
-
-    if (editingCourse) {
-      courses.update(editingCourse.id, courseData);
-      setEditingCourse(null);
-    } else {
-      courses.add(courseData);
-    }
-    setShowAddModal(false);
-    setNewSlot({ day: 'Monday', startTime: '', endTime: '', venue: '' }); // Reset slot state
-    form.reset();
+    if (editingCourse) courses.update(editingCourse.id, courseData);
+    else courses.add(courseData);
+    closeModal();
+    setNewSlot(EMPTY_SLOT);
   };
 
   const handleAddSlot = () => {
-    if (newSlot.day && newSlot.startTime && newSlot.endTime) {
-      setEditingSlots((prev) => [...prev, newSlot]);
-      // Reset only time and venue, keep day for convenience or reset day too if preferred
-      setNewSlot((prev) => ({ ...prev, startTime: '', endTime: '', venue: '' }));
-    } else {
+    if (!newSlot.day || !newSlot.startTime || !newSlot.endTime) {
       alert('Please fill in Day, Start Time, and End Time for the slot.');
+      return;
     }
+    setEditingSlots((prev) => [...prev, newSlot]);
+    // Keep the day for convenience
+    setNewSlot((prev) => ({ ...prev, startTime: '', endTime: '', venue: '' }));
   };
+
+  const slotsToggle = (course: AdminCourse) => (
+    <button
+      onClick={() => setExpandedCourseId(expandedCourseId === course.id ? null : course.id)}
+      className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30 transition-colors"
+    >
+      <Clock className="w-3 h-3" />
+      {course.slots.length} slot{course.slots.length !== 1 ? 's' : ''}
+      {expandedCourseId === course.id ? (
+        <ChevronUp className="w-3 h-3" />
+      ) : (
+        <ChevronDown className="w-3 h-3" />
+      )}
+    </button>
+  );
+
+  const actionButtons = (course: AdminCourse) => (
+    <>
+      <button
+        onClick={() => openModal(course)}
+        className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
+      >
+        <Edit className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => courses.remove(course.id)}
+        className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </>
+  );
 
   return (
     <AdminPageLayout>
-      {/* Header */}
-      <AdminHeader
-        icon={BookOpen}
-        title="Courses"
-        subtitle="Manage course catalog and schedules"
-      >
-        <div className="flex flex-wrap gap-2 sm:gap-3">
-          {/* Delete Filtered - only show when filters are active */}
-          {(searchTerm || typeFilter !== 'All') && filteredCourses.length > 0 && (
-            <button
-              onClick={() => {
-                if (
-                  confirm(
-                    `Are you sure you want to delete all ${filteredCourses.length} filtered courses? This action cannot be undone.`
-                  )
-                ) {
-                  // Use atomic bulk delete to avoid race conditions
-                  courses.removeMany(filteredCourses.map((c) => c.id));
-                }
-              }}
-              className="admin-btn bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-4"
-            >
-              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-              Delete {filteredCourses.length}
-            </button>
-          )}
-          {/* Clear All Courses */}
-          {config.courses.length > 0 && (
-            <button
-              onClick={() => {
-                if (
-                  confirm(
-                    `Are you sure you want to delete ALL ${config.courses.length} courses? This action cannot be undone.`
-                  )
-                ) {
-                  courses.clear();
-                }
-              }}
-              className="admin-btn bg-red-900 hover:bg-red-800 text-white border border-red-700 text-xs sm:text-sm px-3 sm:px-4"
-            >
-              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-              Clear All ({config.courses.length})
-            </button>
-          )}
-          <button
-            onClick={() => setShowUploader(true)}
-            className="admin-btn admin-btn-secondary text-xs sm:text-sm px-3 sm:px-4"
-          >
-            <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
-            Upload Excel
-          </button>
-          <button
-            onClick={() => {
-              setEditingCourse(null);
-              setEditingSlots([]);
-              setShowAddModal(true);
-            }}
-            className="admin-btn admin-btn-primary text-xs sm:text-sm px-3 sm:px-4"
-          >
-            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-            Add Course
-          </button>
-        </div>
+      <AdminHeader icon={BookOpen} title="Courses" subtitle="Manage course catalog and schedules">
+        <BulkActions
+          noun="courses"
+          total={config.courses.length}
+          filtered={searchTerm || typeFilter !== 'All' ? filteredCourses : undefined}
+          onDeleteMany={courses.removeMany}
+          onClear={courses.clear}
+          onUpload={() => setShowUploader(true)}
+          onAdd={() => openModal(null)}
+          addLabel="Add Course"
+        />
       </AdminHeader>
-
-      {/* Stats - Placeholder if needed */}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <div className="admin-search flex-1">
-          <Search className="admin-search-icon w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search courses..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="admin-input"
-            style={{ paddingLeft: '48px' }}
-          />
-        </div>
+        <SearchInput
+          className="flex-1"
+          placeholder="Search courses..."
+          value={searchTerm}
+          onChange={(value) => {
+            setSearchTerm(value);
+            pager.setPage(1);
+          }}
+        />
         <select
           value={typeFilter}
           onChange={(e) => {
             setTypeFilter(e.target.value as 'All' | 'CBCS' | 'NEP');
-            setCurrentPage(1);
+            pager.setPage(1);
           }}
           className="admin-select w-full sm:w-auto sm:min-w-[120px]"
         >
@@ -219,7 +210,7 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
               </tr>
             </thead>
             <tbody>
-              {paginatedCourses.map((course) => (
+              {pager.pageItems.map((course) => (
                 <React.Fragment key={course.id}>
                   <tr>
                     <td className="font-mono text-blue-400">{course.courseCode}</td>
@@ -228,58 +219,23 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
                     <td className="text-slate-400">{course.credits}</td>
                     <td>
                       <span
-                        className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                          course.courseType === 'CBCS'
-                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        }`}
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-full ${TYPE_BADGE[course.courseType]}`}
                       >
                         {course.courseType}
                       </span>
                     </td>
                     <td>
-                      {course.slots && course.slots.length > 0 ? (
-                        <button
-                          onClick={() =>
-                            setExpandedCourseId(expandedCourseId === course.id ? null : course.id)
-                          }
-                          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30 transition-colors"
-                        >
-                          <Clock className="w-3 h-3" />
-                          {course.slots.length} slot{course.slots.length !== 1 ? 's' : ''}
-                          {expandedCourseId === course.id ? (
-                            <ChevronUp className="w-3 h-3" />
-                          ) : (
-                            <ChevronDown className="w-3 h-3" />
-                          )}
-                        </button>
+                      {course.slots?.length ? (
+                        slotsToggle(course)
                       ) : (
                         <span className="text-xs text-slate-500">No slots</span>
                       )}
                     </td>
                     <td>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            setEditingCourse(course);
-                            setEditingSlots(course.slots || []);
-                            setShowAddModal(true);
-                          }}
-                          className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => courses.remove(course.id)}
-                          className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <div className="flex gap-2">{actionButtons(course)}</div>
                     </td>
                   </tr>
-                  {/* Expanded Slots Row */}
-                  {expandedCourseId === course.id && course.slots && course.slots.length > 0 && (
+                  {expandedCourseId === course.id && course.slots?.length > 0 && (
                     <tr>
                       <td colSpan={7} className="bg-purple-500/5 border-l-2 border-purple-500">
                         <div className="pl-6 py-3 space-y-2">
@@ -287,34 +243,24 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
                             Class Schedule
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {course.slots.map(
-                              (
-                                slot: {
-                                  day: string;
-                                  startTime: string;
-                                  endTime: string;
-                                  venue?: string;
-                                },
-                                idx: number
-                              ) => (
-                                <div
-                                  key={idx}
-                                  className="flex items-center gap-3 bg-slate-800/50 rounded-lg px-3 py-2 text-sm border border-purple-500/20"
-                                >
-                                  <div className="flex-shrink-0 w-20 font-medium text-purple-400">
-                                    {slot.day}
-                                  </div>
-                                  <div className="flex-1 text-slate-300">
-                                    {slot.startTime} - {slot.endTime}
-                                  </div>
-                                  {slot.venue && (
-                                    <div className="text-xs text-slate-400 bg-slate-700/50 px-2 py-1 rounded">
-                                      {slot.venue}
-                                    </div>
-                                  )}
+                            {course.slots.map((slot, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-3 bg-slate-800/50 rounded-lg px-3 py-2 text-sm border border-purple-500/20"
+                              >
+                                <div className="flex-shrink-0 w-20 font-medium text-purple-400">
+                                  {slot.day}
                                 </div>
-                              )
-                            )}
+                                <div className="flex-1 text-slate-300">
+                                  {slot.startTime} - {slot.endTime}
+                                </div>
+                                {slot.venue && (
+                                  <div className="text-xs text-slate-400 bg-slate-700/50 px-2 py-1 rounded">
+                                    {slot.venue}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </td>
@@ -329,19 +275,14 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
 
       {/* Course Cards - Mobile */}
       <div className="space-y-3 md:hidden">
-        {paginatedCourses.map((course) => (
+        {pager.pageItems.map((course) => (
           <div key={course.id} className="admin-card p-4">
-            {/* Header row with code, type, and actions */}
             <div className="flex items-start justify-between gap-2 mb-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-mono text-blue-400 text-sm">{course.courseCode}</span>
                   <span
-                    className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                      course.courseType === 'CBCS'
-                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    }`}
+                    className={`px-2 py-0.5 text-xs font-semibold rounded-full ${TYPE_BADGE[course.courseType]}`}
                   >
                     {course.courseType}
                   </span>
@@ -350,74 +291,36 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
                   {course.courseName}
                 </h4>
               </div>
-              <div className="flex gap-1 flex-shrink-0">
-                <button
-                  onClick={() => {
-                    setEditingCourse(course);
-                    setEditingSlots(course.slots || []);
-                    setShowAddModal(true);
-                  }}
-                  className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => courses.remove(course.id)}
-                  className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              <div className="flex gap-1 flex-shrink-0">{actionButtons(course)}</div>
             </div>
 
-            {/* Details row */}
             <div className="flex items-center gap-3 text-xs text-slate-400">
               <span>L-T-P: {course.ltp}</span>
               <span>•</span>
               <span>{course.credits} Credits</span>
             </div>
 
-            {/* Slots section */}
-            {course.slots && course.slots.length > 0 && (
+            {course.slots?.length > 0 && (
               <div className="mt-3">
-                <button
-                  onClick={() =>
-                    setExpandedCourseId(expandedCourseId === course.id ? null : course.id)
-                  }
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30 transition-colors"
-                >
-                  <Clock className="w-3 h-3" />
-                  {course.slots.length} slot{course.slots.length !== 1 ? 's' : ''}
-                  {expandedCourseId === course.id ? (
-                    <ChevronUp className="w-3 h-3" />
-                  ) : (
-                    <ChevronDown className="w-3 h-3" />
-                  )}
-                </button>
-
+                {slotsToggle(course)}
                 {expandedCourseId === course.id && (
                   <div className="mt-3 space-y-2">
-                    {course.slots.map(
-                      (
-                        slot: { day: string; startTime: string; endTime: string; venue?: string },
-                        idx: number
-                      ) => (
-                        <div
-                          key={idx}
-                          className="flex flex-wrap items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-2 text-sm border border-purple-500/20"
-                        >
-                          <span className="font-medium text-purple-400">{slot.day}</span>
-                          <span className="text-slate-300">
-                            {slot.startTime} - {slot.endTime}
+                    {course.slots.map((slot, idx) => (
+                      <div
+                        key={idx}
+                        className="flex flex-wrap items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-2 text-sm border border-purple-500/20"
+                      >
+                        <span className="font-medium text-purple-400">{slot.day}</span>
+                        <span className="text-slate-300">
+                          {slot.startTime} - {slot.endTime}
+                        </span>
+                        {slot.venue && (
+                          <span className="text-xs text-slate-400 bg-slate-700/50 px-2 py-0.5 rounded">
+                            {slot.venue}
                           </span>
-                          {slot.venue && (
-                            <span className="text-xs text-slate-400 bg-slate-700/50 px-2 py-0.5 rounded">
-                              {slot.venue}
-                            </span>
-                          )}
-                        </div>
-                      )
-                    )}
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -426,82 +329,16 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
         ))}
       </div>
 
-      {/* Pagination - Desktop */}
-      {totalPages > 1 && (
-        <div className="hidden md:flex items-center justify-between px-6 py-4 border-t border-blue-500/10">
-          <div className="text-sm text-slate-400">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-            {Math.min(currentPage * itemsPerPage, filteredCourses.length)} of{' '}
-            {filteredCourses.length}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="admin-btn admin-btn-secondary text-sm disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Pagination - Mobile */}
-      {totalPages > 1 && (
-        <div className="admin-card md:hidden">
-          <div className="flex flex-col gap-3">
-            <div className="text-xs text-slate-400 text-center">
-              Showing {(currentPage - 1) * itemsPerPage + 1}-
-              {Math.min(currentPage * itemsPerPage, filteredCourses.length)} of{' '}
-              {filteredCourses.length}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40 flex-1 justify-center"
-              >
-                Previous
-              </button>
-              <span className="flex items-center justify-center text-sm text-slate-400 min-w-[60px]">
-                {currentPage}/{totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="admin-btn admin-btn-secondary text-sm disabled:opacity-40 flex-1 justify-center"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Pagination {...pager} label="courses" />
 
       {/* Add/Edit Modal */}
       {showAddModal && (
-        <div
-          className="admin-modal-overlay"
-          onClick={() => {
-            setShowAddModal(false);
-            setEditingCourse(null);
-          }}
-        >
+        <div className="admin-modal-overlay" onClick={closeModal}>
           <div className="admin-modal max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h3 className="admin-modal-title">{editingCourse ? 'Edit Course' : 'Add Course'}</h3>
               <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setEditingCourse(null);
-                }}
+                onClick={closeModal}
                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -569,67 +406,14 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
                       }`}
                     >
                       {editingSlotIndex === idx ? (
-                        // Editing mode
                         <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
-                          <select
-                            value={slot.day}
-                            onChange={(e) => {
+                          <SlotFields
+                            slot={slot}
+                            onChange={(patch) =>
                               setEditingSlots((prev) =>
-                                prev.map((s, i) => (i === idx ? { ...s, day: e.target.value } : s))
-                              );
-                            }}
-                            className="admin-select text-sm py-2 col-span-1 xs:col-span-2"
-                          >
-                            {[
-                              'Monday',
-                              'Tuesday',
-                              'Wednesday',
-                              'Thursday',
-                              'Friday',
-                              'Saturday',
-                              'Sunday',
-                            ].map((d) => (
-                              <option key={d} value={d}>
-                                {d}
-                              </option>
-                            ))}
-                          </select>
-                          <input
-                            type="time"
-                            value={slot.startTime}
-                            onChange={(e) => {
-                              setEditingSlots((prev) =>
-                                prev.map((s, i) =>
-                                  i === idx ? { ...s, startTime: e.target.value } : s
-                                )
-                              );
-                            }}
-                            className="admin-input text-sm py-2"
-                          />
-                          <input
-                            type="time"
-                            value={slot.endTime}
-                            onChange={(e) => {
-                              setEditingSlots((prev) =>
-                                prev.map((s, i) =>
-                                  i === idx ? { ...s, endTime: e.target.value } : s
-                                )
-                              );
-                            }}
-                            className="admin-input text-sm py-2"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Venue (optional)"
-                            value={slot.venue}
-                            onChange={(e) => {
-                              setEditingSlots((prev) =>
-                                prev.map((s, i) =>
-                                  i === idx ? { ...s, venue: e.target.value } : s
-                                )
-                              );
-                            }}
-                            className="admin-input text-sm py-2 col-span-1 xs:col-span-2"
+                                prev.map((s, i) => (i === idx ? { ...s, ...patch } : s))
+                              )
+                            }
                           />
                           <button
                             type="button"
@@ -640,7 +424,6 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
                           </button>
                         </div>
                       ) : (
-                        // Display mode
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="w-24 text-sm font-medium text-blue-400">{slot.day}</div>
                           <div className="text-sm text-slate-300">
@@ -683,45 +466,9 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
                 </div>
 
                 <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 bg-blue-500/10 p-3 rounded-lg border border-blue-500/20">
-                  <select
-                    value={newSlot.day}
-                    onChange={(e) => setNewSlot({ ...newSlot, day: e.target.value })}
-                    className="admin-select text-sm py-2 col-span-1 xs:col-span-2"
-                  >
-                    {[
-                      'Monday',
-                      'Tuesday',
-                      'Wednesday',
-                      'Thursday',
-                      'Friday',
-                      'Saturday',
-                      'Sunday',
-                    ].map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="time"
-                    value={newSlot.startTime}
-                    onChange={(e) => setNewSlot({ ...newSlot, startTime: e.target.value })}
-                    className="admin-input text-sm py-2"
-                    placeholder="Start"
-                  />
-                  <input
-                    type="time"
-                    value={newSlot.endTime}
-                    onChange={(e) => setNewSlot({ ...newSlot, endTime: e.target.value })}
-                    className="admin-input text-sm py-2"
-                    placeholder="End"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Venue (optional)"
-                    value={newSlot.venue}
-                    onChange={(e) => setNewSlot({ ...newSlot, venue: e.target.value })}
-                    className="admin-input text-sm py-2 col-span-1 xs:col-span-2"
+                  <SlotFields
+                    slot={newSlot}
+                    onChange={(patch) => setNewSlot((prev) => ({ ...prev, ...patch }))}
                   />
                   <button
                     type="button"
@@ -752,7 +499,6 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
         </div>
       )}
 
-      {/* Course Uploader Modal */}
       {showUploader && (
         <CourseUploader onImport={importCourses} onClose={() => setShowUploader(false)} />
       )}
