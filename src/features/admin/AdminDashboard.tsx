@@ -22,7 +22,6 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useAuth } from '../auth/hooks/useAuth';
 import AdminFooter from './components/AdminFooter';
 import AdminSearch from './components/AdminSearch';
 import AnalyticsEditor from './components/AnalyticsEditor';
@@ -44,6 +43,7 @@ import StudentDirectoryEditor from './components/StudentDirectoryEditor';
 import SupportEditor from './components/SupportEditor';
 import { AdminConfigApi, useAdminConfig } from './hooks/useAdminConfig';
 import { AdminTab } from './types';
+import { useAuth } from '../auth/hooks/useAuth';
 import './styles.css';
 
 const EDITORS: Record<AdminTab, React.ComponentType<AdminConfigApi>> = {

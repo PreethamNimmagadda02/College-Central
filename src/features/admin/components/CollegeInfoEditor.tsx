@@ -8,8 +8,8 @@ import {
 import { AlertCircle, Building2, Check, ImageIcon, Loader2, Pencil, Trash2 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 
-import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminHeader, AdminPageLayout } from './ui';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
 
 type Props = Pick<AdminConfigApi, 'config' | 'updateCollegeInfo' | 'updateAppConstants'>;
 

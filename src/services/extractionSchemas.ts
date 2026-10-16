@@ -142,9 +142,9 @@ function stripDatesFromDescription(desc: string): string {
         ''
       )
       // Remove patterns like "21-07-2025" or "21/07/2025"
-      .replace(/\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/g, '')
+      .replace(/\d{1,2}[-/]\d{1,2}[-/]\d{4}/g, '')
       // Remove patterns like "2025-07-21"
-      .replace(/\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/g, '')
+      .replace(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/g, '')
       // Remove date ranges like "16 - 21 September"
       .replace(
         /\d{1,2}\s*[-–]\s*\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)/gi,

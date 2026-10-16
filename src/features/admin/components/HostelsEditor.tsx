@@ -1,8 +1,8 @@
 import { House, Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminHeader, AdminPageLayout } from './ui';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
 
 type Props = Pick<AdminConfigApi, 'config' | 'hostels'>;
 
