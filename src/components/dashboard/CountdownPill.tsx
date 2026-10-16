@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarEvent } from '@/types';
 import { getEventEmoji } from '@lib/utils/eventUtils';
@@ -7,37 +7,17 @@ interface CountdownPillProps {
   events: CalendarEvent[];
 }
 
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+
 const CountdownPill: React.FC<CountdownPillProps> = React.memo(({ events }) => {
-  const [countdownTick, setCountdownTick] = useState(0);
+  // The pill shows days and hours, so refreshing once a minute keeps it current
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdownTick((prev) => prev + 1);
-    }, 1000);
+    const timer = setInterval(() => setNow(new Date()), 60 * 1000);
     return () => clearInterval(timer);
   }, []);
-
-  const getCountdown = useCallback(
-    (dateStr: string) => {
-      void countdownTick;
-      const eventDate = new Date(dateStr);
-      eventDate.setHours(0, 0, 0, 0);
-      const now = new Date();
-      const diff = eventDate.getTime() - now.getTime();
-
-      if (diff <= 0) {
-        return { days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true };
-      }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      return { days, hours, minutes, seconds, isPast: false };
-    },
-    [countdownTick]
-  );
 
   const nextEvent = useMemo(() => {
     if (!events || events.length === 0) return null;
@@ -53,15 +33,17 @@ const CountdownPill: React.FC<CountdownPillProps> = React.memo(({ events }) => {
 
   if (!nextEvent) return null;
 
-  const countdown = getCountdown(nextEvent.date);
-  const urgencyPercent = countdown.isPast
-    ? 100
-    : Math.min(100, Math.max(0, 100 - (countdown.days / 30) * 100));
-  const isUrgent = countdown.days < 2 && !countdown.isPast;
   const eventDate = new Date(nextEvent.date);
-  const now = new Date();
+  const eventDayStart = new Date(eventDate);
+  eventDayStart.setHours(0, 0, 0, 0);
+  const diff = eventDayStart.getTime() - now.getTime();
+  const isPast = diff <= 0;
+  const days = isPast ? 0 : Math.floor(diff / DAY_MS);
+  const hours = isPast ? 0 : Math.floor((diff % DAY_MS) / HOUR_MS);
+
+  const urgencyPercent = isPast ? 100 : Math.min(100, Math.max(0, 100 - (days / 30) * 100));
+  const isUrgent = days < 2 && !isPast;
   const isToday = eventDate.toDateString() === now.toDateString();
-  const isPast = countdown.isPast;
 
   return (
     <Link
@@ -138,14 +120,13 @@ const CountdownPill: React.FC<CountdownPillProps> = React.memo(({ events }) => {
               : 'text-purple-600 dark:text-purple-400'
             }`}
         >
-          <span>{countdown.days}d</span>
-          <span className="text-[10px] ml-0.5 opacity-80 font-bold">
-            {countdown.hours}h
-          </span>
+          <span>{days}d</span>
+          <span className="text-[10px] ml-0.5 opacity-80 font-bold">{hours}h</span>
         </div>
       )}
     </Link>
   );
 });
+CountdownPill.displayName = 'CountdownPill';
 
 export default CountdownPill;
