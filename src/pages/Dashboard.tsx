@@ -31,7 +31,6 @@ import { useCalendar } from '@contexts/CalendarContext';
 import { useGrades } from '@contexts/GradesContext';
 import { useSchedule } from '@contexts/ScheduleContext';
 import { useUser } from '@contexts/UserContext';
-import { usePageLoadTrace } from '@hooks/usePerformanceTrace';
 import {
   toInputDateString,
   formatTime,
@@ -139,9 +138,6 @@ const getIconForLink = (link: QuickLink): React.ReactNode => {
 // Default city used as fallback when cities array is unexpectedly empty
 
 const Dashboard: React.FC = () => {
-  // Performance monitoring
-  usePageLoadTrace('dashboard');
-
   const { config: appConfig } = useAppConfig();
 
   const { user, loading: userLoading, updateUser } = useUser();

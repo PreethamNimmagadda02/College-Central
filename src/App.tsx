@@ -27,7 +27,6 @@ import { RoleProvider } from '@features/auth/hooks/useRole';
 
 // Utilities
 import { lazyWithRetry } from '@lib/utils/lazyWithRetry';
-import { measurePageLoad } from '@lib/utils/performance';
 import React, { Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -241,9 +240,6 @@ const App: React.FC = () => {
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
-    // Measure initial app load performance
-    measurePageLoad('app_initial_load');
-
     // Fade out splash screen
     const splash = document.getElementById('app-splash');
     if (splash) {
