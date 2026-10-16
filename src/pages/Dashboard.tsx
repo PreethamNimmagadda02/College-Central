@@ -90,9 +90,6 @@ const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
   return COURSE_COLORS[colorIndex];
 };
 
-// Default quick links (stored data without icons)
-// Default quick links are now imported from collegeConfig
-
 // Get icon component by name (for custom links)
 const getIconByName = (iconName: string): React.ReactNode => {
   const iconComponents: Record<string, React.ReactNode> = {
@@ -136,7 +133,110 @@ const getIconForLink = (link: QuickLink): React.ReactNode => {
   return iconMap[link.id] || <WebsiteIcon />;
 };
 
-// Default city used as fallback when cities array is unexpectedly empty
+// Keywords that decide which academic calendar events matter to BTech students
+const has = (desc: string, words: string[]) => words.some((w) => desc.includes(w));
+
+const TIMETABLE_CHANGE_WORDS = [
+  'timetable',
+  'working as per',
+  'working as',
+  'afternoon working',
+  'morning working',
+];
+const BTECH_WORDS = [
+  'b. tech',
+  'btech',
+  'b tech',
+  'ug students',
+  'undergraduate',
+  'final year ug',
+  '1st year ug',
+  '2nd year',
+  '3rd year',
+  '4th year',
+  'int. m. tech',
+  'dual degree',
+  'bs-ms',
+];
+const ALL_STUDENTS_WORDS = [
+  'all students',
+  'semester classes',
+  'semester start',
+  'semester end',
+  'convocation',
+  'foundation day',
+  'srijan',
+  'concetto',
+  'parakram',
+  'basant',
+  'sports meet',
+  'orientation',
+  'registration',
+  'fee payment',
+  'pre-registration',
+];
+const PG_WORDS = [
+  'pg students',
+  'ph. d',
+  'phd',
+  'm. tech',
+  'm. sc',
+  'mba',
+  'executive',
+  'part-time',
+  'research proposal',
+  'supervisor',
+  'project guide',
+  'thesis',
+  'dissertation',
+];
+const SPECIAL_EVENT_WORDS = [
+  'all students',
+  'convocation',
+  'foundation day',
+  'srijan',
+  'concetto',
+  'parakram',
+  'basant',
+  'sports meet',
+  'cultural',
+  'fest',
+  'techno-management',
+  'orientation',
+  'registration',
+  'fee payment',
+  'pre-registration',
+  'semester classes',
+  'semester feedback',
+  'feedback',
+];
+
+// An 'Other' event (not a timetable change) that is BTech-specific or matches generalWords,
+// skipping PG/PhD/Executive/Part-time-only events unless they also mention BTech/UG students
+const isBTechOtherEvent = (e: CalendarEvent, generalWords: string[]) => {
+  const desc = e.description.toLowerCase();
+  if (e.type !== 'Other' || has(desc, ['timetable', 'working as'])) return false;
+
+  const isPGPhDOnly =
+    has(desc, [
+      'pg students',
+      'ph. d',
+      'phd',
+      'm. tech',
+      'm. sc',
+      'mba',
+      'executive',
+      'part-time',
+      'research',
+      'supervisor',
+      'thesis',
+      'dissertation',
+    ]) &&
+    !has(desc, ['b. tech', 'btech', 'b tech', 'ug students', 'undergraduate', 'all students']);
+  if (isPGPhDOnly) return false;
+
+  return has(desc, BTECH_WORDS) || has(desc, generalWords);
+};
 
 const Dashboard: React.FC = () => {
   const { config: appConfig } = useAppConfig();
@@ -160,8 +260,6 @@ const Dashboard: React.FC = () => {
       { text: 'The only way to do great work is to love what you do.', author: 'Steve Jobs' },
     ];
   }, [appConfig?.quotes]);
-
-  // Update default city from admin config when config loads (only if user hasn't saved a preference)
 
   const upcomingEventsCount = useMemo(() => {
     if (!calendarData) return 0;
@@ -190,8 +288,6 @@ const Dashboard: React.FC = () => {
 
     return upcomingEvents.length;
   }, [calendarData]);
-
-  // AI Weather Recommendation State
 
   // Quick Links state management
   const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
@@ -399,6 +495,14 @@ const Dashboard: React.FC = () => {
     const displayDateString = toInputDateString(dateToDisplay);
     const displayWeekday = dateToDisplay.toLocaleDateString('en-US', { weekday: 'long' });
 
+    // Classes on a weekday sorted by start time; personalOnly keeps just the user's own tasks
+    const classesOn = (day: string, personalOnly = false) =>
+      (scheduleData || [])
+        .filter(
+          (c) => (!personalOnly || c.isCustomTask) && c.day.toLowerCase() === day.toLowerCase()
+        )
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
     // Check for academic calendar events on the selected date
     const todayEvents = calendarData.events.filter((e) => {
       const startDate = e.date;
@@ -415,153 +519,26 @@ const Dashboard: React.FC = () => {
         e.type === 'Holiday' ||
         e.type === 'Mid-Semester Exams' ||
         e.type === 'End-Semester Exams' ||
-        description.includes('timetable') ||
-        description.includes('working as per') ||
-        description.includes('working as') ||
-        description.includes('afternoon working') ||
-        description.includes('morning working')
+        has(description, TIMETABLE_CHANGE_WORDS)
       ) {
         return true;
       }
 
       // Include events that mention BTech students specifically
-      if (
-        description.includes('b. tech') ||
-        description.includes('btech') ||
-        description.includes('b tech') ||
-        description.includes('ug students') ||
-        description.includes('undergraduate') ||
-        description.includes('final year ug') ||
-        description.includes('1st year ug') ||
-        description.includes('2nd year') ||
-        description.includes('3rd year') ||
-        description.includes('4th year') ||
-        description.includes('int. m. tech') ||
-        description.includes('dual degree') ||
-        description.includes('bs-ms')
-      ) {
-        return true;
-      }
+      if (has(description, BTECH_WORDS)) return true;
 
       // Include general academic events that affect all students
-      if (
-        description.includes('all students') ||
-        description.includes('semester classes') ||
-        description.includes('semester start') ||
-        description.includes('semester end') ||
-        description.includes('convocation') ||
-        description.includes('foundation day') ||
-        description.includes('srijan') ||
-        description.includes('concetto') ||
-        description.includes('parakram') ||
-        description.includes('basant') ||
-        description.includes('sports meet') ||
-        description.includes('orientation') ||
-        description.includes('registration') ||
-        description.includes('fee payment') ||
-        description.includes('pre-registration')
-      ) {
-        return true;
-      }
+      if (has(description, ALL_STUDENTS_WORDS)) return true;
 
-      // Exclude PG-only, PhD-only, Executive-only events
-      if (
-        description.includes('pg students') ||
-        description.includes('ph. d') ||
-        description.includes('phd') ||
-        description.includes('m. tech') ||
-        description.includes('m. sc') ||
-        description.includes('mba') ||
-        description.includes('executive') ||
-        description.includes('part-time') ||
-        description.includes('research proposal') ||
-        description.includes('supervisor') ||
-        description.includes('project guide') ||
-        description.includes('thesis') ||
-        description.includes('dissertation')
-      ) {
-        return false;
-      }
-
-      // Include other general events by default
-      return true;
+      // Exclude PG-only, PhD-only, Executive-only events; include other general events by default
+      return !has(description, PG_WORDS);
     });
 
     let titleText = isToday ? "Today's Schedule" : 'Schedule';
 
     // Check for special events FIRST (before checking holidays/exams)
     // This ensures special events are captured even on holidays/exam days
-    const specialEvents = todayEvents.filter((e) => {
-      const desc = e.description.toLowerCase();
-
-      // Must be type 'Other' and not timetable/working-as (but CAN be on holiday/exam days)
-      if (e.type !== 'Other') return false;
-      if (desc.includes('timetable') || desc.includes('working as')) return false;
-
-      // Explicitly exclude PG/PhD/Executive/Part-time ONLY events
-      const isPGPhDOnly =
-        (desc.includes('pg students') ||
-          desc.includes('ph. d') ||
-          desc.includes('phd') ||
-          desc.includes('m. tech') ||
-          desc.includes('m. sc') ||
-          desc.includes('mba') ||
-          desc.includes('executive') ||
-          desc.includes('part-time') ||
-          desc.includes('research') ||
-          desc.includes('supervisor') ||
-          desc.includes('thesis') ||
-          desc.includes('dissertation')) &&
-        // Not if it also mentions BTech/UG
-        !(
-          desc.includes('b. tech') ||
-          desc.includes('btech') ||
-          desc.includes('b tech') ||
-          desc.includes('ug students') ||
-          desc.includes('undergraduate') ||
-          desc.includes('all students')
-        );
-
-      if (isPGPhDOnly) return false;
-
-      // Include if it's BTech-specific OR a general college event
-      const isBTechSpecific =
-        desc.includes('b. tech') ||
-        desc.includes('btech') ||
-        desc.includes('b tech') ||
-        desc.includes('ug students') ||
-        desc.includes('undergraduate') ||
-        desc.includes('1st year ug') ||
-        desc.includes('2nd year') ||
-        desc.includes('3rd year') ||
-        desc.includes('4th year') ||
-        desc.includes('final year ug') ||
-        desc.includes('int. m. tech') ||
-        desc.includes('dual degree') ||
-        desc.includes('bs-ms');
-
-      const isGeneralCollegeEvent =
-        desc.includes('all students') ||
-        desc.includes('convocation') ||
-        desc.includes('foundation day') ||
-        desc.includes('srijan') ||
-        desc.includes('concetto') ||
-        desc.includes('parakram') ||
-        desc.includes('basant') ||
-        desc.includes('sports meet') ||
-        desc.includes('cultural') ||
-        desc.includes('fest') ||
-        desc.includes('techno-management') ||
-        desc.includes('orientation') ||
-        desc.includes('registration') ||
-        desc.includes('fee payment') ||
-        desc.includes('pre-registration') ||
-        desc.includes('semester classes') ||
-        desc.includes('semester feedback') ||
-        desc.includes('feedback');
-
-      return isBTechSpecific || isGeneralCollegeEvent;
-    });
+    const specialEvents = todayEvents.filter((e) => isBTechOtherEvent(e, SPECIAL_EVENT_WORDS));
 
     let specialEventMessage: string | null = null;
     if (specialEvents.length > 0) {
@@ -580,15 +557,11 @@ const Dashboard: React.FC = () => {
     );
 
     if (examEvent) {
-      // Extract personal tasks to show even during exam period
-      const personalTasks = (scheduleData || [])
-        .filter((c) => c.isCustomTask && c.day.toLowerCase() === displayWeekday.toLowerCase())
-        .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
       return {
         ...defaultState,
         title: 'Exam Period 📝',
-        classes: personalTasks,
+        // Personal tasks still show during the exam period
+        classes: classesOn(displayWeekday, true),
         isHoliday: true,
         isExam: true,
         holidayDescription: examEvent.description,
@@ -600,23 +573,21 @@ const Dashboard: React.FC = () => {
     const holidayEvent = todayEvents.find(
       (e) =>
         e.type === 'Holiday' ||
-        e.description.toLowerCase().includes('semester break') ||
-        e.description.toLowerCase().includes('mid semester break') ||
-        e.description.toLowerCase().includes('winter break') ||
-        e.description.toLowerCase().includes('summer break') ||
-        e.description.toLowerCase().includes('no class')
+        has(e.description.toLowerCase(), [
+          'semester break',
+          'mid semester break',
+          'winter break',
+          'summer break',
+          'no class',
+        ])
     );
 
     if (holidayEvent) {
-      // Extract personal tasks to show even during holidays
-      const personalTasks = (scheduleData || [])
-        .filter((c) => c.isCustomTask && c.day.toLowerCase() === displayWeekday.toLowerCase())
-        .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
       return {
         ...defaultState,
         title: "It's a Holiday! 🎉",
-        classes: personalTasks,
+        // Personal tasks still show during holidays
+        classes: classesOn(displayWeekday, true),
         isHoliday: true,
         holidayDescription: holidayEvent.description,
         infoMessage: specialEventMessage,
@@ -627,28 +598,21 @@ const Dashboard: React.FC = () => {
     const semesterEvent = todayEvents.find(
       (e) =>
         e.type === 'Start of Semester' ||
-        e.description.toLowerCase().includes('semester start') ||
-        e.description.toLowerCase().includes('commencement of') ||
-        e.description.toLowerCase().includes('semester end')
+        has(e.description.toLowerCase(), ['semester start', 'commencement of', 'semester end'])
     );
 
     if (semesterEvent) {
       const desc = semesterEvent.description.toLowerCase();
       const isSemesterStart =
         semesterEvent.type === 'Start of Semester' ||
-        desc.includes('semester start') ||
-        desc.includes('commencement of');
+        has(desc, ['semester start', 'commencement of']);
 
       if (isSemesterStart) {
         // Semester start is NOT a day off - classes begin! Show regular schedule with info message
-        const classesForDay = (scheduleData || [])
-          .filter((c) => c.day.toLowerCase() === displayWeekday.toLowerCase())
-          .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
         return {
           ...defaultState,
           title: isToday ? "Today's Schedule" : 'Schedule',
-          classes: classesForDay,
+          classes: classesOn(displayWeekday),
           isHoliday: false,
           infoMessage: specialEventMessage
             ? `${specialEventMessage}\n📚 ${semesterEvent.description}`
@@ -656,14 +620,10 @@ const Dashboard: React.FC = () => {
         };
       } else {
         // Semester end - show personal tasks only
-        const personalTasks = (scheduleData || [])
-          .filter((c) => c.isCustomTask && c.day.toLowerCase() === displayWeekday.toLowerCase())
-          .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
         return {
           ...defaultState,
           title: 'Semester Event 📚',
-          classes: personalTasks,
+          classes: classesOn(displayWeekday, true),
           isHoliday: true,
           holidayDescription: `${semesterEvent.description} - Check with your department for schedule changes.`,
           infoMessage: specialEventMessage,
@@ -672,15 +632,12 @@ const Dashboard: React.FC = () => {
     }
 
     // Check for timetable changes or special scheduling
-    const timetableEvent = todayEvents.find(
-      (e) =>
-        e.description.toLowerCase().includes('timetable') ||
-        e.description.toLowerCase().includes('schedule change') ||
-        e.description.toLowerCase().includes('class schedule') ||
-        e.description.toLowerCase().includes('working as per') ||
-        e.description.toLowerCase().includes('working as') ||
-        e.description.toLowerCase().includes('afternoon working') ||
-        e.description.toLowerCase().includes('morning working')
+    const timetableEvent = todayEvents.find((e) =>
+      has(e.description.toLowerCase(), [
+        ...TIMETABLE_CHANGE_WORDS,
+        'schedule change',
+        'class schedule',
+      ])
     );
 
     let effectiveDay = displayWeekday;
@@ -690,39 +647,16 @@ const Dashboard: React.FC = () => {
     if (timetableEvent) {
       const desc = timetableEvent.description.toLowerCase();
 
-      // Check for specific day timetable changes
-      for (const day of weekdays) {
-        if (desc.includes(`${day} timetable`) || desc.includes(`${day} schedule`)) {
-          effectiveDay = day.charAt(0).toUpperCase() + day.slice(1);
-          infoMessage = `📅 This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
-          break;
-        }
-      }
+      // "<day> timetable" takes priority over "working as per <day>"
+      const followedDay =
+        weekdays.find((day) => has(desc, [`${day} timetable`, `${day} schedule`])) ??
+        weekdays.find((day) => has(desc, [`working as per ${day}`, `as per ${day}`]));
 
-      // Check for "working as per [day] timetable" patterns
-      if (!infoMessage) {
-        for (const day of weekdays) {
-          if (desc.includes(`working as per ${day}`) || desc.includes(`as per ${day}`)) {
-            effectiveDay = day.charAt(0).toUpperCase() + day.slice(1);
-            infoMessage = `📅 This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
-            break;
-          }
-        }
-      }
-
-      // Check for afternoon/morning working patterns
-      if (!infoMessage) {
-        if (desc.includes('afternoon working')) {
-          infoMessage = `📅 ${timetableEvent.description}`;
-        } else if (desc.includes('morning working')) {
-          infoMessage = `📅 ${timetableEvent.description}`;
-        } else if (desc.includes('working as per')) {
-          infoMessage = `📅 ${timetableEvent.description}`;
-        }
-      }
-
-      // If no specific pattern matched, show general timetable change message
-      if (!infoMessage) {
+      if (followedDay) {
+        effectiveDay = followedDay.charAt(0).toUpperCase() + followedDay.slice(1);
+        infoMessage = `📅 This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
+      } else {
+        // No specific day to follow, so show the timetable change itself
         infoMessage = `📅 ${timetableEvent.description}`;
       }
     }
@@ -733,72 +667,18 @@ const Dashboard: React.FC = () => {
     }
 
     // Check for other academic events - BTech specific OR general college events
-    const otherEvents = todayEvents.filter((e) => {
-      const desc = e.description.toLowerCase();
-
-      // Must be type 'Other' and not timetable/working-as and not already in specialEvents
-      if (e.type !== 'Other') return false;
-      if (desc.includes('timetable') || desc.includes('working as')) return false;
-      if (specialEvents.includes(e)) return false;
-
-      // Explicitly exclude PG/PhD/Executive/Part-time ONLY events
-      const isPGPhDOnly =
-        (desc.includes('pg students') ||
-          desc.includes('ph. d') ||
-          desc.includes('phd') ||
-          desc.includes('m. tech') ||
-          desc.includes('m. sc') ||
-          desc.includes('mba') ||
-          desc.includes('executive') ||
-          desc.includes('part-time') ||
-          desc.includes('research') ||
-          desc.includes('supervisor') ||
-          desc.includes('thesis') ||
-          desc.includes('dissertation')) &&
-        // Not if it also mentions BTech/UG
-        !(
-          desc.includes('b. tech') ||
-          desc.includes('btech') ||
-          desc.includes('b tech') ||
-          desc.includes('ug students') ||
-          desc.includes('undergraduate') ||
-          desc.includes('all students')
-        );
-
-      if (isPGPhDOnly) return false;
-
-      // Include if it's BTech-specific OR a general college event
-      const isBTechSpecific =
-        desc.includes('b. tech') ||
-        desc.includes('btech') ||
-        desc.includes('b tech') ||
-        desc.includes('ug students') ||
-        desc.includes('undergraduate') ||
-        desc.includes('1st year ug') ||
-        desc.includes('2nd year') ||
-        desc.includes('3rd year') ||
-        desc.includes('4th year') ||
-        desc.includes('final year ug') ||
-        desc.includes('int. m. tech') ||
-        desc.includes('dual degree') ||
-        desc.includes('bs-ms');
-
-      const isGeneralCollegeEvent =
-        desc.includes('all students') ||
-        desc.includes('semester start') ||
-        desc.includes('semester end');
-
-      return isBTechSpecific || isGeneralCollegeEvent;
-    });
+    const otherEvents = todayEvents.filter(
+      (e) =>
+        !specialEvents.includes(e) &&
+        isBTechOtherEvent(e, ['all students', 'semester start', 'semester end'])
+    );
 
     if (otherEvents.length > 0 && !infoMessage) {
       const eventDescriptions = otherEvents.map((e) => e.description).join(', ');
       infoMessage = `📋 Academic Event: ${eventDescriptions}`;
     }
 
-    const classesForDay = (scheduleData || [])
-      .filter((c) => c.day.toLowerCase() === effectiveDay.toLowerCase())
-      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const classesForDay = classesOn(effectiveDay);
 
     // Update title based on events and schedule changes
     if (infoMessage) {
@@ -891,18 +771,9 @@ const Dashboard: React.FC = () => {
 
           // Determine academic year based on semester type
           // Monsoon (Jul-Dec): Academic year starts same year
-          // Winter (Dec-May): Academic year started previous year
-          let academicYearStart: number;
+          // Winter (Jan-Jun): Academic year started previous year
           const isMonsoon = startMonth >= 6 && startMonth <= 11;
-          const isWinter = startMonth >= 0 && startMonth <= 5;
-
-          if (isMonsoon) {
-            academicYearStart = startYear;
-          } else if (isWinter || startMonth === 11) {
-            academicYearStart = startMonth >= 0 && startMonth <= 5 ? startYear - 1 : startYear;
-          } else {
-            academicYearStart = startYear;
-          }
+          const academicYearStart = isMonsoon ? startYear : startYear - 1;
 
           const academicYear = `${academicYearStart}-${((academicYearStart + 1) % 100).toString().padStart(2, '0')}`;
 
