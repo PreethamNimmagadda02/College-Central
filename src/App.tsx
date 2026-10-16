@@ -22,6 +22,7 @@ import { GradesProvider } from '@contexts/GradesContext';
 import { ScheduleProvider } from '@contexts/ScheduleContext';
 import { UserProvider } from '@contexts/UserContext';
 import { AuthProvider } from '@features/auth/hooks/useAuth';
+import { GuestBoundary } from '@features/demo/GuestBoundary';
 import { RoleProvider } from '@features/auth/hooks/useRole';
 
 // Utilities
@@ -256,40 +257,42 @@ const App: React.FC = () => {
   return (
     <>
       <AuthProvider>
-        <AppConfigProvider>
-          <UserProvider>
-            <RoleProvider>
-              <GradesProvider>
-                <ScheduleProvider>
-                  <CalendarProvider>
-                    <FormsProvider>
-                      <WeatherProvider>
-                        <CampusMapProvider>
-                          <LocationProvider>
-                            <LocationRequirement>
-                              {isNative && (
-                                <NativeLocationProvider>
-                                  <RouterProvider router={router} />
-                                  <WeatherModal />
-                                </NativeLocationProvider>
-                              )}
-                              {!isNative && (
-                                <>
-                                  <RouterProvider router={router} />
-                                  <WeatherModal />
-                                </>
-                              )}
-                            </LocationRequirement>
-                          </LocationProvider>
-                        </CampusMapProvider>
-                      </WeatherProvider>
-                    </FormsProvider>
-                  </CalendarProvider>
-                </ScheduleProvider>
-              </GradesProvider>
-            </RoleProvider>
-          </UserProvider>
-        </AppConfigProvider>
+        <GuestBoundary>
+          <AppConfigProvider>
+            <UserProvider>
+              <RoleProvider>
+                <GradesProvider>
+                  <ScheduleProvider>
+                    <CalendarProvider>
+                      <FormsProvider>
+                        <WeatherProvider>
+                          <CampusMapProvider>
+                            <LocationProvider>
+                              <LocationRequirement>
+                                {isNative && (
+                                  <NativeLocationProvider>
+                                    <RouterProvider router={router} />
+                                    <WeatherModal />
+                                  </NativeLocationProvider>
+                                )}
+                                {!isNative && (
+                                  <>
+                                    <RouterProvider router={router} />
+                                    <WeatherModal />
+                                  </>
+                                )}
+                              </LocationRequirement>
+                            </LocationProvider>
+                          </CampusMapProvider>
+                        </WeatherProvider>
+                      </FormsProvider>
+                    </CalendarProvider>
+                  </ScheduleProvider>
+                </GradesProvider>
+              </RoleProvider>
+            </UserProvider>
+          </AppConfigProvider>
+        </GuestBoundary>
       </AuthProvider>
       <UpdatePrompt />
       <InstallPrompt />
