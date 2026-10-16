@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAdminConfig } from '../hooks/useAdminConfig';
+
+import { AdminConfig } from '../types';
 
 interface SearchResult {
   id: string;
@@ -13,6 +14,7 @@ interface SearchResult {
 interface AdminSearchProps {
   isOpen: boolean;
   onClose: () => void;
+  config: AdminConfig;
 }
 
 const typeIcons: Record<SearchResult['type'], React.ReactNode> = {
@@ -96,13 +98,12 @@ const typeColors: Record<SearchResult['type'], string> = {
   link: 'bg-cyan-500/20 text-cyan-400',
 };
 
-const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose }) => {
+const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose, config }) => {
   const [query, setQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<SearchResult['type'] | 'all'>('all');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { config } = useAdminConfig();
 
   // Build search index from config
   const searchIndex = useMemo((): SearchResult[] => {

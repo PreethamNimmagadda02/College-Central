@@ -7,15 +7,11 @@ import {
 } from '@services/storageService';
 import React, { useState, useEffect, useRef } from 'react';
 
-import { AdminConfig } from '../types';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminHeader, BuildingIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 
-interface Props {
-  config: AdminConfig;
-  updateCollegeInfo: (updates: Partial<AdminConfig['collegeInfo']>) => void;
-  updateAppConstants: (updates: Partial<AdminConfig['appConstants']>) => void;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'updateCollegeInfo' | 'updateAppConstants'>;
 
 const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateAppConstants }) => {
   const [isEditing, setIsEditing] = useState(false);

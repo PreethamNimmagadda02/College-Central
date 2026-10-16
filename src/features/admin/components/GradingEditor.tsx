@@ -1,19 +1,11 @@
 import React, { useState } from 'react';
 import { DEFAULT_GRADING_SCALE } from '@config/gradingScale';
 
+import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminGradeDefinition } from '../types';
 import AdminPageLayout from './AdminPageLayout';
 
-interface GradingEditorProps {
-  config: {
-    gradingScale?: AdminGradeDefinition[];
-  };
-  addGrade: (grade: Omit<AdminGradeDefinition, 'id'>) => void;
-  updateGrade: (id: string, grade: Partial<AdminGradeDefinition>) => void;
-  deleteGrade: (id: string) => void;
-  reorderGrades: (gradingScale: AdminGradeDefinition[]) => void;
-  updateGradingScale: (gradingScale: AdminGradeDefinition[]) => void;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'grades'>;
 
 // Predefined color options for grade display
 const COLOR_OPTIONS = [
@@ -52,14 +44,7 @@ const COLOR_OPTIONS = [
   { name: 'Teal', value: 'text-teal-600 bg-teal-100 dark:bg-teal-900/30 dark:text-teal-400' },
 ];
 
-const GradingEditor: React.FC<GradingEditorProps> = ({
-  config,
-  addGrade,
-  updateGrade,
-  deleteGrade,
-  reorderGrades,
-  updateGradingScale,
-}) => {
+const GradingEditor: React.FC<Props> = ({ config, grades }) => {
   // Use config grades if available, otherwise use defaults
   const gradingScale =
     config.gradingScale && config.gradingScale.length > 0
@@ -75,7 +60,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
 
   const handleAddGrade = () => {
     if (!newGrade.grade.trim()) return;
-    addGrade(newGrade);
+    grades.add(newGrade);
     setNewGrade({ grade: '', points: 0, color: COLOR_OPTIONS[0]!.value });
     setShowAddForm(false);
   };
@@ -86,7 +71,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
     const temp = newScale[index - 1];
     newScale[index - 1] = newScale[index]!;
     newScale[index] = temp!;
-    reorderGrades(newScale);
+    grades.set(newScale);
   };
 
   const handleMoveDown = (index: number) => {
@@ -95,7 +80,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
     const temp = newScale[index];
     newScale[index] = newScale[index + 1]!;
     newScale[index + 1] = temp!;
-    reorderGrades(newScale);
+    grades.set(newScale);
   };
 
   // Check if we're using defaults (config doesn't have grades)
@@ -103,7 +88,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
 
   // Save default grades to database
   const handleSaveDefaults = () => {
-    updateGradingScale(DEFAULT_GRADING_SCALE);
+    grades.set(DEFAULT_GRADING_SCALE);
   };
 
   return (
@@ -355,7 +340,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
                           type="text"
                           value={grade.grade}
                           onChange={(e) =>
-                            updateGrade(grade.id, { grade: e.target.value.toUpperCase() })
+                            grades.update(grade.id, { grade: e.target.value.toUpperCase() })
                           }
                           className="admin-input w-20"
                           maxLength={3}
@@ -372,7 +357,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
                           type="number"
                           value={grade.points}
                           onChange={(e) =>
-                            updateGrade(grade.id, { points: parseFloat(e.target.value) || 0 })
+                            grades.update(grade.id, { points: parseFloat(e.target.value) || 0 })
                           }
                           className="admin-input w-24"
                           min="0"
@@ -389,7 +374,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
                       {editingId === grade.id ? (
                         <select
                           value={grade.color}
-                          onChange={(e) => updateGrade(grade.id, { color: e.target.value })}
+                          onChange={(e) => grades.update(grade.id, { color: e.target.value })}
                           className="admin-input w-full max-w-[150px]"
                         >
                           {COLOR_OPTIONS.map((color) => (
@@ -450,7 +435,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
                                 `Delete grade "${grade.grade}"? This action cannot be undone.`
                               )
                             ) {
-                              deleteGrade(grade.id);
+                              grades.remove(grade.id);
                             }
                           }}
                           className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
@@ -575,7 +560,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
                     <button
                       onClick={() => {
                         if (window.confirm(`Delete grade "${grade.grade}"?`)) {
-                          deleteGrade(grade.id);
+                          grades.remove(grade.id);
                         }
                       }}
                       className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
@@ -606,7 +591,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
                         type="number"
                         value={grade.points}
                         onChange={(e) =>
-                          updateGrade(grade.id, { points: parseFloat(e.target.value) || 0 })
+                          grades.update(grade.id, { points: parseFloat(e.target.value) || 0 })
                         }
                         className="admin-input w-16 text-sm py-1"
                         min="0"
@@ -622,7 +607,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
                     {editingId === grade.id ? (
                       <select
                         value={grade.color}
-                        onChange={(e) => updateGrade(grade.id, { color: e.target.value })}
+                        onChange={(e) => grades.update(grade.id, { color: e.target.value })}
                         className="admin-input text-xs py-1"
                       >
                         {COLOR_OPTIONS.map((color) => (
@@ -647,7 +632,7 @@ const GradingEditor: React.FC<GradingEditorProps> = ({
                       type="text"
                       value={grade.grade}
                       onChange={(e) =>
-                        updateGrade(grade.id, { grade: e.target.value.toUpperCase() })
+                        grades.update(grade.id, { grade: e.target.value.toUpperCase() })
                       }
                       className="admin-input w-16 text-sm py-1"
                       maxLength={3}

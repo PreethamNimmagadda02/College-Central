@@ -1,30 +1,15 @@
 import { Plus, Search, Upload, Trash2, Edit, X } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 
-import { AdminConfig, AdminStudentEntry } from '../types';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
+import { AdminStudentEntry } from '../types';
 import { AdminHeader, UserGroupIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 import StudentUploader from './StudentUploader';
 
-interface Props {
-  config: AdminConfig;
-  addStudent: (student: Omit<AdminStudentEntry, 'id'>) => void;
-  updateStudent: (id: string, student: Partial<AdminStudentEntry>) => void;
-  deleteStudent: (id: string) => void;
-  deleteStudentsByIds: (ids: string[]) => void;
-  clearAllStudents: () => void;
-  importStudents: (students: Omit<AdminStudentEntry, 'id'>[]) => void;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'students' | 'importStudents'>;
 
-const StudentDirectoryEditor: React.FC<Props> = ({
-  config,
-  addStudent,
-  updateStudent,
-  deleteStudent,
-  deleteStudentsByIds,
-  clearAllStudents,
-  importStudents,
-}) => {
+const StudentDirectoryEditor: React.FC<Props> = ({ config, students, importStudents }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [branchFilter, setBranchFilter] = useState<string>('All');
   const [yearFilter, setYearFilter] = useState<string>('All');
@@ -89,10 +74,10 @@ const StudentDirectoryEditor: React.FC<Props> = ({
     };
 
     if (editingStudent) {
-      updateStudent(editingStudent.id, studentData);
+      students.update(editingStudent.id, studentData);
       setEditingStudent(null);
     } else {
-      addStudent(studentData);
+      students.add(studentData);
     }
     setShowAddModal(false);
     form.reset();
@@ -117,7 +102,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
                       `Are you sure you want to delete all ${filteredStudents.length} filtered students? This action cannot be undone.`
                     )
                   ) {
-                    deleteStudentsByIds(filteredStudents.map((s) => s.id));
+                    students.removeMany(filteredStudents.map((s) => s.id));
                   }
                 }}
                 className="admin-btn bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-4"
@@ -135,7 +120,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
                     `Are you sure you want to delete ALL ${config.students.length} students? This action cannot be undone.`
                   )
                 ) {
-                  clearAllStudents();
+                  students.clear();
                 }
               }}
               className="admin-btn bg-red-900 hover:bg-red-800 text-white border border-red-700 text-xs sm:text-sm px-3 sm:px-4"
@@ -248,7 +233,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => deleteStudent(student.id)}
+                        onClick={() => students.remove(student.id)}
                         className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -327,7 +312,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => deleteStudent(student.id)}
+                  onClick={() => students.remove(student.id)}
                   className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />

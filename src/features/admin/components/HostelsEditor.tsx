@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
 
-import { AdminConfig } from '../types';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminHeader, HomeIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 
-interface Props {
-  config: AdminConfig;
-  addHostel: (hostel: string) => void;
-  updateHostel: (index: number, hostel: string) => void;
-  deleteHostel: (index: number) => void;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'hostels'>;
 
 const PlusIcon = () => (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -28,14 +23,14 @@ const TrashIcon = () => (
   </svg>
 );
 
-const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, deleteHostel }) => {
+const HostelsEditor: React.FC<Props> = ({ config, hostels }) => {
   const [newHostel, setNewHostel] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
 
   const handleAddHostel = () => {
     if (newHostel.trim()) {
-      addHostel(newHostel.trim());
+      hostels.add(newHostel.trim());
       setNewHostel('');
     }
   };
@@ -47,7 +42,7 @@ const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, delet
 
   const handleSaveEdit = () => {
     if (editingIndex !== null && editValue.trim()) {
-      updateHostel(editingIndex, editValue.trim());
+      hostels.update(editingIndex, editValue.trim());
       setEditingIndex(null);
       setEditValue('');
     }
@@ -139,7 +134,7 @@ const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, delet
                       Edit
                     </button>
                     <button
-                      onClick={() => deleteHostel(index)}
+                      onClick={() => hostels.remove(index)}
                       className="admin-btn admin-btn-danger text-xs sm:text-sm px-2 sm:px-3"
                     >
                       <TrashIcon />

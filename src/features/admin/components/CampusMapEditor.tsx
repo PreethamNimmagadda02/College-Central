@@ -1,4 +1,3 @@
-import { useAdminConfig } from '@features/admin/hooks/useAdminConfig';
 import {
   Search,
   Plus,
@@ -15,14 +14,12 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { AdminConfig } from '../types';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { CampusLocation, CampusLocationCategory, QuickRoute } from '../types';
 import { AdminHeader, MapPinIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 
-interface Props {
-  config: AdminConfig;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'saveSection'>;
 
 const CATEGORIES: CampusLocationCategory[] = [
   'academic',
@@ -56,8 +53,7 @@ const LOCATION_ICONS = [
 
 type Tab = 'locations' | 'routes';
 
-const CampusMapEditor: React.FC<Props> = ({ config }) => {
-  const { saveSection } = useAdminConfig();
+const CampusMapEditor: React.FC<Props> = ({ config, saveSection }) => {
   const [activeTab, setActiveTab] = useState<Tab>('locations');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAdding, setIsAdding] = useState(false);

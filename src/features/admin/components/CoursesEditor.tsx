@@ -1,30 +1,15 @@
 import { Plus, Search, Upload, Trash2, Edit, X, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 
-import { AdminConfig, AdminCourse } from '../types';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
+import { AdminCourse } from '../types';
 import { AdminHeader, BookOpenIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 import CourseUploader from './CourseUploader';
 
-interface Props {
-  config: AdminConfig;
-  addCourse: (course: Omit<AdminCourse, 'id'>) => void;
-  updateCourse: (id: string, course: Partial<AdminCourse>) => void;
-  deleteCourse: (id: string) => void;
-  deleteCoursesByIds: (ids: string[]) => void;
-  clearAllCourses: () => void;
-  importCourses: (courses: Omit<AdminCourse, 'id'>[]) => void;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'courses' | 'importCourses'>;
 
-const CoursesEditor: React.FC<Props> = ({
-  config,
-  addCourse,
-  updateCourse,
-  deleteCourse,
-  deleteCoursesByIds,
-  clearAllCourses,
-  importCourses,
-}) => {
+const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'All' | 'CBCS' | 'NEP'>('All');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -89,10 +74,10 @@ const CoursesEditor: React.FC<Props> = ({
     };
 
     if (editingCourse) {
-      updateCourse(editingCourse.id, courseData);
+      courses.update(editingCourse.id, courseData);
       setEditingCourse(null);
     } else {
-      addCourse(courseData);
+      courses.add(courseData);
     }
     setShowAddModal(false);
     setNewSlot({ day: 'Monday', startTime: '', endTime: '', venue: '' }); // Reset slot state
@@ -128,7 +113,7 @@ const CoursesEditor: React.FC<Props> = ({
                   )
                 ) {
                   // Use atomic bulk delete to avoid race conditions
-                  deleteCoursesByIds(filteredCourses.map((c) => c.id));
+                  courses.removeMany(filteredCourses.map((c) => c.id));
                 }
               }}
               className="admin-btn bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-4"
@@ -146,7 +131,7 @@ const CoursesEditor: React.FC<Props> = ({
                     `Are you sure you want to delete ALL ${config.courses.length} courses? This action cannot be undone.`
                   )
                 ) {
-                  clearAllCourses();
+                  courses.clear();
                 }
               }}
               className="admin-btn bg-red-900 hover:bg-red-800 text-white border border-red-700 text-xs sm:text-sm px-3 sm:px-4"
@@ -275,7 +260,7 @@ const CoursesEditor: React.FC<Props> = ({
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => deleteCourse(course.id)}
+                          onClick={() => courses.remove(course.id)}
                           className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -367,7 +352,7 @@ const CoursesEditor: React.FC<Props> = ({
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => deleteCourse(course.id)}
+                  onClick={() => courses.remove(course.id)}
                   className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />

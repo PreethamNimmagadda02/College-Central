@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
 
-import { AdminConfig } from '../types';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminHeader, AcademicCapIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 
-interface Props {
-  config: AdminConfig;
-  addBranch: (branch: string) => void;
-  updateBranch: (index: number, branch: string) => void;
-  deleteBranch: (index: number) => void;
-  reorderBranches: (branches: string[]) => void;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'branches'>;
 
 const PlusIcon = () => (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -35,13 +29,7 @@ const GripIcon = () => (
   </svg>
 );
 
-const BranchesEditor: React.FC<Props> = ({
-  config,
-  addBranch,
-  updateBranch,
-  deleteBranch,
-  reorderBranches,
-}) => {
+const BranchesEditor: React.FC<Props> = ({ config, branches }) => {
   const [newBranch, setNewBranch] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -50,7 +38,7 @@ const BranchesEditor: React.FC<Props> = ({
 
   const handleAddBranch = () => {
     if (newBranch.trim()) {
-      addBranch(newBranch.trim());
+      branches.add(newBranch.trim());
       setNewBranch('');
     }
   };
@@ -62,7 +50,7 @@ const BranchesEditor: React.FC<Props> = ({
 
   const handleSaveEdit = () => {
     if (editingIndex !== null && editValue.trim()) {
-      updateBranch(editingIndex, editValue.trim());
+      branches.update(editingIndex, editValue.trim());
       setEditingIndex(null);
       setEditValue('');
     }
@@ -85,7 +73,7 @@ const BranchesEditor: React.FC<Props> = ({
     const removed = newBranches.splice(draggedIndex, 1)[0];
     if (removed !== undefined) {
       newBranches.splice(index, 0, removed);
-      reorderBranches(newBranches);
+      branches.set(newBranches);
       setDraggedIndex(index);
     }
   };
@@ -230,7 +218,7 @@ const BranchesEditor: React.FC<Props> = ({
                       Edit
                     </button>
                     <button
-                      onClick={() => deleteBranch(actualIndex)}
+                      onClick={() => branches.remove(actualIndex)}
                       className="admin-btn admin-btn-danger text-xs sm:text-sm flex-shrink-0 justify-center"
                     >
                       <TrashIcon />

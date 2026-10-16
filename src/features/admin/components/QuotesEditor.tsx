@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from 'react';
 
-import { AdminConfig, AdminQuote } from '../types';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
+import { AdminQuote } from '../types';
 import { AdminHeader, SparklesIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 
-interface Props {
-  config: AdminConfig;
-  addQuote: (quote: Omit<AdminQuote, 'id'>) => void;
-  updateQuote: (id: string, quote: Partial<AdminQuote>) => void;
-  deleteQuote: (id: string) => void;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'quotes'>;
 
 const PlusIcon = () => (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -39,7 +35,7 @@ const QuoteIcon = () => (
   </svg>
 );
 
-const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQuote }) => {
+const QuotesEditor: React.FC<Props> = ({ config, quotes }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingQuote, setEditingQuote] = useState<AdminQuote | null>(null);
   const [newQuote, setNewQuote] = useState({ text: '', author: '' });
@@ -63,7 +59,7 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
 
   const handleAddQuote = () => {
     if (newQuote.text.trim() && newQuote.author.trim()) {
-      addQuote({
+      quotes.add({
         text: newQuote.text.trim(),
         author: newQuote.author.trim(),
       });
@@ -74,7 +70,7 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
 
   const handleUpdateQuote = () => {
     if (editingQuote && editingQuote.text.trim() && editingQuote.author.trim()) {
-      updateQuote(editingQuote.id, {
+      quotes.update(editingQuote.id, {
         text: editingQuote.text.trim(),
         author: editingQuote.author.trim(),
       });
@@ -173,7 +169,7 @@ const QuotesEditor: React.FC<Props> = ({ config, addQuote, updateQuote, deleteQu
                   Edit
                 </button>
                 <button
-                  onClick={() => deleteQuote(quote.id)}
+                  onClick={() => quotes.remove(quote.id)}
                   className="admin-btn admin-btn-danger text-xs sm:text-sm flex-1 sm:flex-none justify-center"
                 >
                   <TrashIcon />

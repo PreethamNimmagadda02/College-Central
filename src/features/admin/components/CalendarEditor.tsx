@@ -1,23 +1,15 @@
 import React, { useState } from 'react';
 
-import { AdminConfig, AdminCalendarEvent } from '../types';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
+import { AdminCalendarEvent } from '../types';
 import { AdminHeader, CalendarIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 import CalendarUploader from './CalendarUploader';
 
-interface Props {
-  config: AdminConfig;
-  addCalendarEvent: (event: Omit<AdminCalendarEvent, 'id'>) => void;
-  updateCalendarEvent: (id: string, event: Partial<AdminCalendarEvent>) => void;
-  deleteCalendarEvent: (id: string) => void;
-  clearAllCalendarEvents?: () => void;
-  importCalendarEvents?: (events: Omit<AdminCalendarEvent, 'id'>[]) => void;
-  updateCalendarDates?: (dates: {
-    semesterStartDate?: string;
-    semesterEndDate?: string;
-    semesterName?: string;
-  }) => void;
-}
+type Props = Pick<
+  AdminConfigApi,
+  'config' | 'calendarEvents' | 'importCalendarEvents' | 'updateCalendarDates'
+>;
 
 const EVENT_TYPES: AdminCalendarEvent['type'][] = [
   'Start of Semester',
@@ -65,10 +57,7 @@ const UploadIcon = () => (
 
 const CalendarEditor: React.FC<Props> = ({
   config,
-  addCalendarEvent,
-  updateCalendarEvent,
-  deleteCalendarEvent,
-  clearAllCalendarEvents,
+  calendarEvents,
   importCalendarEvents,
   updateCalendarDates,
 }) => {
@@ -98,30 +87,10 @@ const CalendarEditor: React.FC<Props> = ({
     setIsImporting(true);
     setImportProgress({ current: 0, total: events.length });
 
-    // Use bulk import function if available (assigns unique IDs properly)
-    if (importCalendarEvents) {
-      importCalendarEvents(events);
-      setImportProgress({ current: events.length, total: events.length });
-      setIsImporting(false);
-      setShowUploader(false);
-    } else {
-      // Fallback: clear events, then add one by one
-      if (clearAllCalendarEvents) {
-        clearAllCalendarEvents();
-      }
-
-      // Add events with small delay between each to prevent ID collision
-      events.forEach((event, index) => {
-        setTimeout(() => {
-          addCalendarEvent(event);
-          setImportProgress({ current: index + 1, total: events.length });
-          if (index === events.length - 1) {
-            setIsImporting(false);
-            setShowUploader(false);
-          }
-        }, index * 10);
-      });
-    }
+    importCalendarEvents(events);
+    setImportProgress({ current: events.length, total: events.length });
+    setIsImporting(false);
+    setShowUploader(false);
   };
 
   const handleAddEvent = () => {
@@ -135,7 +104,7 @@ const CalendarEditor: React.FC<Props> = ({
       if (newEvent.endDate) {
         eventToAdd.endDate = newEvent.endDate;
       }
-      addCalendarEvent(eventToAdd);
+      calendarEvents.add(eventToAdd);
       setNewEvent({ date: '', endDate: '', description: '', type: 'Other' });
       setShowAddModal(false);
     }
@@ -152,7 +121,7 @@ const CalendarEditor: React.FC<Props> = ({
       if (editingEvent.endDate) {
         eventUpdate.endDate = editingEvent.endDate;
       }
-      updateCalendarEvent(editingEvent.id, eventUpdate);
+      calendarEvents.update(editingEvent.id, eventUpdate);
       setEditingEvent(null);
     }
   };
@@ -237,9 +206,7 @@ const CalendarEditor: React.FC<Props> = ({
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    if (updateCalendarDates) {
-                      updateCalendarDates({ semesterName: tempSemesterName.trim() || undefined });
-                    }
+                    updateCalendarDates({ semesterName: tempSemesterName.trim() || undefined });
                     setEditingSemesterName(false);
                   }}
                   className="admin-btn admin-btn-success text-sm"
@@ -445,7 +412,7 @@ const CalendarEditor: React.FC<Props> = ({
                 Edit
               </button>
               <button
-                onClick={() => deleteCalendarEvent(event.id)}
+                onClick={() => calendarEvents.remove(event.id)}
                 className="admin-btn admin-btn-danger text-xs sm:text-sm"
               >
                 <TrashIcon />

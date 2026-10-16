@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 
-import { AdminConfig, AdminForm } from '../types';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
+import { AdminForm } from '../types';
 import { AdminHeader, DocumentIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 
-interface Props {
-  config: AdminConfig;
-  addForm: (form: Omit<AdminForm, 'id'>) => void;
-  updateForm: (id: string, form: Partial<AdminForm>) => void;
-  deleteForm: (id: string) => void;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'forms'>;
 
 const CATEGORIES = [
   { value: 'general', label: 'General Forms', color: 'from-blue-500 to-blue-600' },
@@ -46,7 +42,7 @@ const DownloadIcon = () => (
   </svg>
 );
 
-const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm }) => {
+const FormsEditor: React.FC<Props> = ({ config, forms }) => {
   const [activeCategory, setActiveCategory] = useState<AdminForm['category']>('general');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingForm, setEditingForm] = useState<AdminForm | null>(null);
@@ -64,7 +60,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
 
   const handleAddForm = () => {
     if (newForm.title.trim() && newForm.formNumber.trim() && newForm.downloadLink.trim()) {
-      addForm({
+      forms.add({
         title: newForm.title.trim(),
         formNumber: newForm.formNumber.trim(),
         downloadLink: newForm.downloadLink.trim(),
@@ -84,7 +80,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
 
   const handleUpdateForm = () => {
     if (editingForm && editingForm.title.trim() && editingForm.formNumber.trim()) {
-      updateForm(editingForm.id, {
+      forms.update(editingForm.id, {
         title: editingForm.title.trim(),
         formNumber: editingForm.formNumber.trim(),
         downloadLink: editingForm.downloadLink.trim(),
@@ -215,7 +211,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                       Edit
                     </button>
                     <button
-                      onClick={() => deleteForm(form.id)}
+                      onClick={() => forms.remove(form.id)}
                       className="admin-btn admin-btn-danger text-sm"
                     >
                       <TrashIcon />
@@ -264,7 +260,7 @@ const FormsEditor: React.FC<Props> = ({ config, addForm, updateForm, deleteForm 
                 Edit
               </button>
               <button
-                onClick={() => deleteForm(form.id)}
+                onClick={() => forms.remove(form.id)}
                 className="admin-btn admin-btn-danger text-xs px-3"
               >
                 <TrashIcon />

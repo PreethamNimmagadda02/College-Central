@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 
-import { AdminConfig, AdminQuickLink } from '../types';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
+import { AdminQuickLink } from '../types';
 import { AdminHeader, LinkIcon as HeaderLinkIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 
-interface Props {
-  config: AdminConfig;
-  addQuickLink: (link: Omit<AdminQuickLink, 'id'>) => void;
-  updateQuickLink: (id: string, link: Partial<AdminQuickLink>) => void;
-  deleteQuickLink: (id: string) => void;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'quickLinks'>;
 
 const ICON_OPTIONS = [
   { value: 'website', label: '🌐 Website' },
@@ -68,12 +64,7 @@ const LinkIcon = () => (
   </svg>
 );
 
-const QuickLinksEditor: React.FC<Props> = ({
-  config,
-  addQuickLink,
-  updateQuickLink,
-  deleteQuickLink,
-}) => {
+const QuickLinksEditor: React.FC<Props> = ({ config, quickLinks }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingLink, setEditingLink] = useState<AdminQuickLink | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,7 +78,7 @@ const QuickLinksEditor: React.FC<Props> = ({
 
   const handleAddLink = () => {
     if (newLink.name.trim() && newLink.href.trim()) {
-      addQuickLink({
+      quickLinks.add({
         name: newLink.name.trim(),
         href: newLink.href.startsWith('http') ? newLink.href : `https://${newLink.href}`,
         color: newLink.color,
@@ -100,7 +91,7 @@ const QuickLinksEditor: React.FC<Props> = ({
 
   const handleUpdateLink = () => {
     if (editingLink && editingLink.name.trim() && editingLink.href.trim()) {
-      updateQuickLink(editingLink.id, {
+      quickLinks.update(editingLink.id, {
         name: editingLink.name.trim(),
         href: editingLink.href.startsWith('http')
           ? editingLink.href
@@ -202,7 +193,7 @@ const QuickLinksEditor: React.FC<Props> = ({
                   Edit
                 </button>
                 <button
-                  onClick={() => deleteQuickLink(link.id)}
+                  onClick={() => quickLinks.remove(link.id)}
                   className="admin-btn admin-btn-danger text-xs sm:text-sm px-2 sm:px-3"
                 >
                   <TrashIcon />

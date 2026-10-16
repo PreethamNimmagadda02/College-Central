@@ -1,29 +1,15 @@
 import { Plus, Search, Trash2, Edit2, Phone, Mail, Building, Upload } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 
-import { AdminConfig, AdminDirectoryEntry } from '../types';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
+import { AdminDirectoryEntry } from '../types';
 import { AdminHeader, UsersIcon } from './AdminIcons';
 import AdminPageLayout from './AdminPageLayout';
 import DirectoryUploader from './DirectoryUploader';
 
-interface Props {
-  config: AdminConfig;
-  addDirectoryEntry: (entry: Omit<AdminDirectoryEntry, 'id'>) => void;
-  updateDirectoryEntry: (id: string, entry: Partial<AdminDirectoryEntry>) => void;
-  deleteDirectoryEntry: (id: string) => void;
-  deleteDirectoryEntriesByIds: (ids: string[]) => void;
-  clearAllDirectoryEntries: () => void;
-  importDirectoryEntries: (entries: Omit<AdminDirectoryEntry, 'id'>[]) => void;
-}
-const DirectoryEditor: React.FC<Props> = ({
-  config,
-  addDirectoryEntry,
-  updateDirectoryEntry,
-  deleteDirectoryEntry,
-  deleteDirectoryEntriesByIds,
-  clearAllDirectoryEntries,
-  importDirectoryEntries,
-}) => {
+type Props = Pick<AdminConfigApi, 'config' | 'directory' | 'importDirectoryEntries'>;
+
+const DirectoryEditor: React.FC<Props> = ({ config, directory, importDirectoryEntries }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
   const [editingEntry, setEditingEntry] = useState<AdminDirectoryEntry | null>(null);
@@ -67,7 +53,7 @@ const DirectoryEditor: React.FC<Props> = ({
 
   const handleAddEntry = () => {
     if (newEntry.name.trim() && newEntry.department.trim()) {
-      addDirectoryEntry({
+      directory.add({
         name: newEntry.name.trim(),
         department: newEntry.department.trim(),
         designation: newEntry.designation.trim(),
@@ -81,7 +67,7 @@ const DirectoryEditor: React.FC<Props> = ({
 
   const handleUpdateEntry = () => {
     if (editingEntry && editingEntry.name.trim() && editingEntry.department.trim()) {
-      updateDirectoryEntry(editingEntry.id, {
+      directory.update(editingEntry.id, {
         name: editingEntry.name.trim(),
         department: editingEntry.department.trim(),
         designation: editingEntry.designation.trim(),
@@ -110,7 +96,7 @@ const DirectoryEditor: React.FC<Props> = ({
                     `Are you sure you want to delete all ${filteredEntries.length} filtered entries? This action cannot be undone.`
                   )
                 ) {
-                  deleteDirectoryEntriesByIds(filteredEntries.map((e) => e.id));
+                  directory.removeMany(filteredEntries.map((e) => e.id));
                 }
               }}
               className="admin-btn bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-4"
@@ -128,7 +114,7 @@ const DirectoryEditor: React.FC<Props> = ({
                     `Are you sure you want to delete ALL ${config.directory?.length || 0} faculty entries? This action cannot be undone.`
                   )
                 ) {
-                  clearAllDirectoryEntries();
+                  directory.clear();
                 }
               }}
               className="admin-btn bg-red-900 hover:bg-red-800 text-white border border-red-700 text-xs sm:text-sm px-3 sm:px-4"
@@ -245,7 +231,7 @@ const DirectoryEditor: React.FC<Props> = ({
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => deleteDirectoryEntry(entry.id)}
+                        onClick={() => directory.remove(entry.id)}
                         className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -315,7 +301,7 @@ const DirectoryEditor: React.FC<Props> = ({
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => deleteDirectoryEntry(entry.id)}
+                  onClick={() => directory.remove(entry.id)}
                   className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />

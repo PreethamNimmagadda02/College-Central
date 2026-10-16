@@ -657,7 +657,11 @@ const AdminDashboard: React.FC = () => {
       <AdminFooter />
 
       {/* Search Modal */}
-      <AdminSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <AdminSearch
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        config={adminConfig.config}
+      />
     </div>
   );
 };
