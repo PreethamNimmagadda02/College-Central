@@ -162,8 +162,14 @@ export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children 
   useEffect(() => {
     if (isGuest) {
       // Guests get the bundled config with fictional classmates in place of the real
-      // student list, so the demo makes no Firebase calls at all
-      setConfig({ ...generateDefaultConfig(), students: getDemoState().directory });
+      // student list, so the demo makes no Firebase calls at all. Its calendar is left
+      // empty so CalendarContext shifts the bundled calendar to the current year.
+      const defaults = generateDefaultConfig();
+      setConfig({
+        ...defaults,
+        students: getDemoState().directory,
+        calendar: { ...defaults.calendar, events: [] },
+      });
       setIsFirestoreConfig(false);
       setError(null);
       setLoading(false);

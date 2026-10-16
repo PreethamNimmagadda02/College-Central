@@ -57,6 +57,14 @@ describe('calendar and forms in guest mode', () => {
     expect(getDemoState().reminderEventKeys).toHaveLength(2);
   });
 
+  it('shows guests the academic calendar shifted to the current year', async () => {
+    const { result } = renderHook(() => useCalendar(), { wrapper });
+    await waitFor(() => expect(result.current.calendarData).not.toBeNull());
+
+    const start = new Date(result.current.calendarData!.semesterStartDate);
+    expect(start.getFullYear()).toBe(new Date().getFullYear());
+  });
+
   it('adds, updates and deletes personal events in the demo store', async () => {
     const date = inDays(10);
     const key = `${date}-Mock interview`;
