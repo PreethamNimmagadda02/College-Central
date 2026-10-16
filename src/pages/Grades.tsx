@@ -1,10 +1,18 @@
 import { useAppConfig } from '@contexts/AppConfigContext';
-import { useGrades, GradesData } from '@contexts/GradesContext';
+import { useGrades } from '@contexts/GradesContext';
 import { useSchedule } from '@contexts/ScheduleContext';
 import { useUser } from '@contexts/UserContext';
 import { useGradingScale } from '@hooks/useGradingScale';
 import { calculateCreditsFromLTP } from '@lib/utils/creditCalculator';
-import { motion, useInView, useSpring, useTransform } from 'framer-motion';
+import { getLatestGrades } from '@lib/utils/gradeUtils';
+import {
+  motion,
+  useInView,
+  useMotionValueEvent,
+  useSpring,
+  useTransform,
+  Variants,
+} from 'framer-motion';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Line,
@@ -17,10 +25,44 @@ import {
   ComposedChart,
 } from 'recharts';
 
-import { Grade, Semester, SavedScenario } from '@/types';
+import { Grade, GradesData, Semester, SavedScenario } from '@/types';
 
-// Animated Counter Component - counts up smoothly when value changes
-const AnimatedCounter: React.FC<{
+// Shared entrance variants: a container that staggers its children, and child entrances
+const STAGGER: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+const FADE_UP: Variants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
+const POP_UP: Variants = {
+  hidden: { opacity: 0, y: 20, scale: 0.9 },
+  show: { opacity: 1, y: 0, scale: 1 },
+};
+const SLIDE_IN: Variants = { hidden: { opacity: 0, x: -20 }, show: { opacity: 1, x: 0 } };
+
+// Presentation for each SGPA trajectory status
+const TREND_META = {
+  Improving: {
+    emoji: '📈',
+    color: 'text-green-600',
+    bob: { y: [0, -5, 0] },
+    message: '🚀 Your grades are improving over time!',
+  },
+  Declining: {
+    emoji: '📉',
+    color: 'text-red-600',
+    bob: { y: [0, 5, 0] },
+    message: '⚠️ Your grades show a declining trend',
+  },
+  Stable: {
+    emoji: '➡️',
+    color: 'text-orange-600',
+    bob: { x: [0, 5, 0] },
+    message: '➡️ Your performance is relatively stable',
+  },
+};
+
+// Counts up smoothly to `value` (shown with `decimals` places) when scrolled into view
+const AnimatedNumber: React.FC<{
   value: number;
   decimals?: number;
   duration?: number;
@@ -31,51 +73,13 @@ const AnimatedCounter: React.FC<{
   const spring = useSpring(0, { duration: duration * 1000, bounce: 0 });
   const display = useTransform(spring, (current) => current.toFixed(decimals));
   const [displayValue, setDisplayValue] = useState(value.toFixed(decimals));
+  useMotionValueEvent(display, 'change', setDisplayValue);
 
   useEffect(() => {
     if (isInView) {
       spring.set(value);
     }
   }, [value, isInView, spring]);
-
-  useEffect(() => {
-    const unsubscribe = display.on('change', (latest) => {
-      setDisplayValue(latest);
-    });
-    return unsubscribe;
-  }, [display]);
-
-  return (
-    <span ref={ref} className={className}>
-      {displayValue}
-    </span>
-  );
-};
-
-// Animated Integer Counter - for whole numbers
-const AnimatedInteger: React.FC<{ value: number; duration?: number; className?: string }> = ({
-  value,
-  duration = 1.5,
-  className = '',
-}) => {
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: false, margin: '-50px' });
-  const spring = useSpring(0, { duration: duration * 1000, bounce: 0 });
-  const display = useTransform(spring, (current) => Math.round(current).toString());
-  const [displayValue, setDisplayValue] = useState(value.toString());
-
-  useEffect(() => {
-    if (isInView) {
-      spring.set(value);
-    }
-  }, [value, isInView, spring]);
-
-  useEffect(() => {
-    const unsubscribe = display.on('change', (latest) => {
-      setDisplayValue(latest);
-    });
-    return unsubscribe;
-  }, [display]);
 
   return (
     <span ref={ref} className={className}>
@@ -102,19 +106,13 @@ const ProgressRing: React.FC<{
     (val) => circumference - (val / 100) * circumference
   );
   const [offset, setOffset] = useState(circumference);
+  useMotionValueEvent(strokeDashoffset, 'change', setOffset);
 
   useEffect(() => {
     if (isInView) {
       spring.set(Math.min(progress, 100));
     }
   }, [progress, isInView, spring]);
-
-  useEffect(() => {
-    const unsubscribe = strokeDashoffset.on('change', (latest) => {
-      setOffset(latest);
-    });
-    return unsubscribe;
-  }, [strokeDashoffset]);
 
   return (
     <svg ref={ref} width={size} height={size} className={`transform -rotate-90 ${className}`}>
@@ -165,7 +163,7 @@ const getCGPAStatus = (cgpa: number) => {
   };
 };
 
-const CGPAForecaster: React.FC = React.memo(() => {
+const CGPAForecaster: React.FC = React.memo(function CGPAForecaster() {
   const { gradesData } = useGrades();
   const { scheduleData } = useSchedule();
   const { user, updateUser } = useUser();
@@ -984,37 +982,21 @@ const CGPAForecaster: React.FC = React.memo(() => {
  * ImprovementExamForecaster allows students to modify their past grades
  * and see how improvement exams could affect their CGPA.
  */
-const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.memo(({ gradesData }) => {
+const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.memo(function ImprovementExamForecaster({ gradesData }) {
   const { gradeOptions, gradePoints, getGradeColor, getGradeOutlineStyle } = useGradingScale();
   const [modifiedGrades, setModifiedGrades] = useState<{ [subjectCode: string]: string }>({});
   const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
 
   // Get latest grades for each course (handles retakes)
-  const latestGrades = useMemo(() => {
-    const courseMap: { [subjectCode: string]: { grade: Grade; semester: number } } = {};
-
-    gradesData.semesters.forEach((sem: Semester) => {
-      sem.grades.forEach((grade: Grade) => {
-        const existing = courseMap[grade.subjectCode];
-        if (!existing || sem.semester > existing.semester) {
-          courseMap[grade.subjectCode] = {
-            grade: { ...grade },
-            semester: sem.semester,
-          };
-        }
-      });
-    });
-
-    return courseMap;
-  }, [gradesData]);
+  const latestGrades = useMemo(() => getLatestGrades(gradesData.semesters), [gradesData]);
 
   // Calculate new CGPA with modified grades
   const projectedCalculations = useMemo(() => {
     let totalPoints = 0;
     let totalCredits = 0;
 
-    Object.entries(latestGrades).forEach(([subjectCode, { grade }]) => {
+    Object.entries(latestGrades).forEach(([subjectCode, grade]) => {
       const currentGrade = modifiedGrades[subjectCode] || grade.grade;
       // Include all courses in calculation - F grade contributes 0 points but credits still count
       const points = gradePoints[currentGrade] || 0;
@@ -1611,42 +1593,21 @@ const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.me
  * PerformanceAnalytics displays grade analytics using only the latest grade for each course.
  * When a student retakes a course, only the most recent attempt is counted in analytics.
  */
-const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: string }> = React.memo(({
+const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: string }> = React.memo(function PerformanceAnalytics({
   gradesData,
   courseOption,
-}) => {
+}) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'distribution' | 'insights'>(
-    'overview'
-  );
+  const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'distribution'>('overview');
   const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
   const { gradePoints, getGradeColor } = useGradingScale();
 
-  // Helper function to get latest grade for each course (handles retakes)
-  const getLatestGrades = useMemo(() => {
-    const courseMap: { [subjectCode: string]: { grade: Grade; semester: number } } = {};
-
-    // Iterate through semesters to track the latest occurrence of each course
-    gradesData.semesters.forEach((sem: Semester) => {
-      sem.grades.forEach((grade: Grade) => {
-        const existing = courseMap[grade.subjectCode];
-        // If course doesn't exist or current semester is later, update it
-        if (!existing || sem.semester > existing.semester) {
-          courseMap[grade.subjectCode] = {
-            grade: { ...grade },
-            semester: sem.semester,
-          };
-        }
-      });
-    });
-
-    // Return array of latest grades with semester info
-    return Object.values(courseMap).map((item) => ({
-      ...item.grade,
-      semester: item.semester,
-    }));
-  }, [gradesData]);
+  // Latest grade for each course with its semester (handles retakes)
+  const latestGrades = useMemo(
+    () => Object.values(getLatestGrades(gradesData.semesters)),
+    [gradesData]
+  );
 
   // Calculate performance trends with enhanced metrics
   const performanceTrend = useMemo(() => {
@@ -1664,6 +1625,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
         semester: `Semester ${sem.semester}`,
         semesterNum: sem.semester,
         sgpa: sem.sgpa,
+        cgpa: sem.cgpa,
         credits: earnedCredits, // Now only counts earned (passed) credits
         delta: index > 0 ? delta : 0,
         courseCount: sem.grades.length,
@@ -1696,10 +1658,11 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
       sumX2 += i * i;
     });
     const slope = n > 1 ? (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX) : 0;
-    const trajectoryStatus = slope > 0.1 ? 'Improving' : slope < -0.1 ? 'Declining' : 'Stable';
+    const trajectoryStatus: keyof typeof TREND_META =
+      slope > 0.1 ? 'Improving' : slope < -0.1 ? 'Declining' : 'Stable';
 
     // 3. Credit Efficiency (quality points per credit)
-    const totalQualityPoints = getLatestGrades.reduce(
+    const totalQualityPoints = latestGrades.reduce(
       (sum, g) => sum + (gradePoints[g.grade] || 0) * g.credits,
       0
     );
@@ -1708,7 +1671,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
     // 4. High-Credit Performance (courses with 4+ credits)
     const highCreditThreshold = courseOption === 'NEP' ? 3 : 9;
-    const highCreditCourses = getLatestGrades.filter((g) => g.credits >= highCreditThreshold);
+    const highCreditCourses = latestGrades.filter((g) => g.credits >= highCreditThreshold);
     const highCreditAvg =
       highCreditCourses.length > 0
         ? highCreditCourses.reduce((sum, g) => sum + (gradePoints[g.grade] || 0), 0) /
@@ -1716,12 +1679,12 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
         : 0;
 
     // 5. Failure/Risk Analysis
-    const failedCourses = getLatestGrades.filter((g) => g.grade === 'F');
-    const atRiskCourses = getLatestGrades.filter((g) => ['D', 'F'].includes(g.grade));
+    const failedCourses = latestGrades.filter((g) => g.grade === 'F');
+    const atRiskCourses = latestGrades.filter((g) => ['D', 'F'].includes(g.grade));
 
     // 6. Excellence Rate (A+ and A grades)
-    const excellentGrades = getLatestGrades.filter((g) => ['A+', 'A'].includes(g.grade));
-    const excellenceRate = (excellentGrades.length / getLatestGrades.length) * 100;
+    const excellentGrades = latestGrades.filter((g) => ['A+', 'A'].includes(g.grade));
+    const excellenceRate = (excellentGrades.length / latestGrades.length) * 100;
 
     // 7. Academic Standing
     let academicStanding = 'Good Standing';
@@ -1731,13 +1694,10 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
     else if (gradesData.cgpa >= 5.0) academicStanding = 'Satisfactory';
     else academicStanding = 'Academic Probation';
 
-    // 8. Best and Worst Semesters
+    // 8. Best Semester
     const firstSemester = sortedSemesters[0];
     const bestSemester = firstSemester
       ? sortedSemesters.reduce((best, sem) => (sem.sgpa > best.sgpa ? sem : best), firstSemester)
-      : { semester: 0, sgpa: 0, grades: [], sessionYear: '', sessionType: 'Monsoon' as const };
-    const worstSemester = firstSemester
-      ? sortedSemesters.reduce((worst, sem) => (sem.sgpa < worst.sgpa ? sem : worst), firstSemester)
       : { semester: 0, sgpa: 0, grades: [], sessionYear: '', sessionType: 'Monsoon' as const };
 
     // 9. Improvement Potential
@@ -1764,20 +1724,21 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
       excellenceRate,
       academicStanding,
       bestSemester,
-      worstSemester,
       improvementPotential,
       avgCreditsPerSem,
       maxCreditsInSem,
       avgSgpa,
     };
-  }, [gradesData, getLatestGrades]);
+  }, [gradesData, latestGrades]);
+
+  const trend = TREND_META[advancedMetrics.trajectoryStatus];
 
   // Calculate grade distribution with courses (using latest grades only)
   const gradeDistribution = useMemo(() => {
     const distribution: { [key: string]: { count: number; courses: any[]; totalCredits: number } } =
       {};
 
-    getLatestGrades.forEach((gradeWithSem: any) => {
+    latestGrades.forEach((gradeWithSem: any) => {
       const gradeValue = gradeWithSem.grade;
       if (!distribution[gradeValue]) {
         distribution[gradeValue] = { count: 0, courses: [], totalCredits: 0 };
@@ -1791,11 +1752,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
     });
 
     return distribution;
-  }, [getLatestGrades]);
-
-  const getGradeCourses = (grade: string) => {
-    return gradeDistribution[grade]?.courses || [];
-  };
+  }, [latestGrades]);
 
   // Calculate subject performance with courses (using latest grades only)
   const subjectPerformance = useMemo(() => {
@@ -1803,7 +1760,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
       [key: string]: { total: number; count: number; courses: any[]; totalCredits: number };
     } = {};
 
-    getLatestGrades.forEach((gradeWithSem: any) => {
+    latestGrades.forEach((gradeWithSem: any) => {
       const category = gradeWithSem.subjectCode.substring(0, 2);
       if (!subjects[category]) {
         subjects[category] = { total: 0, count: 0, courses: [], totalCredits: 0 };
@@ -1827,12 +1784,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
         // If averages are equal, sort by totalCredits (higher credits = better rank)
         return b.totalCredits - a.totalCredits;
       });
-  }, [getLatestGrades]);
-
-  const getCategoryCourses = (category: string) => {
-    const categoryData = subjectPerformance.find((s) => s.category === category);
-    return categoryData?.courses || [];
-  };
+  }, [latestGrades]);
 
   return (
     <motion.div
@@ -1893,15 +1845,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
           {/* Key Performance Indicators */}
           <motion.div
             className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
-            variants={{
-              hidden: { opacity: 0 },
-              show: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.1,
-                },
-              },
-            }}
+            variants={STAGGER}
             initial="hidden"
             animate="show"
           >
@@ -1909,10 +1853,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               type="button"
               aria-expanded={selectedKPI === 'standing'}
               aria-label="View details for Academic Standing"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
+              variants={POP_UP}
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'standing' ? null : 'standing')}
@@ -1942,7 +1883,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 </motion.p>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-[10px] sm:text-xs text-slate-500">CGPA</p>
-                  <AnimatedCounter
+                  <AnimatedNumber
                     value={gradesData.cgpa}
                     decimals={2}
                     className="text-[10px] sm:text-xs font-semibold text-blue-600"
@@ -1955,10 +1896,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               type="button"
               aria-expanded={selectedKPI === 'consistency'}
               aria-label="View details for Consistency Score"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
+              variants={POP_UP}
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'consistency' ? null : 'consistency')}
@@ -1979,7 +1917,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   </motion.span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <AnimatedCounter
+                  <AnimatedNumber
                     value={advancedMetrics.consistencyScore}
                     decimals={0}
                     className="text-base sm:text-xl font-bold text-green-600"
@@ -2003,10 +1941,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               type="button"
               aria-expanded={selectedKPI === 'efficiency'}
               aria-label="View details for Credit Efficiency"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
+              variants={POP_UP}
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'efficiency' ? null : 'efficiency')}
@@ -2026,7 +1961,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     ⚡
                   </motion.span>
                 </div>
-                <AnimatedCounter
+                <AnimatedNumber
                   value={advancedMetrics.creditEfficiency}
                   decimals={2}
                   className="text-base sm:text-xl font-bold text-purple-600 block"
@@ -2050,10 +1985,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               type="button"
               aria-expanded={selectedKPI === 'trend'}
               aria-label="View details for Performance Trend"
-              variants={{
-                hidden: { opacity: 0, y: 20, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
+              variants={POP_UP}
               whileHover={{ y: -8, scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               onClick={() => setSelectedKPI(selectedKPI === 'trend' ? null : 'trend')}
@@ -2067,29 +1999,14 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   </h4>
                   <motion.span
                     className="text-base sm:text-lg"
-                    animate={
-                      advancedMetrics.trajectoryStatus === 'Improving'
-                        ? { y: [0, -5, 0] }
-                        : advancedMetrics.trajectoryStatus === 'Declining'
-                          ? { y: [0, 5, 0] }
-                          : { x: [0, 5, 0] }
-                    }
+                    animate={trend.bob}
                     transition={{ repeat: Infinity, duration: 2 }}
                   >
-                    {advancedMetrics.trajectoryStatus === 'Improving'
-                      ? '📈'
-                      : advancedMetrics.trajectoryStatus === 'Declining'
-                        ? '📉'
-                        : '➡️'}
+                    {trend.emoji}
                   </motion.span>
                 </div>
                 <motion.p
-                  className={`text-base sm:text-xl font-bold truncate ${advancedMetrics.trajectoryStatus === 'Improving'
-                      ? 'text-green-600'
-                      : advancedMetrics.trajectoryStatus === 'Declining'
-                        ? 'text-red-600'
-                        : 'text-orange-600'
-                    }`}
+                  className={`text-base sm:text-xl font-bold truncate ${trend.color}`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
@@ -2275,13 +2192,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     {selectedKPI === 'trend' && (
                       <>
                         <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
-                          <span className="text-orange-500">
-                            {advancedMetrics.trajectoryStatus === 'Improving'
-                              ? '📈'
-                              : advancedMetrics.trajectoryStatus === 'Declining'
-                                ? '📉'
-                                : '➡️'}
-                          </span>{' '}
+                          <span className="text-orange-500">{trend.emoji}</span>{' '}
                           Performance Trend
                         </h4>
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
@@ -2311,26 +2222,12 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                             </p>
                             <p>
                               Status:{' '}
-                              <strong
-                                className={
-                                  advancedMetrics.trajectoryStatus === 'Improving'
-                                    ? 'text-green-600'
-                                    : advancedMetrics.trajectoryStatus === 'Declining'
-                                      ? 'text-red-600'
-                                      : 'text-orange-600'
-                                }
-                              >
+                              <strong className={trend.color}>
                                 {advancedMetrics.trajectoryStatus}
                               </strong>
                             </p>
                           </div>
-                          <p className="text-xs text-slate-500 mt-2">
-                            {advancedMetrics.trajectoryStatus === 'Improving'
-                              ? '🚀 Your grades are improving over time!'
-                              : advancedMetrics.trajectoryStatus === 'Declining'
-                                ? '⚠️ Your grades show a declining trend'
-                                : '➡️ Your performance is relatively stable'}
-                          </p>
+                          <p className="text-xs text-slate-500 mt-2">{trend.message}</p>
                         </div>
                       </>
                     )}
@@ -2360,23 +2257,12 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
           {/* Performance Summary Cards */}
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
-            variants={{
-              hidden: { opacity: 0 },
-              show: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.1,
-                },
-              },
-            }}
+            variants={STAGGER}
             initial="hidden"
             animate="show"
           >
             <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                show: { opacity: 1, y: 0 },
-              }}
+              variants={FADE_UP}
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => setSelectedKPI(selectedKPI === 'excellence' ? null : 'excellence')}
@@ -2390,7 +2276,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     Excellence Rate
                   </span>
-                  <AnimatedCounter
+                  <AnimatedNumber
                     value={advancedMetrics.excellenceRate}
                     decimals={1}
                     className="font-semibold text-sm sm:text-base text-emerald-700 dark:text-emerald-400"
@@ -2402,7 +2288,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   </span>
                   <span className="font-semibold text-sm sm:text-base">
                     Sem {advancedMetrics.bestSemester.semester} (
-                    <AnimatedCounter
+                    <AnimatedNumber
                       value={advancedMetrics.bestSemester.sgpa}
                       decimals={2}
                       className="inline"
@@ -2414,7 +2300,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     High-Credit Avg
                   </span>
-                  <AnimatedCounter
+                  <AnimatedNumber
                     value={advancedMetrics.highCreditAvg}
                     decimals={2}
                     className="font-semibold text-sm sm:text-base"
@@ -2424,10 +2310,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             </motion.div>
 
             <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                show: { opacity: 1, y: 0 },
-              }}
+              variants={FADE_UP}
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => setSelectedKPI(selectedKPI === 'workload' ? null : 'workload')}
@@ -2441,7 +2324,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     Avg Credits/Sem
                   </span>
-                  <AnimatedCounter
+                  <AnimatedNumber
                     value={advancedMetrics.avgCreditsPerSem}
                     decimals={1}
                     className="font-semibold text-sm sm:text-base text-blue-700 dark:text-blue-400"
@@ -2451,8 +2334,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     Max Credits
                   </span>
-                  <AnimatedInteger
+                  <AnimatedNumber
                     value={advancedMetrics.maxCreditsInSem}
+                    decimals={0}
                     className="font-semibold text-sm sm:text-base"
                   />
                 </div>
@@ -2460,8 +2344,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     Total Courses
                   </span>
-                  <AnimatedInteger
-                    value={getLatestGrades.length}
+                  <AnimatedNumber
+                    value={latestGrades.length}
+                    decimals={0}
                     className="font-semibold text-sm sm:text-base"
                   />
                 </div>
@@ -2469,10 +2354,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             </motion.div>
 
             <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                show: { opacity: 1, y: 0 },
-              }}
+              variants={FADE_UP}
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => setSelectedKPI(selectedKPI === 'risk' ? null : 'risk')}
@@ -2486,8 +2368,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     Failed Courses
                   </span>
-                  <AnimatedInteger
+                  <AnimatedNumber
                     value={advancedMetrics.failedCourses.length}
+                    decimals={0}
                     className={`font-semibold text-sm sm:text-base ${advancedMetrics.failedCourses.length > 0 ? 'text-red-600' : 'text-green-600'}`}
                   />
                 </div>
@@ -2495,8 +2378,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     At-Risk (D/F)
                   </span>
-                  <AnimatedInteger
+                  <AnimatedNumber
                     value={advancedMetrics.atRiskCourses.length}
+                    decimals={0}
                     className={`font-semibold text-sm sm:text-base ${advancedMetrics.atRiskCourses.length > 0 ? 'text-orange-600' : 'text-green-600'}`}
                   />
                 </div>
@@ -2505,7 +2389,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     Improvement
                   </span>
                   <span className="font-semibold text-sm sm:text-base">
-                    <AnimatedCounter
+                    <AnimatedNumber
                       value={advancedMetrics.improvementPotential}
                       decimals={2}
                       className="inline"
@@ -2599,7 +2483,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                           <div>
                             <p className="text-xs font-medium mb-1">Total Unique Courses:</p>
                             <p className="text-xs text-slate-500">
-                              <strong>{getLatestGrades.length}</strong> courses completed (retakes
+                              <strong>{latestGrades.length}</strong> courses completed (retakes
                               counted once)
                             </p>
                           </div>
@@ -2779,25 +2663,14 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             )}
             <motion.div
               className="space-y-2 sm:space-y-3"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
+              variants={STAGGER}
               initial="hidden"
               animate="show"
             >
               {subjectPerformance.map((subject, index) => (
                 <motion.div
                   key={index}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    show: { opacity: 1, y: 0 },
-                  }}
+                  variants={FADE_UP}
                 >
                   <div
                     onClick={() =>
@@ -2875,7 +2748,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                     >
-                      {getCategoryCourses(subject.category).map(
+                      {subject.courses.map(
                         (course: any, courseIndex: number) => (
                           <div
                             key={courseIndex}
@@ -3040,27 +2913,14 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
             {/* Recharts Line Chart */}
             {(() => {
-              // Use extracted SGPA and CGPA values directly from the gradesheet
-              const sortedSemesters = [...gradesData.semesters].sort(
-                (a, b) => a.semester - b.semester
-              );
-
-              const chartData = sortedSemesters.map((sem) => {
-                // Calculate earned credits for this semester (passed courses only)
-                const semCredits = sem.grades.reduce(
-                  (total, grade) => total + (grade.grade !== 'F' ? grade.credits || 0 : 0),
-                  0
-                );
-
-                return {
-                  name: `Sem ${sem.semester}`,
-                  semester: sem.semester,
-                  SGPA: parseFloat(sem.sgpa.toFixed(2)), // Use extracted SGPA directly
-                  CGPA: parseFloat((sem.cgpa || sem.sgpa).toFixed(2)), // Use extracted CGPA directly (fallback to SGPA for older data)
-                  credits: semCredits,
-                  courses: sem.grades.length,
-                };
-              });
+              // Extracted SGPA/CGPA from the gradesheet (CGPA falls back to SGPA for older data)
+              const chartData = performanceTrend.map((item) => ({
+                name: `Sem ${item.semesterNum}`,
+                SGPA: parseFloat(item.sgpa.toFixed(2)),
+                CGPA: parseFloat((item.cgpa || item.sgpa).toFixed(2)),
+                credits: item.credits,
+                courses: item.courseCount,
+              }));
 
               // Custom tooltip component
               const CustomTooltip = ({ active, payload, label }: any) => {
@@ -3111,11 +2971,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <div className="w-full outline-none focus:outline-none [&_svg]:outline-none [&_svg]:focus:outline-none [&_*]:outline-none">
                     <ResponsiveContainer width="100%" height={250}>
                       <ComposedChart
-                        data={chartData.map((d) => ({
-                          ...d,
-                          // Use shorter labels on mobile
-                          displayName: d.name,
-                        }))}
+                        data={chartData}
                         margin={{
                           top: 15,
                           right: 20,
@@ -3224,22 +3080,13 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   {/* Summary Stats - more compact on mobile */}
                   <motion.div
                     className="mt-3 sm:mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3"
-                    variants={{
-                      hidden: { opacity: 0 },
-                      show: {
-                        opacity: 1,
-                        transition: { staggerChildren: 0.1 },
-                      },
-                    }}
+                    variants={STAGGER}
                     initial="hidden"
                     animate="show"
                   >
                     <motion.div
                       className="group relative overflow-hidden bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl p-2.5 sm:p-3 border border-emerald-100 dark:border-emerald-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
+                      variants={POP_UP}
                       whileHover={{
                         y: -4,
                         scale: 1.03,
@@ -3268,10 +3115,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
                     <motion.div
                       className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-2.5 sm:p-3 border border-blue-100 dark:border-blue-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
+                      variants={POP_UP}
                       whileHover={{
                         y: -4,
                         scale: 1.03,
@@ -3300,10 +3144,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
                     <motion.div
                       className="group relative overflow-hidden bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-xl p-2.5 sm:p-3 border border-purple-100 dark:border-purple-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
+                      variants={POP_UP}
                       whileHover={{
                         y: -4,
                         scale: 1.03,
@@ -3334,10 +3175,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
                     <motion.div
                       className="group relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-2.5 sm:p-3 border border-amber-100 dark:border-amber-800/50 cursor-pointer"
-                      variants={{
-                        hidden: { opacity: 0, y: 20, scale: 0.9 },
-                        show: { opacity: 1, y: 0, scale: 1 },
-                      }}
+                      variants={POP_UP}
                       whileHover={{
                         y: -4,
                         scale: 1.03,
@@ -3460,15 +3298,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             )}
             <motion.div
               className="space-y-3 sm:space-y-4"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
+              variants={STAGGER}
               initial="hidden"
               animate="show"
             >
@@ -3476,10 +3306,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 <motion.div
                   key={index}
                   className="space-y-1.5 sm:space-y-2"
-                  variants={{
-                    hidden: { opacity: 0, x: -20 },
-                    show: { opacity: 1, x: 0 },
-                  }}
+                  variants={SLIDE_IN}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
                     <div className="flex items-center gap-2 sm:gap-3">
@@ -3630,27 +3457,16 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             )}
             <motion.div
               className="space-y-3"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
+              variants={STAGGER}
               initial="hidden"
               animate="show"
             >
               {(() => {
                 // Track unique courses to avoid counting retakes multiple times
                 const seenCourses = new Set<string>();
-                const sortedSemesters = [...gradesData.semesters].sort(
-                  (a, b) => a.semester - b.semester
-                );
 
-                // Calculate new unique earned credits per semester
-                const creditProgressionData = sortedSemesters.map((sem) => {
+                // Calculate new unique earned credits per semester (semesters are already sorted)
+                const creditProgressionData = gradesData.semesters.map((sem) => {
                   let newUniqueCredits = 0;
 
                   sem.grades.forEach((grade) => {
@@ -3663,7 +3479,6 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
                   return {
                     semester: `Semester ${sem.semester}`,
-                    semesterNum: sem.semester,
                     newCredits: newUniqueCredits,
                   };
                 });
@@ -3681,10 +3496,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <motion.div
                     key={index}
                     className="flex items-center gap-3"
-                    variants={{
-                      hidden: { opacity: 0, x: -20 },
-                      show: { opacity: 1, x: 0 },
-                    }}
+                    variants={SLIDE_IN}
                   >
                     <span className="text-sm font-medium w-16">{item.semester}</span>
                     <div className="group flex-1 cursor-pointer">
@@ -3800,15 +3612,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             )}
             <motion.div
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
+              variants={STAGGER}
               initial="hidden"
               animate="show"
             >
@@ -3829,18 +3633,20 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10">
-                      <AnimatedInteger
+                      <AnimatedNumber
                         value={data.count}
+                        decimals={0}
                         className="text-2xl sm:text-3xl font-bold group-hover:scale-125 transition-transform duration-300 block"
                       />
                       <p className="text-base sm:text-lg font-semibold group-hover:font-black transition-all">
                         {grade}
                       </p>
                       <p className="text-[10px] sm:text-xs mt-1 opacity-75 group-hover:opacity-100 transition-opacity">
-                        <AnimatedInteger value={data.totalCredits} className="inline" /> credits
+                        <AnimatedNumber value={data.totalCredits} decimals={0} className="inline" />{' '}
+                        credits
                       </p>
                       <p className="text-[10px] sm:text-xs opacity-60 group-hover:opacity-100 group-hover:font-semibold transition-all">
-                        <AnimatedCounter
+                        <AnimatedNumber
                           value={(data.totalCredits / gradesData.totalCredits) * 100}
                           decimals={1}
                           className="inline"
@@ -3870,7 +3676,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     </svg>
                   </button>
                 </div>
-                {getGradeCourses(selectedGrade).map((course: any, courseIndex: number) => (
+                {gradeDistribution[selectedGrade]?.courses.map((course, courseIndex) => (
                   <div
                     key={courseIndex}
                     className="group relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between p-2.5 sm:p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-300 gap-2 sm:gap-0"
@@ -3999,15 +3805,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             )}
             <motion.div
               className="space-y-3 sm:space-y-4"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
+              variants={STAGGER}
               initial="hidden"
               animate="show"
             >
@@ -4017,19 +3815,16 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 { tier: 'Average', grades: ['C+', 'C'], color: 'yellow' },
                 { tier: 'Below Average', grades: ['D', 'F'], color: 'red' },
               ].map((tierInfo) => {
-                const tierCourses = getLatestGrades.filter((g) =>
+                const tierCourses = latestGrades.filter((g) =>
                   tierInfo.grades.includes(g.grade)
                 );
                 const tierCredits = tierCourses.reduce((sum, g) => sum + g.credits, 0);
-                const percentage = (tierCourses.length / getLatestGrades.length) * 100;
+                const percentage = (tierCourses.length / latestGrades.length) * 100;
 
                 return (
                   <motion.div
                     key={tierInfo.tier}
-                    variants={{
-                      hidden: { opacity: 0, x: -20 },
-                      show: { opacity: 1, x: 0 },
-                    }}
+                    variants={SLIDE_IN}
                   >
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1.5 sm:mb-2 gap-0.5 sm:gap-0">
                       <div>
@@ -4071,6 +3866,74 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
     </motion.div>
   );
 });
+
+// The selected semester's grades: `compact` sits under its card on small screens,
+// the full version below the semester grid on large screens
+const SemesterGrades: React.FC<{
+  semester: Semester;
+  compact?: boolean;
+  getGradeColor: (grade: string) => string;
+}> = ({ semester, compact = false, getGradeColor }) => (
+  <div
+    className={`${compact ? 'lg:hidden col-span-1 sm:col-span-2 p-4 sm:p-5' : 'hidden lg:block mt-4 sm:mt-6 p-4 sm:p-6'} bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/20`}
+  >
+    <h4
+      className={`font-semibold ${compact ? 'text-sm sm:text-base mb-3' : 'text-base sm:text-lg mb-3 sm:mb-4'} flex items-center`}
+    >
+      <span
+        className={
+          compact
+            ? 'w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center mr-2 text-xs'
+            : 'w-6 h-6 sm:w-8 sm:h-8 bg-primary text-white rounded-full flex items-center justify-center mr-2 sm:mr-3 text-xs sm:text-sm'
+        }
+      >
+        {semester.semester}
+      </span>
+      Semester {semester.semester}
+      {compact ? ' Grades' : ' - Detailed Grades'}
+    </h4>
+    <div className={compact ? 'space-y-2' : 'grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4'}>
+      {semester.grades.map((grade, index) => (
+        <div
+          key={index}
+          className={
+            compact
+              ? 'group relative overflow-hidden flex items-center justify-between p-3 bg-white dark:bg-dark-card rounded-lg shadow-sm hover:shadow-md transition-all duration-300'
+              : 'group relative overflow-hidden flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-dark-card rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99]'
+          }
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative z-10 flex-grow min-w-0">
+            <p
+              className={`font-semibold group-hover:text-primary transition-colors ${compact ? 'text-sm' : 'text-sm sm:text-base'} truncate`}
+            >
+              {grade.subjectCode}
+            </p>
+            <p
+              className={`${compact ? 'text-xs' : 'text-xs sm:text-sm'} text-slate-600 dark:text-slate-400 truncate`}
+            >
+              {grade.subjectName}
+            </p>
+            <p
+              className={
+                compact
+                  ? 'text-[10px] text-slate-500 mt-0.5'
+                  : 'text-[10px] sm:text-xs text-slate-500 mt-1'
+              }
+            >
+              {grade.credits} Credits
+            </p>
+          </div>
+          <div
+            className={`relative z-10 ${compact ? 'px-3 py-1.5 rounded-lg font-bold text-sm' : 'px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-base sm:text-lg'} transition-transform group-hover:scale-110 ${getGradeColor(grade.grade)}`}
+          >
+            {grade.grade}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 const Grades: React.FC = () => {
   const {
@@ -4893,40 +4756,7 @@ const Grades: React.FC = () => {
 
                   {/* Show grades immediately below semester on small screens */}
                   {isSelected && (
-                    <div className="lg:hidden col-span-1 sm:col-span-2 p-4 sm:p-5 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/20">
-                      <h4 className="font-semibold text-sm sm:text-base mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center mr-2 text-xs">
-                          {semester.semester}
-                        </span>
-                        Semester {semester.semester} Grades
-                      </h4>
-                      <div className="space-y-2">
-                        {semester.grades.map((grade: Grade, index: number) => (
-                          <div
-                            key={index}
-                            className="group relative overflow-hidden flex items-center justify-between p-3 bg-white dark:bg-dark-card rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            <div className="relative z-10 flex-grow min-w-0">
-                              <p className="font-semibold group-hover:text-primary transition-colors text-sm truncate">
-                                {grade.subjectCode}
-                              </p>
-                              <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                                {grade.subjectName}
-                              </p>
-                              <p className="text-[10px] text-slate-500 mt-0.5">
-                                {grade.credits} Credits
-                              </p>
-                            </div>
-                            <div
-                              className={`relative z-10 px-3 py-1.5 rounded-lg font-bold text-sm transition-transform group-hover:scale-110 ${getGradeColor(grade.grade)}`}
-                            >
-                              {grade.grade}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <SemesterGrades semester={semester} compact getGradeColor={getGradeColor} />
                   )}
                 </React.Fragment>
               );
@@ -4935,40 +4765,7 @@ const Grades: React.FC = () => {
 
           {/* Selected Semester Details - Show on large screens below grid */}
           {selectedSemesterData && (
-            <div className="hidden lg:block mt-4 sm:mt-6 p-4 sm:p-6 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/20">
-              <h4 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4 flex items-center">
-                <span className="w-6 h-6 sm:w-8 sm:h-8 bg-primary text-white rounded-full flex items-center justify-center mr-2 sm:mr-3 text-xs sm:text-sm">
-                  {selectedSemesterData.semester}
-                </span>
-                Semester {selectedSemesterData.semester} - Detailed Grades
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {selectedSemesterData.grades.map((grade: Grade, index: number) => (
-                  <div
-                    key={index}
-                    className="group relative overflow-hidden flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-dark-card rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99]"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="relative z-10 flex-grow min-w-0">
-                      <p className="font-semibold group-hover:text-primary transition-colors text-sm sm:text-base truncate">
-                        {grade.subjectCode}
-                      </p>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">
-                        {grade.subjectName}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-slate-500 mt-1">
-                        {grade.credits} Credits
-                      </p>
-                    </div>
-                    <div
-                      className={`relative z-10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-base sm:text-lg transition-transform group-hover:scale-110 ${getGradeColor(grade.grade)}`}
-                    >
-                      {grade.grade}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <SemesterGrades semester={selectedSemesterData} getGradeColor={getGradeColor} />
           )}
         </div>
       </div>
