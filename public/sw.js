@@ -113,6 +113,13 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Leave every other cross-origin request to the browser. A fetch made here is checked against
+  // connect-src instead of the page's script-src/img-src, so proxying third-party scripts
+  // (reCAPTCHA for App Check) gets them blocked, and API failures get masked as offline errors.
+  if (new URL(event.request.url).origin !== self.location.origin) {
+    return;
+  }
+
   // Network-first strategy for HTML, JS, and CSS to ensure fresh updates
   const isAppAsset = event.request.url.includes('.html') ||
                      event.request.url.includes('.js') ||
