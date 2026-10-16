@@ -13,6 +13,8 @@ import { defaultQuickLinks } from '@config/quickLinks';
 import { MOTIVATIONAL_QUOTES } from '@config/quotes';
 import { STUDENT_DIRECTORY } from '@config/studentDirectory';
 import { AdminConfig } from '@features/admin/types';
+import { useAuth } from '@features/auth/hooks/useAuth';
+import { getDemoState } from '@features/demo/demoStore';
 import { subscribeToConfig, initializeConfig } from '@services/configService';
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 
@@ -151,12 +153,23 @@ const generateDefaultConfig = (): AdminConfig => {
 };
 
 export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isGuest } = useAuth();
   const [config, setConfig] = useState<AdminConfig>(generateDefaultConfig);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isFirestoreConfig, setIsFirestoreConfig] = useState(false);
 
   useEffect(() => {
+    if (isGuest) {
+      // Guests get the bundled config with fictional classmates in place of the real
+      // student list, so the demo makes no Firebase calls at all
+      setConfig({ ...generateDefaultConfig(), students: getDemoState().directory });
+      setIsFirestoreConfig(false);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -181,7 +194,7 @@ export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children 
     return () => {
       unsubscribe();
     };
-  }, []); // No dependencies - subscribe once on mount
+  }, [isGuest]); // Re-runs only when a guest session starts or ends
 
   const contextValue = useMemo(
     () => ({

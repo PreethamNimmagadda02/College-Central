@@ -14,6 +14,9 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import { STUDENT_DIRECTORY } from '@config/studentDirectory';
 import { auth, db, storage } from '@lib/firebase';
+import { useAuth } from '@features/auth/hooks/useAuth';
+import { DEMO_UID } from '@features/demo/demoSession';
+import { subscribeDemoState, updateDemoProfile } from '@features/demo/demoStore';
 import {
   MAX_FILE_SIZE_BYTES,
   ALLOWED_IMAGE_TYPES,
@@ -37,11 +40,21 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isGuest } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null); // ENHANCEMENT: State for errors.
 
   useEffect(() => {
+    if (isGuest) {
+      // Guests read their profile from the local demo store; Firebase is never touched
+      return subscribeDemoState((state) => {
+        setUser(state.profile);
+        setError(null);
+        setLoading(false);
+      });
+    }
+
     let unsubscribeFromFirestore: (() => void) | null = null;
 
     const initializeUser = async (authUser: firebase.User) => {
@@ -168,34 +181,44 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         unsubscribeFromFirestore();
       }
     };
-  }, []);
+  }, [isGuest]);
 
-  const updateUser = useCallback(async (newDetails: Partial<User>) => {
-    const currentUserId = auth.currentUser?.uid;
-    if (currentUserId) {
-      try {
-        const userDocRef = db.collection('users').doc(currentUserId); // Use compat API
-        await userDocRef.update(newDetails); // Use compat API
+  const updateUser = useCallback(
+    async (newDetails: Partial<User>) => {
+      const currentUserId = isGuest ? DEMO_UID : auth.currentUser?.uid;
+      if (currentUserId) {
+        try {
+          if (isGuest) {
+            updateDemoProfile(newDetails);
+          } else {
+            const userDocRef = db.collection('users').doc(currentUserId); // Use compat API
+            await userDocRef.update(newDetails); // Use compat API
+          }
 
-        if (!newDetails.profilePicture) {
-          await logActivity(currentUserId, {
-            type: 'update',
-            title: 'Profile Updated',
-            description: 'Your profile information was successfully updated.',
-            icon: '✏️',
-            link: '/profile',
-          });
+          if (!newDetails.profilePicture) {
+            await logActivity(currentUserId, {
+              type: 'update',
+              title: 'Profile Updated',
+              description: 'Your profile information was successfully updated.',
+              icon: '✏️',
+              link: '/profile',
+            });
+          }
+        } catch (e) {
+          console.error('Failed to update user:', e);
+          setError(e instanceof Error ? e : new Error('Failed to update profile.'));
+          throw e;
         }
-      } catch (e) {
-        console.error('Failed to update user:', e);
-        setError(e instanceof Error ? e : new Error('Failed to update profile.'));
-        throw e;
       }
-    }
-  }, []);
+    },
+    [isGuest]
+  );
 
   const uploadProfilePicture = useCallback(
     async (file: File) => {
+      if (isGuest) {
+        throw new Error("Profile pictures can't be changed in the demo.");
+      }
       const currentUser = auth.currentUser;
       if (!currentUser || !user) throw new Error('Not authenticated or user data not loaded');
 
@@ -296,7 +319,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         );
       });
     },
-    [user, updateUser]
+    [user, updateUser, isGuest]
   );
 
   const contextValue = useMemo(
