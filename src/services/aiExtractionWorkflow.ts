@@ -3,8 +3,6 @@
  * A robust multi-step workflow for extracting data from large files with maximum accuracy.
  */
 
-import { retryOnlyIfRetryable } from '@lib/utils/retryLogic';
-
 // ============================================================================
 // Types
 // ============================================================================
@@ -187,6 +185,22 @@ ${chunk}`;
 }
 
 /**
+ * Try a chunk up to `attempts` times. Any failure is retried: Gemini's rate-limit and server
+ * errors carry no status field, and a malformed reply often succeeds on the next call.
+ */
+async function extractWithRetries(extract: () => Promise<unknown[]>, attempts: number) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await extract();
+    } catch (error) {
+      if (attempt >= attempts) throw error;
+      console.warn(`[Extraction] Attempt ${attempt} failed, retrying:`, error);
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+}
+
+/**
  * Repair truncated JSON by finding the last complete object
  */
 function repairTruncatedJSON(jsonStr: string): string {
@@ -273,10 +287,9 @@ export async function extractWithWorkflow<T>(
     });
 
     try {
-      // maxRetries counts attempts here; retryOnlyIfRetryable counts retries after the first
-      const items = await retryOnlyIfRetryable(
+      const items = await extractWithRetries(
         () => extractFromChunk(chunkText, i, totalChunks, config.schema, apiKey),
-        Math.max(0, config.maxRetries - 1)
+        config.maxRetries
       );
       allItems.push(...items);
       successfulChunks++;
