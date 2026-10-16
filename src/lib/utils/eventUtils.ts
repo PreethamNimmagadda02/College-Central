@@ -1,5 +1,8 @@
 import { CalendarEvent } from '@/types';
 
+// Unique key for an event; reminder preferences are stored under this key
+export const getEventKey = (event: CalendarEvent): string => `${event.date}-${event.description}`;
+
 // Helper function to get emoji for calendar event type
 export const getEventEmoji = (event: CalendarEvent): string => {
   const desc = event.description.toLowerCase();

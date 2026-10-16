@@ -21,10 +21,10 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import { logActivity } from '@services/activityService';
 import { getDemoState, subscribeDemoState, updateDemoState } from '@features/demo/demoStore';
+import { getEventKey } from '@lib/utils/eventUtils';
 
 interface CalendarContextType {
   calendarData: AcademicCalendarData | null;
-  setCalendarData: React.Dispatch<React.SetStateAction<AcademicCalendarData | null>>;
   loading: boolean;
   addUserEvent: (event: CalendarEvent) => Promise<void>;
   updateUserEvent: (eventId: string, event: CalendarEvent) => Promise<void>;
@@ -99,11 +99,6 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [loading, setLoading] = useState(true);
   const [userEvents, setUserEvents] = useState<CalendarEvent[]>([]);
   const [reminderPreferences, setReminderPreferences] = useState<string[]>([]);
-
-  // Generate unique key for an event
-  const getEventKey = useCallback((event: CalendarEvent): string => {
-    return `${event.date}-${event.description}`;
-  }, []);
 
   // Load user's custom events from Firebase
   useEffect(() => {
@@ -264,39 +259,33 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     let currentSemesterStart = adjustedPreloadedData.semesterStartDate;
     let currentSemesterEnd = adjustedPreloadedData.semesterEndDate;
 
+    // A semester ends with the first end-semester exams after its start
+    const findSemesterEnd = (startEvent: CalendarEvent): string | undefined => {
+      const endEvent = semesterEnds.find(
+        (e) => new Date(e.endDate || e.date) > new Date(startEvent.date)
+      );
+      return endEvent ? endEvent.endDate || endEvent.date : undefined;
+    };
+
     // Logic to find the active or next semester
     // 1. Try to find a semester we are currently in
     let foundActiveSemester = false;
 
-    for (let i = 0; i < semesterStarts.length; i++) {
-      const startEvent = semesterStarts[i];
-      if (!startEvent) continue;
+    for (const startEvent of semesterStarts) {
+      const semesterEnd = findSemesterEnd(startEvent);
 
-      // Find the corresponding end event (the next one after this start)
-      const endEvent = semesterEnds.find(
-        (e) => new Date(e.endDate || e.date) > new Date(startEvent.date)
-      );
-
-      if (endEvent) {
-        const startDate = new Date(startEvent.date);
-        const endDate = new Date(endEvent.endDate || endEvent.date);
-
-        // If today is within this range, pick it
-        if (today >= startDate && today <= endDate) {
-          currentSemesterStart = startEvent.date;
-          currentSemesterEnd = endEvent.endDate || endEvent.date;
-          foundActiveSemester = true;
-          break;
-        }
+      // If today is within this range, pick it
+      if (semesterEnd && today >= new Date(startEvent.date) && today <= new Date(semesterEnd)) {
+        currentSemesterStart = startEvent.date;
+        currentSemesterEnd = semesterEnd;
+        foundActiveSemester = true;
+        break;
       }
     }
 
     // 2. If not in an active semester, find the NEXT semester
     if (!foundActiveSemester) {
-      for (let i = 0; i < semesterStarts.length; i++) {
-        const startEvent = semesterStarts[i];
-        if (!startEvent) continue;
-
+      for (const startEvent of semesterStarts) {
         const startDate = new Date(startEvent.date);
 
         if (today < startDate) {
@@ -304,17 +293,12 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
           // Check if we are within 7 days of the start date
           const diffTime = startDate.getTime() - today.getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          const semesterEnd = diffDays <= 7 ? findSemesterEnd(startEvent) : undefined;
 
-          if (diffDays <= 7) {
-            const endEvent = semesterEnds.find(
-              (e) => new Date(e.endDate || e.date) > new Date(startEvent.date)
-            );
-            if (endEvent) {
-              currentSemesterStart = startEvent.date;
-              currentSemesterEnd = endEvent.endDate || endEvent.date;
-              foundActiveSemester = true;
-              break;
-            }
+          if (semesterEnd) {
+            currentSemesterStart = startEvent.date;
+            currentSemesterEnd = semesterEnd;
+            break;
           }
         }
       }
@@ -372,7 +356,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         console.error('Error cleaning up past event reminders:', error);
       }
     }
-  }, [currentUser, calendarData, reminderPreferences, getEventKey, saveReminderKeys]);
+  }, [currentUser, calendarData, reminderPreferences, saveReminderKeys]);
 
   // Run reminder cleanup when calendar data or reminders change
   useEffect(() => {
@@ -488,7 +472,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         });
       }
     },
-    [currentUser, isGuest, reminderPreferences, getEventKey, toggleReminderPreference]
+    [currentUser, isGuest, reminderPreferences, toggleReminderPreference]
   );
 
   // Delete user event from Firebase (or the demo store for guests)
@@ -533,13 +517,12 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         link: '/academic-calendar',
       });
     },
-    [currentUser, isGuest, reminderPreferences, getEventKey, saveReminderKeys]
+    [currentUser, isGuest, reminderPreferences, saveReminderKeys]
   );
 
   const contextValue = useMemo(
     () => ({
       calendarData,
-      setCalendarData,
       loading,
       addUserEvent,
       updateUserEvent,
@@ -550,14 +533,12 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     }),
     [
       calendarData,
-      setCalendarData,
       loading,
       addUserEvent,
       updateUserEvent,
       deleteUserEvent,
       reminderPreferences,
       toggleReminderPreference,
-      getEventKey,
     ]
   );
 
