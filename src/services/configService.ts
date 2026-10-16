@@ -39,37 +39,6 @@ const ARRAY_CONFIG_KEYS = [
 ] as const;
 
 /**
- * Update the entire app configuration in Firestore
- * Writes each section to its own document
- */
-export const updateConfig = async (config: AdminConfig): Promise<boolean> => {
-  try {
-    const batch = db.batch();
-    const collectionRef = db.collection(CONFIG_COLLECTION);
-
-    // Write each section to its own document
-    Object.entries(CONFIG_DOCS).forEach(([key, docId]) => {
-      const docRef = collectionRef.doc(docId);
-      const data = config[key as keyof AdminConfig];
-
-      // For array-based configs, wrap in { items: [...] }
-      if (ARRAY_CONFIG_KEYS.includes(key as any)) {
-        batch.set(docRef, { items: data }, { merge: true });
-      } else {
-        // For object configs (like collegeInfo), replace entirely to ensure nested values sync
-        batch.set(docRef, data);
-      }
-    });
-
-    await batch.commit();
-    return true;
-  } catch (error) {
-    console.error('Error updating config in Firestore:', error);
-    return false;
-  }
-};
-
-/**
  * Update a specific section of the app configuration
  */
 export const updateConfigSection = async <K extends keyof AdminConfig>(
