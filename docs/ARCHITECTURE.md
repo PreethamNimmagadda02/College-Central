@@ -1491,7 +1491,7 @@ VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=sender_id
 VITE_FIREBASE_APP_ID=app_id
 VITE_FIREBASE_MEASUREMENT_ID=G-measurement_id
-VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_FIREBASE_APPCHECK_SITE_KEY=your_recaptcha_enterprise_site_key
 
 # Tenant-specific
 VITE_ALLOWED_EMAIL_DOMAIN=@iitism.ac.in
@@ -1860,32 +1860,22 @@ export interface ExampleContextType {
 
 ### 20.1 Current Implementation
 
+Gemini is called through Firebase AI Logic. Firebase proxies the request and holds
+the Gemini API key server-side, and App Check attests that the request comes from
+this app. The client never has a Gemini key: anything in a `VITE_` variable is
+public, and `npm run build` fails if a credential reaches `dist/`.
+
 ```typescript
-// src/services/api.ts
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+// src/lib/firebase.ts exposes the lazy-loaded client
+import { getFirebaseAI } from '@lib/firebase';
 
-export const getWeatherRecommendation = async (weather: WeatherData) => {
-  const prompt = `Based on the following weather data:
-    Temperature: ${weather.temp}°C
-    Condition: ${weather.condition}
-    Provide a brief recommendation for students.`;
-
-  const response = await fetch(GEMINI_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': GEMINI_API_KEY
-    },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
-    })
-  });
-
-  const data = await response.json();
-  return data.candidates[0].content.parts[0].text;
-};
+const { getModel } = await getFirebaseAI();
+const result = await getModel().generateContent(prompt);
+const text = result.response.text();
 ```
+
+Callers: `src/contexts/GradesContext.tsx` (grade sheet extraction) and
+`src/services/aiExtractionWorkflow.ts` (calendar and course extraction).
 
 ### 20.2 Future AI Features
 
@@ -2066,7 +2056,7 @@ VITE_FIREBASE_API_KEY=${COLLEGEID_FIREBASE_API_KEY}
 VITE_FIREBASE_MESSAGING_SENDER_ID=${COLLEGEID_MESSAGING_SENDER_ID}
 VITE_FIREBASE_APP_ID=${COLLEGEID_APP_ID}
 VITE_FIREBASE_MEASUREMENT_ID=${COLLEGEID_MEASUREMENT_ID}
-VITE_GEMINI_API_KEY=${COLLEGEID_GEMINI_API_KEY}
+VITE_FIREBASE_APPCHECK_SITE_KEY=${COLLEGEID_APPCHECK_SITE_KEY}
 
 # College-specific
 VITE_ALLOWED_EMAIL_DOMAIN=@example.edu
@@ -2089,7 +2079,7 @@ VITE_EMAILJS_PUBLIC_KEY=<shared>
 | **Per-Tenant Firebase** | `<COLLEGE>_MESSAGING_SENDER_ID` | `IITISM_MESSAGING_SENDER_ID` |
 | **Per-Tenant Firebase** | `<COLLEGE>_APP_ID` | `IITISM_APP_ID` |
 | **Per-Tenant Firebase** | `<COLLEGE>_MEASUREMENT_ID` | `IITISM_MEASUREMENT_ID` |
-| **Per-Tenant Gemini** | `<COLLEGE>_GEMINI_API_KEY` | `IITISM_GEMINI_API_KEY` |
+| **Per-Tenant App Check** | `<COLLEGE>_APPCHECK_SITE_KEY` | `IITISM_APPCHECK_SITE_KEY` |
 | **Per-Tenant Service Account** | `<COLLEGE>_FIREBASE_SERVICE_ACCOUNT` | `IITISM_FIREBASE_SERVICE_ACCOUNT` |
 | **Per-Tenant Project ID** | `<COLLEGE>_PROJECT_ID` | `IITISM_PROJECT_ID` |
 | **Shared EmailJS** | `VITE_EMAILJS_*` | `VITE_EMAILJS_SERVICE_ID` |
@@ -2141,7 +2131,7 @@ on:
    - `<COLLEGE>_MESSAGING_SENDER_ID`
    - `<COLLEGE>_APP_ID`
    - `<COLLEGE>_MEASUREMENT_ID`
-   - `<COLLEGE>_GEMINI_API_KEY`
+   - `<COLLEGE>_APPCHECK_SITE_KEY`
    - `<COLLEGE>_FIREBASE_SERVICE_ACCOUNT` (JSON)
    - `<COLLEGE>_PROJECT_ID`
 

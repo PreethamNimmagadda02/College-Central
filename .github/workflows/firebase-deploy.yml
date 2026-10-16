@@ -36,8 +36,8 @@ jobs:
           # IIT(ISM) Domain Config
           VITE_ALLOWED_EMAIL_DOMAIN: "@iitism.ac.in"
           VITE_HOSTED_DOMAIN: "iitism.ac.in"
-          # IIT(ISM) External Services
-          VITE_GEMINI_API_KEY: ${{ secrets.iitism_GEMINI_API_KEY }}
+          # IIT(ISM) App Check (reCAPTCHA Enterprise site key, public)
+          VITE_FIREBASE_APPCHECK_SITE_KEY: ${{ secrets.iitism_APPCHECK_SITE_KEY }}
           # Shared Services (common across all tenants)
           VITE_EMAILJS_SERVICE_ID: ${{ secrets.VITE_EMAILJS_SERVICE_ID }}
           VITE_EMAILJS_TEMPLATE_ID: ${{ secrets.VITE_EMAILJS_TEMPLATE_ID }}

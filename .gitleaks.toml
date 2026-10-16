@@ -1,0 +1,11 @@
+# Extends the default gitleaks rules.
+[extend]
+useDefault = true
+
+# Google also issues API keys in an "AQ." format, which the default
+# gcp-api-key rule (AIza...) does not match.
+[[rules]]
+id = "google-api-key-aq"
+description = "Google API key (AQ. format)"
+regex = '''\bAQ\.[A-Za-z0-9_-]{40,}'''
+keywords = ["AQ."]
