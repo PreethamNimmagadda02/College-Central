@@ -33,6 +33,7 @@ try {
   db.settings({
     cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
     experimentalAutoDetectLongPolling: true,
+    ignoreUndefinedProperties: true, // Drop undefined fields instead of rejecting the write
     merge: true, // Merge with existing settings to avoid override warning
   });
 } catch (err) {
