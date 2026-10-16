@@ -1,7 +1,7 @@
 import { City, cities } from '@/data/cities';
 import { getWeatherAdvice } from '@/data/weatherAdvice';
 import { useAppConfig } from '@contexts/AppConfigContext';
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 // --- Types ---
 
@@ -18,7 +18,6 @@ export interface DetailedWeatherData extends WeatherData {
   pressure: number;
   feelsLike: number;
   uvIndex: number;
-  visibility: number;
   precipitation: number;
   cloudCover: number;
   dewPoint: number;
@@ -26,27 +25,15 @@ export interface DetailedWeatherData extends WeatherData {
   weatherCode?: number;
 }
 
-interface WeatherAdviceCache {
-  advice: string;
-  temp: number;
-  weatherCode: number;
-  timeOfDay: string;
-  timestamp: number;
-}
-
 interface WeatherContextType {
   weather: WeatherData | null;
   detailedWeather: DetailedWeatherData | null;
   weatherLoading: boolean;
-  weatherError: string | null;
   selectedCity: City;
   showWeatherModal: boolean;
   recommendation: string | null;
   fetchWeather: (city?: City) => Promise<void>;
-  setSelectedCity: (city: City) => void;
   setShowWeatherModal: (show: boolean) => void;
-  toggleWeatherModal: () => void;
-  cities: City[];
 }
 
 // --- Constants & Helpers ---
@@ -58,8 +45,6 @@ const DEFAULT_CITY: City = {
   lon: 83.2185,
 };
 
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
-
 export const getWindDirection = (degrees: number): string => {
   const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   const index = Math.round(degrees / 45) % 8;
@@ -67,66 +52,41 @@ export const getWindDirection = (degrees: number): string => {
   return directions[normalizedIndex] ?? 'N';
 };
 
-const getWeatherInfoFromCode = (
-  code: number,
-  isDay: number
-): { desc: string; icon: string } => {
-  const is_day = isDay === 1;
-  switch (code) {
-    case 0:
-      return { desc: 'Clear sky', icon: is_day ? '☀️' : '🌙' };
-    case 1:
-      return { desc: 'Mainly clear', icon: is_day ? '🌤️' : '☁️' };
-    case 2:
-      return { desc: 'Partly cloudy', icon: is_day ? '⛅' : '☁️' };
-    case 3:
-      return { desc: 'Overcast', icon: '☁️' };
-    case 45:
-    case 48:
-      return { desc: 'Fog', icon: '🌫️' };
-    case 51:
-    case 53:
-    case 55:
-      return { desc: 'Drizzle', icon: '🌦️' };
-    case 56:
-    case 57:
-      return { desc: 'Freezing Drizzle', icon: '🌨️' };
-    case 61:
-    case 63:
-    case 65:
-      return { desc: 'Rain', icon: '🌧️' };
-    case 66:
-    case 67:
-      return { desc: 'Freezing Rain', icon: '🌨️' };
-    case 71:
-    case 73:
-    case 75:
-      return { desc: 'Snow fall', icon: '❄️' };
-    case 77:
-      return { desc: 'Snow grains', icon: '❄️' };
-    case 80:
-    case 81:
-    case 82:
-      return { desc: 'Rain showers', icon: '🌧️' };
-    case 85:
-    case 86:
-      return { desc: 'Snow showers', icon: '🌨️' };
-    case 95:
-      return { desc: 'Thunderstorm', icon: '⛈️' };
-    case 96:
-    case 99:
-      return { desc: 'Thunderstorm with hail', icon: '⛈️' };
-    default:
-      return { desc: 'Unknown', icon: '🌡️' };
-  }
+// Open-Meteo WMO weather codes: [description, icon, night icon if different]
+const WEATHER_CODES: Record<number, [desc: string, icon: string, nightIcon?: string]> = {
+  0: ['Clear sky', '☀️', '🌙'],
+  1: ['Mainly clear', '🌤️', '☁️'],
+  2: ['Partly cloudy', '⛅', '☁️'],
+  3: ['Overcast', '☁️'],
+  45: ['Fog', '🌫️'],
+  48: ['Fog', '🌫️'],
+  51: ['Drizzle', '🌦️'],
+  53: ['Drizzle', '🌦️'],
+  55: ['Drizzle', '🌦️'],
+  56: ['Freezing Drizzle', '🌨️'],
+  57: ['Freezing Drizzle', '🌨️'],
+  61: ['Rain', '🌧️'],
+  63: ['Rain', '🌧️'],
+  65: ['Rain', '🌧️'],
+  66: ['Freezing Rain', '🌨️'],
+  67: ['Freezing Rain', '🌨️'],
+  71: ['Snow fall', '❄️'],
+  73: ['Snow fall', '❄️'],
+  75: ['Snow fall', '❄️'],
+  77: ['Snow grains', '❄️'],
+  80: ['Rain showers', '🌧️'],
+  81: ['Rain showers', '🌧️'],
+  82: ['Rain showers', '🌧️'],
+  85: ['Snow showers', '🌨️'],
+  86: ['Snow showers', '🌨️'],
+  95: ['Thunderstorm', '⛈️'],
+  96: ['Thunderstorm with hail', '⛈️'],
+  99: ['Thunderstorm with hail', '⛈️'],
 };
 
-const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 17) return 'afternoon';
-  if (hour >= 17 && hour < 21) return 'evening';
-  return 'night';
+const getWeatherInfoFromCode = (code: number, isDay: number): { desc: string; icon: string } => {
+  const [desc, icon, nightIcon] = WEATHER_CODES[code] ?? ['Unknown', '🌡️'];
+  return { desc, icon: isDay !== 1 && nightIcon ? nightIcon : icon };
 };
 
 // --- Context & Provider ---
@@ -138,79 +98,13 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [detailedWeather, setDetailedWeather] = useState<DetailedWeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
-  const [weatherError, setWeatherError] = useState<string | null>(null);
   const [showWeatherModal, setShowWeatherModal] = useState(false);
-  const [recommendation, setRecommendation] = useState<string | null>(null);
 
   const [selectedCity, setSelectedCity] = useState<City>(DEFAULT_CITY);
 
-  const getCachedAdvice = (temp: number, weatherCode: number): string | null => {
-    try {
-      const cached = localStorage.getItem('weatherAdviceCache');
-      if (!cached) return null;
-
-      const cacheData: WeatherAdviceCache = JSON.parse(cached);
-      const now = Date.now();
-
-      if (
-        now - cacheData.timestamp < CACHE_DURATION &&
-        Math.abs(cacheData.temp - temp) < 2 &&
-        cacheData.weatherCode === weatherCode
-      ) {
-        return cacheData.advice;
-      }
-
-      return null;
-    } catch (err) {
-      console.error('Cache read error:', err);
-      return null;
-    }
-  };
-
-  const cacheAdvice = (advice: string, temp: number, weatherCode: number) => {
-    try {
-      const cacheData: WeatherAdviceCache = {
-        advice,
-        temp,
-        weatherCode,
-        timeOfDay: getTimeOfDay(),
-        timestamp: Date.now(),
-      };
-      localStorage.setItem('weatherAdviceCache', JSON.stringify(cacheData));
-    } catch (err) {
-      console.error('Cache write error:', err);
-    }
-  };
-
-  const fetchWeatherRecommendation = async (weatherData: WeatherData, weatherCode: number) => {
-    setRecommendation(null);
-
-    try {
-      const temp = parseFloat(weatherData.temp);
-
-      // Check cache first
-      const cachedAdvice = getCachedAdvice(temp, weatherCode);
-      if (cachedAdvice) {
-        setRecommendation(cachedAdvice);
-        return;
-      }
-
-      // Get advice from pre-stored data
-      const advice = getWeatherAdvice(weatherCode, temp);
-      setRecommendation(advice);
-
-      // Cache the new advice
-      cacheAdvice(advice, temp, weatherCode);
-    } catch (err) {
-      console.error('Weather advice error:', err);
-    }
-  };
-
   const fetchWeather = useCallback(
     async (city: City = selectedCity) => {
-      setWeatherError(null);
       setWeatherLoading(true);
-      setRecommendation(null);
 
       try {
         const lat = city.lat;
@@ -259,7 +153,6 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }> = ({ child
           pressure: surface_pressure || 0,
           feelsLike: apparent_temperature || parseFloat(weatherData.temp),
           uvIndex: uv_index || 0,
-          visibility: 10,
           precipitation: precipitation || 0,
           cloudCover: cloud_cover || 0,
           dewPoint: dew_point_2m || 0,
@@ -267,10 +160,7 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }> = ({ child
           weatherCode: weather_code,
         };
         setDetailedWeather(detailedData);
-
-        await fetchWeatherRecommendation(weatherData, weather_code);
       } catch (err) {
-        setWeatherError('Could not load weather.');
         console.error('Weather fetch error:', err);
       } finally {
         setWeatherLoading(false);
@@ -310,27 +200,23 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [appConfig, selectedCity]);
 
-  // Handle city change (in-memory only, not persistent)
-  const handleSetSelectedCity = (city: City) => {
-    setSelectedCity(city);
-    fetchWeather(city);
-  };
-
-  const toggleWeatherModal = () => setShowWeatherModal((prev) => !prev);
+  // Advice is a local lookup with a random pick; memoise it so it only changes with the weather
+  const temp = weather ? parseFloat(weather.temp) : null;
+  const weatherCode = detailedWeather?.weatherCode;
+  const recommendation = useMemo(
+    () => (temp !== null && weatherCode !== undefined ? getWeatherAdvice(weatherCode, temp) : null),
+    [temp, weatherCode]
+  );
 
   const value = {
     weather,
     detailedWeather,
     weatherLoading,
-    weatherError,
     selectedCity,
     showWeatherModal,
     recommendation,
     fetchWeather,
-    setSelectedCity: handleSetSelectedCity,
     setShowWeatherModal,
-    toggleWeatherModal,
-    cities,
   };
 
   return <WeatherContext.Provider value={value}>{children}</WeatherContext.Provider>;

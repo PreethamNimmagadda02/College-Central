@@ -22,8 +22,6 @@ import React, { createContext, useContext, useState, useEffect, useMemo, ReactNo
 interface AppConfigContextType {
   config: AdminConfig;
   loading: boolean;
-  error: Error | null;
-  isFirestoreConfig: boolean; // true if config is from Firestore, false if fallback
 }
 
 const AppConfigContext = createContext<AppConfigContextType | undefined>(undefined);
@@ -108,8 +106,6 @@ export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children 
   const { isGuest } = useAuth();
   const [config, setConfig] = useState<AdminConfig>(generateDefaultConfig);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [isFirestoreConfig, setIsFirestoreConfig] = useState(false);
 
   useEffect(() => {
     if (isGuest) {
@@ -122,14 +118,11 @@ export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children 
         students: getDemoState().directory,
         calendar: { ...defaults.calendar, events: [] },
       });
-      setIsFirestoreConfig(false);
-      setError(null);
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     // Initialize config if it doesn't exist
     const defaultConfig = generateDefaultConfig();
@@ -138,14 +131,8 @@ export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children 
     // Subscribe to real-time updates - this is independent of auth
     // Config is read-only and should always be available
     const unsubscribe = subscribeToConfig((firestoreConfig) => {
-      if (firestoreConfig) {
-        setConfig(firestoreConfig);
-        setIsFirestoreConfig(true);
-      } else {
-        // Fallback to default config
-        setConfig(defaultConfig);
-        setIsFirestoreConfig(false);
-      }
+      // Fall back to the bundled defaults when Firestore has no config
+      setConfig(firestoreConfig ?? defaultConfig);
       setLoading(false);
     });
 
@@ -154,15 +141,7 @@ export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children 
     };
   }, [isGuest]); // Re-runs only when a guest session starts or ends
 
-  const contextValue = useMemo(
-    () => ({
-      config,
-      loading,
-      error,
-      isFirestoreConfig,
-    }),
-    [config, loading, error, isFirestoreConfig]
-  );
+  const contextValue = useMemo(() => ({ config, loading }), [config, loading]);
 
   return <AppConfigContext.Provider value={contextValue}>{children}</AppConfigContext.Provider>;
 };

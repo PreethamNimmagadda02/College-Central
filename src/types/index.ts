@@ -270,4 +270,7 @@ export interface User {
 
   // Grade Data
   gradesData?: GradesData;
+
+  scheduleData?: ClassSchedule[];
+  savedCampusPlaces?: string[];
 }
