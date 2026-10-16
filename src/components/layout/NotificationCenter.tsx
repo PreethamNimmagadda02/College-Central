@@ -1,7 +1,7 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@contexts/UserContext';
 import { useAuth } from '@features/auth/hooks/useAuth';
+import { useClickOutside } from '@hooks/useClickOutside';
 import { subscribeDemoState, updateDemoState } from '@features/demo/demoStore';
 import { db } from '@lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot, doc, updateDoc, writeBatch } from 'firebase/firestore';
@@ -13,31 +13,25 @@ const NotificationCenter: React.FC = () => {
     const { isGuest } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const unreadCount = notifications.filter((n) => !n.read).length;
     const [expandedNotifId, setExpandedNotifId] = useState<string | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Close dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-                setExpandedNotifId(null);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    useClickOutside(
+        dropdownRef,
+        useCallback(() => {
+            setIsOpen(false);
+            setExpandedNotifId(null);
+        }, [])
+    );
 
     // Listen to notifications
     useEffect(() => {
         if (!user) return;
 
         if (isGuest) {
-            return subscribeDemoState((state) => {
-                setNotifications(state.notifications);
-                setUnreadCount(state.notifications.filter((n) => !n.read).length);
-            });
+            return subscribeDemoState((state) => setNotifications(state.notifications));
         }
 
         const q = query(
@@ -53,7 +47,6 @@ const NotificationCenter: React.FC = () => {
             })) as Notification[];
 
             setNotifications(notifs);
-            setUnreadCount(notifs.filter(n => !n.read).length);
         });
 
         return () => unsubscribe();

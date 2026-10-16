@@ -26,12 +26,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   sidebarCollapsed,
   onHoverChange,
 }) => {
-  const trigger = useRef<HTMLButtonElement>(null);
-  const sidebar = useRef<HTMLElement>(null);
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [isHoveringEdge, setIsHoveringEdge] = React.useState(false);
-  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
 
   const handleLogout = async () => {
@@ -75,12 +72,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           const shouldShowSidebar = isHoveringEdge ? x <= extendedWidth : x <= edgeDetectionWidth;
 
           if (shouldShowSidebar !== isHoveringEdge) {
-            // Clear any pending timeout
-            if (hoverTimeoutRef.current) {
-              clearTimeout(hoverTimeoutRef.current);
-              hoverTimeoutRef.current = null;
-            }
-
             // Both show and hide instantly - no delays
             setIsHoveringEdge(shouldShowSidebar);
             onHoverChange?.(shouldShowSidebar);
@@ -94,9 +85,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
-        if (hoverTimeoutRef.current) {
-          clearTimeout(hoverTimeoutRef.current);
-        }
         if (rafRef.current) {
           cancelAnimationFrame(rafRef.current);
         }
@@ -110,22 +98,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       return undefined;
     }
   }, [sidebarCollapsed, isHoveringEdge, onHoverChange]);
-
-  // close on click outside
-  useEffect(() => {
-    const clickHandler = ({ target }: MouseEvent) => {
-      if (!sidebar.current || !trigger.current) return;
-      if (
-        !sidebarOpen ||
-        sidebar.current.contains(target as Node) ||
-        trigger.current.contains(target as Node)
-      )
-        return;
-      setSidebarOpen(false);
-    };
-    document.addEventListener('click', clickHandler);
-    return () => document.removeEventListener('click', clickHandler);
-  });
 
   const menuSections = {
     academics: [
@@ -194,21 +166,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       ></div>
 
       <aside
-        ref={sidebar}
         onMouseEnter={() => {
           if (sidebarCollapsed) {
-            if (hoverTimeoutRef.current) {
-              clearTimeout(hoverTimeoutRef.current);
-              hoverTimeoutRef.current = null;
-            }
             setIsHoveringEdge(true);
             onHoverChange?.(true);
           }
         }}
-        onMouseLeave={() => {
-          // The global mousemove handler will handle hiding the sidebar
-          // when the cursor moves beyond the sidebar boundary
-        }}
+        // Leaving is handled by the mousemove listener, which hides the sidebar
+        // once the cursor moves beyond its boundary
         className={`fixed left-0 top-16 bottom-0 z-50 flex flex-col w-64
           bg-gradient-to-b from-white/95 via-white/95 to-slate-50/95
           dark:from-slate-900/95 dark:via-slate-900/95 dark:to-slate-900/90
