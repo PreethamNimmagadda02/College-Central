@@ -39,6 +39,7 @@ import {
   addDays,
   calculateDateProgress,
   getWeekNumber,
+  parseDateString,
 } from '@lib/utils/dateUtils';
 import { getGreeting, getRandomItem } from '@lib/utils/helpers';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -206,7 +207,6 @@ const Dashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [draggedLinkId, setDraggedLinkId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // === Smart Countdown: Events with Reminders (synced with Calendar) ===
 
@@ -1343,151 +1343,18 @@ const Dashboard: React.FC = () => {
                     </svg>
                   </button>
 
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowDatePicker(!showDatePicker)}
-                      className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2 min-w-[9.375rem]"
-                      title="Click to pick a date"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      Jump to date
-                    </button>
-
-                    {showDatePicker && (
-                      <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-3 z-10 min-w-[15.625rem]">
-                        <div className="flex items-center gap-2 mb-3">
-                          <select
-                            value={selectedDate.getMonth()}
-                            onChange={(e) => {
-                              const newDate = new Date(selectedDate);
-                              newDate.setMonth(parseInt(e.target.value));
-                              setSelectedDate(newDate);
-                              localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
-                            }}
-                            className="flex-1 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                          >
-                            {[
-                              'Jan',
-                              'Feb',
-                              'Mar',
-                              'Apr',
-                              'May',
-                              'Jun',
-                              'Jul',
-                              'Aug',
-                              'Sep',
-                              'Oct',
-                              'Nov',
-                              'Dec',
-                            ].map((month, idx) => (
-                              <option key={idx} value={idx}>
-                                {month}
-                              </option>
-                            ))}
-                          </select>
-                          <input
-                            type="number"
-                            min="2000"
-                            max="2100"
-                            value={selectedDate.getFullYear()}
-                            onChange={(e) => {
-                              const year = parseInt(e.target.value);
-                              if (!isNaN(year) && year >= 2000 && year <= 2100) {
-                                const newDate = new Date(selectedDate);
-                                newDate.setFullYear(year);
-                                setSelectedDate(newDate);
-                                localStorage.setItem(
-                                  'dashboardSelectedDate',
-                                  newDate.toISOString()
-                                );
-                              }
-                            }}
-                            placeholder="YYYY"
-                            className="w-20 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:outline-none text-center"
-                          />
-                        </div>
-                        <div className="grid grid-cols-7 gap-1 mb-2">
-                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
-                            <div
-                              key={day}
-                              className="text-center text-xs font-semibold text-slate-500 dark:text-slate-400 py-1"
-                            >
-                              {day}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="grid grid-cols-7 gap-1">
-                          {(() => {
-                            const year = selectedDate.getFullYear();
-                            const month = selectedDate.getMonth();
-                            const firstDay = new Date(year, month, 1).getDay();
-                            const daysInMonth = new Date(year, month + 1, 0).getDate();
-                            const days = [];
-
-                            // Empty cells for days before month starts
-                            for (let i = 0; i < firstDay; i++) {
-                              days.push(<div key={`empty-${i}`} />);
-                            }
-
-                            // Days of the month
-                            for (let day = 1; day <= daysInMonth; day++) {
-                              const isSelected = day === selectedDate.getDate();
-                              const isToday =
-                                new Date().toDateString() ===
-                                new Date(year, month, day).toDateString();
-                              days.push(
-                                <button
-                                  key={day}
-                                  onClick={() => {
-                                    const newDate = new Date(year, month, day);
-                                    setSelectedDate(newDate);
-                                    localStorage.setItem(
-                                      'dashboardSelectedDate',
-                                      newDate.toISOString()
-                                    );
-                                    setShowDatePicker(false);
-                                  }}
-                                  className={`
-                                                                        text-sm py-1.5 rounded transition-colors
-                                                                        ${isSelected
-                                      ? 'bg-primary text-white font-bold'
-                                      : isToday
-                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold'
-                                        : 'hover:bg-slate-100 dark:hover:bg-slate-700'
-                                    }
-                                                                    `}
-                                >
-                                  {day}
-                                </button>
-                              );
-                            }
-
-                            return days;
-                          })()}
-                        </div>
-                        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-                          <button
-                            onClick={() => setShowDatePicker(false)}
-                            className="px-3 py-1 text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded transition-colors"
-                          >
-                            Close
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <input
+                    type="date"
+                    value={toInputDateString(selectedDate)}
+                    min="2000-01-01"
+                    max="2100-12-31"
+                    onChange={(e) => {
+                      if (e.target.value) setSelectedDate(parseDateString(e.target.value));
+                    }}
+                    className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium transition-colors min-w-[9.375rem]"
+                    title="Jump to date"
+                    aria-label="Jump to date"
+                  />
 
                   <button
                     onClick={handleNextDay}
