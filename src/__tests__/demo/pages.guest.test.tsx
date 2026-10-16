@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const firestoreMock = vi.hoisted(() => ({
@@ -46,12 +47,14 @@ const renderDirectory = () => {
     loading: false,
   } as unknown as ReturnType<typeof useAppConfig>);
 
+  // Directory reports a missing profile with a toast, which App mounts a Toaster for
   render(
     <MemoryRouter initialEntries={['/directory']}>
       <Routes>
         <Route path="/directory" element={<Directory />} />
         <Route path="/u/:userId" element={<UserProfile />} />
       </Routes>
+      <Toaster />
     </MemoryRouter>
   );
   fireEvent.click(screen.getByRole('button', { name: /^Students/ }));

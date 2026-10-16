@@ -13,6 +13,7 @@ import {
 import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { toast } from 'sonner';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { getDemoUserByAdmissionNumber } from '@features/demo/demoStore';
@@ -47,6 +48,17 @@ const isValidIndianPhoneNumber = (phone: string): boolean => {
 
   return false;
 };
+
+// Missing values sort as empty strings
+const compareBy =
+  <T,>(key: keyof T, direction: 'asc' | 'desc') =>
+  (a: T, b: T) => {
+    const aVal = a[key] ?? '';
+    const bVal = b[key] ?? '';
+    if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+    return 0;
+  };
 
 const Directory = () => {
   const { config, loading: configLoading } = useAppConfig();
@@ -137,20 +149,13 @@ const Directory = () => {
       });
     }
 
-    // Sort groups if needed
+    // Sort groups by their first entry
     if (sortConfig.key) {
-      groupedArray.sort((a, b) => {
-        const key = sortConfig.key as keyof DirectoryEntry;
-        const aValue = a[0]![key];
-        const bValue = b[0]![key];
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
+      const compare = compareBy<DirectoryEntry>(
+        sortConfig.key as keyof DirectoryEntry,
+        sortConfig.direction
+      );
+      groupedArray.sort((a, b) => compare(a[0]!, b[0]!));
     }
 
     return groupedArray;
@@ -174,36 +179,16 @@ const Directory = () => {
       if (filtered === studentDirectory) {
         filtered = [...filtered];
       }
-      filtered.sort((a, b) => {
-        const key = sortConfig.key as keyof StudentDirectoryEntry;
-        const aVal = a[key] ?? '';
-        const bVal = b[key] ?? '';
-
-        if (aVal < bVal) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aVal > bVal) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
+      filtered.sort(
+        compareBy<StudentDirectoryEntry>(
+          sortConfig.key as keyof StudentDirectoryEntry,
+          sortConfig.direction
+        )
+      );
     }
 
     return filtered;
   }, [studentDirectory, deferredSearchTerm, sortConfig]);
-
-  // Group students by name (for consistency)
-  const groupedStudents = useMemo(() => {
-    const map = new Map<string, StudentDirectoryEntry[]>();
-    filteredStudents.forEach((entry) => {
-      if (map.has(entry.name)) {
-        map.get(entry.name)!.push(entry);
-      } else {
-        map.set(entry.name, [entry]);
-      }
-    });
-    return Array.from(map.values());
-  }, [filteredStudents]);
 
   // Clear all filters
   const clearFilters = () => {
@@ -213,15 +198,14 @@ const Directory = () => {
   };
 
   // Pagination
-  const totalFacultyPages = Math.ceil(groupedFaculty.length / itemsPerPage);
-  const totalStudentPages = Math.ceil(groupedStudents.length / itemsPerPage);
-  const totalPages = activeTab === 'faculty' ? totalFacultyPages : totalStudentPages;
+  const activeCount = activeTab === 'faculty' ? groupedFaculty.length : filteredStudents.length;
+  const totalPages = Math.ceil(activeCount / itemsPerPage);
 
   const paginatedFaculty = groupedFaculty.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-  const paginatedStudents = groupedStudents.slice(
+  const paginatedStudents = filteredStudents.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -238,10 +222,6 @@ const Directory = () => {
   // Profile Lookup Logic
   const navigate = useNavigate();
   const [checkingProfile, setCheckingProfile] = useState<string | null>(null); // admNo being checked
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: 'success' | 'error';
-  } | null>(null);
 
   if (loading) {
     return (
@@ -271,19 +251,11 @@ const Directory = () => {
       if (userId) {
         navigate(`/u/${userId}`);
       } else {
-        setNotification({
-          message: 'This user has not created a profile yet.',
-          type: 'error',
-        });
-        setTimeout(() => setNotification(null), 3000);
+        toast.error('This user has not created a profile yet.');
       }
     } catch (error) {
       console.error('Error checking profile:', error);
-      setNotification({
-        message: 'Failed to access directory database.',
-        type: 'error',
-      });
-      setTimeout(() => setNotification(null), 3000);
+      toast.error('Failed to access directory database.');
     } finally {
       setCheckingProfile(null);
     }
@@ -294,35 +266,10 @@ const Directory = () => {
       ? 'Search by name, department, designation, or email...'
       : 'Search by name, admission number, or branch...';
 
-  const activeCount = activeTab === 'faculty' ? groupedFaculty.length : filteredStudents.length;
-  const totalCount =
-    activeTab === 'faculty'
-      ? Array.from(new Map(facultyDirectory.map((e) => [e.name, e])).values()).length
-      : studentDirectory.length;
+  const totalCount = activeTab === 'faculty' ? facultyGroups.length : studentDirectory.length;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 relative">
-      {/* Toast Notification */}
-      {notification && (
-        <div className="fixed top-20 right-4 z-50 animate-slideIn">
-          <div
-            className={`px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 text-white ${
-              notification.type === 'error' ? 'bg-red-500' : 'bg-green-500'
-            }`}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span className="font-medium">{notification.message}</span>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
         <div>
@@ -361,7 +308,7 @@ const Directory = () => {
                 Faculty<span className="hidden sm:inline"> & Staff</span>
               </span>
               <span className="bg-primary/10 text-primary dark:bg-secondary/20 dark:text-secondary px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-semibold flex-shrink-0">
-                {Array.from(new Map(facultyDirectory.map((e) => [e.name, e])).values()).length}
+                {facultyGroups.length}
               </span>
             </button>
             <button
@@ -541,8 +488,7 @@ const Directory = () => {
                       </div>
                     );
                   })
-                : paginatedStudents.map((group) => {
-                    const student = group[0]!; // Student data is not expected to have multiple roles.
+                : paginatedStudents.map((student) => {
                     const isChecking = checkingProfile === student.admNo;
                     return (
                       <div
@@ -740,8 +686,7 @@ const Directory = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                  {paginatedStudents.map((group) => {
-                    const student = group[0]!; // Students are not expected to have multiple roles
+                  {paginatedStudents.map((student) => {
                     const isChecking = checkingProfile === student.admNo;
                     return (
                       <tr
@@ -796,11 +741,7 @@ const Directory = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-sm text-slate-600 dark:text-slate-400">
               Showing {(currentPage - 1) * itemsPerPage + 1} -{' '}
-              {Math.min(
-                currentPage * itemsPerPage,
-                activeTab === 'faculty' ? groupedFaculty.length : groupedStudents.length
-              )}{' '}
-              of {activeTab === 'faculty' ? groupedFaculty.length : groupedStudents.length} entries
+              {Math.min(currentPage * itemsPerPage, activeCount)} of {activeCount} entries
             </div>
             <div className="flex gap-2">
               <button
