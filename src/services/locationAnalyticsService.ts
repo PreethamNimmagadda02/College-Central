@@ -56,6 +56,7 @@ export interface AnalyticsSummary {
 }
 
 import { CAMPUS_LOCATIONS } from '@/config/campusMap';
+import { isDemoActive, isDemoUid } from '@features/demo/demoSession';
 
 // ============================================
 // CAMPUS ZONES (Geofencing boundaries)
@@ -137,6 +138,7 @@ export interface UserLocationState {
  * Get user's current location state from Firestore
  */
 export async function getUserLocationState(userId: string): Promise<UserLocationState | null> {
+  if (isDemoUid(userId)) return null;
   try {
     const doc = await db.collection(USER_LOCATION_STATE_COLLECTION).doc(userId).get();
     if (doc.exists) {
@@ -157,6 +159,7 @@ export async function updateUserLocationState(
   zoneId: string,
   visitId: string
 ): Promise<boolean> {
+  if (isDemoUid(userId)) return false;
   try {
     await db.collection(USER_LOCATION_STATE_COLLECTION).doc(userId).set({
       lastZoneId: zoneId,
@@ -178,6 +181,7 @@ export async function recordLocationVisit(
   userId: string,
   zone: CampusZone
 ): Promise<string | null> {
+  if (isDemoUid(userId)) return null;
   try {
     const now = new Date();
     const visit: Omit<LocationVisit, 'id'> = {
@@ -836,11 +840,33 @@ export interface LiveZoneStatus {
   lastUpdated: Date;
 }
 
+const DEMO_CROWD_PATTERN: CrowdLevel[] = [
+  'busy',
+  'moderate',
+  'quiet',
+  'moderate',
+  'quiet',
+  'busy',
+  'quiet',
+];
+
+/** Fixed, varied crowd levels so the demo map doesn't show every zone as quiet. */
+function demoCrowdLevels(): LiveZoneStatus[] {
+  const now = new Date();
+  return DEFAULT_CAMPUS_ZONES.map((zone, i) => {
+    const level = DEMO_CROWD_PATTERN[i % DEMO_CROWD_PATTERN.length]!;
+    const visitorCount =
+      level === 'busy' ? 35 + (i % 10) : level === 'moderate' ? 12 + (i % 8) : i % 5;
+    return { zoneId: zone.id, level, visitorCount, lastUpdated: now };
+  });
+}
+
 /**
  * Get real-time crowd levels for all zones
  * Based on active visits in the last 15 minutes
  */
 export async function getRealTimeCrowdLevels(): Promise<LiveZoneStatus[]> {
+  if (isDemoActive()) return demoCrowdLevels();
   try {
     const now = new Date();
     const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
@@ -918,6 +944,7 @@ export interface UserStats {
  * Get personal stats for a specific user
  */
 export async function getUserStats(userId: string): Promise<UserStats | null> {
+  if (isDemoUid(userId)) return null;
   try {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -998,9 +1025,21 @@ export async function getUserStats(userId: string): Promise<UserStats | null> {
 /**
  * Get popular times for a specific zone (0-23 hour distribution)
  */
+/** A plausible busy-afternoon curve, used when there's no real data and in the demo. */
+function samplePopularTimes(): { hour: number; level: number }[] {
+  return Array.from({ length: 24 }, (_, i) => {
+    // Generate a bell curve-ish pattern peaking at 2 PM (14)
+    const dist = Math.abs(i - 14);
+    let val = Math.max(10, 100 - dist * 10);
+    if (i < 8 || i > 22) val = Math.max(5, val * 0.1);
+    return { hour: i, level: Math.floor(val * (0.5 + Math.random() * 0.5)) };
+  });
+}
+
 export async function getZonePopularTimes(
   zoneId: string
 ): Promise<{ hour: number; level: number }[]> {
+  if (isDemoActive()) return samplePopularTimes();
   try {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -1013,14 +1052,7 @@ export async function getZonePopularTimes(
       .get();
 
     if (snapshot.empty) {
-      // Return mock data if empty so UI looks good for demo
-      return Array.from({ length: 24 }, (_, i) => {
-        // Generate a bell curve-ish pattern peaking at 2 PM (14)
-        const dist = Math.abs(i - 14);
-        let val = Math.max(10, 100 - dist * 10);
-        if (i < 8 || i > 22) val = Math.max(5, val * 0.1);
-        return { hour: i, level: Math.floor(val * (0.5 + Math.random() * 0.5)) };
-      });
+      return samplePopularTimes();
     }
 
     const visits = snapshot.docs.map((doc) => doc.data()) as LocationVisit[];
@@ -1067,6 +1099,7 @@ export async function updateUserLocation(
   location: { lat: number; lng: number; heading?: number; speed?: number },
   zoneId?: string
 ): Promise<void> {
+  if (isDemoUid(userId)) return;
   try {
     await db
       .collection(ACTIVE_LOCATIONS_COLLECTION)

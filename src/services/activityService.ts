@@ -2,6 +2,8 @@
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import { db } from '@lib/firebase';
+import { isDemoUid } from '@features/demo/demoSession';
+import { addDemoActivity } from '@features/demo/demoStore';
 
 import { ActivityType, ActivityItem } from '@/types';
 
@@ -30,6 +32,11 @@ export interface ActivityLogPage {
 export const logActivity = async (userId: string, activity: ActivityLog) => {
   if (!userId) {
     console.warn('Attempted to log activity without a userId.');
+    return;
+  }
+  if (isDemoUid(userId)) {
+    // Guests keep their activity feed in the local demo store
+    addDemoActivity(activity);
     return;
   }
   try {
@@ -126,6 +133,7 @@ export const cleanupOldActivities = async (userId: string): Promise<void> => {
     console.warn('Attempted to cleanup activities without a userId.');
     return;
   }
+  if (isDemoUid(userId)) return; // the demo store caps its own feed
 
   try {
     const activityCollectionRef = db.collection('users').doc(userId).collection('activity');
