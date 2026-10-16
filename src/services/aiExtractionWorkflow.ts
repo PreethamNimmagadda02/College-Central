@@ -3,6 +3,8 @@
  * A robust multi-step workflow for extracting data from large files with maximum accuracy.
  */
 
+import { getFirebaseAI } from '@lib/firebase';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -128,11 +130,9 @@ async function extractFromChunk(
   chunk: string,
   chunkIndex: number,
   totalChunks: number,
-  schema: ExtractionSchema,
-  apiKey: string
+  schema: ExtractionSchema
 ): Promise<unknown[]> {
-  const { GoogleGenAI } = await import('@google/genai');
-  const ai = new GoogleGenAI({ apiKey });
+  const { getModel } = await getFirebaseAI();
 
   const prompt = `You are a precise data extractor. Extract ${schema.name} from the text below.
 
@@ -168,14 +168,10 @@ ${schema.examples}
 TEXT TO EXTRACT FROM:
 ${chunk}`;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash',
-    contents: prompt,
-    config: { responseMimeType: 'application/json' },
-  });
+  const result = await getModel({ responseMimeType: 'application/json' }).generateContent(prompt);
 
   // JSON mode can still be cut off at the token limit
-  const items = JSON.parse(repairTruncatedJSON(response.text?.trim() || ''));
+  const items = JSON.parse(repairTruncatedJSON(result.response.text().trim()));
 
   if (!Array.isArray(items)) {
     throw new Error('Response is not an array');
@@ -247,16 +243,6 @@ export async function extractWithWorkflow<T>(
   onProgress?: (progress: ExtractionProgress) => void
 ): Promise<ExtractionResult<T>> {
   const errors: string[] = [];
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-  if (!apiKey) {
-    return {
-      success: false,
-      data: [],
-      stats: createEmptyStats(),
-      errors: ['Gemini API key not configured'],
-    };
-  }
 
   // Phase 1: Prepare chunks
   onProgress?.({
@@ -288,7 +274,7 @@ export async function extractWithWorkflow<T>(
 
     try {
       const items = await extractWithRetries(
-        () => extractFromChunk(chunkText, i, totalChunks, config.schema, apiKey),
+        () => extractFromChunk(chunkText, i, totalChunks, config.schema),
         config.maxRetries
       );
       allItems.push(...items);
@@ -364,17 +350,5 @@ export async function extractWithWorkflow<T>(
     data: uniqueItems,
     stats,
     errors,
-  };
-}
-
-function createEmptyStats(): ExtractionStats {
-  return {
-    totalChunks: 0,
-    successfulChunks: 0,
-    failedChunks: 0,
-    rawItemCount: 0,
-    duplicatesRemoved: 0,
-    invalidItemsRemoved: 0,
-    finalItemCount: 0,
   };
 }

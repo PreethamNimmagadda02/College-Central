@@ -1,11 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const genai = vi.hoisted(() => ({ generateContent: vi.fn() }));
+const genai = vi.hoisted(() => ({ generateContent: vi.fn(), getModel: vi.fn() }));
 
-vi.mock('@google/genai', () => ({
-  GoogleGenAI: class {
-    models = { generateContent: genai.generateContent };
-  },
+vi.mock('@lib/firebase', () => ({
+  getFirebaseAI: async () => ({ getModel: genai.getModel }),
 }));
 
 import { extractWithWorkflow, type ExtractionConfig } from '@services/aiExtractionWorkflow';
@@ -21,20 +19,27 @@ const config: ExtractionConfig<{ name: string }> = {
   maxRetries: 3,
 };
 
+const reply = (text: string) => ({ response: { text: () => text } });
+
 describe('extractWithWorkflow', () => {
   beforeEach(() => {
-    vi.stubEnv('VITE_GEMINI_API_KEY', 'test-key');
     genai.generateContent.mockReset();
+    genai.getModel.mockReset().mockReturnValue({ generateContent: genai.generateContent });
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
+  it('asks Gemini for JSON and parses the reply', async () => {
+    genai.generateContent.mockResolvedValueOnce(reply('[{"name":"Convocation"}]'));
+
+    const result = await extractWithWorkflow('Convocation: 12 Dec', config);
+
+    expect(genai.getModel).toHaveBeenCalledWith({ responseMimeType: 'application/json' });
+    expect(result.data).toEqual([{ name: 'Convocation' }]);
   });
 
   it('retries a chunk after a rate-limit error instead of dropping its events', async () => {
     genai.generateContent
       .mockRejectedValueOnce(new Error('got status: 429 Too Many Requests'))
-      .mockResolvedValueOnce({ text: '[{"name":"Mid-semester exams"}]' });
+      .mockResolvedValueOnce(reply('[{"name":"Mid-semester exams"}]'));
 
     const result = await extractWithWorkflow('Mid-semester exams: 1-5 Sept', config);
 
