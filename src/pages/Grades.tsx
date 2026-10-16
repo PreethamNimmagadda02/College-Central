@@ -4,6 +4,7 @@ import { useSchedule } from '@contexts/ScheduleContext';
 import { useUser } from '@contexts/UserContext';
 import { useGradingScale } from '@hooks/useGradingScale';
 import { calculateCreditsFromLTP } from '@lib/utils/creditCalculator';
+import { getLatestGrades } from '@lib/utils/gradeUtils';
 import { motion, useInView, useSpring, useTransform } from 'framer-motion';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
@@ -991,30 +992,14 @@ const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.me
   const [searchQuery, setSearchQuery] = useState('');
 
   // Get latest grades for each course (handles retakes)
-  const latestGrades = useMemo(() => {
-    const courseMap: { [subjectCode: string]: { grade: Grade; semester: number } } = {};
-
-    gradesData.semesters.forEach((sem: Semester) => {
-      sem.grades.forEach((grade: Grade) => {
-        const existing = courseMap[grade.subjectCode];
-        if (!existing || sem.semester > existing.semester) {
-          courseMap[grade.subjectCode] = {
-            grade: { ...grade },
-            semester: sem.semester,
-          };
-        }
-      });
-    });
-
-    return courseMap;
-  }, [gradesData]);
+  const latestGrades = useMemo(() => getLatestGrades(gradesData.semesters), [gradesData]);
 
   // Calculate new CGPA with modified grades
   const projectedCalculations = useMemo(() => {
     let totalPoints = 0;
     let totalCredits = 0;
 
-    Object.entries(latestGrades).forEach(([subjectCode, { grade }]) => {
+    Object.entries(latestGrades).forEach(([subjectCode, grade]) => {
       const currentGrade = modifiedGrades[subjectCode] || grade.grade;
       // Include all courses in calculation - F grade contributes 0 points but credits still count
       const points = gradePoints[currentGrade] || 0;
@@ -1623,30 +1608,11 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
   const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
   const { gradePoints, getGradeColor } = useGradingScale();
 
-  // Helper function to get latest grade for each course (handles retakes)
-  const getLatestGrades = useMemo(() => {
-    const courseMap: { [subjectCode: string]: { grade: Grade; semester: number } } = {};
-
-    // Iterate through semesters to track the latest occurrence of each course
-    gradesData.semesters.forEach((sem: Semester) => {
-      sem.grades.forEach((grade: Grade) => {
-        const existing = courseMap[grade.subjectCode];
-        // If course doesn't exist or current semester is later, update it
-        if (!existing || sem.semester > existing.semester) {
-          courseMap[grade.subjectCode] = {
-            grade: { ...grade },
-            semester: sem.semester,
-          };
-        }
-      });
-    });
-
-    // Return array of latest grades with semester info
-    return Object.values(courseMap).map((item) => ({
-      ...item.grade,
-      semester: item.semester,
-    }));
-  }, [gradesData]);
+  // Latest grade for each course with its semester (handles retakes)
+  const latestGrades = useMemo(
+    () => Object.values(getLatestGrades(gradesData.semesters)),
+    [gradesData]
+  );
 
   // Calculate performance trends with enhanced metrics
   const performanceTrend = useMemo(() => {
@@ -1699,7 +1665,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
     const trajectoryStatus = slope > 0.1 ? 'Improving' : slope < -0.1 ? 'Declining' : 'Stable';
 
     // 3. Credit Efficiency (quality points per credit)
-    const totalQualityPoints = getLatestGrades.reduce(
+    const totalQualityPoints = latestGrades.reduce(
       (sum, g) => sum + (gradePoints[g.grade] || 0) * g.credits,
       0
     );
@@ -1708,7 +1674,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
     // 4. High-Credit Performance (courses with 4+ credits)
     const highCreditThreshold = courseOption === 'NEP' ? 3 : 9;
-    const highCreditCourses = getLatestGrades.filter((g) => g.credits >= highCreditThreshold);
+    const highCreditCourses = latestGrades.filter((g) => g.credits >= highCreditThreshold);
     const highCreditAvg =
       highCreditCourses.length > 0
         ? highCreditCourses.reduce((sum, g) => sum + (gradePoints[g.grade] || 0), 0) /
@@ -1716,12 +1682,12 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
         : 0;
 
     // 5. Failure/Risk Analysis
-    const failedCourses = getLatestGrades.filter((g) => g.grade === 'F');
-    const atRiskCourses = getLatestGrades.filter((g) => ['D', 'F'].includes(g.grade));
+    const failedCourses = latestGrades.filter((g) => g.grade === 'F');
+    const atRiskCourses = latestGrades.filter((g) => ['D', 'F'].includes(g.grade));
 
     // 6. Excellence Rate (A+ and A grades)
-    const excellentGrades = getLatestGrades.filter((g) => ['A+', 'A'].includes(g.grade));
-    const excellenceRate = (excellentGrades.length / getLatestGrades.length) * 100;
+    const excellentGrades = latestGrades.filter((g) => ['A+', 'A'].includes(g.grade));
+    const excellenceRate = (excellentGrades.length / latestGrades.length) * 100;
 
     // 7. Academic Standing
     let academicStanding = 'Good Standing';
@@ -1770,14 +1736,14 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
       maxCreditsInSem,
       avgSgpa,
     };
-  }, [gradesData, getLatestGrades]);
+  }, [gradesData, latestGrades]);
 
   // Calculate grade distribution with courses (using latest grades only)
   const gradeDistribution = useMemo(() => {
     const distribution: { [key: string]: { count: number; courses: any[]; totalCredits: number } } =
       {};
 
-    getLatestGrades.forEach((gradeWithSem: any) => {
+    latestGrades.forEach((gradeWithSem: any) => {
       const gradeValue = gradeWithSem.grade;
       if (!distribution[gradeValue]) {
         distribution[gradeValue] = { count: 0, courses: [], totalCredits: 0 };
@@ -1791,7 +1757,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
     });
 
     return distribution;
-  }, [getLatestGrades]);
+  }, [latestGrades]);
 
   const getGradeCourses = (grade: string) => {
     return gradeDistribution[grade]?.courses || [];
@@ -1803,7 +1769,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
       [key: string]: { total: number; count: number; courses: any[]; totalCredits: number };
     } = {};
 
-    getLatestGrades.forEach((gradeWithSem: any) => {
+    latestGrades.forEach((gradeWithSem: any) => {
       const category = gradeWithSem.subjectCode.substring(0, 2);
       if (!subjects[category]) {
         subjects[category] = { total: 0, count: 0, courses: [], totalCredits: 0 };
@@ -1827,7 +1793,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
         // If averages are equal, sort by totalCredits (higher credits = better rank)
         return b.totalCredits - a.totalCredits;
       });
-  }, [getLatestGrades]);
+  }, [latestGrades]);
 
   const getCategoryCourses = (category: string) => {
     const categoryData = subjectPerformance.find((s) => s.category === category);
@@ -2461,7 +2427,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     Total Courses
                   </span>
                   <AnimatedInteger
-                    value={getLatestGrades.length}
+                    value={latestGrades.length}
                     className="font-semibold text-sm sm:text-base"
                   />
                 </div>
@@ -2599,7 +2565,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                           <div>
                             <p className="text-xs font-medium mb-1">Total Unique Courses:</p>
                             <p className="text-xs text-slate-500">
-                              <strong>{getLatestGrades.length}</strong> courses completed (retakes
+                              <strong>{latestGrades.length}</strong> courses completed (retakes
                               counted once)
                             </p>
                           </div>
@@ -4017,11 +3983,11 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 { tier: 'Average', grades: ['C+', 'C'], color: 'yellow' },
                 { tier: 'Below Average', grades: ['D', 'F'], color: 'red' },
               ].map((tierInfo) => {
-                const tierCourses = getLatestGrades.filter((g) =>
+                const tierCourses = latestGrades.filter((g) =>
                   tierInfo.grades.includes(g.grade)
                 );
                 const tierCredits = tierCourses.reduce((sum, g) => sum + g.credits, 0);
-                const percentage = (tierCourses.length / getLatestGrades.length) * 100;
+                const percentage = (tierCourses.length / latestGrades.length) * 100;
 
                 return (
                   <motion.div
