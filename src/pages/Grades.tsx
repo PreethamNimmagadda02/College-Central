@@ -3867,6 +3867,74 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
   );
 });
 
+// The selected semester's grades: `compact` sits under its card on small screens,
+// the full version below the semester grid on large screens
+const SemesterGrades: React.FC<{
+  semester: Semester;
+  compact?: boolean;
+  getGradeColor: (grade: string) => string;
+}> = ({ semester, compact = false, getGradeColor }) => (
+  <div
+    className={`${compact ? 'lg:hidden col-span-1 sm:col-span-2 p-4 sm:p-5' : 'hidden lg:block mt-4 sm:mt-6 p-4 sm:p-6'} bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/20`}
+  >
+    <h4
+      className={`font-semibold ${compact ? 'text-sm sm:text-base mb-3' : 'text-base sm:text-lg mb-3 sm:mb-4'} flex items-center`}
+    >
+      <span
+        className={
+          compact
+            ? 'w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center mr-2 text-xs'
+            : 'w-6 h-6 sm:w-8 sm:h-8 bg-primary text-white rounded-full flex items-center justify-center mr-2 sm:mr-3 text-xs sm:text-sm'
+        }
+      >
+        {semester.semester}
+      </span>
+      Semester {semester.semester}
+      {compact ? ' Grades' : ' - Detailed Grades'}
+    </h4>
+    <div className={compact ? 'space-y-2' : 'grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4'}>
+      {semester.grades.map((grade, index) => (
+        <div
+          key={index}
+          className={
+            compact
+              ? 'group relative overflow-hidden flex items-center justify-between p-3 bg-white dark:bg-dark-card rounded-lg shadow-sm hover:shadow-md transition-all duration-300'
+              : 'group relative overflow-hidden flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-dark-card rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99]'
+          }
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative z-10 flex-grow min-w-0">
+            <p
+              className={`font-semibold group-hover:text-primary transition-colors ${compact ? 'text-sm' : 'text-sm sm:text-base'} truncate`}
+            >
+              {grade.subjectCode}
+            </p>
+            <p
+              className={`${compact ? 'text-xs' : 'text-xs sm:text-sm'} text-slate-600 dark:text-slate-400 truncate`}
+            >
+              {grade.subjectName}
+            </p>
+            <p
+              className={
+                compact
+                  ? 'text-[10px] text-slate-500 mt-0.5'
+                  : 'text-[10px] sm:text-xs text-slate-500 mt-1'
+              }
+            >
+              {grade.credits} Credits
+            </p>
+          </div>
+          <div
+            className={`relative z-10 ${compact ? 'px-3 py-1.5 rounded-lg font-bold text-sm' : 'px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-base sm:text-lg'} transition-transform group-hover:scale-110 ${getGradeColor(grade.grade)}`}
+          >
+            {grade.grade}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 const Grades: React.FC = () => {
   const {
     gradesData,
@@ -4688,40 +4756,7 @@ const Grades: React.FC = () => {
 
                   {/* Show grades immediately below semester on small screens */}
                   {isSelected && (
-                    <div className="lg:hidden col-span-1 sm:col-span-2 p-4 sm:p-5 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/20">
-                      <h4 className="font-semibold text-sm sm:text-base mb-3 flex items-center">
-                        <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center mr-2 text-xs">
-                          {semester.semester}
-                        </span>
-                        Semester {semester.semester} Grades
-                      </h4>
-                      <div className="space-y-2">
-                        {semester.grades.map((grade: Grade, index: number) => (
-                          <div
-                            key={index}
-                            className="group relative overflow-hidden flex items-center justify-between p-3 bg-white dark:bg-dark-card rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            <div className="relative z-10 flex-grow min-w-0">
-                              <p className="font-semibold group-hover:text-primary transition-colors text-sm truncate">
-                                {grade.subjectCode}
-                              </p>
-                              <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                                {grade.subjectName}
-                              </p>
-                              <p className="text-[10px] text-slate-500 mt-0.5">
-                                {grade.credits} Credits
-                              </p>
-                            </div>
-                            <div
-                              className={`relative z-10 px-3 py-1.5 rounded-lg font-bold text-sm transition-transform group-hover:scale-110 ${getGradeColor(grade.grade)}`}
-                            >
-                              {grade.grade}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <SemesterGrades semester={semester} compact getGradeColor={getGradeColor} />
                   )}
                 </React.Fragment>
               );
@@ -4730,40 +4765,7 @@ const Grades: React.FC = () => {
 
           {/* Selected Semester Details - Show on large screens below grid */}
           {selectedSemesterData && (
-            <div className="hidden lg:block mt-4 sm:mt-6 p-4 sm:p-6 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/20">
-              <h4 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4 flex items-center">
-                <span className="w-6 h-6 sm:w-8 sm:h-8 bg-primary text-white rounded-full flex items-center justify-center mr-2 sm:mr-3 text-xs sm:text-sm">
-                  {selectedSemesterData.semester}
-                </span>
-                Semester {selectedSemesterData.semester} - Detailed Grades
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {selectedSemesterData.grades.map((grade: Grade, index: number) => (
-                  <div
-                    key={index}
-                    className="group relative overflow-hidden flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-dark-card rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99]"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="relative z-10 flex-grow min-w-0">
-                      <p className="font-semibold group-hover:text-primary transition-colors text-sm sm:text-base truncate">
-                        {grade.subjectCode}
-                      </p>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">
-                        {grade.subjectName}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-slate-500 mt-1">
-                        {grade.credits} Credits
-                      </p>
-                    </div>
-                    <div
-                      className={`relative z-10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-base sm:text-lg transition-transform group-hover:scale-110 ${getGradeColor(grade.grade)}`}
-                    >
-                      {grade.grade}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <SemesterGrades semester={selectedSemesterData} getGradeColor={getGradeColor} />
           )}
         </div>
       </div>
