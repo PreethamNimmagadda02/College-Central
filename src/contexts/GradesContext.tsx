@@ -6,10 +6,10 @@ import { useAuth } from '@features/auth/hooks/useAuth';
 import { db } from '@lib/firebase';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/storage';
-import { logActivity } from '@services/activityService';
-import { getLatestGrades } from '@lib/utils/gradeUtils';
 import { updateDemoProfile } from '@features/demo/demoStore';
 import useGradingScale from '@hooks/useGradingScale';
+import { getLatestGrades } from '@lib/utils/gradeUtils';
+import { logActivity } from '@services/activityService';
 
 import { useUser } from './UserContext';
 

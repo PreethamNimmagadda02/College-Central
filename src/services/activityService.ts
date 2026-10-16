@@ -1,19 +1,18 @@
 // FIX: Update Firebase imports to v8 compat syntax.
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
-import { db } from '@lib/firebase';
 import { isDemoUid } from '@features/demo/demoSession';
 import { addDemoActivity } from '@features/demo/demoStore';
-
-import { ActivityType } from '@/types';
-
-import { isFirebaseError } from '@lib/utils/helpers';
-import { retryOnlyIfRetryable } from '@lib/utils/retryLogic';
+import { db } from '@lib/firebase';
 import {
   ACTIVITY_LOG_MAX_RETRIES,
   ACTIVITY_LOG_RETRY_DELAY_MS,
   MAX_ACTIVITIES_STORED,
 } from '@lib/utils/constants';
+import { isFirebaseError } from '@lib/utils/helpers';
+import { retryOnlyIfRetryable } from '@lib/utils/retryLogic';
+
+import { ActivityType } from '@/types';
 
 interface ActivityLog {
   type: ActivityType;

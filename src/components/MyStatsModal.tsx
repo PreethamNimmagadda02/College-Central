@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { UserStats } from '@/services/locationAnalyticsService';
 
 interface MyStatsModalProps {

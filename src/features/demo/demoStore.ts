@@ -3,10 +3,10 @@
 
 import { MAX_ACTIVITIES_STORED } from '@lib/utils/constants';
 
-import type { ActivityItem, User } from '@/types';
-
 import { createDemoSeed, DEMO_STATE_VERSION } from './demoData';
 import type { DemoProfile, DemoState } from './types';
+
+import type { ActivityItem, User } from '@/types';
 
 const STORE_KEY = 'cc_demo_store';
 

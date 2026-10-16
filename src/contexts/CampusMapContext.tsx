@@ -16,6 +16,7 @@ import { updateDemoProfile } from '@features/demo/demoStore';
 
 import { useAppConfig } from './AppConfigContext';
 import { useUser } from './UserContext';
+
 import { getRealTimeCrowdLevels, LiveZoneStatus } from '@services/locationAnalyticsService';
 
 import { CampusLocation, QuickRoute } from '@/types';

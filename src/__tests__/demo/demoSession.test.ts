@@ -1,12 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  DEMO_UID,
-  endDemo,
-  isDemoActive,
-  isDemoUid,
-  startDemo,
-} from '@features/demo/demoSession';
+import { DEMO_UID, endDemo, isDemoActive, isDemoUid, startDemo } from '@features/demo/demoSession';
 
 describe('demoSession', () => {
   beforeEach(() => {

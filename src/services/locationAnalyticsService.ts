@@ -56,6 +56,7 @@ export interface AnalyticsSummary {
 }
 
 import { CAMPUS_LOCATIONS } from '@/config/campusMap';
+
 import { isDemoActive, isDemoUid } from '@features/demo/demoSession';
 
 // ============================================

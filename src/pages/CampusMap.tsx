@@ -1,14 +1,14 @@
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useCampusMap } from '@contexts/CampusMapContext';
 import { useLocation } from '@contexts/LocationContext';
+import { useAuth } from '@features/auth/hooks/useAuth';
 import React, { useState, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 
-import { CampusLocation, CampusLocationCategory } from '@/types';
-import { useAuth } from '@features/auth/hooks/useAuth';
-import { getUserStats, UserStats } from '@/services/locationAnalyticsService';
 import MyStatsModal from '@/components/MyStatsModal';
 import PopularTimesChart from '@/components/PopularTimesChart';
+import { getUserStats, UserStats } from '@/services/locationAnalyticsService';
+import { CampusLocation, CampusLocationCategory } from '@/types';
 
 // One row per category, in display order: drives the stat cards, filter pills and badges
 const CATEGORIES: {
@@ -90,11 +90,7 @@ const CampusMap: React.FC = () => {
     shareLocation,
     liveZoneStatus,
   } = useCampusMap();
-  const {
-    location: userLocation,
-    error: locationError,
-    permissionStatus,
-  } = useLocation();
+  const { location: userLocation, error: locationError, permissionStatus } = useLocation();
   const { config: appConfig } = useAppConfig();
 
   const [selectedCategory, setSelectedCategory] = useState<CampusLocationCategory | 'all'>('all');

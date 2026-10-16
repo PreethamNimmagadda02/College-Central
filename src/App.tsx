@@ -1,35 +1,35 @@
 // Auth feature hooks
 
 // Context providers
-import { AppConfigProvider } from '@contexts/AppConfigContext';
+import { Capacitor } from '@capacitor/core';
+import ErrorBoundary from '@components/common/ErrorBoundary';
+import { InstallPrompt } from '@components/common/InstallPrompt';
+import { LocationRequirement } from '@components/common/LocationRequirement';
+import { NativeLocationTracker } from '@components/common/NativeLocationTracker';
+import { OfflineIndicator } from '@components/common/OfflineIndicator';
+import ProtectedRoute from '@components/common/ProtectedRoute';
 
 // Layout and common components
-import Layout from '@pages/Layout';
-import ErrorBoundary from '@components/common/ErrorBoundary';
-import ProtectedRoute from '@components/common/ProtectedRoute';
 import UpdatePrompt from '@components/common/UpdatePrompt';
-import { InstallPrompt } from '@components/common/InstallPrompt';
-import { OfflineIndicator } from '@components/common/OfflineIndicator';
-import { CalendarProvider } from '@contexts/CalendarContext';
 import { CampusMapProvider } from '@contexts/CampusMapContext';
 import { LocationProvider } from '@contexts/LocationContext';
-import { LocationRequirement } from '@components/common/LocationRequirement';
 import { WeatherProvider } from '@contexts/WeatherContext';
 import WeatherModal from '@components/weather/WeatherModal';
+import { AppConfigProvider } from '@contexts/AppConfigContext';
+import { CalendarProvider } from '@contexts/CalendarContext';
 import { FormsProvider } from '@contexts/FormsContext';
 import { GradesProvider } from '@contexts/GradesContext';
 import { ScheduleProvider } from '@contexts/ScheduleContext';
 import { UserProvider } from '@contexts/UserContext';
 import { AuthProvider } from '@features/auth/hooks/useAuth';
-import { GuestBoundary } from '@features/demo/GuestBoundary';
 import { RoleProvider } from '@features/auth/hooks/useRole';
+import { GuestBoundary } from '@features/demo/GuestBoundary';
+import Layout from '@pages/Layout';
 
 // Utilities
 import React, { lazy, Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { Capacitor } from '@capacitor/core';
-import { NativeLocationTracker } from '@components/common/NativeLocationTracker';
 
 // Lazy load pages (main.tsx reloads once if a chunk from an old deploy is gone)
 const Dashboard = lazy(() => import('@pages/Dashboard'));

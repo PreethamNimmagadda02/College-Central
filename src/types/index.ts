@@ -189,8 +189,8 @@ export interface SocialLinks {
   github?: string;
   linkedin?: string;
   instagram?: string;
-  eventDate?: Date;
-  metadata?: Record<string, any>;
+  twitter?: string;
+  website?: string;
 }
 
 export interface Notification {

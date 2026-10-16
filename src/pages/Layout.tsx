@@ -1,9 +1,9 @@
+import SessionGuard from '@components/common/SessionGuard';
 import Footer from '@components/layout/Footer';
 import Header from '@components/layout/Header';
 import Sidebar from '@components/layout/Sidebar';
-import SessionGuard from '@components/common/SessionGuard';
-import { DemoBanner } from '@features/demo/DemoBanner';
 import { useAppConfig } from '@contexts/AppConfigContext';
+import { DemoBanner } from '@features/demo/DemoBanner';
 import React, { useState, useEffect } from 'react';
 import { useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';

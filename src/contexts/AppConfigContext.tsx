@@ -2,12 +2,12 @@
 import { PRELOADED_CALENDAR_DATA } from '@config/academicCalendar';
 import { GREETING_TIMES, WEATHER } from '@config/appConstants';
 import { BRANCH_OPTIONS } from '@config/branches';
-import { CAMPUS_DIRECTORY } from '@config/directory';
 import { CAMPUS_LOCATIONS, CAMPUS_QUICK_ROUTES } from '@config/campusMap';
 import { COLLEGE_INFO } from '@config/collegeInfo';
-import { DEFAULT_GRADING_SCALE } from '@config/gradingScale';
 import { TIMETABLE_DATA as CBCS_COURSES } from '@config/courseData';
+import { CAMPUS_DIRECTORY } from '@config/directory';
 import { generalForms, ugForms, pgForms, phdForms } from '@config/forms';
+import { DEFAULT_GRADING_SCALE } from '@config/gradingScale';
 import { HOSTEL_OPTIONS } from '@config/hostels';
 import { NEP_TIMETABLE_DATA as NEP_COURSES } from '@config/nepCourseData';
 import { defaultQuickLinks } from '@config/quickLinks';

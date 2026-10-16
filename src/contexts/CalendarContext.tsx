@@ -12,16 +12,15 @@ import { AcademicCalendarData, CalendarEvent } from '@/types';
 
 import { PRELOADED_CALENDAR_DATA } from '@config/academicCalendar';
 import { useAuth } from '@features/auth/hooks/useAuth';
-
-import { useAppConfig } from './AppConfigContext';
-
 import { db } from '@lib/firebase';
 // FIX: Updated Firebase imports for v9 compatibility.
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
-import { logActivity } from '@services/activityService';
 import { getDemoState, subscribeDemoState, updateDemoState } from '@features/demo/demoStore';
 import { getEventKey } from '@lib/utils/eventUtils';
+import { logActivity } from '@services/activityService';
+
+import { useAppConfig } from './AppConfigContext';
 
 interface CalendarContextType {
   calendarData: AcademicCalendarData | null;

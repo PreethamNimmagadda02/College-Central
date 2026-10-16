@@ -13,10 +13,10 @@ import firebase from 'firebase/compat/app';
 
 import 'firebase/compat/auth';
 import { STUDENT_DIRECTORY } from '@config/studentDirectory';
-import { auth, db, storage } from '@lib/firebase';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { DEMO_PHOTO_UNAVAILABLE, DEMO_UID } from '@features/demo/demoSession';
 import { subscribeDemoState, updateDemoProfile } from '@features/demo/demoStore';
+import { auth, db, storage } from '@lib/firebase';
 import {
   MAX_FILE_SIZE_BYTES,
   ALLOWED_IMAGE_TYPES,

@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  getCourseOptionFromAdmissionNumber,
-} from '@lib/utils/courseUtils';
+import { getCourseOptionFromAdmissionNumber } from '@lib/utils/courseUtils';
 
 describe('courseUtils', () => {
   describe('getCourseOptionFromAdmissionNumber', () => {

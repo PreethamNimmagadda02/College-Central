@@ -73,7 +73,14 @@ describe('switching from a guest session to a real account', () => {
       ...s,
       userEvents: [
         ...s.userEvents,
-        { id: 'past', date: '2020-01-01', description: 'Old viva', type: 'Other', remindMe: true, userId: DEMO_UID },
+        {
+          id: 'past',
+          date: '2020-01-01',
+          description: 'Old viva',
+          type: 'Other',
+          remindMe: true,
+          userId: DEMO_UID,
+        },
       ],
       reminderEventKeys: [...s.reminderEventKeys, '2020-01-01-Old viva'],
     }));

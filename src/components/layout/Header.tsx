@@ -20,6 +20,7 @@ import { useRole } from '@features/auth/hooks/useRole';
 import { useClickOutside } from '@hooks/useClickOutside';
 import React, { useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+
 import NotificationCenter from './NotificationCenter';
 
 // Shared by the desktop header and the mobile QuickActionsPill

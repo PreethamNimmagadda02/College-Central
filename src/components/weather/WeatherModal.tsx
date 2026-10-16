@@ -1,5 +1,5 @@
-import React from 'react';
 import { useWeather, getWindDirection } from '@contexts/WeatherContext';
+import React from 'react';
 
 interface StatTileProps {
   icon: string;

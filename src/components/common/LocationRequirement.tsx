@@ -1,7 +1,7 @@
-import React from 'react';
 import { useLocation } from '@contexts/LocationContext';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { MapPin, RefreshCw } from 'lucide-react';
+import React from 'react';
 
 export const LocationRequirement: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isGuest } = useAuth();

@@ -1,4 +1,7 @@
 import { useAppConfig } from '@contexts/AppConfigContext';
+import { useAuth } from '@features/auth/hooks/useAuth';
+import { getDemoUserByAdmissionNumber } from '@features/demo/demoStore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import {
   Search,
   Mail,
@@ -12,12 +15,9 @@ import {
 } from 'lucide-react';
 import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { db } from '@/lib/firebase';
-import { useAuth } from '@features/auth/hooks/useAuth';
-import { getDemoUserByAdmissionNumber } from '@features/demo/demoStore';
 
+import { db } from '@/lib/firebase';
 import { DirectoryEntry, StudentDirectoryEntry } from '@/types';
 
 const isValidIndianPhoneNumber = (phone: string): boolean => {

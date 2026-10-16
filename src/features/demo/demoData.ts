@@ -7,6 +7,9 @@ import { getCourseOptionFromAdmissionNumber } from '@lib/utils/courseUtils';
 import { calculateCreditsFromLTP } from '@lib/utils/creditCalculator';
 import { getEventKey } from '@lib/utils/eventUtils';
 
+import { DEMO_DISPLAY_NAME, DEMO_EMAIL, DEMO_UID } from './demoSession';
+import type { DemoProfile, DemoState } from './types';
+
 import type {
   ActivityItem,
   CalendarEvent,
@@ -20,9 +23,6 @@ import type {
   User,
   UserFormsData,
 } from '@/types';
-
-import { DEMO_DISPLAY_NAME, DEMO_EMAIL, DEMO_UID } from './demoSession';
-import type { DemoProfile, DemoState } from './types';
 
 /** Bump when the seed or DemoState changes, so browsers holding older demo data reseed. */
 export const DEMO_STATE_VERSION = 1;
@@ -375,14 +375,49 @@ function buildActivity(nowMs: number, userForms: UserFormsData): ActivityItem[] 
 
   const entries: [number, ActivityItem['type'], string, string, string, string?][] = [
     [1, 'login', 'Signed In', 'Started exploring the demo.', '🔑'],
-    [26, 'schedule', 'Timetable Updated', 'Added Advanced DBMS Lab to your timetable.', '🗓️', '/schedule'],
-    [30, 'reminder', 'Reminder Set', 'For event: "Advanced DBMS lab viva"', '🔔', '/academic-calendar'],
+    [
+      26,
+      'schedule',
+      'Timetable Updated',
+      'Added Advanced DBMS Lab to your timetable.',
+      '🗓️',
+      '/schedule',
+    ],
+    [
+      30,
+      'reminder',
+      'Reminder Set',
+      'For event: "Advanced DBMS lab viva"',
+      '🔔',
+      '/academic-calendar',
+    ],
     [52, 'form', 'Form Downloaded', `Downloaded: ${downloaded}`, '📄', '/college-forms'],
     [75, 'map', 'Place Saved', 'Saved "Central Library" to your places.', '⭐', '/campus-map'],
     [100, 'grades', 'Grades Updated', 'Semester 4 grades were added.', '📊', '/grades'],
-    [150, 'event', 'Event Added', 'Added "Coding club contest" to calendar.', '📅', '/academic-calendar'],
-    [200, 'update', 'Profile Updated', 'Your profile information was successfully updated.', '✏️', '/profile'],
-    [260, 'form', 'Form Favorited', `Form "${favourited}" was added to favorites.`, '⭐', '/college-forms'],
+    [
+      150,
+      'event',
+      'Event Added',
+      'Added "Coding club contest" to calendar.',
+      '📅',
+      '/academic-calendar',
+    ],
+    [
+      200,
+      'update',
+      'Profile Updated',
+      'Your profile information was successfully updated.',
+      '✏️',
+      '/profile',
+    ],
+    [
+      260,
+      'form',
+      'Form Favorited',
+      `Form "${favourited}" was added to favorites.`,
+      '⭐',
+      '/college-forms',
+    ],
     [330, 'login', 'Account Created', 'Welcome! Your account has been created.', '🎉'],
   ];
 

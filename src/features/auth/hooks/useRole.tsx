@@ -46,7 +46,7 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const adminEmails: string[] = adminEmailsDoc.data()?.items || [];
           const userEmail = currentUser.email.toLowerCase();
 
-          if (adminEmails.map(e => e.toLowerCase()).includes(userEmail)) {
+          if (adminEmails.map((e) => e.toLowerCase()).includes(userEmail)) {
             setRole('admin');
           } else {
             setRole('user');

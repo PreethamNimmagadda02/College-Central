@@ -1,6 +1,6 @@
 import { useAuth } from '@features/auth/hooks/useAuth';
-import { db } from '@lib/firebase';
 import { updateDemoProfile } from '@features/demo/demoStore';
+import { db } from '@lib/firebase';
 import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
 
 import { useUser } from './UserContext';
