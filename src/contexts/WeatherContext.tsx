@@ -67,7 +67,7 @@ export const getWindDirection = (degrees: number): string => {
   return directions[normalizedIndex] ?? 'N';
 };
 
-export const getWeatherInfoFromCode = (
+const getWeatherInfoFromCode = (
   code: number,
   isDay: number
 ): { desc: string; icon: string } => {

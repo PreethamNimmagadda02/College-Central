@@ -80,4 +80,4 @@ export async function getAnalytics(): Promise<FirebaseAnalytics | null> {
   return null;
 }
 
-export { auth, db, storage, perf, analytics };
+export { auth, db, storage };

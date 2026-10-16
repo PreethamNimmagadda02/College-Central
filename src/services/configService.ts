@@ -63,55 +63,6 @@ const sanitizeForFirestore = (obj: any): any => {
 };
 
 /**
- * Get the entire app configuration from Firestore
- * Fetches all config documents and combines them
- */
-export const getConfig = async (): Promise<AdminConfig | null> => {
-  // Check cache first to reduce Firestore reads
-  const cached = cache.get<AdminConfig>(CACHE_KEYS.APP_CONFIG);
-  if (cached) {
-    return cached;
-  }
-
-  try {
-    const collectionRef = db.collection(CONFIG_COLLECTION);
-    const snapshot = await collectionRef.get();
-
-    if (snapshot.empty) {
-      return null;
-    }
-
-    const config: Partial<AdminConfig> = {};
-    const validDocIds = Object.values(CONFIG_DOCS);
-
-    snapshot.forEach((doc) => {
-      const docId = doc.id;
-
-      // Skip invalid document IDs
-      if (!validDocIds.includes(docId as any)) {
-        return;
-      }
-
-      const data = doc.data();
-
-      // For array-based configs, extract from { items: [...] }
-      if (ARRAY_CONFIG_KEYS.includes(docId as any)) {
-        (config as any)[docId] = data.items || [];
-      } else {
-        (config as any)[docId] = data;
-      }
-    });
-
-    // Cache the result for 5 minutes to reduce Firestore reads
-    cache.set(CACHE_KEYS.APP_CONFIG, config as AdminConfig, CACHE_TTL.CONFIG);
-    return config as AdminConfig;
-  } catch (error) {
-    console.error('Error fetching config from Firestore:', error);
-    return null;
-  }
-};
-
-/**
  * Update the entire app configuration in Firestore
  * Writes each section to its own document
  */

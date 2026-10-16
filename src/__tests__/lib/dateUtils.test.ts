@@ -5,7 +5,6 @@ import {
   isToday,
   isSameDay,
   addDays,
-  getDayName,
   parseDateString,
   calculateDateProgress,
   formatDateRange,
@@ -86,14 +85,6 @@ describe('dateUtils', () => {
       const result = addDays(date, 5);
       expect(result.getMonth()).toBe(1); // February
       expect(result.getDate()).toBe(4);
-    });
-  });
-
-  describe('getDayName', () => {
-    it('returns correct day name', () => {
-      // January 1, 2025 is a Wednesday
-      const date = new Date(2025, 0, 1);
-      expect(getDayName(date)).toBe('Wednesday');
     });
   });
 

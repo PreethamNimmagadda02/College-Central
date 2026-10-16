@@ -28,12 +28,3 @@ export const calculateCreditsFromLTP = (
     return 3 * L + 2 * T + P;
   }
 };
-
-/**
- * Get the credit calculation formula description
- * @param courseOption - Either 'CBCS' or 'NEP'
- * @returns Formula description string
- */
-export const getCreditFormula = (courseOption: 'CBCS' | 'NEP' = 'CBCS'): string => {
-  return courseOption === 'NEP' ? 'L + T + 0.5*P' : '3L + 2T + P';
-};

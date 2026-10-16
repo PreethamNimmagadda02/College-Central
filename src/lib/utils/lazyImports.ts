@@ -4,14 +4,6 @@
  */
 
 /**
- * Lazy load jsPDF only when needed
- */
-export async function getJsPDF() {
-  const { default: jsPDF } = await import('jspdf');
-  return jsPDF;
-}
-
-/**
  * Lazy load Google Gemini AI only when needed
  */
 export async function getGoogleGenAI() {

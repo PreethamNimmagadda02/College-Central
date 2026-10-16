@@ -5,28 +5,21 @@ import { db } from '@lib/firebase';
 import { isDemoUid } from '@features/demo/demoSession';
 import { addDemoActivity } from '@features/demo/demoStore';
 
-import { ActivityType, ActivityItem } from '@/types';
+import { ActivityType } from '@/types';
 
 import { retryOnlyIfRetryable } from '@lib/utils/retryLogic';
 import {
   ACTIVITY_LOG_MAX_RETRIES,
   ACTIVITY_LOG_RETRY_DELAY_MS,
-  ACTIVITY_LOG_PAGE_SIZE,
   MAX_ACTIVITIES_STORED,
 } from '@lib/utils/constants';
 
-export interface ActivityLog {
+interface ActivityLog {
   type: ActivityType;
   title: string;
   description: string;
   icon: string;
   link?: string;
-}
-
-export interface ActivityLogPage {
-  activities: ActivityItem[];
-  lastDoc: firebase.firestore.QueryDocumentSnapshot | null;
-  hasMore: boolean;
 }
 
 export const logActivity = async (userId: string, activity: ActivityLog) => {
@@ -69,57 +62,6 @@ export const logActivity = async (userId: string, activity: ActivityLog) => {
       );
     }
     // Don't throw - activity logging is non-critical
-  }
-};
-
-/**
- * Fetch activity logs with pagination
- * @param userId - User ID to fetch activities for
- * @param lastDoc - Last document from previous page (for pagination)
- * @param pageSize - Number of activities per page
- * @returns ActivityLogPage with activities and pagination info
- */
-export const fetchActivityLogs = async (
-  userId: string,
-  lastDoc: firebase.firestore.QueryDocumentSnapshot | null = null,
-  pageSize: number = ACTIVITY_LOG_PAGE_SIZE
-): Promise<ActivityLogPage> => {
-  if (!userId) {
-    throw new Error('userId is required to fetch activity logs');
-  }
-
-  try {
-    const activityCollectionRef = db
-      .collection('users')
-      .doc(userId)
-      .collection('activity')
-      .orderBy('timestamp', 'desc')
-      .limit(pageSize + 1); // Fetch one extra to check if there are more
-
-    // If we have a lastDoc, start after it
-    const query = lastDoc ? activityCollectionRef.startAfter(lastDoc) : activityCollectionRef;
-
-    const snapshot = await query.get();
-    const docs = snapshot.docs;
-
-    // Check if there are more items
-    const hasMore = docs.length > pageSize;
-    const activities = docs.slice(0, pageSize).map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as ActivityItem[];
-
-    // Get the last doc for next page
-    const newLastDoc = hasMore ? docs[pageSize - 1] || null : null;
-
-    return {
-      activities,
-      lastDoc: newLastDoc,
-      hasMore,
-    };
-  } catch (error) {
-    console.error('Error fetching activity logs:', error);
-    throw error;
   }
 };
 
