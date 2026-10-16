@@ -164,7 +164,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [scrollY, setScrollY] = useState(0);
-  const { loginWithGoogle, isAuthenticated, loading: authLoading } = useAuth();
+  const { loginWithGoogle, enterGuestMode, isAuthenticated, loading: authLoading } = useAuth();
   const { config: appConfig } = useAppConfig();
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -352,6 +352,12 @@ const Login: React.FC = () => {
     } finally {
       setIsGoogleSubmitting(false);
     }
+  };
+
+  const handleGuestAccess = () => {
+    setError('');
+    enterGuestMode();
+    // The isAuthenticated effect above then routes the guest to the dashboard
   };
 
   if (authLoading || isAuthenticated) {
@@ -1246,6 +1252,19 @@ const Login: React.FC = () => {
                         </div>
                       </div>
                     </button>
+
+                    {/* Guest access for visitors without a college email */}
+                    <button
+                      type="button"
+                      onClick={handleGuestAccess}
+                      disabled={isGoogleSubmitting}
+                      className="mt-4 w-full rounded-xl border border-white/20 bg-white/5 py-3 px-6 text-sm md:text-base font-semibold text-white/90 hover:bg-white/10 hover:border-white/30 transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      Explore as guest
+                    </button>
+                    <p className="mt-2 text-center text-xs text-white/50">
+                      No college email? Try the app with sample data.
+                    </p>
 
                     {/* Trust indicators */}
                     <div className="mt-8 space-y-3">
