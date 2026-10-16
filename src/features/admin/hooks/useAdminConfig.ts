@@ -84,12 +84,12 @@ export const useAdminConfig = () => {
     []
   );
 
-  // Save one section straight to Firestore, then mirror it locally
+  // Save one section straight to Firestore, then mirror it locally. Already persisted,
+  // so this doesn't raise hasChanges.
   const saveSection = useCallback(
     async <K extends keyof AdminConfig>(section: K, data: AdminConfig[K]) => {
       try {
         if (await updateConfigSection(section, data)) {
-          setHasChanges(true);
           setConfig((prev) => ({ ...prev, [section]: data }));
         }
       } catch (err) {

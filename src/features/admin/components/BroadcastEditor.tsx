@@ -69,14 +69,17 @@ const BroadcastEditor: React.FC = () => {
   const [hostel, setHostel] = useState('All');
   const [courseOption, setCourseOption] = useState<'CBCS' | 'NEP' | 'All'>('All');
 
-  // Same matching rules as sendBroadcast (case-insensitive branch/hostel, year from email)
-  const recipientCount = users.filter(
-    (user) =>
-      (branch === 'All' || user.branch?.toLowerCase() === branch.toLowerCase()) &&
-      (hostel === 'All' || user.hostel?.toLowerCase() === hostel.toLowerCase()) &&
-      (courseOption === 'All' || user.courseOption === courseOption) &&
-      (year === 'All' || (admissionYear(user.email) ?? 'Other') === year)
-  ).length;
+  // Same matching rules as sendBroadcast (case-insensitive branch/hostel, year from email).
+  // Unknown (null) until users load, so sending isn't blocked by a slow or failed preview.
+  const recipientCount = users.length
+    ? users.filter(
+        (user) =>
+          (branch === 'All' || user.branch?.toLowerCase() === branch.toLowerCase()) &&
+          (hostel === 'All' || user.hostel?.toLowerCase() === hostel.toLowerCase()) &&
+          (courseOption === 'All' || user.courseOption === courseOption) &&
+          (year === 'All' || (admissionYear(user.email) ?? 'Other') === year)
+      ).length
+    : null;
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) {
@@ -204,7 +207,7 @@ const BroadcastEditor: React.FC = () => {
               <div className="flex items-center gap-2 px-3 py-1 bg-blue-500/10 rounded-full border border-blue-500/20">
                 <Users className="w-6 h-6" />
                 <span className="text-sm font-medium text-blue-400">
-                  {fetchingCount ? '...' : recipientCount} recipients
+                  {fetchingCount ? '...' : (recipientCount ?? 0)} recipients
                 </span>
               </div>
             </div>
