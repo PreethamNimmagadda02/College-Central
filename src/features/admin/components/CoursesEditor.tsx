@@ -1,11 +1,21 @@
-import { Plus, Search, Upload, Trash2, Edit, X, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Edit,
+  Plus,
+  Search,
+  Trash2,
+  Upload,
+  X,
+} from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminCourse } from '../types';
-import { AdminHeader, BookOpenIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
 import CourseUploader from './CourseUploader';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'courses' | 'importCourses'>;
 
@@ -98,7 +108,7 @@ const CoursesEditor: React.FC<Props> = ({ config, courses, importCourses }) => {
     <AdminPageLayout>
       {/* Header */}
       <AdminHeader
-        icon={<BookOpenIcon />}
+        icon={BookOpen}
         title="Courses"
         subtitle="Manage course catalog and schedules"
       >

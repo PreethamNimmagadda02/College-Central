@@ -3,7 +3,7 @@ import { DEFAULT_GRADING_SCALE } from '@config/gradingScale';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminGradeDefinition } from '../types';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminPageLayout } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'grades'>;
 

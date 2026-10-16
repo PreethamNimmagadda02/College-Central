@@ -1,8 +1,8 @@
+import { GraduationCap } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
-import { AdminHeader, AcademicCapIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'branches'>;
 
@@ -89,7 +89,7 @@ const BranchesEditor: React.FC<Props> = ({ config, branches }) => {
   return (
     <AdminPageLayout>
       <AdminHeader
-        icon={<AcademicCapIcon />}
+        icon={GraduationCap}
         title="Branches / Departments"
         subtitle="Manage available academic branches for students"
       />

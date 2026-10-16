@@ -1,9 +1,9 @@
+import { FileText } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminForm } from '../types';
-import { AdminHeader, DocumentIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'forms'>;
 
@@ -111,7 +111,7 @@ const FormsEditor: React.FC<Props> = ({ config, forms }) => {
   return (
     <AdminPageLayout>
       <AdminHeader
-        icon={<DocumentIcon />}
+        icon={FileText}
         title="Academic Forms"
         subtitle="Manage downloadable forms for students"
       >

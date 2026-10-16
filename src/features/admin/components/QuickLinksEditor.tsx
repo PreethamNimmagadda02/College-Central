@@ -1,9 +1,9 @@
+import { Link } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminQuickLink } from '../types';
-import { AdminHeader, LinkIcon as HeaderLinkIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'quickLinks'>;
 
@@ -117,7 +117,7 @@ const QuickLinksEditor: React.FC<Props> = ({ config, quickLinks }) => {
   return (
     <AdminPageLayout>
       <AdminHeader
-        icon={<HeaderLinkIcon />}
+        icon={Link}
         title="Quick Links"
         subtitle="Default institutional links shown on the dashboard"
       >

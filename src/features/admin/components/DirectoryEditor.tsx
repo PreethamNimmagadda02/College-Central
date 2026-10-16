@@ -1,11 +1,10 @@
-import { Plus, Search, Trash2, Edit2, Phone, Mail, Building, Upload } from 'lucide-react';
+import { Building, Edit2, Mail, Phone, Plus, Search, Trash2, Upload, Users } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminDirectoryEntry } from '../types';
-import { AdminHeader, UsersIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
 import DirectoryUploader from './DirectoryUploader';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'directory' | 'importDirectoryEntries'>;
 
@@ -82,7 +81,7 @@ const DirectoryEditor: React.FC<Props> = ({ config, directory, importDirectoryEn
     <AdminPageLayout>
       {/* Header */}
       <AdminHeader
-        icon={<UsersIcon />}
+        icon={Users}
         title="Faculty & Staff Directory"
         subtitle="Manage faculty, staff, and department contacts"
       >

@@ -1,3 +1,4 @@
+import { MapPin } from 'lucide-react';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   LineChart,
@@ -13,8 +14,6 @@ import {
   Legend,
 } from 'recharts';
 
-import { AdminHeader } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
 import {
   getAggregatedAnalytics,
   getPeakAnalysis,
@@ -27,6 +26,7 @@ import {
   ZoneCorrelation,
   HeatmapComparison,
 } from '@/services/locationAnalyticsService';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 // Chart colors
 const CHART_COLORS = [
@@ -285,7 +285,7 @@ const LocationAnalyticsEditor: React.FC = () => {
   if (loading) {
     return (
       <AdminPageLayout>
-        <AdminHeader icon={<MapPinIcon />} title="Location Insights" />
+        <AdminHeader icon={MapPin} title="Location Insights" />
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
         </div>
@@ -295,7 +295,7 @@ const LocationAnalyticsEditor: React.FC = () => {
 
   return (
     <AdminPageLayout>
-      <AdminHeader icon={<MapPinIcon />} title="Location Insights" />
+      <AdminHeader icon={MapPin} title="Location Insights" />
       <div className="space-y-6">
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4">

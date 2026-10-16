@@ -27,7 +27,21 @@ import AdminSearch from './components/AdminSearch';
 import BroadcastEditor from './components/BroadcastEditor';
 import GradeAnalyticsEditor from './components/GradeAnalyticsEditor';
 
-import { BuildingIcon, AcademicCapIcon, MapPinIcon, HomeIcon, LinkIcon, SparklesIcon, DocumentIcon, CalendarIcon, UsersIcon, BookOpenIcon, UserGroupIcon, ChartBarIcon, SpeakerphoneIcon } from './components/AdminIcons';
+import {
+  BarChart3 as ChartBarIcon,
+  BookOpen as BookOpenIcon,
+  Building2 as BuildingIcon,
+  Calendar as CalendarIcon,
+  FileText as DocumentIcon,
+  GraduationCap as AcademicCapIcon,
+  House as HomeIcon,
+  Link as LinkIcon,
+  MapPin as MapPinIcon,
+  Megaphone as SpeakerphoneIcon,
+  Sparkles as SparklesIcon,
+  Users as UsersIcon,
+  UsersRound as UserGroupIcon,
+} from 'lucide-react';
 
 // Categorized menu sections
 const menuSections = {
@@ -99,7 +113,7 @@ const menuSections = {
       path: '/admin/broadcasts',
       label: 'Broadcasts',
       icon: <SpeakerphoneIcon />,
-    }
+    },
   ],
   monitoring: [
     {
@@ -278,7 +292,6 @@ const AdminDashboard: React.FC = () => {
                 <span className="hidden sm:inline">Unsaved Changes</span>
               </span>
             )}
-
 
             {/* Search Button */}
             <button

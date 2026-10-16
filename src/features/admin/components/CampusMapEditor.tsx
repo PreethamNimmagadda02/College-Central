@@ -1,23 +1,22 @@
 import {
-  Search,
-  Plus,
-  Trash2,
-  MapPin,
+  Check,
   Edit2,
-  X,
-  Save,
-  Navigation,
+  ExternalLink,
   Link,
   Locate,
-  ExternalLink,
-  Check,
+  MapPin,
+  Navigation,
+  Plus,
+  Save,
+  Search,
+  Trash2,
+  X,
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { CampusLocation, CampusLocationCategory, QuickRoute } from '../types';
-import { AdminHeader, MapPinIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'saveSection'>;
 
@@ -379,7 +378,7 @@ const CampusMapEditor: React.FC<Props> = ({ config, saveSection }) => {
     <AdminPageLayout>
       {/* Header */}
       <AdminHeader
-        icon={<MapPinIcon />}
+        icon={MapPin}
         title="Campus Map"
         subtitle="Manage locations and navigation routes"
       >

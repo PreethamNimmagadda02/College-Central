@@ -1,3 +1,4 @@
+import { BarChart3 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import {
     BarChart,
@@ -11,8 +12,7 @@ import {
 } from 'recharts';
 import { db } from '@lib/firebase';
 import { User } from '@/types';
-import { AdminHeader, ChartBarIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 // Mock data for development if needed, but we'll fetch real data
 // const MOCK_DATA = ...
@@ -271,7 +271,7 @@ const GradeAnalyticsEditor: React.FC = () => {
     return (
         <AdminPageLayout>
             <AdminHeader
-                icon={<ChartBarIcon />}
+                icon={BarChart3}
                 title="Learning Analytics"
                 subtitle="Insights into student academic performance across the institution"
             >

@@ -1,11 +1,10 @@
-import { Plus, Search, Upload, Trash2, Edit, X } from 'lucide-react';
+import { Edit, Plus, Search, Trash2, Upload, UsersRound, X } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminStudentEntry } from '../types';
-import { AdminHeader, UserGroupIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
 import StudentUploader from './StudentUploader';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'students' | 'importStudents'>;
 
@@ -87,7 +86,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({ config, students, importStude
     <AdminPageLayout>
       {/* Header */}
       <AdminHeader
-        icon={<UserGroupIcon />}
+        icon={UsersRound}
         title="Student Directory"
         subtitle="Manage student records and information"
       >

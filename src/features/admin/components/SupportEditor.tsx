@@ -1,22 +1,21 @@
 import emailjs from '@emailjs/browser';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import {
-  MessageSquare,
-  Send,
-  Loader2,
-  CheckCircle,
   AlertCircle,
-  HelpCircle,
   Bug,
-  Lightbulb,
+  CheckCircle,
   FileQuestion,
+  HelpCircle,
+  Lightbulb,
+  Loader2,
   Mail,
+  MessageSquare,
+  Phone,
+  Send,
   Shield,
 } from 'lucide-react';
 import React, { useState, useRef, useMemo, useCallback } from 'react';
-
-import { AdminHeader, SupportIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 // Types
 interface FormState {
@@ -349,7 +348,7 @@ const SupportEditor: React.FC = () => {
     <AdminPageLayout>
       {/* Header */}
       <AdminHeader
-        icon={<SupportIcon />}
+        icon={Phone}
         title="Support"
         subtitle="Get help or report issues with the admin dashboard"
       />

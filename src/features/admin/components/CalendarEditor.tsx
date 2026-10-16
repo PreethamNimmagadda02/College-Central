@@ -1,10 +1,10 @@
+import { Calendar } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminCalendarEvent } from '../types';
-import { AdminHeader, CalendarIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
 import CalendarUploader from './CalendarUploader';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 type Props = Pick<
   AdminConfigApi,
@@ -155,7 +155,7 @@ const CalendarEditor: React.FC<Props> = ({
   return (
     <AdminPageLayout>
       <AdminHeader
-        icon={<CalendarIcon />}
+        icon={Calendar}
         title="Academic Calendar"
         subtitle="Manage semester dates and calendar events"
       >

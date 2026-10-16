@@ -5,11 +5,11 @@ import {
   isValidFileSize,
   MAX_HERO_IMAGE_SIZE,
 } from '@services/storageService';
+import { Building2 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
-import { AdminHeader, BuildingIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'updateCollegeInfo' | 'updateAppConstants'>;
 
@@ -69,7 +69,7 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
     <AdminPageLayout>
       {/* Header with Edit/Save/Cancel buttons */}
       <AdminHeader
-        icon={<BuildingIcon />}
+        icon={Building2}
         title="College Information"
         subtitle={
           isEditing

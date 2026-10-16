@@ -1,9 +1,9 @@
+import { Sparkles } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { AdminQuote } from '../types';
-import { AdminHeader, SparklesIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'quotes'>;
 
@@ -94,7 +94,7 @@ const QuotesEditor: React.FC<Props> = ({ config, quotes }) => {
   return (
     <AdminPageLayout>
       <AdminHeader
-        icon={<SparklesIcon />}
+        icon={Sparkles}
         title="Motivational Quotes"
         subtitle="Quotes displayed on the student dashboard"
       >

@@ -1,12 +1,12 @@
 
+import { Megaphone, Users } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { AdminHeader, SpeakerphoneIcon, UsersIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
 import { sendBroadcast } from '@/services/notificationService';
 import { db } from '@lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { NotificationFilter } from '@/types';
 import { toast } from 'sonner';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 const BroadcastEditor: React.FC = () => {
     const [loading, setLoading] = useState(false);
@@ -115,7 +115,7 @@ const BroadcastEditor: React.FC = () => {
     return (
         <AdminPageLayout>
             <AdminHeader
-                icon={<SpeakerphoneIcon />}
+                icon={Megaphone}
                 title="Broadcast Messages"
                 subtitle="Send targeted notifications to students"
             />
@@ -199,7 +199,7 @@ const BroadcastEditor: React.FC = () => {
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold text-white">Target Audience</h3>
                             <div className="flex items-center gap-2 px-3 py-1 bg-blue-500/10 rounded-full border border-blue-500/20">
-                                <UsersIcon />
+                                <Users className="w-6 h-6" />
                                 <span className="text-sm font-medium text-blue-400">
                                     {fetchingCount ? '...' : (recipientCount ?? 0)} recipients
                                 </span>

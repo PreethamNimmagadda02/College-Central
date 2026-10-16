@@ -1,8 +1,8 @@
+import { House } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { AdminConfigApi } from '../hooks/useAdminConfig';
-import { AdminHeader, HomeIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminHeader, AdminPageLayout } from './ui';
 
 type Props = Pick<AdminConfigApi, 'config' | 'hostels'>;
 
@@ -56,7 +56,7 @@ const HostelsEditor: React.FC<Props> = ({ config, hostels }) => {
   return (
     <AdminPageLayout>
       <AdminHeader
-        icon={<HomeIcon />}
+        icon={House}
         title="Hostels"
         subtitle="Manage available hostel options for students"
       />
@@ -120,7 +120,7 @@ const HostelsEditor: React.FC<Props> = ({ config, hostels }) => {
               ) : (
                 <div className="flex items-center gap-3 sm:gap-4">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white flex-shrink-0">
-                    <HomeIcon />
+                    <House className="w-6 h-6" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-medium text-sm sm:text-base truncate">{hostel}</p>

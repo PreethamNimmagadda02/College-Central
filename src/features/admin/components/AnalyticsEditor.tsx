@@ -1,4 +1,5 @@
 import { db } from '@lib/firebase';
+import { BarChart3 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import {
   BarChart,
@@ -12,9 +13,8 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
+import { AdminHeader, AdminPageLayout } from './ui';
 
-import { AdminHeader, ChartBarIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
 
 interface UserData {
   id: string;
@@ -442,7 +442,7 @@ const AnalyticsEditor: React.FC = () => {
     <AdminPageLayout>
       {/* Header */}
       <AdminHeader
-        icon={<ChartBarIcon />}
+        icon={BarChart3}
         title="User Analytics"
         subtitle={lastUpdated ? `Last updated: ${lastUpdated.toLocaleTimeString()}` : ''}
       >
