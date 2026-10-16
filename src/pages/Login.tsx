@@ -2,80 +2,42 @@ import ScrollToTop from '@components/common/ScrollToTop';
 import { LogoIcon } from '@components/icons/SidebarIcons';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useAuth } from '@features/auth/hooks/useAuth';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  animate,
+  motion,
+  useInView,
+  useMotionValueEvent,
+  useScroll,
+  useTransform,
+} from 'framer-motion';
+import React, { useState, useEffect, useRef, useCallback, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Custom hook for animated counting
-const useCountUp = (end: number, duration: number = 2000, startCounting: boolean = false) => {
+// Counts up from 0 to `end` with a cubic ease-out once `start` turns true
+const useCountUp = (end: number, duration: number, start: boolean) => {
   const [count, setCount] = useState(0);
-  const countRef = useRef(0);
-  const startTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!startCounting) {
-      setCount(0);
-      countRef.current = 0;
-      startTimeRef.current = null;
-      return;
-    }
-
-    const animate = (timestamp: number) => {
-      if (!startTimeRef.current) startTimeRef.current = timestamp;
-      const progress = Math.min((timestamp - startTimeRef.current) / duration, 1);
-
-      // Ease out cubic for smooth deceleration
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-      const currentCount = Math.floor(easeOut * end);
-
-      if (currentCount !== countRef.current) {
-        countRef.current = currentCount;
-        setCount(currentCount);
-      }
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        setCount(end);
-      }
-    };
-
-    requestAnimationFrame(animate);
-  }, [end, duration, startCounting]);
+    if (!start) return undefined;
+    const controls = animate(0, end, {
+      duration: duration / 1000,
+      ease: (t) => 1 - Math.pow(1 - t, 3),
+      onUpdate: (value) => setCount(Math.floor(value)),
+      onComplete: () => setCount(end),
+    });
+    return () => controls.stop();
+  }, [end, duration, start]);
 
   return count;
 };
 
-// Custom hook for intersection observer
-const useInView = (threshold: number = 0.1) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isInView, setIsInView] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry && entry.isIntersecting && !isInView) {
-          setIsInView(true);
-        }
-      },
-      { threshold }
-    );
-
-    const currentRef = ref.current;
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
-
-    return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
-      observer.disconnect();
-    };
-  }, [threshold, isInView]);
-
-  return { ref, isInView };
+// Fades a section in and slides it up as it scrolls into view
+const useReveal = (ref: RefObject<HTMLElement | null>, fromY = 80) => {
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end center'] });
+  return {
+    opacity: useTransform(scrollYProgress, [0, 0.4], [0, 1]),
+    y: useTransform(scrollYProgress, [0, 0.4], [fromY, 0]),
+  };
 };
 
 // Custom hook for mouse position tracking
@@ -125,6 +87,57 @@ const smartMetrics = [
   { label: 'Uptime', value: 99, suffix: '%', icon: '⚡', description: 'System availability' },
 ];
 
+const testimonials = [
+  {
+    quote:
+      'College Central has made my life so much easier. I can check my schedule, track my CGPA, and find classrooms all in one app!',
+    initial: 'A',
+    avatar: 'from-blue-400 to-purple-500',
+    program: 'CSE Student',
+    year: '2nd Year',
+  },
+  {
+    quote:
+      "The CGPA tracker is amazing! No more manual calculations. It's accurate, fast, and helps me stay on top of my academics.",
+    initial: 'R',
+    avatar: 'from-pink-400 to-orange-500',
+    program: 'ECE Student',
+    year: '3rd Year',
+  },
+  {
+    quote:
+      'Finally, a campus map that actually works! No more asking random seniors for directions. The interactive map is a lifesaver.',
+    initial: 'P',
+    avatar: 'from-green-400 to-cyan-500',
+    program: 'Mechanical Student',
+    year: '1st Year',
+  },
+  {
+    quote:
+      'The schedule feature is incredible. I can add custom tasks, track my deadlines, and never forget a submission date again!',
+    initial: 'S',
+    avatar: 'from-yellow-400 to-red-500',
+    program: 'Electrical Engineering',
+    year: '4th Year',
+  },
+  {
+    quote:
+      'Love how everything syncs in real-time! The dark mode is perfect for late-night study sessions. Best campus app ever.',
+    initial: 'M',
+    avatar: 'from-violet-400 to-indigo-600',
+    program: 'MnC Student',
+    year: '2nd Year',
+  },
+  {
+    quote:
+      "The academic calendar integration is a game-changer. I'm always on top of exam dates, holidays, and important events now.",
+    initial: 'K',
+    avatar: 'from-teal-400 to-emerald-600',
+    program: 'Civil Engineering',
+    year: '3rd Year',
+  },
+];
+
 // Animated metric card component
 const AnimatedMetricCard: React.FC<{
   metric: (typeof smartMetrics)[0];
@@ -163,7 +176,6 @@ const AnimatedMetricCard: React.FC<{
 const LoginLanding: React.FC = () => {
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
   const { loginWithGoogle, enterGuestMode } = useAuth();
   const { config: appConfig } = useAppConfig();
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
@@ -173,7 +185,8 @@ const LoginLanding: React.FC = () => {
   const [showCursor, setShowCursor] = useState(true);
 
   // Hooks for interactive elements
-  const { ref: metricsRef, isInView: metricsInView } = useInView(0.2);
+  const metricsRef = useRef<HTMLDivElement>(null);
+  const metricsInView = useInView(metricsRef, { once: true, amount: 0.2 });
   const { elementRef: loginCardRef, mousePosition } = useMousePosition();
   const [testimonialIndex, setTestimonialIndex] = useState(0);
 
@@ -183,39 +196,17 @@ const LoginLanding: React.FC = () => {
   const socialRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
 
-  // useScroll hooks for each section - triggers animation as section enters viewport
-  const { scrollYProgress: missionProgress } = useScroll({
-    target: missionRef,
-    offset: ['start end', 'end center'],
-  });
+  const missionReveal = useReveal(missionRef);
+  const featuresReveal = useReveal(featuresRef);
+  const socialReveal = useReveal(socialRef);
+  const ctaReveal = useReveal(ctaRef, 60);
 
-  const { scrollYProgress: featuresProgress } = useScroll({
-    target: featuresRef,
-    offset: ['start end', 'end center'],
-  });
+  // Page scroll drives the hero parallax and the fixed logo past the first screen
+  const { scrollY } = useScroll();
+  const heroY = useTransform(scrollY, (y) => y * 0.3);
+  const [showFixedLogo, setShowFixedLogo] = useState(false);
+  useMotionValueEvent(scrollY, 'change', (y) => setShowFixedLogo(y > window.innerHeight * 0.8));
 
-  const { scrollYProgress: socialProgress } = useScroll({
-    target: socialRef,
-    offset: ['start end', 'end center'],
-  });
-
-  const { scrollYProgress: ctaProgress } = useScroll({
-    target: ctaRef,
-    offset: ['start end', 'end center'],
-  });
-
-  // Transform values for reveal animations - fade in and slide up as user scrolls
-  const missionOpacity = useTransform(missionProgress, [0, 0.4], [0, 1]);
-  const missionY = useTransform(missionProgress, [0, 0.4], [80, 0]);
-
-  const featuresOpacity = useTransform(featuresProgress, [0, 0.4], [0, 1]);
-  const featuresY = useTransform(featuresProgress, [0, 0.4], [80, 0]);
-
-  const socialOpacity = useTransform(socialProgress, [0, 0.4], [0, 1]);
-  const socialY = useTransform(socialProgress, [0, 0.4], [80, 0]);
-
-  const ctaOpacity = useTransform(ctaProgress, [0, 0.4], [0, 1]);
-  const ctaY = useTransform(ctaProgress, [0, 0.4], [60, 0]);
   // Set theme-color for notch to match Login page background
   useEffect(() => {
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
@@ -233,24 +224,6 @@ const LoginLanding: React.FC = () => {
         themeColorMeta.setAttribute('content', isDark ? '#0f172a' : '#ffffff');
       }
     };
-  }, []);
-
-  // Smooth parallax scroll effect with requestAnimationFrame
-  useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          setScrollY(window.scrollY);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Typing animation for hero text
@@ -309,7 +282,7 @@ const LoginLanding: React.FC = () => {
   // Testimonial auto-rotation
   useEffect(() => {
     const interval = setInterval(() => {
-      setTestimonialIndex((prev) => (prev + 1) % 6);
+      setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -355,36 +328,11 @@ const LoginLanding: React.FC = () => {
   return (
     <>
       <ScrollToTop />
-      <style>{`
-        @keyframes spin-slow {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 8s linear infinite;
-        }
-        @keyframes gradient-shift {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-        .animate-gradient {
-          animation: gradient-shift 3s ease infinite;
-        }
-      `}</style>
-
       {/* Fixed Logo and Name - Top Left (appears when scrolling past first section) */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         className={`fixed top-3 left-3 sm:top-4 sm:left-4 md:top-6 md:left-6 z-50 transition-all duration-700 ease-out cursor-pointer group/logo ${
-          scrollY > window.innerHeight * 0.8
+          showFixedLogo
             ? 'opacity-100 translate-x-0'
             : 'opacity-0 -translate-x-8 pointer-events-none'
         }`}
@@ -412,19 +360,19 @@ const LoginLanding: React.FC = () => {
         {/* Section 1: Hero with Background Image */}
         <section className="relative min-h-screen flex items-center justify-center">
           {/* Background Image with Parallax */}
-          <div
+          <motion.div
             className="absolute inset-0 will-change-transform"
             style={{
               backgroundImage: `url('${appConfig?.collegeInfo?.heroImageUrl || '/iitism_banner_new.gif'}')`,
               backgroundSize: '100% 100%',
               backgroundPosition: 'center center',
               backgroundRepeat: 'no-repeat',
-              transform: `translate3d(0, ${scrollY * 0.3}px, 0)`,
+              y: heroY,
               backfaceVisibility: 'hidden',
               width: '100%',
               height: '100%',
             }}
-          ></div>
+          ></motion.div>
 
           {/* Overlay for better contrast */}
           <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 via-indigo-900/40 to-purple-900/50"></div>
@@ -465,7 +413,7 @@ const LoginLanding: React.FC = () => {
               {/* Animated typing text - Main Headline */}
               <div className="min-h-[15vh] md:min-h-[18vh] lg:min-h-[20vh] flex items-center justify-center px-4">
                 <h2 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight text-center">
-                  <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto] transition-all duration-300 drop-shadow-2xl">
+                  <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent animate-gradient-shift bg-[length:200%_auto] transition-all duration-300 drop-shadow-2xl">
                     {typedText}
                   </span>
                   {showCursor && (
@@ -543,7 +491,7 @@ const LoginLanding: React.FC = () => {
           <motion.div
             ref={missionRef}
             className="relative flex flex-col justify-center items-center px-6 py-12 md:py-16"
-            style={{ opacity: missionOpacity, y: missionY }}
+            style={missionReveal}
           >
             <div className="max-w-4xl space-y-6 text-center relative z-10">
               <div className="group/tag inline-flex items-center gap-2.5 px-6 py-3 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-md rounded-full text-base md:text-lg font-semibold text-white border border-purple-400/30 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-105 transition-all duration-300">
@@ -608,7 +556,7 @@ const LoginLanding: React.FC = () => {
           <motion.div
             ref={featuresRef}
             className="relative flex flex-col justify-center items-center px-6 py-10 md:py-14"
-            style={{ opacity: featuresOpacity, y: featuresY }}
+            style={featuresReveal}
           >
             <div className="max-w-7xl w-full space-y-8 relative z-10">
               <div className="text-center space-y-3">
@@ -721,7 +669,7 @@ const LoginLanding: React.FC = () => {
           <motion.div
             ref={socialRef}
             className="relative flex flex-col justify-center items-center px-6 py-10 md:py-14"
-            style={{ opacity: socialOpacity, y: socialY }}
+            style={socialReveal}
           >
             <div className="max-w-4xl w-full space-y-8 relative z-10">
               <div className="text-center space-y-3">
@@ -754,210 +702,47 @@ const LoginLanding: React.FC = () => {
                   className="flex transition-transform duration-700 ease-out"
                   style={{ transform: `translateX(-${testimonialIndex * 100}%)` }}
                 >
-                  {/* Testimonial 1 */}
-                  <div className="w-full flex-shrink-0 px-2">
-                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                      <div className="flex items-center gap-1 mb-3">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <svg
-                            key={star}
-                            className="w-4 h-4 text-yellow-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
-                        "College Central has made my life so much easier. I can check my schedule,
-                        track my CGPA, and find classrooms all in one app!"
-                      </p>
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">
-                          A
+                  {testimonials.map((testimonial) => (
+                    <div key={testimonial.initial} className="w-full flex-shrink-0 px-2">
+                      <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
+                        <div className="flex items-center gap-1 mb-3">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <svg
+                              key={star}
+                              className="w-4 h-4 text-yellow-400"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
                         </div>
-                        <div className="text-left">
-                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">
-                            CSE Student
-                          </p>
-                          <p className="text-white/60 text-xs md:text-sm">2nd Year</p>
+                        <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
+                          "{testimonial.quote}"
+                        </p>
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <div
+                            className={`w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br ${testimonial.avatar} flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300`}
+                          >
+                            {testimonial.initial}
+                          </div>
+                          <div className="text-left">
+                            <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">
+                              {testimonial.program}
+                            </p>
+                            <p className="text-white/60 text-xs md:text-sm">{testimonial.year}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Testimonial 2 */}
-                  <div className="w-full flex-shrink-0 px-2">
-                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                      <div className="flex items-center gap-1 mb-3">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <svg
-                            key={star}
-                            className="w-4 h-4 text-yellow-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
-                        "The CGPA tracker is amazing! No more manual calculations. It's accurate,
-                        fast, and helps me stay on top of my academics."
-                      </p>
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-pink-400 to-orange-500 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">
-                          R
-                        </div>
-                        <div className="text-left">
-                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">
-                            ECE Student
-                          </p>
-                          <p className="text-white/60 text-xs md:text-sm">3rd Year</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Testimonial 3 */}
-                  <div className="w-full flex-shrink-0 px-2">
-                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                      <div className="flex items-center gap-1 mb-3">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <svg
-                            key={star}
-                            className="w-4 h-4 text-yellow-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
-                        "Finally, a campus map that actually works! No more asking random seniors
-                        for directions. The interactive map is a lifesaver."
-                      </p>
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-green-400 to-cyan-500 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">
-                          P
-                        </div>
-                        <div className="text-left">
-                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">
-                            Mechanical Student
-                          </p>
-                          <p className="text-white/60 text-xs md:text-sm">1st Year</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Testimonial 4 */}
-                  <div className="w-full flex-shrink-0 px-2">
-                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                      <div className="flex items-center gap-1 mb-3">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <svg
-                            key={star}
-                            className="w-4 h-4 text-yellow-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
-                        "The schedule feature is incredible. I can add custom tasks, track my
-                        deadlines, and never forget a submission date again!"
-                      </p>
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-yellow-400 to-red-500 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">
-                          S
-                        </div>
-                        <div className="text-left">
-                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">
-                            Electrical Engineering
-                          </p>
-                          <p className="text-white/60 text-xs md:text-sm">4th Year</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Testimonial 5 */}
-                  <div className="w-full flex-shrink-0 px-2">
-                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                      <div className="flex items-center gap-1 mb-3">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <svg
-                            key={star}
-                            className="w-4 h-4 text-yellow-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
-                        "Love how everything syncs in real-time! The dark mode is perfect for
-                        late-night study sessions. Best campus app ever."
-                      </p>
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-violet-400 to-indigo-600 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">
-                          M
-                        </div>
-                        <div className="text-left">
-                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">
-                            MnC Student
-                          </p>
-                          <p className="text-white/60 text-xs md:text-sm">2nd Year</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Testimonial 6 */}
-                  <div className="w-full flex-shrink-0 px-2">
-                    <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                      <div className="flex items-center gap-1 mb-3">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <svg
-                            key={star}
-                            className="w-4 h-4 text-yellow-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
-                        "The academic calendar integration is a game-changer. I'm always on top of
-                        exam dates, holidays, and important events now."
-                      </p>
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300">
-                          K
-                        </div>
-                        <div className="text-left">
-                          <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">
-                            Civil Engineering
-                          </p>
-                          <p className="text-white/60 text-xs md:text-sm">3rd Year</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
                 {/* Carousel Navigation Dots */}
                 <div className="flex justify-center gap-2 mt-4">
-                  {[0, 1, 2, 3, 4, 5].map((index) => (
+                  {testimonials.map((testimonial, index) => (
                     <button
-                      key={index}
+                      key={testimonial.initial}
                       onClick={() => setTestimonialIndex(index)}
                       className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                         testimonialIndex === index
@@ -1023,7 +808,7 @@ const LoginLanding: React.FC = () => {
           <motion.div
             ref={ctaRef}
             className="relative flex flex-col justify-center items-center px-6 py-8 md:py-10"
-            style={{ opacity: ctaOpacity, y: ctaY }}
+            style={ctaReveal}
           >
             <div className="max-w-2xl text-center space-y-4 relative z-10">
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight">
@@ -1062,7 +847,7 @@ const LoginLanding: React.FC = () => {
                 />
 
                 {/* Animated border gradient */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition-all duration-1000 animate-gradient"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition-all duration-1000 animate-gradient-shift"></div>
 
                 {/* Floating particles effect */}
                 <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
@@ -1165,7 +950,7 @@ const LoginLanding: React.FC = () => {
                       disabled={isGoogleSubmitting}
                       className="relative w-full group/btn transform hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200"
                     >
-                      <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-xl blur opacity-60 group-hover/btn:opacity-100 transition duration-300 animate-gradient"></div>
+                      <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-xl blur opacity-60 group-hover/btn:opacity-100 transition duration-300 animate-gradient-shift"></div>
                       <div className="relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-xl group-hover/btn:from-indigo-500 group-hover/btn:via-purple-500 group-hover/btn:to-pink-500 transition-all duration-300 overflow-hidden">
                         {/* Animated shine effect */}
                         <div className="absolute inset-0 translate-x-[-100%] group-hover/btn:translate-x-[100%] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000"></div>
