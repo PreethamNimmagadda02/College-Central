@@ -39,6 +39,28 @@ const POP_UP: Variants = {
 };
 const SLIDE_IN: Variants = { hidden: { opacity: 0, x: -20 }, show: { opacity: 1, x: 0 } };
 
+// Presentation for each SGPA trajectory status
+const TREND_META = {
+  Improving: {
+    emoji: '📈',
+    color: 'text-green-600',
+    bob: { y: [0, -5, 0] },
+    message: '🚀 Your grades are improving over time!',
+  },
+  Declining: {
+    emoji: '📉',
+    color: 'text-red-600',
+    bob: { y: [0, 5, 0] },
+    message: '⚠️ Your grades show a declining trend',
+  },
+  Stable: {
+    emoji: '➡️',
+    color: 'text-orange-600',
+    bob: { x: [0, 5, 0] },
+    message: '➡️ Your performance is relatively stable',
+  },
+};
+
 // Counts up smoothly to `value` (shown with `decimals` places) when scrolled into view
 const AnimatedNumber: React.FC<{
   value: number;
@@ -1577,9 +1599,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 }) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'distribution' | 'insights'>(
-    'overview'
-  );
+  const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'distribution'>('overview');
   const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
   const { gradePoints, getGradeColor } = useGradingScale();
 
@@ -1605,6 +1625,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
         semester: `Semester ${sem.semester}`,
         semesterNum: sem.semester,
         sgpa: sem.sgpa,
+        cgpa: sem.cgpa,
         credits: earnedCredits, // Now only counts earned (passed) credits
         delta: index > 0 ? delta : 0,
         courseCount: sem.grades.length,
@@ -1637,7 +1658,8 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
       sumX2 += i * i;
     });
     const slope = n > 1 ? (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX) : 0;
-    const trajectoryStatus = slope > 0.1 ? 'Improving' : slope < -0.1 ? 'Declining' : 'Stable';
+    const trajectoryStatus: keyof typeof TREND_META =
+      slope > 0.1 ? 'Improving' : slope < -0.1 ? 'Declining' : 'Stable';
 
     // 3. Credit Efficiency (quality points per credit)
     const totalQualityPoints = latestGrades.reduce(
@@ -1672,13 +1694,10 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
     else if (gradesData.cgpa >= 5.0) academicStanding = 'Satisfactory';
     else academicStanding = 'Academic Probation';
 
-    // 8. Best and Worst Semesters
+    // 8. Best Semester
     const firstSemester = sortedSemesters[0];
     const bestSemester = firstSemester
       ? sortedSemesters.reduce((best, sem) => (sem.sgpa > best.sgpa ? sem : best), firstSemester)
-      : { semester: 0, sgpa: 0, grades: [], sessionYear: '', sessionType: 'Monsoon' as const };
-    const worstSemester = firstSemester
-      ? sortedSemesters.reduce((worst, sem) => (sem.sgpa < worst.sgpa ? sem : worst), firstSemester)
       : { semester: 0, sgpa: 0, grades: [], sessionYear: '', sessionType: 'Monsoon' as const };
 
     // 9. Improvement Potential
@@ -1705,13 +1724,14 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
       excellenceRate,
       academicStanding,
       bestSemester,
-      worstSemester,
       improvementPotential,
       avgCreditsPerSem,
       maxCreditsInSem,
       avgSgpa,
     };
   }, [gradesData, latestGrades]);
+
+  const trend = TREND_META[advancedMetrics.trajectoryStatus];
 
   // Calculate grade distribution with courses (using latest grades only)
   const gradeDistribution = useMemo(() => {
@@ -1733,10 +1753,6 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
     return distribution;
   }, [latestGrades]);
-
-  const getGradeCourses = (grade: string) => {
-    return gradeDistribution[grade]?.courses || [];
-  };
 
   // Calculate subject performance with courses (using latest grades only)
   const subjectPerformance = useMemo(() => {
@@ -1769,11 +1785,6 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
         return b.totalCredits - a.totalCredits;
       });
   }, [latestGrades]);
-
-  const getCategoryCourses = (category: string) => {
-    const categoryData = subjectPerformance.find((s) => s.category === category);
-    return categoryData?.courses || [];
-  };
 
   return (
     <motion.div
@@ -1988,29 +1999,14 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   </h4>
                   <motion.span
                     className="text-base sm:text-lg"
-                    animate={
-                      advancedMetrics.trajectoryStatus === 'Improving'
-                        ? { y: [0, -5, 0] }
-                        : advancedMetrics.trajectoryStatus === 'Declining'
-                          ? { y: [0, 5, 0] }
-                          : { x: [0, 5, 0] }
-                    }
+                    animate={trend.bob}
                     transition={{ repeat: Infinity, duration: 2 }}
                   >
-                    {advancedMetrics.trajectoryStatus === 'Improving'
-                      ? '📈'
-                      : advancedMetrics.trajectoryStatus === 'Declining'
-                        ? '📉'
-                        : '➡️'}
+                    {trend.emoji}
                   </motion.span>
                 </div>
                 <motion.p
-                  className={`text-base sm:text-xl font-bold truncate ${advancedMetrics.trajectoryStatus === 'Improving'
-                      ? 'text-green-600'
-                      : advancedMetrics.trajectoryStatus === 'Declining'
-                        ? 'text-red-600'
-                        : 'text-orange-600'
-                    }`}
+                  className={`text-base sm:text-xl font-bold truncate ${trend.color}`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
@@ -2196,13 +2192,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     {selectedKPI === 'trend' && (
                       <>
                         <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
-                          <span className="text-orange-500">
-                            {advancedMetrics.trajectoryStatus === 'Improving'
-                              ? '📈'
-                              : advancedMetrics.trajectoryStatus === 'Declining'
-                                ? '📉'
-                                : '➡️'}
-                          </span>{' '}
+                          <span className="text-orange-500">{trend.emoji}</span>{' '}
                           Performance Trend
                         </h4>
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
@@ -2232,26 +2222,12 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                             </p>
                             <p>
                               Status:{' '}
-                              <strong
-                                className={
-                                  advancedMetrics.trajectoryStatus === 'Improving'
-                                    ? 'text-green-600'
-                                    : advancedMetrics.trajectoryStatus === 'Declining'
-                                      ? 'text-red-600'
-                                      : 'text-orange-600'
-                                }
-                              >
+                              <strong className={trend.color}>
                                 {advancedMetrics.trajectoryStatus}
                               </strong>
                             </p>
                           </div>
-                          <p className="text-xs text-slate-500 mt-2">
-                            {advancedMetrics.trajectoryStatus === 'Improving'
-                              ? '🚀 Your grades are improving over time!'
-                              : advancedMetrics.trajectoryStatus === 'Declining'
-                                ? '⚠️ Your grades show a declining trend'
-                                : '➡️ Your performance is relatively stable'}
-                          </p>
+                          <p className="text-xs text-slate-500 mt-2">{trend.message}</p>
                         </div>
                       </>
                     )}
@@ -2772,7 +2748,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                     >
-                      {getCategoryCourses(subject.category).map(
+                      {subject.courses.map(
                         (course: any, courseIndex: number) => (
                           <div
                             key={courseIndex}
@@ -2937,27 +2913,14 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
             {/* Recharts Line Chart */}
             {(() => {
-              // Use extracted SGPA and CGPA values directly from the gradesheet
-              const sortedSemesters = [...gradesData.semesters].sort(
-                (a, b) => a.semester - b.semester
-              );
-
-              const chartData = sortedSemesters.map((sem) => {
-                // Calculate earned credits for this semester (passed courses only)
-                const semCredits = sem.grades.reduce(
-                  (total, grade) => total + (grade.grade !== 'F' ? grade.credits || 0 : 0),
-                  0
-                );
-
-                return {
-                  name: `Sem ${sem.semester}`,
-                  semester: sem.semester,
-                  SGPA: parseFloat(sem.sgpa.toFixed(2)), // Use extracted SGPA directly
-                  CGPA: parseFloat((sem.cgpa || sem.sgpa).toFixed(2)), // Use extracted CGPA directly (fallback to SGPA for older data)
-                  credits: semCredits,
-                  courses: sem.grades.length,
-                };
-              });
+              // Extracted SGPA/CGPA from the gradesheet (CGPA falls back to SGPA for older data)
+              const chartData = performanceTrend.map((item) => ({
+                name: `Sem ${item.semesterNum}`,
+                SGPA: parseFloat(item.sgpa.toFixed(2)),
+                CGPA: parseFloat((item.cgpa || item.sgpa).toFixed(2)),
+                credits: item.credits,
+                courses: item.courseCount,
+              }));
 
               // Custom tooltip component
               const CustomTooltip = ({ active, payload, label }: any) => {
@@ -3008,11 +2971,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   <div className="w-full outline-none focus:outline-none [&_svg]:outline-none [&_svg]:focus:outline-none [&_*]:outline-none">
                     <ResponsiveContainer width="100%" height={250}>
                       <ComposedChart
-                        data={chartData.map((d) => ({
-                          ...d,
-                          // Use shorter labels on mobile
-                          displayName: d.name,
-                        }))}
+                        data={chartData}
                         margin={{
                           top: 15,
                           right: 20,
@@ -3505,12 +3464,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               {(() => {
                 // Track unique courses to avoid counting retakes multiple times
                 const seenCourses = new Set<string>();
-                const sortedSemesters = [...gradesData.semesters].sort(
-                  (a, b) => a.semester - b.semester
-                );
 
-                // Calculate new unique earned credits per semester
-                const creditProgressionData = sortedSemesters.map((sem) => {
+                // Calculate new unique earned credits per semester (semesters are already sorted)
+                const creditProgressionData = gradesData.semesters.map((sem) => {
                   let newUniqueCredits = 0;
 
                   sem.grades.forEach((grade) => {
@@ -3523,7 +3479,6 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
 
                   return {
                     semester: `Semester ${sem.semester}`,
-                    semesterNum: sem.semester,
                     newCredits: newUniqueCredits,
                   };
                 });
@@ -3721,7 +3676,7 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     </svg>
                   </button>
                 </div>
-                {getGradeCourses(selectedGrade).map((course: any, courseIndex: number) => (
+                {gradeDistribution[selectedGrade]?.courses.map((course, courseIndex) => (
                   <div
                     key={courseIndex}
                     className="group relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between p-2.5 sm:p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-300 gap-2 sm:gap-0"
