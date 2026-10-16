@@ -258,11 +258,7 @@ const StudentDirectoryEditor: React.FC<Props> = ({ config, students, importStude
       )}
 
       {showUploader && (
-        <StudentUploader
-          onImport={importStudents}
-          onClose={() => setShowUploader(false)}
-          existingBranches={branches}
-        />
+        <StudentUploader onImport={importStudents} onClose={() => setShowUploader(false)} />
       )}
     </AdminPageLayout>
   );

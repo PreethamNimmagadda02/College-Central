@@ -1,15 +1,10 @@
 /**
- * Extraction Schemas for AI Workflow
- * Pre-defined configurations for extracting different data types
+ * AI extraction config for academic calendar events (used by the admin calendar uploader)
  */
 
 import { ExtractionConfig, ExtractionSchema } from './aiExtractionWorkflow';
 
-// ============================================================================
-// Calendar Events
-// ============================================================================
-
-export interface CalendarEventData {
+interface CalendarEventData {
   date: string;
   endDate?: string;
   description: string;

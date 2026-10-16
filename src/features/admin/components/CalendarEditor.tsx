@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { AdminConfigApi } from '../hooks/useAdminConfig';
 import { usePagination } from '../hooks/usePagination';
 import { AdminCalendarEvent } from '../types';
-import CalendarUploader from './CalendarUploader';
+import CalendarUploader, { EVENT_TYPE_COLORS } from './CalendarUploader';
 import { AdminHeader, AdminPageLayout, FormModal, Pagination, SearchInput } from './ui';
 
 type Props = Pick<
@@ -20,14 +20,6 @@ const EVENT_TYPES: AdminCalendarEvent['type'][] = [
   'Holiday',
   'Other',
 ];
-
-const EVENT_TYPE_COLORS: Record<AdminCalendarEvent['type'], string> = {
-  'Start of Semester': 'bg-green-500',
-  'Mid-Semester Exams': 'bg-yellow-500',
-  'End-Semester Exams': 'bg-red-500',
-  Holiday: 'bg-purple-500',
-  Other: 'bg-blue-500',
-};
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString('en-IN', {

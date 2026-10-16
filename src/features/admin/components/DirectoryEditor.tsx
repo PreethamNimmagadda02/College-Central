@@ -304,7 +304,6 @@ const DirectoryEditor: React.FC<Props> = ({ config, directory, importDirectoryEn
         <DirectoryUploader
           onImport={importDirectoryEntries}
           onClose={() => setShowUploader(false)}
-          existingDepartments={departments}
         />
       )}
     </AdminPageLayout>
