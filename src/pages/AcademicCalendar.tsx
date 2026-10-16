@@ -49,6 +49,127 @@ const getEventStatus = (event: CalendarEvent) => {
   };
 };
 
+const inputClass =
+  'w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800';
+const labelClass = 'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2';
+
+// One form for adding a new event and for editing one of the user's own events
+const EventFormModal: React.FC<{
+  mode: 'add' | 'edit';
+  event: Partial<CalendarEvent>;
+  onChange: (changes: Partial<CalendarEvent>) => void;
+  onSubmit: () => void;
+  onClose: () => void;
+}> = ({ mode, event, onChange, onSubmit, onClose }) => {
+  const isAdd = mode === 'add';
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            {isAdd ? 'Add New Event' : 'Edit Event'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className={labelClass}>
+              {isAdd ? 'Event Description *' : 'Event Description'}
+            </label>
+            <input
+              type="text"
+              value={event.description}
+              onChange={(e) => onChange({ description: e.target.value })}
+              className={inputClass}
+              placeholder={isAdd ? 'e.g., Project Submission Deadline' : undefined}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>{isAdd ? 'Start Date *' : 'Start Date'}</label>
+            <input
+              type="date"
+              value={event.date}
+              min="2020-01-01"
+              max="2099-12-31"
+              onChange={(e) => onChange({ date: e.target.value })}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>End Date (optional)</label>
+            <input
+              type="date"
+              value={event.endDate || ''}
+              min="2020-01-01"
+              max="2099-12-31"
+              onChange={(e) => onChange({ endDate: e.target.value })}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Event Type</label>
+            <select
+              value={event.type}
+              onChange={(e) => onChange({ type: e.target.value as CalendarEventType })}
+              className={inputClass}
+            >
+              <option value="Other">Other</option>
+              <option value="Start of Semester">Start of Semester</option>
+              <option value="Mid-Semester Exams">Mid-Semester Exams</option>
+              <option value="End-Semester Exams">End-Semester Exams</option>
+              <option value="Holiday">Holiday</option>
+            </select>
+          </div>
+          {isAdd && (
+            <div className="flex items-center space-x-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <input
+                type="checkbox"
+                id="remindMe"
+                checked={event.remindMe || false}
+                onChange={(e) => onChange({ remindMe: e.target.checked })}
+                className="w-4 h-4 text-purple-600 bg-white border-slate-300 rounded focus:ring-purple-500"
+              />
+              <label
+                htmlFor="remindMe"
+                className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+              >
+                🔔 Remind me about this event
+              </label>
+            </div>
+          )}
+          <div className="flex space-x-3 pt-4">
+            <button
+              onClick={onSubmit}
+              className="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white font-medium rounded-lg hover:shadow-lg transition-all"
+            >
+              {isAdd ? 'Add Event' : 'Save Changes'}
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AcademicCalendar: React.FC = () => {
   const {
     calendarData,
@@ -1558,227 +1679,24 @@ const AcademicCalendar: React.FC = () => {
         </div>
       )}
 
-      {/* Add Event Modal */}
       {showAddEventModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Add New Event</h2>
-              <button
-                onClick={() => setShowAddEventModal(false)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Event Description *
-                </label>
-                <input
-                  type="text"
-                  value={newEvent.description}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setNewEvent({ ...newEvent, description: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                  placeholder="e.g., Project Submission Deadline"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Start Date *
-                </label>
-                <input
-                  type="date"
-                  value={newEvent.date}
-                  min="2020-01-01"
-                  max="2099-12-31"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setNewEvent({ ...newEvent, date: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  End Date (optional)
-                </label>
-                <input
-                  type="date"
-                  value={newEvent.endDate || ''}
-                  min="2020-01-01"
-                  max="2099-12-31"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setNewEvent({ ...newEvent, endDate: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Event Type
-                </label>
-                <select
-                  value={newEvent.type}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    setNewEvent({ ...newEvent, type: e.target.value as CalendarEventType })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                >
-                  <option value="Other">Other</option>
-                  <option value="Start of Semester">Start of Semester</option>
-                  <option value="Mid-Semester Exams">Mid-Semester Exams</option>
-                  <option value="End-Semester Exams">End-Semester Exams</option>
-                  <option value="Holiday">Holiday</option>
-                </select>
-              </div>
-              <div className="flex items-center space-x-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                <input
-                  type="checkbox"
-                  id="remindMe"
-                  checked={newEvent.remindMe || false}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setNewEvent({ ...newEvent, remindMe: e.target.checked })
-                  }
-                  className="w-4 h-4 text-purple-600 bg-white border-slate-300 rounded focus:ring-purple-500"
-                />
-                <label
-                  htmlFor="remindMe"
-                  className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
-                >
-                  🔔 Remind me about this event
-                </label>
-              </div>
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={handleAddEvent}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white font-medium rounded-lg hover:shadow-lg transition-all"
-                >
-                  Add Event
-                </button>
-                <button
-                  onClick={() => setShowAddEventModal(false)}
-                  className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <EventFormModal
+          mode="add"
+          event={newEvent}
+          onChange={(changes) => setNewEvent({ ...newEvent, ...changes })}
+          onSubmit={handleAddEvent}
+          onClose={() => setShowAddEventModal(false)}
+        />
       )}
 
-      {/* Edit Event Modal */}
       {showEditEventModal && selectedEvent && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Edit Event</h2>
-              <button
-                onClick={() => setShowEditEventModal(false)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Event Description
-                </label>
-                <input
-                  type="text"
-                  value={selectedEvent.description}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSelectedEvent({ ...selectedEvent, description: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  value={selectedEvent.date}
-                  min="2020-01-01"
-                  max="2099-12-31"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSelectedEvent({ ...selectedEvent, date: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  End Date (optional)
-                </label>
-                <input
-                  type="date"
-                  value={selectedEvent.endDate || ''}
-                  min="2020-01-01"
-                  max="2099-12-31"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSelectedEvent({ ...selectedEvent, endDate: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Event Type
-                </label>
-                <select
-                  value={selectedEvent.type}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    setSelectedEvent({
-                      ...selectedEvent,
-                      type: e.target.value as CalendarEventType,
-                    })
-                  }
-                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-800"
-                >
-                  <option value="Other">Other</option>
-                  <option value="Start of Semester">Start of Semester</option>
-                  <option value="Mid-Semester Exams">Mid-Semester Exams</option>
-                  <option value="End-Semester Exams">End-Semester Exams</option>
-                  <option value="Holiday">Holiday</option>
-                </select>
-              </div>
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={handleEditEvent}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white font-medium rounded-lg hover:shadow-lg transition-all"
-                >
-                  Save Changes
-                </button>
-                <button
-                  onClick={() => setShowEditEventModal(false)}
-                  className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <EventFormModal
+          mode="edit"
+          event={selectedEvent}
+          onChange={(changes) => setSelectedEvent({ ...selectedEvent, ...changes })}
+          onSubmit={handleEditEvent}
+          onClose={() => setShowEditEventModal(false)}
+        />
       )}
 
       {/* Event Details Modal */}
