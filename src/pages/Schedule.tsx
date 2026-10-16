@@ -2,11 +2,12 @@ import { useAppConfig } from '@contexts/AppConfigContext';
 import { useSchedule } from '@contexts/ScheduleContext';
 import { useUser } from '@contexts/UserContext';
 import { useAuth } from '@features/auth/hooks/useAuth';
+import { getClassColor } from '@lib/utils/courseColors';
 import { calculateCreditsFromLTP } from '@lib/utils/creditCalculator';
 import { logActivity } from '@services/activityService';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 
-import { ClassSchedule } from '@/types';
+import { ClassSchedule, TimeTableCourse } from '@/types';
 
 const ChevronDownIcon: React.FC = () => (
   <svg
@@ -34,47 +35,35 @@ const formatTime = (time: string) => {
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 
-// Original 16-color palette with order-based assignment
-// Ordered for maximum visual distinction - alternating warm/cool, no similar colors adjacent
-const COURSE_COLORS = [
-  'bg-purple-500/25 border-2 border-purple-600 text-purple-800 dark:text-purple-200', // Purple
-  'bg-emerald-500/25 border-2 border-emerald-600 text-emerald-800 dark:text-emerald-200', // Emerald (green-blue)
-  'bg-rose-500/25 border-2 border-rose-600 text-rose-800 dark:text-rose-200', // Rose (pink-red)
-  'bg-cyan-500/25 border-2 border-cyan-600 text-cyan-800 dark:text-cyan-200', // Cyan (blue-green)
-  'bg-amber-500/25 border-2 border-amber-600 text-amber-800 dark:text-amber-200', // Amber (yellow-orange)
-  'bg-indigo-500/25 border-2 border-indigo-600 text-indigo-800 dark:text-indigo-200', // Indigo (blue-purple)
-  'bg-orange-500/25 border-2 border-orange-600 text-orange-800 dark:text-orange-200', // Orange
-  'bg-sky-500/25 border-2 border-sky-600 text-sky-800 dark:text-sky-200', // Sky Blue
-  'bg-fuchsia-500/25 border-2 border-fuchsia-600 text-fuchsia-800 dark:text-fuchsia-200', // Fuchsia (magenta)
-  'bg-lime-500/25 border-2 border-lime-600 text-lime-800 dark:text-lime-200', // Lime (yellow-green)
-  'bg-red-500/25 border-2 border-red-600 text-red-800 dark:text-red-200', // Red
-  'bg-blue-500/25 border-2 border-blue-600 text-blue-800 dark:text-blue-200', // Blue
-  'bg-yellow-500/25 border-2 border-yellow-600 text-yellow-800 dark:text-yellow-200', // Yellow
-  'bg-violet-500/25 border-2 border-violet-600 text-violet-800 dark:text-violet-200', // Violet
-  'bg-green-500/25 border-2 border-green-600 text-green-800 dark:text-green-200', // Green
-  'bg-pink-500/25 border-2 border-pink-600 text-pink-800 dark:text-pink-200', // Pink
-];
-
-// Map to track color assignments per course code
-const courseColorMap = new Map<string, number>();
-let nextColorIndex = 0;
-
-const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
-  // Custom tasks get a distinctive teal/cyan color scheme
-  if (isCustomTask) {
-    return 'bg-teal-500/25 border-2 border-teal-600 text-teal-800 dark:text-teal-200';
-  }
-
-  // Check if this course already has a color assigned
-  if (!courseColorMap.has(courseCode)) {
-    // Assign the next color in sequence
-    courseColorMap.set(courseCode, nextColorIndex);
-    nextColorIndex = (nextColorIndex + 1) % COURSE_COLORS.length;
-  }
-
-  const colorIndex = courseColorMap.get(courseCode)!;
-  return COURSE_COLORS[colorIndex];
+// "HH:MM" -> minutes since midnight (NaN when blank or malformed)
+const toMinutes = (time: string) => {
+  const [hours, minutes] = time.split(':');
+  return Number(hours) * 60 + Number(minutes);
 };
+
+// Minutes since midnight -> "HH:MM", wrapping around midnight
+const fromMinutes = (total: number) => {
+  const mins = ((total % 1440) + 1440) % 1440;
+  return `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+};
+
+const formatDuration = (start: string, end: string) => {
+  const diff = toMinutes(end) - toMinutes(start);
+  return diff > 0 ? `${Math.floor(diff / 60)}h ${diff % 60}m` : 'Invalid';
+};
+
+// Expand a timetable course into its weekly class slots
+const toClassSlots = (course: TimeTableCourse, instructor = 'TBA'): ClassSchedule[] =>
+  course.slots.map((slot, index) => ({
+    slotId: `${course.courseCode}-${slot.day}-${slot.startTime}-${index}`,
+    day: slot.day as ClassSchedule['day'],
+    startTime: slot.startTime,
+    endTime: slot.endTime,
+    courseName: course.courseName,
+    courseCode: course.courseCode,
+    instructor,
+    location: slot.venue,
+  }));
 
 const Schedule: React.FC = () => {
   const { scheduleData, setScheduleData, loading: scheduleLoading } = useSchedule();
@@ -149,10 +138,9 @@ const Schedule: React.FC = () => {
       )?.instructor;
 
       // Generate updated slots from timetable
-      timetableCourse.slots.forEach((slot, index) => {
-        const slotId = `${courseCode}-${slot.day}-${slot.startTime}-${index}`;
-        validSlotIds.add(slotId);
-        const existingSlot = scheduleMap.get(slotId);
+      toClassSlots(timetableCourse, existingInstructor || 'TBA').forEach((newSlot) => {
+        validSlotIds.add(newSlot.slotId);
+        const existingSlot = scheduleMap.get(newSlot.slotId);
 
         if (existingSlot) {
           // ONLY sync admin-controlled fields (course name)
@@ -173,16 +161,7 @@ const Schedule: React.FC = () => {
         } else {
           // New slot from admin - add it with preserved instructor if available
           needsUpdate = true;
-          updatedCourses.push({
-            slotId,
-            day: slot.day as ClassSchedule['day'],
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-            courseName: timetableCourse.courseName,
-            courseCode: timetableCourse.courseCode,
-            instructor: existingInstructor || 'TBA',
-            location: slot.venue,
-          });
+          updatedCourses.push(newSlot);
         }
       });
     });
@@ -218,7 +197,6 @@ const Schedule: React.FC = () => {
   const [conflictingClasses, setConflictingClasses] = useState<ClassSchedule[]>([]);
   const [applyInstructorToAll, setApplyInstructorToAll] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [_history, setHistory] = useState<ClassSchedule[][]>([]);
   const isInitialized = useRef(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'compact'>('grid');
   const [filterCourse, setFilterCourse] = useState<string>('all');
@@ -230,10 +208,7 @@ const Schedule: React.FC = () => {
 
   const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   // Extended time slots: 6 AM to 11 PM (more flexible for custom tasks)
-  const timeSlots = Array.from(
-    { length: 17 },
-    (_, i) => `${(6 + i).toString().padStart(2, '0')}:00`
-  );
+  const timeSlots = Array.from({ length: 17 }, (_, i) => fromMinutes((6 + i) * 60));
   const currentDayIndex = new Date().getDay();
   const today = allDays[currentDayIndex === 0 ? 6 : currentDayIndex - 1] || '';
 
@@ -270,19 +245,17 @@ const Schedule: React.FC = () => {
     setEditingItem(item);
   };
 
-  useEffect(() => {
-    if (editingItem) {
-      setNewVenue(editingItem.location);
-      setNewInstructor(editingItem.instructor);
-      setNewDay(editingItem.day);
-      setNewStartTime(editingItem.startTime);
-      setNewEndTime(editingItem.endTime);
-      setValidationErrors({});
-      setHasConflict(false);
-      setConflictingClasses([]);
-      setApplyInstructorToAll(true); // Default to updating all classes
+  const log = (title: string, description: string, icon: string) => {
+    if (currentUser) {
+      logActivity(currentUser.uid, {
+        type: 'schedule',
+        title,
+        description,
+        icon,
+        link: '/schedule',
+      });
     }
-  }, [editingItem]);
+  };
 
   // Check for conflicts whenever day or time changes
   useEffect(() => {
@@ -389,7 +362,7 @@ const Schedule: React.FC = () => {
   const upcomingClass = useMemo(() => {
     if (!todaysClasses.length) return null;
     const now = new Date();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const currentTime = fromMinutes(now.getHours() * 60 + now.getMinutes());
 
     return todaysClasses.find((cls) => cls.startTime > currentTime);
   }, [todaysClasses]);
@@ -409,6 +382,16 @@ const Schedule: React.FC = () => {
       })
       .sort((a, b) => (a.code as string).localeCompare(b.code as string));
   }, [scheduleData, timetableMap]);
+
+  // Rebuild course slots for the given codes from the timetable, keeping custom tasks
+  const applyCourses = (codes: string[], title: string, description: string, icon: string) => {
+    const courseSlots = timetableData
+      .filter((course) => codes.includes(course.courseCode))
+      .flatMap((course) => toClassSlots(course));
+    const customTasks = scheduleData?.filter((item) => item.isCustomTask) || [];
+    setScheduleData([...courseSlots, ...customTasks]);
+    log(title, description, icon);
+  };
 
   const handleCourseSelection = (courseCode: string) => {
     // Check if this course belongs to the current timetable
@@ -445,83 +428,22 @@ const Schedule: React.FC = () => {
       : [...selectedCourseCodes, courseCode];
 
     setSelectedCourseCodes(newSelectedCodes);
-
-    const selectedCourses = timetableData.filter((course) =>
-      newSelectedCodes.includes(course.courseCode)
+    applyCourses(
+      newSelectedCodes,
+      'Courses Updated',
+      `Updated schedule to ${newSelectedCodes.length} courses.`,
+      '📚'
     );
-
-    const newCourses: ClassSchedule[] = selectedCourses.flatMap((course) =>
-      course.slots.map((slot, index) => ({
-        slotId: `${course.courseCode}-${slot.day}-${slot.startTime}-${index}`,
-        day: slot.day as ClassSchedule['day'],
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        courseName: course.courseName,
-        courseCode: course.courseCode,
-        instructor: 'TBA',
-        location: slot.venue,
-      }))
-    );
-
-    // Preserve existing custom tasks
-    const existingTasks = scheduleData?.filter((item) => item.isCustomTask) || [];
-    setScheduleData([...newCourses, ...existingTasks]);
-    if (currentUser) {
-      logActivity(currentUser.uid, {
-        type: 'schedule',
-        title: shouldClearExisting ? 'Schedule Cleared and Course Added' : 'Courses Updated',
-        description: shouldClearExisting
-          ? `Cleared courses from other structure and added ${courseCode}`
-          : `Updated schedule to ${newSelectedCodes.length} courses.`,
-        icon: '📚',
-        link: '/schedule',
-      });
-    }
-    setHistory([]);
   };
 
   const handleResetSchedule = () => {
-    const selectedCourses = timetableData.filter((course) =>
-      selectedCourseCodes.includes(course.courseCode)
+    applyCourses(
+      selectedCourseCodes,
+      'Courses Reset',
+      'Academic courses were reset to their original state. Custom tasks preserved.',
+      '🔄'
     );
-
-    const courseScheduleData: ClassSchedule[] = selectedCourses.flatMap((course) =>
-      course.slots.map((slot, index) => ({
-        slotId: `${course.courseCode}-${slot.day}-${slot.startTime}-${index}`,
-        day: slot.day as ClassSchedule['day'],
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        courseName: course.courseName,
-        courseCode: course.courseCode,
-        instructor: 'TBA',
-        location: slot.venue,
-      }))
-    );
-
-    // Preserve custom tasks when resetting course schedule
-    const customTasks = scheduleData?.filter((item) => item.isCustomTask) || [];
-    const newScheduleData = [...courseScheduleData, ...customTasks];
-
-    setScheduleData(newScheduleData);
-    if (currentUser) {
-      logActivity(currentUser.uid, {
-        type: 'schedule',
-        title: 'Courses Reset',
-        description: 'Academic courses were reset to their original state. Custom tasks preserved.',
-        icon: '🔄',
-        link: '/schedule',
-      });
-    }
-    setHistory([]);
   };
-
-  // Undo functionality (currently unused but kept for potential future use)
-  // const handleUndo = () => {
-  //     if (history.length === 0) return;
-  //     const previousState = history[history.length - 1];
-  //     setScheduleData(previousState);
-  //     setHistory(prev => prev.slice(0, -1));
-  // };
 
   const handleResetTasks = () => {
     if (!scheduleData || !currentUser) return;
@@ -530,52 +452,19 @@ const Schedule: React.FC = () => {
     const coursesOnly = scheduleData.filter((item) => !item.isCustomTask);
     setScheduleData(coursesOnly);
 
-    logActivity(currentUser.uid, {
-      type: 'schedule',
-      title: 'Custom Tasks Cleared',
-      description: 'All custom tasks have been removed from the schedule.',
-      icon: '🗑️',
-      link: '/schedule',
-    });
+    log('Custom Tasks Cleared', 'All custom tasks have been removed from the schedule.', '🗑️');
   };
 
   const confirmReset = () => {
     if (!pendingCourseCode) return;
 
-    const newSelectedCodes = [pendingCourseCode];
-    setSelectedCourseCodes(newSelectedCodes);
-
-    const selectedCourses = timetableData.filter((course) =>
-      newSelectedCodes.includes(course.courseCode)
+    setSelectedCourseCodes([pendingCourseCode]);
+    applyCourses(
+      [pendingCourseCode],
+      'Schedule Cleared and Course Added',
+      `Cleared courses from other structure and added ${pendingCourseCode}`,
+      '📚'
     );
-
-    const newCourses: ClassSchedule[] = selectedCourses.flatMap((course) =>
-      course.slots.map((slot, index) => ({
-        slotId: `${course.courseCode}-${slot.day}-${slot.startTime}-${index}`,
-        day: slot.day as ClassSchedule['day'],
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        courseName: course.courseName,
-        courseCode: course.courseCode,
-        instructor: 'TBA',
-        location: slot.venue,
-      }))
-    );
-
-    // Preserve existing custom tasks
-    const existingTasks = scheduleData?.filter((item) => item.isCustomTask) || [];
-    setScheduleData([...newCourses, ...existingTasks]);
-
-    if (currentUser) {
-      logActivity(currentUser.uid, {
-        type: 'schedule',
-        title: 'Schedule Cleared and Course Added',
-        description: `Cleared courses from other structure and added ${pendingCourseCode}`,
-        icon: '📚',
-        link: '/schedule',
-      });
-    }
-    setHistory([]);
     setShowResetWarning(false);
     setPendingCourseCode(null);
   };
@@ -788,8 +677,7 @@ const Schedule: React.FC = () => {
     doc.text('Custom Tasks', startX + 58, legendY + 3);
 
     // Footer
-    const now = new Date();
-    const currentDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+    const currentDate = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
     doc.setFontSize(8);
     doc.setTextColor(149, 165, 166);
     doc.text(`Generated on ${currentDate} via College Central`, pageWidth / 2, pageHeight - 5, {
@@ -797,19 +685,9 @@ const Schedule: React.FC = () => {
     });
 
     // Save the PDF
-    const fileDate = `${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}`;
-    doc.save(`weekly-schedule-${fileDate}.pdf`);
+    doc.save(`weekly-schedule-${currentDate.replaceAll('/', '-')}.pdf`);
 
-    // Log activity
-    if (currentUser) {
-      logActivity(currentUser.uid, {
-        type: 'schedule',
-        title: 'Schedule Exported',
-        description: 'Weekly schedule exported as PDF.',
-        icon: '📄',
-        link: '/schedule',
-      });
-    }
+    log('Schedule Exported', 'Weekly schedule exported as PDF.', '📄');
   };
 
   // Export schedule as ICS (iCalendar) file for Google/Apple Calendar sync
@@ -920,16 +798,11 @@ const Schedule: React.FC = () => {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
-    // Log activity
-    if (currentUser) {
-      logActivity(currentUser.uid, {
-        type: 'schedule',
-        title: 'Schedule Synced to Calendar',
-        description: 'Weekly schedule exported as .ics file for calendar sync.',
-        icon: '📆',
-        link: '/schedule',
-      });
-    }
+    log(
+      'Schedule Synced to Calendar',
+      'Weekly schedule exported as .ics file for calendar sync.',
+      '📆'
+    );
   };
 
   // Validation function
@@ -990,8 +863,6 @@ const Schedule: React.FC = () => {
       return;
     }
 
-    setHistory((prev) => [...prev, scheduleData]);
-
     // Check if instructor changed
     const instructorChanged = newInstructor.trim() !== editingItem.instructor;
 
@@ -1033,13 +904,11 @@ const Schedule: React.FC = () => {
     if (newStartTime !== editingItem.startTime || newEndTime !== editingItem.endTime)
       changes.push('time');
 
-    logActivity(currentUser.uid, {
-      type: 'schedule',
-      title: 'Class Details Updated',
-      description: `Updated ${changes.join(', ')} for ${editingItem.courseCode}.`,
-      icon: '✏️',
-      link: '/schedule',
-    });
+    log(
+      'Class Details Updated',
+      `Updated ${changes.join(', ')} for ${editingItem.courseCode}.`,
+      '✏️'
+    );
     setEditingItem(null);
   };
 
@@ -1049,56 +918,17 @@ const Schedule: React.FC = () => {
       return;
     }
 
-    setHistory((prev) => [...prev, scheduleData]);
-
-    // Create exact duplicate with same details and timings from editingItem
-    // Use a more unique slotId with random component to avoid any conflicts
-    const uniqueId = `${editingItem.courseCode}-${editingItem.day}-${editingItem.startTime}-duplicate-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-
-    const newClass: ClassSchedule = {
-      slotId: uniqueId,
-      day: editingItem.day,
-      startTime: editingItem.startTime,
-      endTime: editingItem.endTime,
-      courseName: editingItem.courseName,
-      courseCode: editingItem.courseCode,
-      instructor: editingItem.instructor,
-      location: editingItem.location,
-      ...(editingItem.isCustomTask !== undefined && { isCustomTask: editingItem.isCustomTask }),
-    };
-
-    // Clean the schedule data: remove undefined values from all items before saving
-    const cleanSchedule = (schedule: ClassSchedule[]) => {
-      return schedule.map((item) => {
-        const cleaned: any = {
-          slotId: item.slotId,
-          day: item.day,
-          startTime: item.startTime,
-          endTime: item.endTime,
-          courseName: item.courseName,
-          courseCode: item.courseCode,
-          instructor: item.instructor,
-          location: item.location,
-        };
-        if (item.isCustomTask !== undefined) {
-          cleaned.isCustomTask = item.isCustomTask;
-        }
-        return cleaned as ClassSchedule;
-      });
-    };
-
-    const updatedSchedule = cleanSchedule([...scheduleData, newClass]);
+    // Exact copy of editingItem under a unique slotId (random suffix avoids any conflicts)
+    const slotId = `${editingItem.courseCode}-${editingItem.day}-${editingItem.startTime}-duplicate-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     try {
-      await setScheduleData(updatedSchedule);
+      await setScheduleData([...scheduleData, { ...editingItem, slotId }]);
 
-      logActivity(currentUser.uid, {
-        type: 'schedule',
-        title: editingItem.isCustomTask ? 'Custom Task Duplicated' : 'Class Duplicated',
-        description: `Created duplicate of ${editingItem.courseCode} on ${editingItem.day} at ${editingItem.startTime}.`,
-        icon: '📋',
-        link: '/schedule',
-      });
+      log(
+        editingItem.isCustomTask ? 'Custom Task Duplicated' : 'Class Duplicated',
+        `Created duplicate of ${editingItem.courseCode} on ${editingItem.day} at ${editingItem.startTime}.`,
+        '📋'
+      );
       setEditingItem(null);
     } catch (error) {
       console.error('Error duplicating class:', error);
@@ -1108,16 +938,13 @@ const Schedule: React.FC = () => {
   const handleDeleteSlot = () => {
     if (!editingItem || !scheduleData || !currentUser) return;
 
-    setHistory((prev) => [...prev, scheduleData]);
     const updatedSchedule = scheduleData.filter((item) => item.slotId !== editingItem.slotId);
     setScheduleData(updatedSchedule);
-    logActivity(currentUser.uid, {
-      type: 'schedule',
-      title: editingItem.isCustomTask ? 'Custom Task Removed' : 'Class Slot Removed',
-      description: `Removed ${editingItem.isCustomTask ? 'custom task' : 'a class slot for'} ${editingItem.courseName}.`,
-      icon: '🗑️',
-      link: '/schedule',
-    });
+    log(
+      editingItem.isCustomTask ? 'Custom Task Removed' : 'Class Slot Removed',
+      `Removed ${editingItem.isCustomTask ? 'custom task' : 'a class slot for'} ${editingItem.courseName}.`,
+      '🗑️'
+    );
     setEditingItem(null);
   };
 
@@ -1145,8 +972,6 @@ const Schedule: React.FC = () => {
       return;
     }
 
-    setHistory((prev) => [...prev, scheduleData]);
-
     const newTask: ClassSchedule = {
       slotId: `custom-task-${Date.now()}`,
       day: newDay as ClassSchedule['day'],
@@ -1162,13 +987,11 @@ const Schedule: React.FC = () => {
     const updatedSchedule = [...scheduleData, newTask];
     setScheduleData(updatedSchedule);
 
-    logActivity(currentUser.uid, {
-      type: 'schedule',
-      title: 'Custom Task Created',
-      description: `Created custom task "${customTaskName}" on ${newDay} at ${newStartTime}.`,
-      icon: '➕',
-      link: '/schedule',
-    });
+    log(
+      'Custom Task Created',
+      `Created custom task "${customTaskName}" on ${newDay} at ${newStartTime}.`,
+      '➕'
+    );
 
     // Reset form
     setIsCreatingCustomTask(false);
@@ -1189,16 +1012,12 @@ const Schedule: React.FC = () => {
   ) => {
     e.preventDefault();
     if (!scheduleData || !currentUser) return;
-    setHistory((prev) => [...prev, scheduleData]);
     const itemToMove: ClassSchedule = JSON.parse(e.dataTransfer.getData('application/json'));
 
-    const start = new Date(`1970-01-01T${itemToMove.startTime}:00`);
-    const end = new Date(`1970-01-01T${itemToMove.endTime}:00`);
-    const durationMs = end.getTime() - start.getTime();
-
-    const newStart = new Date(`1970-01-01T${targetStartTime}:00`);
-    const newEnd = new Date(newStart.getTime() + durationMs);
-    const newEndTime = `${String(newEnd.getHours()).padStart(2, '0')}:${String(newEnd.getMinutes()).padStart(2, '0')}`;
+    // Keep the original duration
+    const newEndTime = fromMinutes(
+      toMinutes(targetStartTime) + toMinutes(itemToMove.endTime) - toMinutes(itemToMove.startTime)
+    );
 
     const updatedSchedule = scheduleData.map((item) => {
       if (item.slotId === itemToMove.slotId) {
@@ -1212,13 +1031,11 @@ const Schedule: React.FC = () => {
       return item;
     });
     setScheduleData(updatedSchedule);
-    logActivity(currentUser.uid, {
-      type: 'schedule',
-      title: 'Class Rescheduled',
-      description: `Rescheduled ${itemToMove.courseName} to ${targetDay} at ${targetStartTime}.`,
-      icon: '🔄',
-      link: '/schedule',
-    });
+    log(
+      'Class Rescheduled',
+      `Rescheduled ${itemToMove.courseName} to ${targetDay} at ${targetStartTime}.`,
+      '🔄'
+    );
   };
 
   // Separate unique courses calculation from filtering logic
@@ -1258,29 +1075,11 @@ const Schedule: React.FC = () => {
       if (!course.courseCode || !course.courseName) return false;
 
       const courseCode = course.courseCode.toLowerCase();
-      const courseName = course.courseName.toLowerCase();
-
-      // Prioritize exact course code match (with or without spaces)
-      if (courseCode === searchLower || courseCode === searchNoSpaces) {
-        return true;
-      }
-
-      // Check if course code starts with search term
-      if (courseCode.startsWith(searchLower) || courseCode.startsWith(searchNoSpaces)) {
-        return true;
-      }
-
-      // Check if course code contains search term
-      if (courseCode.includes(searchNoSpaces)) {
-        return true;
-      }
-
-      // Finally check course name
-      if (courseName.includes(searchLower)) {
-        return true;
-      }
-
-      return false;
+      return (
+        courseCode.startsWith(searchLower) ||
+        courseCode.includes(searchNoSpaces) ||
+        course.courseName.toLowerCase().includes(searchLower)
+      );
     });
   }, [searchTerm, uniqueTimetableCourses, selectedCourseCodes]);
 
@@ -1306,6 +1105,159 @@ const Schedule: React.FC = () => {
     const colStart = days.indexOf(item.day) + 2;
     return { gridColumn: colStart, gridRow: `${rowStart} / span ${rowSpan}` };
   };
+
+  // Venue, day and time-range fields shared by the edit and custom-task modals.
+  // Called as a plain function (not <Component />) so the inputs keep focus while typing.
+  const renderSlotFields = (isTask: boolean, afterVenue?: React.ReactNode) => (
+    <>
+      {/* Venue */}
+      <div className="md:col-span-2">
+        <label
+          htmlFor={isTask ? 'taskVenue' : 'venue'}
+          className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+        >
+          <svg
+            className="w-4 h-4 text-primary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+          {isTask ? 'Location *' : 'Venue / Location'}
+        </label>
+        <input
+          type="text"
+          id={isTask ? 'taskVenue' : 'venue'}
+          value={newVenue}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewVenue(e.target.value)}
+          className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
+            validationErrors.venue
+              ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+              : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+          } dark:bg-slate-700 transition-colors`}
+          placeholder={isTask ? 'e.g., Library, Gym, Room 101' : 'e.g., Room 101, Main Building'}
+        />
+        {validationErrors.venue && (
+          <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            {validationErrors.venue}
+          </p>
+        )}
+      </div>
+
+      {afterVenue}
+
+      {/* Day */}
+      <div>
+        <label
+          htmlFor={isTask ? 'taskDay' : 'day'}
+          className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+        >
+          <svg
+            className="w-4 h-4 text-primary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+          {isTask ? 'Day *' : 'Day'}
+        </label>
+        <select
+          id={isTask ? 'taskDay' : 'day'}
+          value={newDay}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewDay(e.target.value)}
+          className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none dark:bg-slate-700 transition-colors"
+        >
+          {allDays.map((day) => (
+            <option key={day} value={day}>
+              {day}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Time Range */}
+      <div>
+        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+          <svg
+            className="w-4 h-4 text-primary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          {isTask ? 'Time Range *' : 'Time Range'}
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            type="time"
+            value={newStartTime}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStartTime(e.target.value)}
+            className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
+              validationErrors.time || validationErrors.startTime
+                ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+            } dark:bg-slate-700 transition-colors`}
+          />
+          <span className="text-slate-500 dark:text-slate-400 font-medium">to</span>
+          <input
+            type="time"
+            value={newEndTime}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEndTime(e.target.value)}
+            className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${
+              validationErrors.time || validationErrors.endTime
+                ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+            } dark:bg-slate-700 transition-colors`}
+          />
+        </div>
+        {(validationErrors.time || validationErrors.startTime || validationErrors.endTime) && (
+          <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            {validationErrors.time || validationErrors.startTime || validationErrors.endTime}
+          </p>
+        )}
+      </div>
+    </>
+  );
 
   if (scheduleLoading && !isInitialized.current) {
     return (
@@ -1769,10 +1721,11 @@ const Schedule: React.FC = () => {
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`flex-1 sm:flex-initial px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${viewMode === mode
-                    ? 'bg-white dark:bg-slate-600 text-primary shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                    }`}
+                  className={`flex-1 sm:flex-initial px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all ${
+                    viewMode === mode
+                      ? 'bg-white dark:bg-slate-600 text-primary shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  }`}
                 >
                   {mode.charAt(0).toUpperCase() + mode.slice(1)}
                 </button>
@@ -2426,10 +2379,11 @@ const Schedule: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setNewInstructor(e.target.value)
                     }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.instructor
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
+                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
+                      validationErrors.instructor
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                    } dark:bg-slate-700 transition-colors`}
                     placeholder={
                       editingItem.isCustomTask
                         ? 'e.g., Study Group, Self, Club Name'
@@ -2492,181 +2446,14 @@ const Schedule: React.FC = () => {
                     )}
                 </div>
 
-                {/* Venue */}
-                <div className="md:col-span-2">
-                  <label
-                    htmlFor="venue"
-                    className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
-                  >
-                    <svg
-                      className="w-4 h-4 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    Venue / Location
-                  </label>
-                  <input
-                    type="text"
-                    id="venue"
-                    value={newVenue}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setNewVenue(e.target.value)
-                    }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.venue
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
-                    placeholder="e.g., Room 101, Main Building"
-                  />
-                  {validationErrors.venue && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      {validationErrors.venue}
-                    </p>
-                  )}
-                </div>
-
-                {/* Day */}
-                <div>
-                  <label
-                    htmlFor="day"
-                    className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
-                  >
-                    <svg
-                      className="w-4 h-4 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    Day
-                  </label>
-                  <select
-                    id="day"
-                    value={newDay}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setNewDay(e.target.value)
-                    }
-                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none dark:bg-slate-700 transition-colors"
-                  >
-                    {allDays.map((day) => (
-                      <option key={day} value={day}>
-                        {day}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Time Range */}
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    <svg
-                      className="w-4 h-4 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Time Range
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="time"
-                      value={newStartTime}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setNewStartTime(e.target.value)
-                      }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.startTime
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                        } dark:bg-slate-700 transition-colors`}
-                    />
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">to</span>
-                    <input
-                      type="time"
-                      value={newEndTime}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setNewEndTime(e.target.value)
-                      }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.endTime
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                        } dark:bg-slate-700 transition-colors`}
-                    />
-                  </div>
-                  {(validationErrors.time ||
-                    validationErrors.startTime ||
-                    validationErrors.endTime) && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {validationErrors.time ||
-                          validationErrors.startTime ||
-                          validationErrors.endTime}
-                      </p>
-                    )}
-                </div>
+                {renderSlotFields(false)}
               </div>
 
               {/* Duration Display */}
               <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   <span className="font-semibold">Duration:</span>{' '}
-                  {(() => {
-                    const start = new Date(`1970-01-01T${newStartTime}`);
-                    const end = new Date(`1970-01-01T${newEndTime}`);
-                    const diff = (end.getTime() - start.getTime()) / (1000 * 60);
-                    return diff > 0 ? `${Math.floor(diff / 60)}h ${diff % 60}m` : 'Invalid';
-                  })()}
+                  {formatDuration(newStartTime, newEndTime)}
                 </p>
               </div>
 
@@ -2782,10 +2569,11 @@ const Schedule: React.FC = () => {
                   </button>
                   <button
                     onClick={handleUpdateClassDetails}
-                    className={`flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center ${editingItem.isCustomTask
-                      ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
-                      : 'bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white'
-                      }`}
+                    className={`flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold transition-all shadow-lg hover:shadow-xl flex items-center justify-center ${
+                      editingItem.isCustomTask
+                        ? 'bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white'
+                        : 'bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white'
+                    }`}
                   >
                     <svg
                       className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2"
@@ -2920,10 +2708,11 @@ const Schedule: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setCustomTaskName(e.target.value)
                     }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.customTaskName
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
+                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${
+                      validationErrors.customTaskName
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
+                    } dark:bg-slate-700 transition-colors`}
                     placeholder="e.g., Study Session, Gym, Club Meeting"
                   />
                   {validationErrors.customTaskName && (
@@ -2979,50 +2768,16 @@ const Schedule: React.FC = () => {
                   />
                 </div>
 
-                {/* Location */}
-                <div className="md:col-span-2">
-                  <label
-                    htmlFor="taskVenue"
-                    className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
-                  >
-                    <svg
-                      className="w-4 h-4 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                {renderSlotFields(
+                  true,
+                  /* Person/Organizer (Optional) */
+                  <div className="md:col-span-2">
+                    <label
+                      htmlFor="taskOrganizer"
+                      className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    Location *
-                  </label>
-                  <input
-                    type="text"
-                    id="taskVenue"
-                    value={newVenue}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setNewVenue(e.target.value)
-                    }
-                    className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.venue
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                      : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                      } dark:bg-slate-700 transition-colors`}
-                    placeholder="e.g., Library, Gym, Room 101"
-                  />
-                  {validationErrors.venue && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
                       <svg
-                        className="w-4 h-4"
+                        className="w-4 h-4 text-primary"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -3031,220 +2786,32 @@ const Schedule: React.FC = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                         />
                       </svg>
-                      {validationErrors.venue}
-                    </p>
-                  )}
-                </div>
-
-                {/* Person/Organizer (Optional) */}
-                <div className="md:col-span-2">
-                  <label
-                    htmlFor="taskOrganizer"
-                    className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
-                  >
-                    <svg
-                      className="w-4 h-4 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                    Person/Organizer (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    id="taskOrganizer"
-                    value={newInstructor}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setNewInstructor(e.target.value)
-                    }
-                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20 focus:outline-none dark:bg-slate-700 transition-colors"
-                    placeholder="e.g., Study Group, Club Name, Self"
-                  />
-                </div>
-
-                {/* Day */}
-                <div>
-                  <label
-                    htmlFor="taskDay"
-                    className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
-                  >
-                    <svg
-                      className="w-4 h-4 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    Day *
-                  </label>
-                  <select
-                    id="taskDay"
-                    value={newDay}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setNewDay(e.target.value)
-                    }
-                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none dark:bg-slate-700 transition-colors"
-                  >
-                    {allDays.map((day) => (
-                      <option key={day} value={day}>
-                        {day}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Time Range */}
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    <svg
-                      className="w-4 h-4 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Time Range *
-                  </label>
-                  <div className="flex items-center gap-2">
+                      Person/Organizer (Optional)
+                    </label>
                     <input
-                      type="time"
-                      value={newStartTime}
+                      type="text"
+                      id="taskOrganizer"
+                      value={newInstructor}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setNewStartTime(e.target.value)
+                        setNewInstructor(e.target.value)
                       }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.startTime
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                        } dark:bg-slate-700 transition-colors`}
-                    />
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">to</span>
-                    <input
-                      type="time"
-                      value={newEndTime}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setNewEndTime(e.target.value)
-                      }
-                      className={`flex-1 px-3 py-3 rounded-lg border-2 focus:outline-none ${validationErrors.time || validationErrors.endTime
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                        : 'border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20'
-                        } dark:bg-slate-700 transition-colors`}
+                      className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-primary/20 focus:outline-none dark:bg-slate-700 transition-colors"
+                      placeholder="e.g., Study Group, Club Name, Self"
                     />
                   </div>
-                  {(validationErrors.time ||
-                    validationErrors.startTime ||
-                    validationErrors.endTime) && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {validationErrors.time ||
-                          validationErrors.startTime ||
-                          validationErrors.endTime}
-                      </p>
-                    )}
-                </div>
+                )}
               </div>
 
               {/* Duration Display */}
               <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   <span className="font-semibold">Duration:</span>{' '}
-                  {(() => {
-                    const start = new Date(`1970-01-01T${newStartTime}`);
-                    const end = new Date(`1970-01-01T${newEndTime}`);
-                    const diff = (end.getTime() - start.getTime()) / (1000 * 60);
-                    return diff > 0 ? `${Math.floor(diff / 60)}h ${diff % 60}m` : 'Invalid';
-                  })()}
+                  {formatDuration(newStartTime, newEndTime)}
                 </p>
               </div>
-
-              {/* Conflict Warning */}
-              {hasConflict && (
-                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="w-6 h-6 text-yellow-600 dark:text-yellow-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
-                        ⚠️ Schedule Conflict Detected
-                      </h4>
-                      <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-2">
-                        This time slot overlaps with {conflictingClasses.length} other item
-                        {conflictingClasses.length !== 1 ? 's' : ''}:
-                      </p>
-                      <ul className="space-y-1">
-                        {conflictingClasses.map((cls) => (
-                          <li
-                            key={cls.slotId}
-                            className="text-sm text-yellow-700 dark:text-yellow-400 flex items-center gap-2"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            <span className="font-medium">{cls.courseName}</span> -{' '}
-                            {formatTime(cls.startTime)} to {formatTime(cls.endTime)}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Footer */}

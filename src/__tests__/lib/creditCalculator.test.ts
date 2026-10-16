@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateCreditsFromLTP, getCreditFormula } from '@lib/utils/creditCalculator';
+import { calculateCreditsFromLTP } from '@lib/utils/creditCalculator';
 
 describe('creditCalculator', () => {
   describe('calculateCreditsFromLTP (CBCS)', () => {
@@ -69,20 +69,6 @@ describe('creditCalculator', () => {
 
     it('handles non-numeric parts', () => {
       expect(calculateCreditsFromLTP('a-b-c')).toBe(0);
-    });
-  });
-
-  describe('getCreditFormula', () => {
-    it('returns CBCS formula for CBCS option', () => {
-      expect(getCreditFormula('CBCS')).toBe('3L + 2T + P');
-    });
-
-    it('returns NEP formula for NEP option', () => {
-      expect(getCreditFormula('NEP')).toBe('L + T + 0.5*P');
-    });
-
-    it('defaults to CBCS formula', () => {
-      expect(getCreditFormula()).toBe('3L + 2T + P');
     });
   });
 });

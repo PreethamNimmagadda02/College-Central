@@ -1,67 +1,35 @@
+import { House, Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { AdminConfig } from '../types';
-import { AdminHeader, HomeIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminHeader, AdminPageLayout } from './ui';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
 
-interface Props {
-  config: AdminConfig;
-  addHostel: (hostel: string) => void;
-  updateHostel: (index: number, hostel: string) => void;
-  deleteHostel: (index: number) => void;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'hostels'>;
 
-const PlusIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-  </svg>
-);
-
-const TrashIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-    />
-  </svg>
-);
-
-const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, deleteHostel }) => {
+const HostelsEditor: React.FC<Props> = ({ config, hostels }) => {
   const [newHostel, setNewHostel] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
 
   const handleAddHostel = () => {
     if (newHostel.trim()) {
-      addHostel(newHostel.trim());
+      hostels.add(newHostel.trim());
       setNewHostel('');
     }
   };
 
-  const handleStartEdit = (index: number, value: string) => {
-    setEditingIndex(index);
-    setEditValue(value);
-  };
-
   const handleSaveEdit = () => {
     if (editingIndex !== null && editValue.trim()) {
-      updateHostel(editingIndex, editValue.trim());
+      hostels.update(editingIndex, editValue.trim());
       setEditingIndex(null);
       setEditValue('');
     }
   };
 
-  const handleCancelEdit = () => {
-    setEditingIndex(null);
-    setEditValue('');
-  };
-
   return (
     <AdminPageLayout>
       <AdminHeader
-        icon={<HomeIcon />}
+        icon={House}
         title="Hostels"
         subtitle="Manage available hostel options for students"
       />
@@ -82,7 +50,7 @@ const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, delet
             onClick={handleAddHostel}
             className="admin-btn admin-btn-primary w-full sm:w-auto justify-center"
           >
-            <PlusIcon />
+            <Plus className="w-5 h-5" />
             Add Hostel
           </button>
         </div>
@@ -115,7 +83,7 @@ const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, delet
                       Save
                     </button>
                     <button
-                      onClick={handleCancelEdit}
+                      onClick={() => setEditingIndex(null)}
                       className="admin-btn admin-btn-secondary text-xs sm:text-sm flex-1 justify-center"
                     >
                       Cancel
@@ -125,7 +93,7 @@ const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, delet
               ) : (
                 <div className="flex items-center gap-3 sm:gap-4">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white flex-shrink-0">
-                    <HomeIcon />
+                    <House className="w-6 h-6" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-medium text-sm sm:text-base truncate">{hostel}</p>
@@ -133,16 +101,19 @@ const HostelsEditor: React.FC<Props> = ({ config, addHostel, updateHostel, delet
                   </div>
                   <div className="flex gap-1 sm:gap-2 flex-shrink-0">
                     <button
-                      onClick={() => handleStartEdit(index, hostel)}
+                      onClick={() => {
+                        setEditingIndex(index);
+                        setEditValue(hostel);
+                      }}
                       className="admin-btn admin-btn-secondary text-xs sm:text-sm px-2 sm:px-3"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => deleteHostel(index)}
+                      onClick={() => hostels.remove(index)}
                       className="admin-btn admin-btn-danger text-xs sm:text-sm px-2 sm:px-3"
                     >
-                      <TrashIcon />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

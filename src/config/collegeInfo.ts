@@ -32,10 +32,3 @@ export const COLLEGE_INFO = {
     country: 'India',
   },
 } as const;
-
-// Helper function to get the full title for the application
-export const getAppTitle = () => `College Central - ${COLLEGE_INFO.name.short} Student Portal`;
-
-// Helper function to get email validation message
-export const getEmailValidationMessage = () =>
-  `Only ${COLLEGE_INFO.name.abbreviation} email addresses (${COLLEGE_INFO.email.allowedDomain}) are allowed. Please use your institutional email.`;

@@ -9,31 +9,75 @@ import { useCampusMap } from '@contexts/CampusMapContext';
 import { useForms } from '@contexts/FormsContext';
 import { useUser } from '@contexts/UserContext';
 import { useAuth } from '@features/auth/hooks/useAuth';
+import { subscribeDemoState } from '@features/demo/demoStore';
+import { FRAME_OPTIONS, getFrameClass, getInitials } from '@features/profiles/frames';
 import { db } from '@lib/firebase';
 import 'firebase/firestore';
 import { X, Download, Calendar, Bell, MapPin, Check, Edit2, Globe, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { User, ActivityItem, Form, CampusLocation, CalendarEvent } from '@/types';
 
+// Narrow English style reads "5m ago", "3h ago", "2d ago"
+const relativeTime = new Intl.RelativeTimeFormat('en', { style: 'narrow' });
+
 const formatTimeAgo = (timestamp: { seconds: number; nanoseconds: number } | null) => {
   if (!timestamp) return '...';
-  const now = new Date();
   const activityDate = new Date(timestamp.seconds * 1000);
-  const diffSeconds = Math.floor((now.getTime() - activityDate.getTime()) / 1000);
+  const diffMinutes = Math.floor((Date.now() - activityDate.getTime()) / 60000);
 
-  if (diffSeconds < 60) return 'just now';
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffMinutes < 1) return 'just now';
+  if (diffMinutes < 60) return relativeTime.format(-diffMinutes, 'minute');
   const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return relativeTime.format(-diffHours, 'hour');
   const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 7) return relativeTime.format(-diffDays, 'day');
   return activityDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+// Activity timeline colours per activity type
+const ACTIVITY_TYPE_STYLES: Record<string, { bg: string; ring: string; badge: string }> = {
+  schedule: {
+    bg: 'bg-blue-500',
+    ring: 'ring-blue-200 dark:ring-blue-800',
+    badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  },
+  grades: {
+    bg: 'bg-green-500',
+    ring: 'ring-green-200 dark:ring-green-800',
+    badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  },
+  profile: {
+    bg: 'bg-purple-500',
+    ring: 'ring-purple-200 dark:ring-purple-800',
+    badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  },
+  calendar: {
+    bg: 'bg-orange-500',
+    ring: 'ring-orange-200 dark:ring-orange-800',
+    badge: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  },
+  form: {
+    bg: 'bg-cyan-500',
+    ring: 'ring-cyan-200 dark:ring-cyan-800',
+    badge: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+  },
+  map: {
+    bg: 'bg-emerald-500',
+    ring: 'ring-emerald-200 dark:ring-emerald-800',
+    badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  },
+};
+
+const DEFAULT_ACTIVITY_STYLE = {
+  bg: 'bg-primary',
+  ring: 'ring-primary/20',
+  badge: 'bg-primary/10 text-primary',
 };
 
 const Profile: React.FC = () => {
   const { user, updateUser, uploadProfilePicture, loading } = useUser();
-  const { currentUser } = useAuth();
+  const { currentUser, isGuest } = useAuth();
   const { userFormsData, addRecentDownload } = useForms();
   const { savedPlaces, locations } = useCampusMap();
   const { reminderPreferences, calendarData, getEventKey } = useCalendar();
@@ -43,10 +87,6 @@ const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<User>>({});
   const [activeTab, setActiveTab] = useState<'overview' | 'activity'>('overview');
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: 'success' | 'error';
-  } | null>(null);
   const [imageError, setImageError] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -61,59 +101,6 @@ const Profile: React.FC = () => {
   } | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-
-  // Frame options
-  const FRAME_OPTIONS = [
-    { id: 'none', name: 'None', class: 'ring-4 ring-white/50 rounded-full' },
-    {
-      id: 'gradient-blue',
-      name: 'Ocean',
-      class:
-        'p-1 bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30 rounded-full',
-    },
-    {
-      id: 'gradient-purple',
-      name: 'Nebula',
-      class:
-        'p-1 bg-gradient-to-br from-fuchsia-500 via-purple-600 to-indigo-500 shadow-lg shadow-purple-500/30 rounded-full',
-    },
-    {
-      id: 'gradient-gold',
-      name: 'Gold',
-      class:
-        'p-1 bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-700 shadow-lg shadow-yellow-500/40 border border-yellow-300 rounded-full',
-    },
-    {
-      id: 'neon-green',
-      name: 'Cyber',
-      class: 'ring-4 ring-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.6)] bg-black rounded-full',
-    },
-    {
-      id: 'royal',
-      name: 'Royal',
-      class:
-        'p-1 bg-gradient-to-tr from-amber-700 via-yellow-500 to-amber-700 shadow-xl border border-yellow-600 rounded-full',
-    },
-    {
-      id: 'holographic',
-      name: 'Holo',
-      class:
-        'p-1 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 animate-gradient-x shadow-lg rounded-full',
-    },
-    {
-      id: 'neon-blue',
-      name: 'Tron',
-      class:
-        'ring-4 ring-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.6)] bg-slate-900 rounded-full',
-    },
-    {
-      id: 'minimal',
-      name: 'Minimal',
-      class: 'ring-1 ring-white/80 offset-4 offset-black rounded-full',
-    },
-  ];
-
-  // Banner Gradients
 
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
@@ -134,21 +121,15 @@ const Profile: React.FC = () => {
     website: '',
   });
 
-  // Calculate stats for overview - filter to only count favorites that still exist
-  const existingFormNumbers = new Set((appConfig?.forms || []).map((f: Form) => f.formNumber));
-  const savedFormsCount = (userFormsData?.favorites || []).filter((formNumber) =>
-    existingFormNumbers.has(formNumber)
-  ).length;
-  const userAddedEventsCount =
-    calendarData?.events.filter((e) => e.userId === currentUser?.uid).length ?? 0;
-  const remindersCount = reminderPreferences?.length ?? 0;
-  // Filter saved places to only count locations that still exist
-  const existingLocationIds = new Set(
-    (appConfig?.campusMap || []).map((loc: CampusLocation) => loc.id)
+  // Overview stats and the lists their cards open; only forms and places that still exist count
+  const favoriteForms = (appConfig?.forms || []).filter((form: Form) =>
+    userFormsData?.favorites?.includes(form.formNumber)
   );
-  const savedPlacesCount = (savedPlaces || []).filter((locId) =>
-    existingLocationIds.has(locId)
-  ).length;
+  const userEvents = calendarData?.events.filter((e) => e.userId === currentUser?.uid) ?? [];
+  const reminderEvents =
+    calendarData?.events.filter((event) => reminderPreferences.includes(getEventKey(event))) ?? [];
+  const remindersCount = reminderPreferences?.length ?? 0;
+  const userSavedPlaces = locations.filter((loc) => savedPlaces.includes(loc.id));
 
   // Get unique activity types for filter
   const activityTypes = ['all', ...Array.from(new Set(activity.map((item) => item.type)))];
@@ -199,6 +180,13 @@ const Profile: React.FC = () => {
       return;
     }
 
+    if (isGuest) {
+      return subscribeDemoState((state) => {
+        setActivity(state.activity);
+        setActivityLoading(false);
+      });
+    }
+
     const activityQuery = db
       .collection('users')
       .doc(currentUser.uid)
@@ -231,7 +219,7 @@ const Profile: React.FC = () => {
     );
 
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [currentUser, isGuest]);
 
   useEffect(() => {
     if (user) {
@@ -253,11 +241,6 @@ const Profile: React.FC = () => {
     }
   }, [user?.profilePicture]);
 
-  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
-
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -273,9 +256,9 @@ const Profile: React.FC = () => {
     try {
       await updateUser(formData);
       setIsEditing(false);
-      showNotification('Profile updated successfully!', 'success');
-    } catch (error) {
-      showNotification('Failed to update profile', 'error');
+      toast.success('Profile updated successfully!');
+    } catch {
+      toast.error('Failed to update profile');
     }
   };
 
@@ -284,9 +267,9 @@ const Profile: React.FC = () => {
     try {
       await updateUser({ bio: bioText });
       setIsEditingBio(false);
-      showNotification('Bio updated successfully!', 'success');
-    } catch (error) {
-      showNotification('Failed to update bio', 'error');
+      toast.success('Bio updated successfully!');
+    } catch {
+      toast.error('Failed to update bio');
     }
   };
 
@@ -295,9 +278,9 @@ const Profile: React.FC = () => {
     try {
       await updateUser({ socialLinks });
       setIsEditingSocial(false);
-      showNotification('Social links updated!', 'success');
-    } catch (error) {
-      showNotification('Failed to update social links', 'error');
+      toast.success('Social links updated!');
+    } catch {
+      toast.error('Failed to update social links');
     }
   };
 
@@ -358,18 +341,18 @@ const Profile: React.FC = () => {
   const processAndUploadImage = async (file: File) => {
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      showNotification('Please upload an image file', 'error');
+      toast.error('Please upload an image file');
       return;
     }
 
     // Validate file size (max 10MB before compression)
     if (file.size > 10 * 1024 * 1024) {
-      showNotification('Image too large. Maximum size is 10MB', 'error');
+      toast.error('Image too large. Maximum size is 10MB');
       return;
     }
 
     setIsUploading(true);
-    showNotification('Processing image...', 'success');
+    toast.success('Processing image...');
 
     try {
       // Create preview
@@ -378,18 +361,15 @@ const Profile: React.FC = () => {
 
       // Compress image
       const compressedFile = await compressImage(file);
-      showNotification('Uploading...', 'success');
+      toast.success('Uploading...');
 
       // Upload
       await uploadProfilePicture(compressedFile);
-      showNotification('Profile picture updated! ✨', 'success');
+      toast.success('Profile picture updated! ✨');
       setPreviewImage(null);
     } catch (error: unknown) {
       console.error(error);
-      showNotification(
-        error instanceof Error ? error.message : 'Upload failed. Please try again.',
-        'error'
-      );
+      toast.error(error instanceof Error ? error.message : 'Upload failed. Please try again.');
       setPreviewImage(null);
     } finally {
       setIsUploading(false);
@@ -432,20 +412,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  const getFrameClass = (frameId?: string) => {
-    const frame = FRAME_OPTIONS.find((f) => f.id === frameId);
-    return frame ? frame.class : 'ring-4 ring-white/50';
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((word) => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   const openModal = () => {
     if (user?.profilePicture && !imageError) {
       setIsImageExpanded(true);
@@ -483,38 +449,6 @@ const Profile: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-4 lg:p-6 pb-16 mb-12">
-      {/* Notification Toast */}
-      {notification && (
-        <div className="fixed top-20 right-4 z-50 animate-slideIn">
-          <div
-            className={`px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 ${
-              notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-            }`}
-          >
-            {notification.type === 'success' ? (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            )}
-            <span className="font-medium">{notification.message}</span>
-          </div>
-        </div>
-      )}
-
       {/* Customization Toolbar (Edit Mode) */}
       {isEditing && (
         <div className="flex flex-col md:flex-row justify-end gap-4 mb-4 animate-fadeIn">
@@ -657,9 +591,6 @@ const Profile: React.FC = () => {
           )}
         </div>
 
-        {/* Banner Actions (Edit Mode) */}
-        {/* Banner Actions (Edit Mode) - REMOVED REDUNDANT BUTTONS */}
-
         <div className="p-8 relative z-10">
           <div className="relative flex flex-col md:flex-row items-center md:items-start gap-6">
             {/* Profile Picture with Drag & Drop */}
@@ -672,7 +603,13 @@ const Profile: React.FC = () => {
             >
               {/* Main Profile Image */}
               {previewImage || (user.profilePicture && !imageError) ? (
-                <div className={getFrameClass(formData.profileFrame || user.profileFrame)}>
+                // With no frame chosen this wrapper keeps its plain ring-4 (no rounded-full)
+                <div
+                  className={getFrameClass(
+                    formData.profileFrame || user.profileFrame,
+                    'ring-4 ring-white/50'
+                  )}
+                >
                   <img
                     className={`h-32 w-32 rounded-full object-cover transition-all duration-300 ${
                       isDragging ? 'scale-105 opacity-80' : ''
@@ -1157,19 +1094,15 @@ const Profile: React.FC = () => {
               {/* Quick Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                 <button
-                  onClick={() => {
-                    const configForms = appConfig?.forms || [];
-                    const favoriteForms = configForms.filter((form: Form) =>
-                      userFormsData?.favorites?.includes(form.formNumber)
-                    );
+                  onClick={() =>
                     setModalData({
                       title: 'Saved Forms',
                       data: favoriteForms,
                       type: 'forms',
                       link: '/college-forms',
                       linkText: 'Forms',
-                    });
-                  }}
+                    })
+                  }
                   className="w-full text-left group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -1179,7 +1112,7 @@ const Profile: React.FC = () => {
                         Saved Forms
                       </p>
                       <p className="text-2xl md:text-3xl font-black group-hover:scale-110 transition-transform origin-left">
-                        {savedFormsCount}
+                        {favoriteForms.length}
                       </p>
                     </div>
                     <div className="bg-white/20 backdrop-blur-sm p-2 md:p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
@@ -1201,17 +1134,15 @@ const Profile: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => {
-                    const userEvents =
-                      calendarData?.events.filter((e) => e.userId === currentUser?.uid) ?? [];
+                  onClick={() =>
                     setModalData({
                       title: 'Your Events',
                       data: userEvents,
                       type: 'events',
                       link: '/academic-calendar',
                       linkText: 'Calendar',
-                    });
-                  }}
+                    })
+                  }
                   className="w-full text-left group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -1219,7 +1150,7 @@ const Profile: React.FC = () => {
                     <div>
                       <p className="text-blue-100 text-xs md:text-sm font-medium mb-1">Events</p>
                       <p className="text-2xl md:text-3xl font-black group-hover:scale-110 transition-transform origin-left">
-                        {userAddedEventsCount}
+                        {userEvents.length}
                       </p>
                     </div>
                     <div className="bg-white/20 backdrop-blur-sm p-2 md:p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
@@ -1241,19 +1172,15 @@ const Profile: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => {
-                    const reminderEvents =
-                      calendarData?.events.filter((event) =>
-                        reminderPreferences.includes(getEventKey(event))
-                      ) ?? [];
+                  onClick={() =>
                     setModalData({
                       title: 'Active Reminders',
                       data: reminderEvents,
                       type: 'reminders',
                       link: '/academic-calendar',
                       linkText: 'Calendar',
-                    });
-                  }}
+                    })
+                  }
                   className="w-full text-left group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -1285,16 +1212,15 @@ const Profile: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => {
-                    const userSavedPlaces = locations.filter((loc) => savedPlaces.includes(loc.id));
+                  onClick={() =>
                     setModalData({
                       title: 'Saved Places',
                       data: userSavedPlaces,
                       type: 'places',
                       link: '/campus-map',
                       linkText: 'Map',
-                    });
-                  }}
+                    })
+                  }
                   className="w-full text-left group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-4 md:p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -1304,7 +1230,7 @@ const Profile: React.FC = () => {
                         Saved Places
                       </p>
                       <p className="text-2xl md:text-3xl font-black group-hover:scale-110 transition-transform origin-left">
-                        {savedPlacesCount}
+                        {userSavedPlaces.length}
                       </p>
                     </div>
                     <div className="bg-white/20 backdrop-blur-sm p-2 md:p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
@@ -1665,61 +1591,8 @@ const Profile: React.FC = () => {
                         const isEven = index % 2 === 0;
                         const isLast = index === arr.length - 1;
 
-                        // Type-specific colors
-                        const getTypeStyle = (type: string) => {
-                          switch (type) {
-                            case 'schedule':
-                              return {
-                                bg: 'bg-blue-500',
-                                ring: 'ring-blue-200 dark:ring-blue-800',
-                                badge:
-                                  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                              };
-                            case 'grades':
-                              return {
-                                bg: 'bg-green-500',
-                                ring: 'ring-green-200 dark:ring-green-800',
-                                badge:
-                                  'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                              };
-                            case 'profile':
-                              return {
-                                bg: 'bg-purple-500',
-                                ring: 'ring-purple-200 dark:ring-purple-800',
-                                badge:
-                                  'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-                              };
-                            case 'calendar':
-                              return {
-                                bg: 'bg-orange-500',
-                                ring: 'ring-orange-200 dark:ring-orange-800',
-                                badge:
-                                  'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-                              };
-                            case 'form':
-                              return {
-                                bg: 'bg-cyan-500',
-                                ring: 'ring-cyan-200 dark:ring-cyan-800',
-                                badge:
-                                  'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
-                              };
-                            case 'map':
-                              return {
-                                bg: 'bg-emerald-500',
-                                ring: 'ring-emerald-200 dark:ring-emerald-800',
-                                badge:
-                                  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                              };
-                            default:
-                              return {
-                                bg: 'bg-primary',
-                                ring: 'ring-primary/20',
-                                badge: 'bg-primary/10 text-primary',
-                              };
-                          }
-                        };
-
-                        const typeStyle = getTypeStyle(activityItem.type);
+                        const typeStyle =
+                          ACTIVITY_TYPE_STYLES[activityItem.type] ?? DEFAULT_ACTIVITY_STYLE;
 
                         const content = (
                           <div
@@ -2000,30 +1873,17 @@ const Profile: React.FC = () => {
                     </a>
                   </div>
                 ))
-              ) : modalData.type === 'events' ? (
+              ) : modalData.type === 'events' || modalData.type === 'reminders' ? (
                 modalData.data.map((event: CalendarEvent) => (
                   <div
-                    key={event.id}
+                    key={event.id ?? getEventKey(event)}
                     className="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
                   >
-                    <Calendar className="w-5 h-5 mr-3 text-primary" />
-                    <div>
-                      <p className="font-semibold text-slate-800 dark:text-white">
-                        {event.description}
-                      </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {new Date(event.date).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : modalData.type === 'reminders' ? (
-                modalData.data.map((event: CalendarEvent) => (
-                  <div
-                    key={getEventKey(event)}
-                    className="flex items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
-                  >
-                    <Bell className="w-5 h-5 mr-3 text-primary" />
+                    {modalData.type === 'events' ? (
+                      <Calendar className="w-5 h-5 mr-3 text-primary" />
+                    ) : (
+                      <Bell className="w-5 h-5 mr-3 text-primary" />
+                    )}
                     <div>
                       <p className="font-semibold text-slate-800 dark:text-white">
                         {event.description}

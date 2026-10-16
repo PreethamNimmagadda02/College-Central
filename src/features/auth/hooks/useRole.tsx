@@ -17,7 +17,7 @@ interface RoleContextType {
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { currentUser, loading: authLoading } = useAuth();
+  const { currentUser, loading: authLoading, isGuest } = useAuth();
   const { loading: userLoading } = useUser();
   const { loading: configLoading } = useAppConfig();
   const [role, setRole] = useState<'user' | 'admin'>('user');
@@ -31,8 +31,8 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
 
-      // No authenticated user
-      if (!currentUser || !currentUser.email) {
+      // No authenticated user, or a guest exploring the demo
+      if (!currentUser || !currentUser.email || isGuest) {
         setRole('user');
         setIsLoading(false);
         return;
@@ -46,7 +46,7 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const adminEmails: string[] = adminEmailsDoc.data()?.items || [];
           const userEmail = currentUser.email.toLowerCase();
 
-          if (adminEmails.map(e => e.toLowerCase()).includes(userEmail)) {
+          if (adminEmails.map((e) => e.toLowerCase()).includes(userEmail)) {
             setRole('admin');
           } else {
             setRole('user');
@@ -63,7 +63,7 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     determineRole();
-  }, [currentUser, authLoading, userLoading, configLoading]);
+  }, [currentUser, authLoading, userLoading, configLoading, isGuest]);
 
   const contextValue = useMemo(
     () => ({

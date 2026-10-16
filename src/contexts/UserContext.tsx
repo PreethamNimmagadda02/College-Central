@@ -13,6 +13,9 @@ import firebase from 'firebase/compat/app';
 
 import 'firebase/compat/auth';
 import { STUDENT_DIRECTORY } from '@config/studentDirectory';
+import { useAuth } from '@features/auth/hooks/useAuth';
+import { DEMO_PHOTO_UNAVAILABLE, DEMO_UID } from '@features/demo/demoSession';
+import { subscribeDemoState, updateDemoProfile } from '@features/demo/demoStore';
 import { auth, db, storage } from '@lib/firebase';
 import {
   MAX_FILE_SIZE_BYTES,
@@ -20,7 +23,7 @@ import {
   PROFILE_PICTURES_PATH,
 } from '@lib/utils/constants';
 import { getCourseOptionFromAdmissionNumber } from '@lib/utils/courseUtils';
-import { getImageCompression } from '@lib/utils/lazyImports';
+import { isFirebaseError } from '@lib/utils/helpers';
 import { logActivity, cleanupOldActivities } from '@services/activityService';
 
 import { User } from '@/types';
@@ -37,11 +40,21 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isGuest } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null); // ENHANCEMENT: State for errors.
 
   useEffect(() => {
+    if (isGuest) {
+      // Guests read their profile from the local demo store; Firebase is never touched
+      return subscribeDemoState((state) => {
+        setUser(state.profile);
+        setError(null);
+        setLoading(false);
+      });
+    }
+
     let unsubscribeFromFirestore: (() => void) | null = null;
 
     const initializeUser = async (authUser: firebase.User) => {
@@ -108,20 +121,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         const userDocRef = db.collection('users').doc(authUser.uid); // Use compat API
 
-        // OPTIMIZATION: First load from Firestore cache for instant UI
-        userDocRef
-          .get({ source: 'cache' })
-          .then((snapshot) => {
-            if (snapshot.exists) {
-              setUser({ id: snapshot.id, ...snapshot.data() } as User);
-              setLoading(false); // Show cached data immediately
-            }
-          })
-          .catch(() => {
-            // Cache miss expected on first load
-          });
-
-        // Then subscribe for real-time updates
         unsubscribeFromFirestore = userDocRef.onSnapshot(
           { includeMetadataChanges: false }, // Reduce unnecessary triggers
           async (snapshot) => {
@@ -168,34 +167,45 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         unsubscribeFromFirestore();
       }
     };
-  }, []);
+  }, [isGuest]);
 
-  const updateUser = useCallback(async (newDetails: Partial<User>) => {
-    const currentUserId = auth.currentUser?.uid;
-    if (currentUserId) {
-      try {
-        const userDocRef = db.collection('users').doc(currentUserId); // Use compat API
-        await userDocRef.update(newDetails); // Use compat API
+  const updateUser = useCallback(
+    async (newDetails: Partial<User>) => {
+      const currentUserId = isGuest ? DEMO_UID : auth.currentUser?.uid;
+      if (currentUserId) {
+        try {
+          if (isGuest) {
+            updateDemoProfile(newDetails);
+          } else {
+            const userDocRef = db.collection('users').doc(currentUserId); // Use compat API
+            await userDocRef.update(newDetails); // Use compat API
+          }
 
-        if (!newDetails.profilePicture) {
-          await logActivity(currentUserId, {
-            type: 'update',
-            title: 'Profile Updated',
-            description: 'Your profile information was successfully updated.',
-            icon: '✏️',
-            link: '/profile',
-          });
+          if (!newDetails.profilePicture) {
+            await logActivity(currentUserId, {
+              type: 'update',
+              title: 'Profile Updated',
+              description: 'Your profile information was successfully updated.',
+              icon: '✏️',
+              link: '/profile',
+            });
+          }
+        } catch (e) {
+          // Callers report write failures; `error` stays a load error so pages that read the
+          // profile (grades, timetable, saved places) don't break after a failed save
+          console.error('Failed to update user:', e);
+          throw e;
         }
-      } catch (e) {
-        console.error('Failed to update user:', e);
-        setError(e instanceof Error ? e : new Error('Failed to update profile.'));
-        throw e;
       }
-    }
-  }, []);
+    },
+    [isGuest]
+  );
 
   const uploadProfilePicture = useCallback(
     async (file: File) => {
+      if (isGuest) {
+        throw new Error(DEMO_PHOTO_UNAVAILABLE);
+      }
       const currentUser = auth.currentUser;
       if (!currentUser || !user) throw new Error('Not authenticated or user data not loaded');
 
@@ -214,7 +224,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Only compress if file is larger than 1MB
         if (file.size > 1024 * 1024) {
           // Lazy load image compression library
-          const imageCompression = await getImageCompression();
+          const { default: imageCompression } = await import('browser-image-compression');
 
           const options = {
             maxSizeMB: 1, // Maximum file size in MB
@@ -267,9 +277,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   await oldImageRef.delete();
                 } catch (deleteError: unknown) {
                   // Non-blocking error: It's okay if the old file doesn't exist.
-                  const isFirebaseError = (err: unknown): err is { code: string } => {
-                    return typeof err === 'object' && err !== null && 'code' in err;
-                  };
                   if (
                     isFirebaseError(deleteError) &&
                     deleteError.code !== 'storage/object-not-found'
@@ -296,7 +303,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         );
       });
     },
-    [user, updateUser]
+    [user, updateUser, isGuest]
   );
 
   const contextValue = useMemo(

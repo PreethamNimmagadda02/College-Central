@@ -1,6 +1,8 @@
+import { BookOpen, Calendar, FileText, Frown, Link, Search, User, Users } from 'lucide-react';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAdminConfig } from '../hooks/useAdminConfig';
+
+import { AdminConfig } from '../types';
 
 interface SearchResult {
   id: string;
@@ -13,69 +15,16 @@ interface SearchResult {
 interface AdminSearchProps {
   isOpen: boolean;
   onClose: () => void;
+  config: AdminConfig;
 }
 
 const typeIcons: Record<SearchResult['type'], React.ReactNode> = {
-  course: (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-      />
-    </svg>
-  ),
-  faculty: (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-      />
-    </svg>
-  ),
-  student: (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-      />
-    </svg>
-  ),
-  form: (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-      />
-    </svg>
-  ),
-  event: (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-      />
-    </svg>
-  ),
-  link: (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-      />
-    </svg>
-  ),
+  course: <BookOpen className="w-4 h-4" />,
+  faculty: <User className="w-4 h-4" />,
+  student: <Users className="w-4 h-4" />,
+  form: <FileText className="w-4 h-4" />,
+  event: <Calendar className="w-4 h-4" />,
+  link: <Link className="w-4 h-4" />,
 };
 
 const typeLabels: Record<SearchResult['type'], string> = {
@@ -96,13 +45,12 @@ const typeColors: Record<SearchResult['type'], string> = {
   link: 'bg-cyan-500/20 text-cyan-400',
 };
 
-const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose }) => {
+const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose, config }) => {
   const [query, setQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<SearchResult['type'] | 'all'>('all');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { config } = useAdminConfig();
 
   // Build search index from config
   const searchIndex = useMemo((): SearchResult[] => {
@@ -273,19 +221,7 @@ const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose }) => {
           {/* Search Input */}
           <div className="p-4 border-b border-slate-700/50">
             <div className="relative">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input
                 ref={inputRef}
                 type="text"
@@ -352,37 +288,13 @@ const AdminSearch: React.FC<AdminSearchProps> = ({ isOpen, onClose }) => {
               <div className="p-8 text-center text-slate-400">
                 {query ? (
                   <>
-                    <svg
-                      className="w-12 h-12 mx-auto mb-3 opacity-50"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                    <Frown className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>No results found for "{query}"</p>
                     <p className="text-sm mt-1">Try a different search term</p>
                   </>
                 ) : (
                   <>
-                    <svg
-                      className="w-12 h-12 mx-auto mb-3 opacity-50"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
+                    <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>Start typing to search</p>
                     <p className="text-sm mt-1">Search across all admin modules</p>
                   </>

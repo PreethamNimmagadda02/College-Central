@@ -1,14 +1,9 @@
 import { useAuth } from '@features/auth/hooks/useAuth';
+import { updateDemoProfile } from '@features/demo/demoStore';
 import { db } from '@lib/firebase';
-import React, {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-  useMemo,
-  useCallback,
-} from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
+
+import { useUser } from './UserContext';
 
 import { ClassSchedule } from '@/types';
 
@@ -22,84 +17,34 @@ interface ScheduleContextType {
 const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
 
 export const ScheduleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
-  const [scheduleData, setScheduleDataState] = useState<ClassSchedule[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    let unsubscribe: (() => void) | null = null;
-    if (currentUser) {
-      setLoading(true);
-      setError(null);
-      const userDocRef = db.collection('users').doc(currentUser.uid);
-
-      // OPTIMIZATION: First load from Firestore cache for instant UI
-      userDocRef
-        .get({ source: 'cache' })
-        .then((docSnap) => {
-          if (docSnap.exists) {
-            const data = docSnap.data();
-            if (data?.scheduleData) {
-              setScheduleDataState(data.scheduleData as ClassSchedule[]);
-              setLoading(false); // Show cached data immediately
-            }
-          }
-        })
-        .catch(() => {
-          // Cache miss expected on first load
-        });
-
-      // Then subscribe for real-time updates
-      unsubscribe = userDocRef.onSnapshot(
-        { includeMetadataChanges: false },
-        (docSnap) => {
-          if (docSnap.exists) {
-            const data = docSnap.data();
-            if (data && data.scheduleData) {
-              setScheduleDataState(data.scheduleData as ClassSchedule[]);
-            } else {
-              setScheduleDataState(null);
-            }
-          } else {
-            setScheduleDataState(null);
-          }
-          setError(null);
-          setLoading(false);
-        },
-        (err) => {
-          console.error('Error loading schedule data:', err);
-          setError(err instanceof Error ? err : new Error('Failed to load schedule data'));
-          setScheduleDataState(null);
-          setLoading(false);
-        }
-      );
-    } else {
-      setScheduleDataState(null);
-      setError(null);
-      setLoading(false);
-    }
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, [currentUser]);
+  const { currentUser, isGuest } = useAuth();
+  // The timetable lives on users/{uid}, which UserProvider already streams (or serves from the demo store)
+  const { user, loading, error: userError } = useUser();
+  const scheduleData = user?.scheduleData ?? null;
+  const [writeError, setWriteError] = useState<Error | null>(null);
+  const error = writeError ?? userError;
 
   const setScheduleData = useCallback(
     async (data: ClassSchedule[] | null) => {
+      if (isGuest) {
+        updateDemoProfile({ scheduleData: data ?? undefined });
+        setWriteError(null);
+        return;
+      }
       if (currentUser) {
         try {
           const userDocRef = db.collection('users').doc(currentUser.uid);
           await userDocRef.update({ scheduleData: data });
-          setError(null);
+          setWriteError(null);
         } catch (err) {
           console.error('Error updating schedule data:', err);
           const error = err instanceof Error ? err : new Error('Failed to update schedule data');
-          setError(error);
+          setWriteError(error);
           throw error;
         }
       }
     },
-    [currentUser]
+    [currentUser, isGuest]
   );
 
   const contextValue = useMemo(

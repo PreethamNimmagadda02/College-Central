@@ -12,8 +12,11 @@ import 'firebase/firestore';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { db } from '@lib/firebase';
 import { logActivity } from '@services/activityService';
+import { updateDemoProfile } from '@features/demo/demoStore';
 
 import { useAppConfig } from './AppConfigContext';
+import { useUser } from './UserContext';
+
 import { getRealTimeCrowdLevels, LiveZoneStatus } from '@services/locationAnalyticsService';
 
 import { CampusLocation, QuickRoute } from '@/types';
@@ -39,16 +42,18 @@ const CampusMapContext = createContext<CampusMapContextType | undefined>(undefin
 // QuickRoutes moved to config/campusMap.ts
 
 export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, isGuest } = useAuth();
   const { config, loading: configLoading } = useAppConfig();
 
   // Use locations from config, fall back to empty array if not loaded yet
   const locations = useMemo(() => config.campusMap || [], [config.campusMap]);
   const quickRoutes = useMemo(() => config.quickRoutes || [], [config.quickRoutes]);
 
-  const [savedPlaces, setSavedPlaces] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Saved places live on users/{uid}, which UserProvider already streams (or serves from the demo store)
+  const { user, loading: userLoading, error: userError } = useUser();
+  const savedPlaces = useMemo(() => user?.savedCampusPlaces ?? [], [user?.savedCampusPlaces]);
+  const loading = currentUser ? userLoading : configLoading;
+  const error = userError ? 'Failed to load saved places.' : null;
   const [liveZoneStatus, setLiveZoneStatus] = useState<LiveZoneStatus[]>([]);
 
   // Fetch live zone status every 5 minutes (only when authenticated)
@@ -74,57 +79,6 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
     return () => clearInterval(interval);
   }, [currentUser]);
 
-  // Update loading state based on config loading
-  useEffect(() => {
-    if (!currentUser) {
-      setLoading(configLoading);
-      return;
-    }
-    // ... rest of checking saved places
-  }, [currentUser, configLoading]);
-
-  // Load user's saved places from Firestore
-  useEffect(() => {
-    if (!currentUser) {
-      // If not logged in, we are just waiting for config?
-      // Actually if not logged in, standard loading rules apply.
-      // But let's keep existing logic structure but respect configLoading.
-      return;
-    }
-
-    setLoading(true);
-    let unsubscribe: (() => void) | null = null;
-
-    // Load user's saved places
-    unsubscribe = db
-      .collection('users')
-      .doc(currentUser.uid)
-      .onSnapshot(
-        (docSnap) => {
-          if (docSnap.exists) {
-            const data = docSnap.data();
-            if (data && data.savedCampusPlaces) {
-              setSavedPlaces(data.savedCampusPlaces as string[]);
-            } else {
-              setSavedPlaces([]);
-            }
-          } else {
-            setSavedPlaces([]);
-          }
-          setLoading(false);
-        },
-        (err) => {
-          console.error('Error loading saved places:', err);
-          setError('Failed to load saved places.');
-          setLoading(false);
-        }
-      );
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, [currentUser]);
-
   // Toggle saved place (sync with Firebase)
   const toggleSavePlace = useCallback(
     async (locationId: string) => {
@@ -138,13 +92,15 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
         ? [...savedPlaces, locationId]
         : savedPlaces.filter((id: string) => id !== locationId);
 
-      setSavedPlaces(newSaved);
-
       try {
-        const userDocRef = db.collection('users').doc(currentUser.uid);
-        await userDocRef.update({
-          savedCampusPlaces: newSaved,
-        });
+        if (isGuest) {
+          updateDemoProfile({ savedCampusPlaces: newSaved });
+        } else {
+          const userDocRef = db.collection('users').doc(currentUser.uid);
+          await userDocRef.update({
+            savedCampusPlaces: newSaved,
+          });
+        }
 
         const location = locations.find((loc) => loc.id === locationId);
         if (location) {
@@ -159,12 +115,11 @@ export const CampusMapProvider: React.FC<{ children: ReactNode }> = ({ children 
           });
         }
       } catch (err) {
+        // A rejected write rolls back Firestore's local cache, so the snapshot reverts the UI
         console.error('Error saving place:', err);
-        // Revert on error
-        setSavedPlaces(savedPlaces);
       }
     },
-    [currentUser, savedPlaces, locations]
+    [currentUser, isGuest, savedPlaces, locations]
   );
 
   // Get directions URL for Google Maps

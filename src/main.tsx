@@ -1,3 +1,4 @@
+import { getPerformance } from '@lib/firebase';
 import { setupGlobalErrorTracking } from '@lib/utils/errorTracking';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -5,9 +6,10 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 
-// Setup global error tracking
+// Error tracking, and Firebase Performance's automatic page-load and network traces
 if (import.meta.env.PROD) {
   setupGlobalErrorTracking();
+  getPerformance();
 }
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

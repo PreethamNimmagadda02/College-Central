@@ -1,9 +1,17 @@
-import React from 'react';
 import { useLocation } from '@contexts/LocationContext';
+import { useAuth } from '@features/auth/hooks/useAuth';
 import { MapPin, RefreshCw } from 'lucide-react';
+import React from 'react';
 
 export const LocationRequirement: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isGuest } = useAuth();
   const { permissionStatus, error, loading, location, retryLocation } = useLocation();
+
+  // Location is required of signed-in students only: visitors must be able to reach
+  // the login page, and guests exploring the demo are never tracked
+  if (!isAuthenticated || isGuest) {
+    return <>{children}</>;
+  }
 
   // If we have a location, we're good.
   if (location) {

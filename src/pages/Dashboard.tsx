@@ -31,7 +31,7 @@ import { useCalendar } from '@contexts/CalendarContext';
 import { useGrades } from '@contexts/GradesContext';
 import { useSchedule } from '@contexts/ScheduleContext';
 import { useUser } from '@contexts/UserContext';
-import { usePageLoadTrace } from '@hooks/usePerformanceTrace';
+import { getClassColor } from '@lib/utils/courseColors';
 import {
   toInputDateString,
   formatTime,
@@ -40,58 +40,15 @@ import {
   addDays,
   calculateDateProgress,
   getWeekNumber,
+  parseDateString,
 } from '@lib/utils/dateUtils';
+import { getCountdownEvents, getUpcomingEvents } from '@lib/utils/eventUtils';
 import { getGreeting, getRandomItem } from '@lib/utils/helpers';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ClassSchedule, CalendarEvent, QuickLink } from '@/types';
+
 import CountdownPill from '@/components/dashboard/CountdownPill';
-
-// Original 16-color palette with order-based assignment
-// Ordered for maximum visual distinction - alternating warm/cool, no similar colors adjacent
-const COURSE_COLORS = [
-  'bg-purple-500/25 border-2 border-purple-600 text-purple-800 dark:text-purple-200', // Purple
-  'bg-emerald-500/25 border-2 border-emerald-600 text-emerald-800 dark:text-emerald-200', // Emerald (green-blue)
-  'bg-rose-500/25 border-2 border-rose-600 text-rose-800 dark:text-rose-200', // Rose (pink-red)
-  'bg-cyan-500/25 border-2 border-cyan-600 text-cyan-800 dark:text-cyan-200', // Cyan (blue-green)
-  'bg-amber-500/25 border-2 border-amber-600 text-amber-800 dark:text-amber-200', // Amber (yellow-orange)
-  'bg-indigo-500/25 border-2 border-indigo-600 text-indigo-800 dark:text-indigo-200', // Indigo (blue-purple)
-  'bg-orange-500/25 border-2 border-orange-600 text-orange-800 dark:text-orange-200', // Orange
-  'bg-sky-500/25 border-2 border-sky-600 text-sky-800 dark:text-sky-200', // Sky Blue
-  'bg-fuchsia-500/25 border-2 border-fuchsia-600 text-fuchsia-800 dark:text-fuchsia-200', // Fuchsia (magenta)
-  'bg-lime-500/25 border-2 border-lime-600 text-lime-800 dark:text-lime-200', // Lime (yellow-green)
-  'bg-red-500/25 border-2 border-red-600 text-red-800 dark:text-red-200', // Red
-  'bg-blue-500/25 border-2 border-blue-600 text-blue-800 dark:text-blue-200', // Blue
-  'bg-yellow-500/25 border-2 border-yellow-600 text-yellow-800 dark:text-yellow-200', // Yellow
-  'bg-violet-500/25 border-2 border-violet-600 text-violet-800 dark:text-violet-200', // Violet
-  'bg-green-500/25 border-2 border-green-600 text-green-800 dark:text-green-200', // Green
-  'bg-pink-500/25 border-2 border-pink-600 text-pink-800 dark:text-pink-200', // Pink
-];
-
-// Map to track color assignments per course code
-const dashboardColorMap = new Map<string, number>();
-let dashboardNextColorIndex = 0;
-
-// Color function for schedule items (matching Schedule.tsx)
-const getClassColor = (courseCode: string, isCustomTask?: boolean) => {
-  // Custom tasks get a distinctive teal/cyan color scheme
-  if (isCustomTask) {
-    return 'bg-teal-500/25 border-2 border-teal-600 text-teal-800 dark:text-teal-200';
-  }
-
-  // Check if this course already has a color assigned
-  if (!dashboardColorMap.has(courseCode)) {
-    // Assign the next color in sequence
-    dashboardColorMap.set(courseCode, dashboardNextColorIndex);
-    dashboardNextColorIndex = (dashboardNextColorIndex + 1) % COURSE_COLORS.length;
-  }
-
-  const colorIndex = dashboardColorMap.get(courseCode)!;
-  return COURSE_COLORS[colorIndex];
-};
-
-// Default quick links (stored data without icons)
-// Default quick links are now imported from collegeConfig
+import { ClassSchedule, CalendarEvent, QuickLink } from '@/types';
 
 // Get icon component by name (for custom links)
 const getIconByName = (iconName: string): React.ReactNode => {
@@ -136,23 +93,118 @@ const getIconForLink = (link: QuickLink): React.ReactNode => {
   return iconMap[link.id] || <WebsiteIcon />;
 };
 
-// Default city used as fallback when cities array is unexpectedly empty
+// Keywords that decide which academic calendar events matter to BTech students
+const has = (desc: string, words: string[]) => words.some((w) => desc.includes(w));
+
+const TIMETABLE_CHANGE_WORDS = [
+  'timetable',
+  'working as per',
+  'working as',
+  'afternoon working',
+  'morning working',
+];
+const BTECH_WORDS = [
+  'b. tech',
+  'btech',
+  'b tech',
+  'ug students',
+  'undergraduate',
+  'final year ug',
+  '1st year ug',
+  '2nd year',
+  '3rd year',
+  '4th year',
+  'int. m. tech',
+  'dual degree',
+  'bs-ms',
+];
+const ALL_STUDENTS_WORDS = [
+  'all students',
+  'semester classes',
+  'semester start',
+  'semester end',
+  'convocation',
+  'foundation day',
+  'srijan',
+  'concetto',
+  'parakram',
+  'basant',
+  'sports meet',
+  'orientation',
+  'registration',
+  'fee payment',
+  'pre-registration',
+];
+const PG_WORDS = [
+  'pg students',
+  'ph. d',
+  'phd',
+  'm. tech',
+  'm. sc',
+  'mba',
+  'executive',
+  'part-time',
+  'research proposal',
+  'supervisor',
+  'project guide',
+  'thesis',
+  'dissertation',
+];
+const SPECIAL_EVENT_WORDS = [
+  'all students',
+  'convocation',
+  'foundation day',
+  'srijan',
+  'concetto',
+  'parakram',
+  'basant',
+  'sports meet',
+  'cultural',
+  'fest',
+  'techno-management',
+  'orientation',
+  'registration',
+  'fee payment',
+  'pre-registration',
+  'semester classes',
+  'semester feedback',
+  'feedback',
+];
+
+// An 'Other' event (not a timetable change) that is BTech-specific or matches generalWords,
+// skipping PG/PhD/Executive/Part-time-only events unless they also mention BTech/UG students
+const isBTechOtherEvent = (e: CalendarEvent, generalWords: string[]) => {
+  const desc = e.description.toLowerCase();
+  if (e.type !== 'Other' || has(desc, ['timetable', 'working as'])) return false;
+
+  const isPGPhDOnly =
+    has(desc, [
+      'pg students',
+      'ph. d',
+      'phd',
+      'm. tech',
+      'm. sc',
+      'mba',
+      'executive',
+      'part-time',
+      'research',
+      'supervisor',
+      'thesis',
+      'dissertation',
+    ]) &&
+    !has(desc, ['b. tech', 'btech', 'b tech', 'ug students', 'undergraduate', 'all students']);
+  if (isPGPhDOnly) return false;
+
+  return has(desc, BTECH_WORDS) || has(desc, generalWords);
+};
 
 const Dashboard: React.FC = () => {
-  // Performance monitoring
-  usePageLoadTrace('dashboard');
-
   const { config: appConfig } = useAppConfig();
 
   const { user, loading: userLoading, updateUser } = useUser();
   const { gradesData, loading: gradesLoading } = useGrades();
   const { scheduleData, loading: scheduleLoading } = useSchedule();
-  const {
-    calendarData,
-    loading: calendarLoading,
-    reminderPreferences,
-    getEventKey,
-  } = useCalendar();
+  const { calendarData, loading: calendarLoading, reminderPreferences } = useCalendar();
 
   // Get quotes from config
   const configQuotes = useMemo(() => {
@@ -164,37 +216,10 @@ const Dashboard: React.FC = () => {
     ];
   }, [appConfig?.quotes]);
 
-  // Update default city from admin config when config loads (only if user hasn't saved a preference)
-
-  const upcomingEventsCount = useMemo(() => {
-    if (!calendarData) return 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Calculate one week from today
-    const oneWeekFromToday = new Date(today);
-    oneWeekFromToday.setDate(oneWeekFromToday.getDate() + 7);
-
-    // Filter events that are ongoing (started in the past but not yet ended) OR will start within the next week
-    const upcomingEvents = calendarData.events.filter((event) => {
-      const eventStartDate = new Date(event.date);
-      const eventEndDate = new Date(event.endDate || event.date);
-      eventStartDate.setHours(0, 0, 0, 0);
-      eventEndDate.setHours(0, 0, 0, 0);
-
-      // Event is ongoing if it has already started but hasn't ended yet
-      const isOngoing = eventStartDate < today && eventEndDate >= today;
-
-      // Event is upcoming if it starts within the next week
-      const isUpcomingThisWeek = eventStartDate >= today && eventStartDate <= oneWeekFromToday;
-
-      return isOngoing || isUpcomingThisWeek;
-    });
-
-    return upcomingEvents.length;
-  }, [calendarData]);
-
-  // AI Weather Recommendation State
+  const upcomingEventsCount = useMemo(
+    () => (calendarData ? getUpcomingEvents(calendarData.events).length : 0),
+    [calendarData]
+  );
 
   // Quick Links state management
   const [quickLinks, setQuickLinks] = useState<QuickLink[]>([]);
@@ -210,27 +235,12 @@ const Dashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [draggedLinkId, setDraggedLinkId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // === Smart Countdown: Events with Reminders (synced with Calendar) ===
-
-  // Get events with reminders enabled (automatically show countdown for these)
-  const getCountdownEvents = useMemo(() => {
-    if (!calendarData) return [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return reminderPreferences
-      .map((key) => calendarData.events.find((e) => getEventKey(e) === key))
-      .filter((e): e is CalendarEvent => {
-        if (!e) return false;
-        const eventDate = new Date(e.date);
-        eventDate.setHours(0, 0, 0, 0);
-        return eventDate >= today;
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 3);
-  }, [reminderPreferences, calendarData, getEventKey]);
+  // Events with reminders enabled get a countdown (synced with Calendar)
+  const countdownEvents = useMemo(
+    () => (calendarData ? getCountdownEvents(calendarData.events, reminderPreferences) : []),
+    [calendarData, reminderPreferences]
+  );
 
   // Date navigation handlers
   const handleResetToToday = useCallback(() => setSelectedDate(new Date()), []);
@@ -316,11 +326,11 @@ const Dashboard: React.FC = () => {
       const updatedLinks = quickLinks.map((l) =>
         l.id === editingLink.id
           ? {
-            ...editingLink,
-            href: editingLink.href.startsWith('http')
-              ? editingLink.href
-              : `https://${editingLink.href}`,
-          }
+              ...editingLink,
+              href: editingLink.href.startsWith('http')
+                ? editingLink.href
+                : `https://${editingLink.href}`,
+            }
           : l
       );
       saveQuickLinks(updatedLinks);
@@ -403,6 +413,14 @@ const Dashboard: React.FC = () => {
     const displayDateString = toInputDateString(dateToDisplay);
     const displayWeekday = dateToDisplay.toLocaleDateString('en-US', { weekday: 'long' });
 
+    // Classes on a weekday sorted by start time; personalOnly keeps just the user's own tasks
+    const classesOn = (day: string, personalOnly = false) =>
+      (scheduleData || [])
+        .filter(
+          (c) => (!personalOnly || c.isCustomTask) && c.day.toLowerCase() === day.toLowerCase()
+        )
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
     // Check for academic calendar events on the selected date
     const todayEvents = calendarData.events.filter((e) => {
       const startDate = e.date;
@@ -419,153 +437,26 @@ const Dashboard: React.FC = () => {
         e.type === 'Holiday' ||
         e.type === 'Mid-Semester Exams' ||
         e.type === 'End-Semester Exams' ||
-        description.includes('timetable') ||
-        description.includes('working as per') ||
-        description.includes('working as') ||
-        description.includes('afternoon working') ||
-        description.includes('morning working')
+        has(description, TIMETABLE_CHANGE_WORDS)
       ) {
         return true;
       }
 
       // Include events that mention BTech students specifically
-      if (
-        description.includes('b. tech') ||
-        description.includes('btech') ||
-        description.includes('b tech') ||
-        description.includes('ug students') ||
-        description.includes('undergraduate') ||
-        description.includes('final year ug') ||
-        description.includes('1st year ug') ||
-        description.includes('2nd year') ||
-        description.includes('3rd year') ||
-        description.includes('4th year') ||
-        description.includes('int. m. tech') ||
-        description.includes('dual degree') ||
-        description.includes('bs-ms')
-      ) {
-        return true;
-      }
+      if (has(description, BTECH_WORDS)) return true;
 
       // Include general academic events that affect all students
-      if (
-        description.includes('all students') ||
-        description.includes('semester classes') ||
-        description.includes('semester start') ||
-        description.includes('semester end') ||
-        description.includes('convocation') ||
-        description.includes('foundation day') ||
-        description.includes('srijan') ||
-        description.includes('concetto') ||
-        description.includes('parakram') ||
-        description.includes('basant') ||
-        description.includes('sports meet') ||
-        description.includes('orientation') ||
-        description.includes('registration') ||
-        description.includes('fee payment') ||
-        description.includes('pre-registration')
-      ) {
-        return true;
-      }
+      if (has(description, ALL_STUDENTS_WORDS)) return true;
 
-      // Exclude PG-only, PhD-only, Executive-only events
-      if (
-        description.includes('pg students') ||
-        description.includes('ph. d') ||
-        description.includes('phd') ||
-        description.includes('m. tech') ||
-        description.includes('m. sc') ||
-        description.includes('mba') ||
-        description.includes('executive') ||
-        description.includes('part-time') ||
-        description.includes('research proposal') ||
-        description.includes('supervisor') ||
-        description.includes('project guide') ||
-        description.includes('thesis') ||
-        description.includes('dissertation')
-      ) {
-        return false;
-      }
-
-      // Include other general events by default
-      return true;
+      // Exclude PG-only, PhD-only, Executive-only events; include other general events by default
+      return !has(description, PG_WORDS);
     });
 
     let titleText = isToday ? "Today's Schedule" : 'Schedule';
 
     // Check for special events FIRST (before checking holidays/exams)
     // This ensures special events are captured even on holidays/exam days
-    const specialEvents = todayEvents.filter((e) => {
-      const desc = e.description.toLowerCase();
-
-      // Must be type 'Other' and not timetable/working-as (but CAN be on holiday/exam days)
-      if (e.type !== 'Other') return false;
-      if (desc.includes('timetable') || desc.includes('working as')) return false;
-
-      // Explicitly exclude PG/PhD/Executive/Part-time ONLY events
-      const isPGPhDOnly =
-        (desc.includes('pg students') ||
-          desc.includes('ph. d') ||
-          desc.includes('phd') ||
-          desc.includes('m. tech') ||
-          desc.includes('m. sc') ||
-          desc.includes('mba') ||
-          desc.includes('executive') ||
-          desc.includes('part-time') ||
-          desc.includes('research') ||
-          desc.includes('supervisor') ||
-          desc.includes('thesis') ||
-          desc.includes('dissertation')) &&
-        // Not if it also mentions BTech/UG
-        !(
-          desc.includes('b. tech') ||
-          desc.includes('btech') ||
-          desc.includes('b tech') ||
-          desc.includes('ug students') ||
-          desc.includes('undergraduate') ||
-          desc.includes('all students')
-        );
-
-      if (isPGPhDOnly) return false;
-
-      // Include if it's BTech-specific OR a general college event
-      const isBTechSpecific =
-        desc.includes('b. tech') ||
-        desc.includes('btech') ||
-        desc.includes('b tech') ||
-        desc.includes('ug students') ||
-        desc.includes('undergraduate') ||
-        desc.includes('1st year ug') ||
-        desc.includes('2nd year') ||
-        desc.includes('3rd year') ||
-        desc.includes('4th year') ||
-        desc.includes('final year ug') ||
-        desc.includes('int. m. tech') ||
-        desc.includes('dual degree') ||
-        desc.includes('bs-ms');
-
-      const isGeneralCollegeEvent =
-        desc.includes('all students') ||
-        desc.includes('convocation') ||
-        desc.includes('foundation day') ||
-        desc.includes('srijan') ||
-        desc.includes('concetto') ||
-        desc.includes('parakram') ||
-        desc.includes('basant') ||
-        desc.includes('sports meet') ||
-        desc.includes('cultural') ||
-        desc.includes('fest') ||
-        desc.includes('techno-management') ||
-        desc.includes('orientation') ||
-        desc.includes('registration') ||
-        desc.includes('fee payment') ||
-        desc.includes('pre-registration') ||
-        desc.includes('semester classes') ||
-        desc.includes('semester feedback') ||
-        desc.includes('feedback');
-
-      return isBTechSpecific || isGeneralCollegeEvent;
-    });
+    const specialEvents = todayEvents.filter((e) => isBTechOtherEvent(e, SPECIAL_EVENT_WORDS));
 
     let specialEventMessage: string | null = null;
     if (specialEvents.length > 0) {
@@ -584,15 +475,11 @@ const Dashboard: React.FC = () => {
     );
 
     if (examEvent) {
-      // Extract personal tasks to show even during exam period
-      const personalTasks = (scheduleData || [])
-        .filter((c) => c.isCustomTask && c.day.toLowerCase() === displayWeekday.toLowerCase())
-        .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
       return {
         ...defaultState,
         title: 'Exam Period 📝',
-        classes: personalTasks,
+        // Personal tasks still show during the exam period
+        classes: classesOn(displayWeekday, true),
         isHoliday: true,
         isExam: true,
         holidayDescription: examEvent.description,
@@ -604,23 +491,21 @@ const Dashboard: React.FC = () => {
     const holidayEvent = todayEvents.find(
       (e) =>
         e.type === 'Holiday' ||
-        e.description.toLowerCase().includes('semester break') ||
-        e.description.toLowerCase().includes('mid semester break') ||
-        e.description.toLowerCase().includes('winter break') ||
-        e.description.toLowerCase().includes('summer break') ||
-        e.description.toLowerCase().includes('no class')
+        has(e.description.toLowerCase(), [
+          'semester break',
+          'mid semester break',
+          'winter break',
+          'summer break',
+          'no class',
+        ])
     );
 
     if (holidayEvent) {
-      // Extract personal tasks to show even during holidays
-      const personalTasks = (scheduleData || [])
-        .filter((c) => c.isCustomTask && c.day.toLowerCase() === displayWeekday.toLowerCase())
-        .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
       return {
         ...defaultState,
         title: "It's a Holiday! 🎉",
-        classes: personalTasks,
+        // Personal tasks still show during holidays
+        classes: classesOn(displayWeekday, true),
         isHoliday: true,
         holidayDescription: holidayEvent.description,
         infoMessage: specialEventMessage,
@@ -631,28 +516,21 @@ const Dashboard: React.FC = () => {
     const semesterEvent = todayEvents.find(
       (e) =>
         e.type === 'Start of Semester' ||
-        e.description.toLowerCase().includes('semester start') ||
-        e.description.toLowerCase().includes('commencement of') ||
-        e.description.toLowerCase().includes('semester end')
+        has(e.description.toLowerCase(), ['semester start', 'commencement of', 'semester end'])
     );
 
     if (semesterEvent) {
       const desc = semesterEvent.description.toLowerCase();
       const isSemesterStart =
         semesterEvent.type === 'Start of Semester' ||
-        desc.includes('semester start') ||
-        desc.includes('commencement of');
+        has(desc, ['semester start', 'commencement of']);
 
       if (isSemesterStart) {
         // Semester start is NOT a day off - classes begin! Show regular schedule with info message
-        const classesForDay = (scheduleData || [])
-          .filter((c) => c.day.toLowerCase() === displayWeekday.toLowerCase())
-          .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
         return {
           ...defaultState,
           title: isToday ? "Today's Schedule" : 'Schedule',
-          classes: classesForDay,
+          classes: classesOn(displayWeekday),
           isHoliday: false,
           infoMessage: specialEventMessage
             ? `${specialEventMessage}\n📚 ${semesterEvent.description}`
@@ -660,14 +538,10 @@ const Dashboard: React.FC = () => {
         };
       } else {
         // Semester end - show personal tasks only
-        const personalTasks = (scheduleData || [])
-          .filter((c) => c.isCustomTask && c.day.toLowerCase() === displayWeekday.toLowerCase())
-          .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
         return {
           ...defaultState,
           title: 'Semester Event 📚',
-          classes: personalTasks,
+          classes: classesOn(displayWeekday, true),
           isHoliday: true,
           holidayDescription: `${semesterEvent.description} - Check with your department for schedule changes.`,
           infoMessage: specialEventMessage,
@@ -676,15 +550,12 @@ const Dashboard: React.FC = () => {
     }
 
     // Check for timetable changes or special scheduling
-    const timetableEvent = todayEvents.find(
-      (e) =>
-        e.description.toLowerCase().includes('timetable') ||
-        e.description.toLowerCase().includes('schedule change') ||
-        e.description.toLowerCase().includes('class schedule') ||
-        e.description.toLowerCase().includes('working as per') ||
-        e.description.toLowerCase().includes('working as') ||
-        e.description.toLowerCase().includes('afternoon working') ||
-        e.description.toLowerCase().includes('morning working')
+    const timetableEvent = todayEvents.find((e) =>
+      has(e.description.toLowerCase(), [
+        ...TIMETABLE_CHANGE_WORDS,
+        'schedule change',
+        'class schedule',
+      ])
     );
 
     let effectiveDay = displayWeekday;
@@ -694,39 +565,16 @@ const Dashboard: React.FC = () => {
     if (timetableEvent) {
       const desc = timetableEvent.description.toLowerCase();
 
-      // Check for specific day timetable changes
-      for (const day of weekdays) {
-        if (desc.includes(`${day} timetable`) || desc.includes(`${day} schedule`)) {
-          effectiveDay = day.charAt(0).toUpperCase() + day.slice(1);
-          infoMessage = `📅 This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
-          break;
-        }
-      }
+      // "<day> timetable" takes priority over "working as per <day>"
+      const followedDay =
+        weekdays.find((day) => has(desc, [`${day} timetable`, `${day} schedule`])) ??
+        weekdays.find((day) => has(desc, [`working as per ${day}`, `as per ${day}`]));
 
-      // Check for "working as per [day] timetable" patterns
-      if (!infoMessage) {
-        for (const day of weekdays) {
-          if (desc.includes(`working as per ${day}`) || desc.includes(`as per ${day}`)) {
-            effectiveDay = day.charAt(0).toUpperCase() + day.slice(1);
-            infoMessage = `📅 This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
-            break;
-          }
-        }
-      }
-
-      // Check for afternoon/morning working patterns
-      if (!infoMessage) {
-        if (desc.includes('afternoon working')) {
-          infoMessage = `📅 ${timetableEvent.description}`;
-        } else if (desc.includes('morning working')) {
-          infoMessage = `📅 ${timetableEvent.description}`;
-        } else if (desc.includes('working as per')) {
-          infoMessage = `📅 ${timetableEvent.description}`;
-        }
-      }
-
-      // If no specific pattern matched, show general timetable change message
-      if (!infoMessage) {
+      if (followedDay) {
+        effectiveDay = followedDay.charAt(0).toUpperCase() + followedDay.slice(1);
+        infoMessage = `📅 This day follows ${effectiveDay}'s schedule as per the academic calendar.`;
+      } else {
+        // No specific day to follow, so show the timetable change itself
         infoMessage = `📅 ${timetableEvent.description}`;
       }
     }
@@ -737,72 +585,18 @@ const Dashboard: React.FC = () => {
     }
 
     // Check for other academic events - BTech specific OR general college events
-    const otherEvents = todayEvents.filter((e) => {
-      const desc = e.description.toLowerCase();
-
-      // Must be type 'Other' and not timetable/working-as and not already in specialEvents
-      if (e.type !== 'Other') return false;
-      if (desc.includes('timetable') || desc.includes('working as')) return false;
-      if (specialEvents.includes(e)) return false;
-
-      // Explicitly exclude PG/PhD/Executive/Part-time ONLY events
-      const isPGPhDOnly =
-        (desc.includes('pg students') ||
-          desc.includes('ph. d') ||
-          desc.includes('phd') ||
-          desc.includes('m. tech') ||
-          desc.includes('m. sc') ||
-          desc.includes('mba') ||
-          desc.includes('executive') ||
-          desc.includes('part-time') ||
-          desc.includes('research') ||
-          desc.includes('supervisor') ||
-          desc.includes('thesis') ||
-          desc.includes('dissertation')) &&
-        // Not if it also mentions BTech/UG
-        !(
-          desc.includes('b. tech') ||
-          desc.includes('btech') ||
-          desc.includes('b tech') ||
-          desc.includes('ug students') ||
-          desc.includes('undergraduate') ||
-          desc.includes('all students')
-        );
-
-      if (isPGPhDOnly) return false;
-
-      // Include if it's BTech-specific OR a general college event
-      const isBTechSpecific =
-        desc.includes('b. tech') ||
-        desc.includes('btech') ||
-        desc.includes('b tech') ||
-        desc.includes('ug students') ||
-        desc.includes('undergraduate') ||
-        desc.includes('1st year ug') ||
-        desc.includes('2nd year') ||
-        desc.includes('3rd year') ||
-        desc.includes('4th year') ||
-        desc.includes('final year ug') ||
-        desc.includes('int. m. tech') ||
-        desc.includes('dual degree') ||
-        desc.includes('bs-ms');
-
-      const isGeneralCollegeEvent =
-        desc.includes('all students') ||
-        desc.includes('semester start') ||
-        desc.includes('semester end');
-
-      return isBTechSpecific || isGeneralCollegeEvent;
-    });
+    const otherEvents = todayEvents.filter(
+      (e) =>
+        !specialEvents.includes(e) &&
+        isBTechOtherEvent(e, ['all students', 'semester start', 'semester end'])
+    );
 
     if (otherEvents.length > 0 && !infoMessage) {
       const eventDescriptions = otherEvents.map((e) => e.description).join(', ');
       infoMessage = `📋 Academic Event: ${eventDescriptions}`;
     }
 
-    const classesForDay = (scheduleData || [])
-      .filter((c) => c.day.toLowerCase() === effectiveDay.toLowerCase())
-      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const classesForDay = classesOn(effectiveDay);
 
     // Update title based on events and schedule changes
     if (infoMessage) {
@@ -895,18 +689,9 @@ const Dashboard: React.FC = () => {
 
           // Determine academic year based on semester type
           // Monsoon (Jul-Dec): Academic year starts same year
-          // Winter (Dec-May): Academic year started previous year
-          let academicYearStart: number;
+          // Winter (Jan-Jun): Academic year started previous year
           const isMonsoon = startMonth >= 6 && startMonth <= 11;
-          const isWinter = startMonth >= 0 && startMonth <= 5;
-
-          if (isMonsoon) {
-            academicYearStart = startYear;
-          } else if (isWinter || startMonth === 11) {
-            academicYearStart = startMonth >= 0 && startMonth <= 5 ? startYear - 1 : startYear;
-          } else {
-            academicYearStart = startYear;
-          }
+          const academicYearStart = isMonsoon ? startYear : startYear - 1;
 
           const academicYear = `${academicYearStart}-${((academicYearStart + 1) % 100).toString().padStart(2, '0')}`;
 
@@ -1025,9 +810,7 @@ const Dashboard: React.FC = () => {
               </div>
 
               {/* Smart Countdown Pill - Visual Enhanced */}
-              {getCountdownEvents.length > 0 && (
-                <CountdownPill events={getCountdownEvents} />
-              )}
+              {countdownEvents.length > 0 && <CountdownPill events={countdownEvents} />}
             </div>
           </div>
 
@@ -1155,7 +938,7 @@ const Dashboard: React.FC = () => {
                         0,
                         Math.floor(
                           (stableNow.getTime() - semesterStartDate.getTime()) /
-                          (1000 * 60 * 60 * 24)
+                            (1000 * 60 * 60 * 24)
                         )
                       )}
                     </p>
@@ -1347,151 +1130,18 @@ const Dashboard: React.FC = () => {
                     </svg>
                   </button>
 
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowDatePicker(!showDatePicker)}
-                      className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2 min-w-[9.375rem]"
-                      title="Click to pick a date"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      Jump to date
-                    </button>
-
-                    {showDatePicker && (
-                      <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-3 z-10 min-w-[15.625rem]">
-                        <div className="flex items-center gap-2 mb-3">
-                          <select
-                            value={selectedDate.getMonth()}
-                            onChange={(e) => {
-                              const newDate = new Date(selectedDate);
-                              newDate.setMonth(parseInt(e.target.value));
-                              setSelectedDate(newDate);
-                              localStorage.setItem('dashboardSelectedDate', newDate.toISOString());
-                            }}
-                            className="flex-1 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                          >
-                            {[
-                              'Jan',
-                              'Feb',
-                              'Mar',
-                              'Apr',
-                              'May',
-                              'Jun',
-                              'Jul',
-                              'Aug',
-                              'Sep',
-                              'Oct',
-                              'Nov',
-                              'Dec',
-                            ].map((month, idx) => (
-                              <option key={idx} value={idx}>
-                                {month}
-                              </option>
-                            ))}
-                          </select>
-                          <input
-                            type="number"
-                            min="2000"
-                            max="2100"
-                            value={selectedDate.getFullYear()}
-                            onChange={(e) => {
-                              const year = parseInt(e.target.value);
-                              if (!isNaN(year) && year >= 2000 && year <= 2100) {
-                                const newDate = new Date(selectedDate);
-                                newDate.setFullYear(year);
-                                setSelectedDate(newDate);
-                                localStorage.setItem(
-                                  'dashboardSelectedDate',
-                                  newDate.toISOString()
-                                );
-                              }
-                            }}
-                            placeholder="YYYY"
-                            className="w-20 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-primary focus:outline-none text-center"
-                          />
-                        </div>
-                        <div className="grid grid-cols-7 gap-1 mb-2">
-                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
-                            <div
-                              key={day}
-                              className="text-center text-xs font-semibold text-slate-500 dark:text-slate-400 py-1"
-                            >
-                              {day}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="grid grid-cols-7 gap-1">
-                          {(() => {
-                            const year = selectedDate.getFullYear();
-                            const month = selectedDate.getMonth();
-                            const firstDay = new Date(year, month, 1).getDay();
-                            const daysInMonth = new Date(year, month + 1, 0).getDate();
-                            const days = [];
-
-                            // Empty cells for days before month starts
-                            for (let i = 0; i < firstDay; i++) {
-                              days.push(<div key={`empty-${i}`} />);
-                            }
-
-                            // Days of the month
-                            for (let day = 1; day <= daysInMonth; day++) {
-                              const isSelected = day === selectedDate.getDate();
-                              const isToday =
-                                new Date().toDateString() ===
-                                new Date(year, month, day).toDateString();
-                              days.push(
-                                <button
-                                  key={day}
-                                  onClick={() => {
-                                    const newDate = new Date(year, month, day);
-                                    setSelectedDate(newDate);
-                                    localStorage.setItem(
-                                      'dashboardSelectedDate',
-                                      newDate.toISOString()
-                                    );
-                                    setShowDatePicker(false);
-                                  }}
-                                  className={`
-                                                                        text-sm py-1.5 rounded transition-colors
-                                                                        ${isSelected
-                                      ? 'bg-primary text-white font-bold'
-                                      : isToday
-                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-primary font-semibold'
-                                        : 'hover:bg-slate-100 dark:hover:bg-slate-700'
-                                    }
-                                                                    `}
-                                >
-                                  {day}
-                                </button>
-                              );
-                            }
-
-                            return days;
-                          })()}
-                        </div>
-                        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-                          <button
-                            onClick={() => setShowDatePicker(false)}
-                            className="px-3 py-1 text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded transition-colors"
-                          >
-                            Close
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <input
+                    type="date"
+                    value={toInputDateString(selectedDate)}
+                    min="2000-01-01"
+                    max="2100-12-31"
+                    onChange={(e) => {
+                      if (e.target.value) setSelectedDate(parseDateString(e.target.value));
+                    }}
+                    className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium transition-colors min-w-[9.375rem]"
+                    title="Jump to date"
+                    aria-label="Jump to date"
+                  />
 
                   <button
                     onClick={handleNextDay}
@@ -1685,16 +1335,18 @@ const Dashboard: React.FC = () => {
                         return (
                           <li
                             key={c.slotId}
-                            className={`relative pl-8 transition-all duration-700 ease-out ${allClassesCompleted ? 'opacity-50' : isPast ? 'opacity-35' : ''
-                              }`}
+                            className={`relative pl-8 transition-all duration-700 ease-out ${
+                              allClassesCompleted ? 'opacity-50' : isPast ? 'opacity-35' : ''
+                            }`}
                           >
                             {/* Timeline segment for this class */}
                             {index < scheduleInfo.classes.length - 1 && (
                               <div
-                                className={`absolute left-2.5 w-0.5 transition-all duration-700 ease-out ${allClassesCompleted || isPast
-                                  ? 'bg-emerald-500/80 dark:bg-emerald-400/80'
-                                  : 'bg-slate-300 dark:bg-slate-600'
-                                  }`}
+                                className={`absolute left-2.5 w-0.5 transition-all duration-700 ease-out ${
+                                  allClassesCompleted || isPast
+                                    ? 'bg-emerald-500/80 dark:bg-emerald-400/80'
+                                    : 'bg-slate-300 dark:bg-slate-600'
+                                }`}
                                 style={{
                                   top: '1.25rem',
                                   height: 'calc(100% + 0.75rem)', // Extends to next item (space-y-3 = 0.75rem)
@@ -1703,14 +1355,15 @@ const Dashboard: React.FC = () => {
                             )}
 
                             <div
-                              className={`absolute left-0 top-2.5 h-5 w-5 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${isCurrent
-                                ? 'bg-primary ring-4 ring-primary/20 scale-110 shadow-md'
-                                : isNext
-                                  ? 'bg-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-md'
-                                  : isPast || allClassesCompleted
-                                    ? 'bg-emerald-500/90 ring-4 ring-emerald-500/15 dark:bg-emerald-400/90 dark:ring-emerald-400/15'
-                                    : 'bg-slate-300 dark:bg-slate-600 ring-4 ring-slate-200 dark:ring-slate-700'
-                                }`}
+                              className={`absolute left-0 top-2.5 h-5 w-5 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
+                                isCurrent
+                                  ? 'bg-primary ring-4 ring-primary/20 scale-110 shadow-md'
+                                  : isNext
+                                    ? 'bg-amber-500 ring-4 ring-amber-500/20 scale-110 shadow-md'
+                                    : isPast || allClassesCompleted
+                                      ? 'bg-emerald-500/90 ring-4 ring-emerald-500/15 dark:bg-emerald-400/90 dark:ring-emerald-400/15'
+                                      : 'bg-slate-300 dark:bg-slate-600 ring-4 ring-slate-200 dark:ring-slate-700'
+                              }`}
                             >
                               {isPast || allClassesCompleted ? (
                                 <svg
@@ -1729,23 +1382,25 @@ const Dashboard: React.FC = () => {
                             </div>
 
                             <div
-                              className={`transition-all duration-500 ease-out ${isCurrent
-                                ? 'bg-primary/5 border-l-2 border-primary pl-4 pr-3 py-3 rounded-r-lg'
-                                : isNext
-                                  ? 'bg-amber-50 dark:bg-amber-900/10 border-l-2 border-amber-500 pl-4 pr-3 py-3 rounded-r-lg'
-                                  : 'py-2'
-                                }`}
+                              className={`transition-all duration-500 ease-out ${
+                                isCurrent
+                                  ? 'bg-primary/5 border-l-2 border-primary pl-4 pr-3 py-3 rounded-r-lg'
+                                  : isNext
+                                    ? 'bg-amber-50 dark:bg-amber-900/10 border-l-2 border-amber-500 pl-4 pr-3 py-3 rounded-r-lg'
+                                    : 'py-2'
+                              }`}
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
                                     <span
-                                      className={`text-xs font-semibold transition-colors duration-500 ${isCurrent
-                                        ? 'text-primary'
-                                        : isPast || allClassesCompleted
-                                          ? 'text-emerald-600/80 dark:text-emerald-400/80'
-                                          : 'text-slate-500 dark:text-slate-400'
-                                        }`}
+                                      className={`text-xs font-semibold transition-colors duration-500 ${
+                                        isCurrent
+                                          ? 'text-primary'
+                                          : isPast || allClassesCompleted
+                                            ? 'text-emerald-600/80 dark:text-emerald-400/80'
+                                            : 'text-slate-500 dark:text-slate-400'
+                                      }`}
                                     >
                                       {c.startTime} - {c.endTime}
                                     </span>
@@ -1761,18 +1416,20 @@ const Dashboard: React.FC = () => {
                                     )}
                                   </div>
                                   <p
-                                    className={`font-semibold text-sm mb-2 transition-all duration-500 ${isPast || allClassesCompleted
-                                      ? 'text-slate-400 dark:text-slate-500'
-                                      : 'text-slate-900 dark:text-white'
-                                      }`}
+                                    className={`font-semibold text-sm mb-2 transition-all duration-500 ${
+                                      isPast || allClassesCompleted
+                                        ? 'text-slate-400 dark:text-slate-500'
+                                        : 'text-slate-900 dark:text-white'
+                                    }`}
                                   >
                                     {c.courseName}
                                   </p>
                                   <div
-                                    className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs transition-colors duration-500 ${isPast || allClassesCompleted
-                                      ? 'text-slate-400 dark:text-slate-600'
-                                      : 'text-slate-500 dark:text-slate-400'
-                                      }`}
+                                    className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs transition-colors duration-500 ${
+                                      isPast || allClassesCompleted
+                                        ? 'text-slate-400 dark:text-slate-600'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                    }`}
                                   >
                                     <span className="flex items-center gap-1">
                                       <InstructorIcon className="w-3.5 h-3.5" />
@@ -1783,8 +1440,9 @@ const Dashboard: React.FC = () => {
                                       {c.location}
                                     </span>
                                     <span
-                                      className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-500 ${isPast || allClassesCompleted ? 'opacity-60' : ''
-                                        } ${getClassColor(c.courseCode, c.isCustomTask)}`}
+                                      className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-500 ${
+                                        isPast || allClassesCompleted ? 'opacity-60' : ''
+                                      } ${getClassColor(c.courseCode, c.isCustomTask)}`}
                                     >
                                       {c.isCustomTask ? '✓ ' : ''}
                                       {c.courseCode}
@@ -2235,10 +1893,11 @@ const Dashboard: React.FC = () => {
                     <button
                       key={iconOption.icon}
                       onClick={() => setNewLink({ ...newLink, icon: iconOption.icon })}
-                      className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${newLink.icon === iconOption.icon
-                        ? 'border-primary bg-primary/10 shadow-md'
-                        : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
-                        }`}
+                      className={`p-3 rounded-lg border-2 transition-all hover:scale-105 ${
+                        newLink.icon === iconOption.icon
+                          ? 'border-primary bg-primary/10 shadow-md'
+                          : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
+                      }`}
                       title={iconOption.name}
                       aria-label={`Select ${iconOption.name} icon`}
                       aria-pressed={newLink.icon === iconOption.icon}
@@ -2265,10 +1924,11 @@ const Dashboard: React.FC = () => {
                     <button
                       key={color.value}
                       onClick={() => setNewLink({ ...newLink, color: color.value })}
-                      className={`p-2 rounded-lg border-2 transition-all ${newLink.color === color.value
-                        ? 'border-primary bg-primary/10'
-                        : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
-                        }`}
+                      className={`p-2 rounded-lg border-2 transition-all ${
+                        newLink.color === color.value
+                          ? 'border-primary bg-primary/10'
+                          : 'border-slate-200 dark:border-slate-600 hover:border-primary/50'
+                      }`}
                       aria-label={`Select ${color.name} color`}
                       aria-pressed={newLink.color === color.value}
                     >

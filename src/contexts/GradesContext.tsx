@@ -1,22 +1,17 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-  useMemo,
-  useCallback,
-} from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
 
-import { GradesData } from '@/types';
+import { ExtractionConfidence, GradesData, LowConfidenceGrade } from '@/types';
 
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { db } from '@lib/firebase';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/storage';
-import { getGoogleGenAI } from '@lib/utils/lazyImports';
-import { logActivity } from '@services/activityService';
+import { updateDemoProfile } from '@features/demo/demoStore';
 import useGradingScale from '@hooks/useGradingScale';
+import { getLatestGrades } from '@lib/utils/gradeUtils';
+import { logActivity } from '@services/activityService';
+
+import { useUser } from './UserContext';
 
 /**
  * GradesContext handles academic grade data with intelligent retake logic:
@@ -64,76 +59,32 @@ interface GradesContextType {
   resetGradesState: () => Promise<void>;
 }
 
+const DEMO_SCAN_UNAVAILABLE =
+  "Grade-sheet scanning isn't available in the demo. You can still edit your grades by hand.";
+
 const GradesContext = createContext<GradesContextType | undefined>(undefined);
 
 export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, isGuest } = useAuth();
   const { gradePoints: adminGradePoints, gradeOptions } = useGradingScale();
-  const [gradesData, setGradesDataState] = useState<GradesData | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Grades live on users/{uid}, which UserProvider already streams (or serves from the demo store)
+  const { user, loading, error: userError } = useUser();
+  const gradesData = user?.gradesData ?? null;
 
   // State for the extraction process
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [processError, setError] = useState<string | null>(null);
+  const error =
+    processError ?? (userError ? 'Failed to load grades data. Please try again.' : null);
   const [selectedFile, setSelectedFileState] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  useEffect(() => {
-    let unsubscribe: (() => void) | null = null;
-    if (currentUser) {
-      setLoading(true);
-      const userDocRef = db.collection('users').doc(currentUser.uid);
-
-      // OPTIMIZATION: First load from Firestore cache for instant UI
-      userDocRef
-        .get({ source: 'cache' })
-        .then((docSnap) => {
-          if (docSnap.exists) {
-            const data = docSnap.data();
-            if (data?.gradesData) {
-              setGradesDataState(data.gradesData as GradesData);
-              setLoading(false); // Show cached data immediately
-            }
-          }
-        })
-        .catch(() => {
-          // Cache miss expected on first load
-        });
-
-      // Then subscribe for real-time updates
-      unsubscribe = userDocRef.onSnapshot(
-        { includeMetadataChanges: false },
-        (docSnap) => {
-          if (docSnap.exists) {
-            const data = docSnap.data();
-            if (data && data.gradesData) {
-              setGradesDataState(data.gradesData as GradesData);
-            } else {
-              setGradesDataState(null);
-            }
-          } else {
-            setGradesDataState(null);
-          }
-          setLoading(false);
-        },
-        (error) => {
-          console.error('Error loading grades data:', error);
-          setError('Failed to load grades data. Please try again.');
-          setGradesDataState(null);
-          setLoading(false);
-        }
-      );
-    } else {
-      setGradesDataState(null);
-      setLoading(false);
-    }
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, [currentUser]);
-
   const setGradesData = useCallback(
     async (data: GradesData | null) => {
+      if (isGuest) {
+        updateDemoProfile({ gradesData: data ?? undefined });
+        return;
+      }
       if (currentUser) {
         try {
           const userDocRef = db.collection('users').doc(currentUser.uid);
@@ -145,7 +96,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
       }
     },
-    [currentUser]
+    [currentUser, isGuest]
   );
 
   const selectFile = useCallback((file: File | null) => {
@@ -168,6 +119,11 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, []);
 
   const processGrades = useCallback(async () => {
+    if (isGuest) {
+      // Scanning uploads to Storage and calls Gemini, so it stays off in the demo
+      setError(DEMO_SCAN_UNAVAILABLE);
+      return;
+    }
     if (!selectedFile || !currentUser) {
       setError('Please select a file first.');
       return;
@@ -201,7 +157,7 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const base64Data = await fileToBase64(selectedFile);
 
       // Lazy load Google GenAI
-      const { GoogleGenAI, Type } = await getGoogleGenAI();
+      const { GoogleGenAI, Type } = await import('@google/genai');
       const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
       const schema = {
@@ -376,21 +332,19 @@ Include retakes. Return exact values as shown on the document.`,
 
       // ===== MULTI-PASS EXTRACTION WITH CONSENSUS =====
       const MAX_PASSES = 2;
-      const MAX_RETRIES = 2;
       const SGPA_TOLERANCE = 0.15; // Stricter threshold
 
-      let allPasses: any[] = [];
-      let retryCount = 0;
+      const semesterConfidence = (semester: number, sgpaMismatch: number) => ({
+        semester,
+        confidence: sgpaMismatch <= SGPA_TOLERANCE ? 1 : Math.max(0, 1 - sgpaMismatch),
+        sgpaMismatch: parseFloat(sgpaMismatch.toFixed(3)),
+      });
+
+      const allPasses: any[] = [];
       let bestResult: any = null;
       let consensusReached = false;
-      const lowConfidenceGrades: {
-        semester: number;
-        subjectCode: string;
-        extractedGrade: string;
-        reason: string;
-      }[] = [];
-      const semesterConfidences: { semester: number; confidence: number; sgpaMismatch?: number }[] =
-        [];
+      const lowConfidenceGrades: LowConfidenceGrade[] = [];
+      const semesterConfidences: ExtractionConfidence['perSemester'] = [];
 
       // Perform multiple extraction passes
       const extractionPromises = Array.from({ length: MAX_PASSES }, (_, pass) =>
@@ -406,19 +360,6 @@ Include retakes. Return exact values as shown on the document.`,
           console.warn(`[Extraction] Pass ${index + 1} failed:`, result.reason);
         }
       });
-      const passPromises = Array.from({ length: MAX_PASSES }, async (_, pass) => {
-        try {
-          //console.log(`[Extraction] Pass ${pass + 1}/${MAX_PASSES}`);
-          return await performExtraction(pass);
-        } catch (passError) {
-          console.warn(`[Extraction] Pass ${pass + 1} failed:`, passError);
-          return null;
-        }
-      });
-
-      const passResults = await Promise.all(passPromises);
-      const successfulPasses = passResults.filter((result) => result !== null);
-      allPasses.push(...successfulPasses);
 
       if (allPasses.length === 0) {
         throw new Error('All extraction passes failed');
@@ -488,11 +429,7 @@ Include retakes. Return exact values as shown on the document.`,
         const calculatedSGPA = calculateSGPA(sem.grades);
         const sgpaMismatch = Math.abs(calculatedSGPA - sem.sgpa);
 
-        semesterConfidences.push({
-          semester: sem.semester,
-          confidence: sgpaMismatch <= SGPA_TOLERANCE ? 1 : Math.max(0, 1 - sgpaMismatch),
-          sgpaMismatch: parseFloat(sgpaMismatch.toFixed(3)),
-        });
+        semesterConfidences.push(semesterConfidence(sem.semester, sgpaMismatch));
 
         if (sgpaMismatch > SGPA_TOLERANCE) {
           console.warn(
@@ -523,12 +460,10 @@ Include retakes. Return exact values as shown on the document.`,
         return sem;
       });
 
-      // ===== AUTO-RETRY ON SIGNIFICANT MISMATCH =====
-      if (needsRetry && retryCount < MAX_RETRIES) {
-        retryCount++;
-        //console.log(`[Extraction] Retrying due to SGPA mismatch (attempt ${retryCount}/${MAX_RETRIES})`);
+      // ===== ONE RETRY ON SIGNIFICANT MISMATCH =====
+      if (needsRetry) {
         try {
-          const retryResult = await performExtraction(MAX_PASSES + retryCount);
+          const retryResult = await performExtraction(MAX_PASSES + 1);
           // Check if retry has better SGPA matches
           let retryBetter = true;
           retryResult.semesters.forEach((sem: any, idx: number) => {
@@ -551,13 +486,8 @@ Include retakes. Return exact values as shown on the document.`,
             // Recalculate confidences
             semesterConfidences.length = 0;
             bestResult.semesters.forEach((sem: any) => {
-              const calculatedSGPA = calculateSGPA(sem.grades);
-              const sgpaMismatch = Math.abs(calculatedSGPA - sem.sgpa);
-              semesterConfidences.push({
-                semester: sem.semester,
-                confidence: sgpaMismatch <= SGPA_TOLERANCE ? 1 : Math.max(0, 1 - sgpaMismatch),
-                sgpaMismatch: parseFloat(sgpaMismatch.toFixed(3)),
-              });
+              const sgpaMismatch = Math.abs(calculateSGPA(sem.grades) - sem.sgpa);
+              semesterConfidences.push(semesterConfidence(sem.semester, sgpaMismatch));
             });
           }
         } catch (retryError) {
@@ -569,33 +499,17 @@ Include retakes. Return exact values as shown on the document.`,
       const overallConfidence =
         semesterConfidences.length > 0
           ? semesterConfidences.reduce((sum, s) => sum + s.confidence, 0) /
-          semesterConfidences.length
+            semesterConfidences.length
           : 1;
 
       //console.log(`[Extraction] Complete - Overall confidence: ${(overallConfidence * 100).toFixed(1)}%`);
       //console.log(`[Extraction] Low confidence grades: ${lowConfidenceGrades.length}`);
 
       // ===== FINALIZE RESULT =====
-      // Get latest grades for each course (handles retakes)
-      interface CourseData {
-        grade: { subjectCode: string; credits: number; grade: string };
-        semester: number;
-      }
-      const courseMap: { [subjectCode: string]: CourseData } = {};
-      bestResult.semesters.forEach((sem: any) => {
-        sem.grades.forEach((grade: any) => {
-          const existing = courseMap[grade.subjectCode];
-          if (!existing || sem.semester > existing.semester) {
-            courseMap[grade.subjectCode] = { grade, semester: sem.semester };
-          }
-        });
-      });
-
-      // Calculate credits
+      // Count only the latest attempt of each course (handles retakes)
       let totalCredits = 0;
       let earnedCredits = 0;
-      Object.values(courseMap).forEach((courseData) => {
-        const grade = courseData.grade;
+      Object.values(getLatestGrades(bestResult.semesters)).forEach((grade) => {
         const credits = grade.credits || 0;
         totalCredits += credits;
         if (grade.grade !== 'F') {
@@ -607,7 +521,7 @@ Include retakes. Return exact values as shown on the document.`,
       bestResult.earnedCredits = earnedCredits;
 
       // Add extraction metadata
-      const finalResult: GradesData & { extractionConfidence?: any } = {
+      const finalResult: GradesData = {
         ...bestResult,
         gradeSheetUrl,
         gradeSheetFileName: selectedFile.name,
@@ -638,6 +552,7 @@ Include retakes. Return exact values as shown on the document.`,
       setIsProcessing(false);
     }
   }, [
+    isGuest,
     selectedFile,
     currentUser,
     gradesData,

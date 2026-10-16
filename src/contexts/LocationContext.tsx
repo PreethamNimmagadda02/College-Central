@@ -1,12 +1,3 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  ReactNode,
-} from 'react';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import {
   detectCurrentZone,
@@ -17,6 +8,15 @@ import {
   updateUserLocationState,
   CampusZone,
 } from '@services/locationAnalyticsService';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  ReactNode,
+} from 'react';
 
 interface Location {
   lat: number;
@@ -31,8 +31,6 @@ interface LocationContextType {
   loading: boolean;
   permissionStatus: PermissionState | 'unknown';
   currentZone: CampusZone | null;
-  analyticsConsent: boolean | null;
-  requestAnalyticsConsent: () => void;
   retryLocation: () => void;
 }
 
@@ -45,9 +43,7 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [loading, setLoading] = useState<boolean>(true);
   const [permissionStatus, setPermissionStatus] = useState<PermissionState | 'unknown'>('unknown');
 
-  // Analytics state - Implicitly true for all users (browser permission is the gate)
   const [currentZone, setCurrentZone] = useState<CampusZone | null>(null);
-  const analyticsConsent = true; // Implicit consent
 
   // Tracking refs (will be populated from Firestore on mount)
   const lastRecordedZoneId = useRef<string | null>(null);
@@ -79,17 +75,12 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
     initializeState();
   }, [currentUser?.uid]);
 
-  // Request to show consent modal - No-op now as consent is implicit
-  const requestAnalyticsConsent = useCallback(() => {
-    // No-op
-  }, []);
-
   // Track zone visits - only record when zone CHANGES (server-side deduplication)
   useEffect(() => {
     const trackZoneVisit = async () => {
       // Wait for server state to be loaded first
       if (!serverStateLoaded.current) return;
-      if (!analyticsConsent || !currentUser?.uid || !location || !currentZone) return;
+      if (!currentUser?.uid || !location || !currentZone) return;
 
       const now = Date.now();
 
@@ -120,7 +111,7 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
 
     trackZoneVisit();
-  }, [analyticsConsent, currentUser?.uid, location, currentZone]);
+  }, [currentUser?.uid, location, currentZone]);
 
   // Main geolocation effect
   useEffect(() => {
@@ -157,7 +148,7 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       // Update real-time tracking (throttled to every 30s)
       const now = Date.now();
-      if (analyticsConsent && currentUser?.uid && now - lastLocationUpdate.current > 30000) {
+      if (currentUser?.uid && now - lastLocationUpdate.current > 30000) {
         updateUserLocation(
           currentUser.uid,
           {
@@ -211,31 +202,16 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
   }, []);
 
-  // Retry function to clear error and restart watcher
+  // The watcher keeps running, so a retry just clears the error UI and re-reads the
+  // permission; if the user fixed their settings, the next position update succeeds.
   const retryLocation = useCallback(() => {
     setError(null);
     setLoading(true);
-
-    // Re-check permission
     if (navigator.permissions && navigator.permissions.query) {
       navigator.permissions.query({ name: 'geolocation' }).then((result) => {
         setPermissionStatus(result.state);
       });
     }
-
-    // Restart watcher (logic is in useEffect, so we can just trigger a component re-mount or
-    // simply let the watcher continue if it was just a timeout.
-    // But for a full reset, we might need a key or just force a status update.)
-
-    // Actually, the watcher never stops unless components unmount.
-    // If we want to force a "retry" of the *request*, we might need to clear and re-add.
-    // However, standard watchPosition keeps trying.
-    // The main use case is when the USER changes settings and clicks "Retry".
-    // In that case, we just want to clear the error state and let the existing watcher (or a new one) fire.
-
-    // Let's rely on the fact that if the user fixed it, the *next* update will succeed.
-    // But we need to clear the Error UI.
-    setError(null);
   }, []);
 
   return (
@@ -246,8 +222,6 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({ children }
         loading,
         permissionStatus,
         currentZone,
-        analyticsConsent,
-        requestAnalyticsConsent,
         retryLocation,
       }}
     >

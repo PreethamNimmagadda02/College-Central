@@ -22,13 +22,7 @@ export const formatTime = (date: Date): string => {
 /**
  * Check if a date is today
  */
-export const isToday = (date: Date): boolean => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const checkDate = new Date(date);
-  checkDate.setHours(0, 0, 0, 0);
-  return checkDate.getTime() === today.getTime();
-};
+export const isToday = (date: Date): boolean => isSameDay(date, new Date());
 
 /**
  * Check if two dates are the same day
@@ -42,42 +36,12 @@ export const isSameDay = (date1: Date, date2: Date): boolean => {
 };
 
 /**
- * Get date with time set to midnight
- */
-export const getDateAtMidnight = (date: Date): Date => {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  return result;
-};
-
-/**
  * Add days to a date
  */
 export const addDays = (date: Date, days: number): Date => {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
-};
-
-/**
- * Get the day name from a date
- */
-export const getDayName = (date: Date): string => {
-  return date.toLocaleDateString('en-US', { weekday: 'long' });
-};
-
-/**
- * Format date for display (e.g., "Monday, Jan 15")
- */
-export const formatDateShort = (date: Date): string => {
-  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-};
-
-/**
- * Format date for display (e.g., "January 15, 2025")
- */
-export const formatDateLong = (date: Date): string => {
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
 /**

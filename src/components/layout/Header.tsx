@@ -17,9 +17,44 @@ import { useAppConfig } from '@contexts/AppConfigContext';
 import { useUser } from '@contexts/UserContext';
 import { useWeather } from '@contexts/WeatherContext';
 import { useRole } from '@features/auth/hooks/useRole';
-import React, { useState, useRef, useEffect } from 'react';
+import { useClickOutside } from '@hooks/useClickOutside';
+import React, { useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+
 import NotificationCenter from './NotificationCenter';
+
+// Shared by the desktop header and the mobile QuickActionsPill
+
+/** Current weather icon and temperature (or a loading / empty placeholder). */
+const WeatherReading: React.FC<{ iconClassName: string; unit: string }> = ({
+  iconClassName,
+  unit,
+}) => {
+  const { weather, weatherLoading } = useWeather();
+  if (weatherLoading) return <span className="text-sm animate-pulse">⏳</span>;
+  if (!weather) return <span className="text-sm text-slate-500">--°</span>;
+  return (
+    <>
+      <span className={iconClassName}>{weather.icon}</span>
+      <span className="text-sm font-bold text-sky-700 dark:text-sky-300">
+        {weather.temp}
+        {unit}
+      </span>
+    </>
+  );
+};
+
+/** Sun and moon that swap with a spin when the theme changes. */
+const ThemeIcons: React.FC<{ isDark: boolean }> = ({ isDark }) => (
+  <div className="relative w-full h-full flex items-center justify-center">
+    <SunIcon
+      className={`absolute inset-0 w-full h-full text-amber-500 group-hover:text-amber-400 transition-all duration-500 ease-in-out transform ${isDark ? 'opacity-0 rotate-180 scale-0' : 'opacity-100 rotate-0 scale-100 group-hover:rotate-12'}`}
+    />
+    <MoonIcon
+      className={`absolute inset-0 w-full h-full text-blue-400 group-hover:text-blue-300 transition-all duration-500 ease-in-out transform ${isDark ? 'opacity-100 rotate-0 scale-100 group-hover:-rotate-12' : 'opacity-0 -rotate-180 scale-0'}`}
+    />
+  </div>
+);
 
 // ============================================================================
 // QuickActionsPill - Expandable mobile quick actions
@@ -29,78 +64,76 @@ import NotificationCenter from './NotificationCenter';
 // ============================================================================
 
 interface QuickActionsPillProps {
-  weather: { icon: string; temp: string; desc: string } | null;
-  weatherLoading: boolean;
-  setShowWeatherModal: (show: boolean) => void;
   isDark: boolean;
   toggleTheme: () => void;
 }
 
-const QuickActionsPill: React.FC<QuickActionsPillProps> = ({
-  weather,
-  weatherLoading,
-  setShowWeatherModal,
-  isDark,
-  toggleTheme,
-}) => {
+const QuickActionsPill: React.FC<QuickActionsPillProps> = ({ isDark, toggleTheme }) => {
+  const { setShowWeatherModal } = useWeather();
   const [isExpanded, setIsExpanded] = useState(false);
   const pillRef = useRef<HTMLDivElement>(null);
 
   // Close when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (pillRef.current && !pillRef.current.contains(event.target as Node)) {
-        setIsExpanded(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  useClickOutside(
+    pillRef,
+    useCallback(() => setIsExpanded(false), [])
+  );
 
   return (
     <div ref={pillRef} className="relative">
       {/* Collapsed state: Single trigger button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${isExpanded
-          ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/40 rotate-90'
-          : 'bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/70 border border-slate-200/50 dark:border-slate-700/50 hover:border-blue-500/40'
-          }`}
+        className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${
+          isExpanded
+            ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/40 rotate-90'
+            : 'bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/70 border border-slate-200/50 dark:border-slate-700/50 hover:border-blue-500/40'
+        }`}
         aria-label={isExpanded ? 'Collapse quick actions' : 'Expand quick actions'}
       >
         {/* Animated dots icon that morphs to X */}
         <div className="relative w-5 h-5 flex items-center justify-center">
           <span
-            className={`absolute w-1.5 h-1.5 rounded-full bg-blue-500 transition-all duration-300 ${isExpanded ? 'opacity-0 scale-0' : 'opacity-100 -translate-x-2'
-              }`}
+            className={`absolute w-1.5 h-1.5 rounded-full bg-blue-500 transition-all duration-300 ${
+              isExpanded ? 'opacity-0 scale-0' : 'opacity-100 -translate-x-2'
+            }`}
           />
           <span
-            className={`absolute w-1.5 h-1.5 rounded-full bg-purple-500 transition-all duration-300 ${isExpanded ? 'opacity-0 scale-0' : 'opacity-100'
-              }`}
+            className={`absolute w-1.5 h-1.5 rounded-full bg-purple-500 transition-all duration-300 ${
+              isExpanded ? 'opacity-0 scale-0' : 'opacity-100'
+            }`}
           />
           <span
-            className={`absolute w-1.5 h-1.5 rounded-full bg-pink-500 transition-all duration-300 ${isExpanded ? 'opacity-0 scale-0' : 'opacity-100 translate-x-2'
-              }`}
+            className={`absolute w-1.5 h-1.5 rounded-full bg-pink-500 transition-all duration-300 ${
+              isExpanded ? 'opacity-0 scale-0' : 'opacity-100 translate-x-2'
+            }`}
           />
           {/* X icon when expanded */}
           <svg
-            className={`w-4 h-4 text-blue-500 transition-all duration-300 ${isExpanded ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-90'
-              }`}
+            className={`w-4 h-4 text-blue-500 transition-all duration-300 ${
+              isExpanded ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-90'
+            }`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </div>
       </button>
 
       {/* Expanded state: Horizontal pill with all actions */}
       <div
-        className={`absolute right-0 top-12 flex items-center gap-1 p-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 transition-all duration-300 origin-top-right ${isExpanded
-          ? 'opacity-100 scale-100 translate-y-0'
-          : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
-          }`}
+        className={`absolute right-0 top-12 flex items-center gap-1 p-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 transition-all duration-300 origin-top-right ${
+          isExpanded
+            ? 'opacity-100 scale-100 translate-y-0'
+            : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+        }`}
       >
         {/* Weather */}
         <button
@@ -111,16 +144,7 @@ const QuickActionsPill: React.FC<QuickActionsPillProps> = ({
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-sky-500/10 to-blue-500/10 hover:from-sky-500/20 hover:to-blue-500/20 border border-sky-500/20 transition-all duration-200 hover:scale-105"
           title="View weather"
         >
-          {weatherLoading ? (
-            <span className="text-sm animate-pulse">⏳</span>
-          ) : weather ? (
-            <>
-              <span className="text-lg">{weather.icon}</span>
-              <span className="text-sm font-bold text-sky-700 dark:text-sky-300">{weather.temp}°</span>
-            </>
-          ) : (
-            <span className="text-sm text-slate-500">--°</span>
-          )}
+          <WeatherReading iconClassName="text-lg" unit="°" />
         </button>
 
         {/* Notifications - Don't auto-close, let NotificationCenter manage its own dropdown */}
@@ -135,22 +159,12 @@ const QuickActionsPill: React.FC<QuickActionsPillProps> = ({
           className="relative w-10 h-10 p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-blue-500/10 dark:to-purple-500/10 hover:from-amber-500/20 hover:to-orange-500/20 dark:hover:from-blue-500/20 dark:hover:to-purple-500/20 transition-all duration-200 hover:scale-105"
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          <div className="relative w-full h-full flex items-center justify-center">
-            <SunIcon
-              className={`absolute inset-0 w-full h-full text-amber-500 transition-all duration-500 ${isDark ? 'opacity-0 rotate-180 scale-0' : 'opacity-100 rotate-0 scale-100'
-                }`}
-            />
-            <MoonIcon
-              className={`absolute inset-0 w-full h-full text-blue-400 transition-all duration-500 ${isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-180 scale-0'
-                }`}
-            />
-          </div>
+          <ThemeIcons isDark={isDark} />
         </button>
       </div>
     </div>
   );
 };
-
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -169,7 +183,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const { user } = useUser();
   const { config: appConfig } = useAppConfig();
   const { isAdmin } = useRole();
-  const { weather, weatherLoading, setShowWeatherModal } = useWeather();
+  const { weather, setShowWeatherModal } = useWeather();
 
   React.useEffect(() => {
     const root = document.documentElement;
@@ -295,13 +309,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
 
             {/* === MOBILE: Expandable Quick Actions Pill === */}
             <div className="md:hidden relative">
-              <QuickActionsPill
-                weather={weather}
-                weatherLoading={weatherLoading}
-                setShowWeatherModal={setShowWeatherModal}
-                isDark={isDark}
-                toggleTheme={toggleTheme}
-              />
+              <QuickActionsPill isDark={isDark} toggleTheme={toggleTheme} />
             </div>
 
             {/* === DESKTOP: Original inline layout === */}
@@ -311,20 +319,10 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
               className="hidden md:flex items-center gap-2 px-2 py-2 sm:px-3 rounded-xl bg-gradient-to-r from-sky-500/10 to-blue-500/10 hover:from-sky-500/20 hover:to-blue-500/20 border border-sky-500/20 hover:border-sky-500/40 transition-all duration-300 group hover:shadow-md hover:scale-105"
               title={weather ? `${weather.desc} - Click for full details` : 'Loading weather...'}
             >
-              {weatherLoading ? (
-                <span className="text-sm animate-pulse">⏳</span>
-              ) : weather ? (
-                <>
-                  <span className="text-base leading-none sm:text-lg group-hover:scale-110 transition-transform">
-                    {weather.icon}
-                  </span>
-                  <span className="text-sm font-bold text-sky-700 dark:text-sky-300">
-                    {weather.temp}°C
-                  </span>
-                </>
-              ) : (
-                <span className="text-sm text-slate-500">--°</span>
-              )}
+              <WeatherReading
+                iconClassName="text-base leading-none sm:text-lg group-hover:scale-110 transition-transform"
+                unit="°C"
+              />
             </button>
 
             {/* Notification Center - Desktop only */}
@@ -339,14 +337,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-blue-500/10 dark:to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative w-full h-full flex items-center justify-center">
-                <SunIcon
-                  className={`absolute inset-0 w-full h-full text-amber-500 group-hover:text-amber-400 transition-all duration-500 ease-in-out transform ${isDark ? 'opacity-0 rotate-180 scale-0' : 'opacity-100 rotate-0 scale-100 group-hover:rotate-12'}`}
-                />
-                <MoonIcon
-                  className={`absolute inset-0 w-full h-full text-blue-400 group-hover:text-blue-300 transition-all duration-500 ease-in-out transform ${isDark ? 'opacity-100 rotate-0 scale-100 group-hover:-rotate-12' : 'opacity-0 -rotate-180 scale-0'}`}
-                />
-              </div>
+              <ThemeIcons isDark={isDark} />
             </button>
 
             {/* User Profile */}

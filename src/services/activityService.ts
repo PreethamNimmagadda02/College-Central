@@ -1,19 +1,20 @@
 // FIX: Update Firebase imports to v8 compat syntax.
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
+import { isDemoUid } from '@features/demo/demoSession';
+import { addDemoActivity } from '@features/demo/demoStore';
 import { db } from '@lib/firebase';
-
-import { ActivityType, ActivityItem } from '@/types';
-
-import { retryOnlyIfRetryable } from '@lib/utils/retryLogic';
 import {
   ACTIVITY_LOG_MAX_RETRIES,
   ACTIVITY_LOG_RETRY_DELAY_MS,
-  ACTIVITY_LOG_PAGE_SIZE,
   MAX_ACTIVITIES_STORED,
 } from '@lib/utils/constants';
+import { isFirebaseError } from '@lib/utils/helpers';
+import { retryOnlyIfRetryable } from '@lib/utils/retryLogic';
 
-export interface ActivityLog {
+import { ActivityType } from '@/types';
+
+interface ActivityLog {
   type: ActivityType;
   title: string;
   description: string;
@@ -21,15 +22,14 @@ export interface ActivityLog {
   link?: string;
 }
 
-export interface ActivityLogPage {
-  activities: ActivityItem[];
-  lastDoc: firebase.firestore.QueryDocumentSnapshot | null;
-  hasMore: boolean;
-}
-
 export const logActivity = async (userId: string, activity: ActivityLog) => {
   if (!userId) {
     console.warn('Attempted to log activity without a userId.');
+    return;
+  }
+  if (isDemoUid(userId)) {
+    // Guests keep their activity feed in the local demo store
+    addDemoActivity(activity);
     return;
   }
   try {
@@ -52,9 +52,6 @@ export const logActivity = async (userId: string, activity: ActivityLog) => {
     );
   } catch (error: unknown) {
     console.error('Error logging activity: ', error);
-    const isFirebaseError = (err: unknown): err is { code: string } => {
-      return typeof err === 'object' && err !== null && 'code' in err;
-    };
     if (isFirebaseError(error) && error.code === 'permission-denied') {
       console.error(
         'Firestore Security Rules Error: The current user does not have permission to write to their own activity log. ' +
@@ -62,57 +59,6 @@ export const logActivity = async (userId: string, activity: ActivityLog) => {
       );
     }
     // Don't throw - activity logging is non-critical
-  }
-};
-
-/**
- * Fetch activity logs with pagination
- * @param userId - User ID to fetch activities for
- * @param lastDoc - Last document from previous page (for pagination)
- * @param pageSize - Number of activities per page
- * @returns ActivityLogPage with activities and pagination info
- */
-export const fetchActivityLogs = async (
-  userId: string,
-  lastDoc: firebase.firestore.QueryDocumentSnapshot | null = null,
-  pageSize: number = ACTIVITY_LOG_PAGE_SIZE
-): Promise<ActivityLogPage> => {
-  if (!userId) {
-    throw new Error('userId is required to fetch activity logs');
-  }
-
-  try {
-    const activityCollectionRef = db
-      .collection('users')
-      .doc(userId)
-      .collection('activity')
-      .orderBy('timestamp', 'desc')
-      .limit(pageSize + 1); // Fetch one extra to check if there are more
-
-    // If we have a lastDoc, start after it
-    const query = lastDoc ? activityCollectionRef.startAfter(lastDoc) : activityCollectionRef;
-
-    const snapshot = await query.get();
-    const docs = snapshot.docs;
-
-    // Check if there are more items
-    const hasMore = docs.length > pageSize;
-    const activities = docs.slice(0, pageSize).map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as ActivityItem[];
-
-    // Get the last doc for next page
-    const newLastDoc = hasMore ? docs[pageSize - 1] || null : null;
-
-    return {
-      activities,
-      lastDoc: newLastDoc,
-      hasMore,
-    };
-  } catch (error) {
-    console.error('Error fetching activity logs:', error);
-    throw error;
   }
 };
 
@@ -126,6 +72,7 @@ export const cleanupOldActivities = async (userId: string): Promise<void> => {
     console.warn('Attempted to cleanup activities without a userId.');
     return;
   }
+  if (isDemoUid(userId)) return; // the demo store caps its own feed
 
   try {
     const activityCollectionRef = db.collection('users').doc(userId).collection('activity');

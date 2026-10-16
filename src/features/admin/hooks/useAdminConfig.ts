@@ -1,10 +1,6 @@
 import { generateDefaultConfig } from '@contexts/AppConfigContext';
-import {
-  updateConfig as updateFirestoreConfig,
-  updateConfigSection,
-  subscribeToConfig,
-} from '@services/configService';
-import { useState, useEffect, useCallback } from 'react';
+import { updateConfigSection, subscribeToConfig } from '@services/configService';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import {
   AdminConfig,
@@ -20,113 +16,101 @@ import {
 
 const STORAGE_KEY = 'admin_config';
 
+type Apply<T> = (fn: (items: T[]) => T[]) => void;
+
+// add/update/remove for a list of records keyed by `id`
+const listOps = <T extends { id: string }>(apply: Apply<T>, idPrefix: string) => ({
+  add: (item: Omit<T, 'id'>) =>
+    apply((items) => [...items, { ...item, id: `${idPrefix}-${Date.now()}` } as T]),
+  update: (id: string, patch: Partial<T>) =>
+    apply((items) => items.map((i) => (i.id === id ? { ...i, ...patch } : i))),
+  remove: (id: string) => apply((items) => items.filter((i) => i.id !== id)),
+  removeMany: (ids: string[]) => {
+    const idSet = new Set(ids);
+    apply((items) => items.filter((i) => !idSet.has(i.id)));
+  },
+  clear: () => apply(() => []),
+  set: (items: T[]) => apply(() => items),
+});
+
+// add/update/remove by position for plain string lists
+const stringListOps = (apply: Apply<string>, normalize = (s: string) => s) => ({
+  add: (value: string) => apply((items) => [...items, normalize(value)]),
+  update: (index: number, value: string) =>
+    apply((items) => items.map((v, i) => (i === index ? normalize(value) : v))),
+  remove: (index: number) => apply((items) => items.filter((_, i) => i !== index)),
+  set: (items: string[]) => apply(() => items),
+});
+
 export const useAdminConfig = () => {
   const [config, setConfig] = useState<AdminConfig>(generateDefaultConfig);
   const [hasChanges, setHasChanges] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Subscribe to Firestore config on mount
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-
     const unsubscribe = subscribeToConfig((firestoreConfig) => {
       if (firestoreConfig) {
         setConfig(firestoreConfig);
         // Also save to localStorage as backup
         localStorage.setItem(STORAGE_KEY, JSON.stringify(firestoreConfig));
-      } else {
-        // Try localStorage fallback
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          try {
-            setConfig(JSON.parse(saved));
-          } catch {
-            setConfig(generateDefaultConfig());
-          }
-        } else {
-          setConfig(generateDefaultConfig());
-        }
+        return;
       }
-      setLoading(false);
+      // Try localStorage fallback
+      const saved = localStorage.getItem(STORAGE_KEY);
+      try {
+        setConfig(saved ? JSON.parse(saved) : generateDefaultConfig());
+      } catch {
+        setConfig(generateDefaultConfig());
+      }
     });
-
-    return () => {
-      unsubscribe();
-    };
+    return unsubscribe;
   }, []);
 
   // Save specific sections to Firestore
   const saveChangedSections = useCallback(
     async (sections: Array<keyof AdminConfig>, newConfig: AdminConfig) => {
-      setSaving(true);
-      setError(null);
       try {
-        const promises = sections.map((section) => updateConfigSection(section, newConfig[section]));
-        const results = await Promise.all(promises);
-
-        if (results.every((r) => r)) {
+        const results = await Promise.all(
+          sections.map((section) => updateConfigSection(section, newConfig[section]))
+        );
+        if (results.every(Boolean)) {
           setHasChanges(false);
-          // Also save to localStorage as backup
           localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
-        } else {
-          setError('Failed to save some sections');
         }
       } catch (err) {
         console.error('Error saving sections:', err);
-        setError('Failed to save configuration');
-      } finally {
-        setSaving(false);
       }
     },
     []
   );
 
-  // Save specific section to Firestore
+  // Save one section straight to Firestore, then mirror it locally. Already persisted,
+  // so this doesn't raise hasChanges.
   const saveSection = useCallback(
     async <K extends keyof AdminConfig>(section: K, data: AdminConfig[K]) => {
-      setSaving(true);
-      setError(null);
       try {
-        const success = await updateConfigSection(section, data);
-        if (success) {
-          setHasChanges(true);
-          // Optimistically update local state
+        if (await updateConfigSection(section, data)) {
           setConfig((prev) => ({ ...prev, [section]: data }));
-        } else {
-          setError(`Failed to save ${section}`);
         }
       } catch (err) {
         console.error(`Error saving ${section}:`, err);
-        setError(`Failed to save ${section}`);
-      } finally {
-        setSaving(false);
       }
     },
     []
   );
 
-  // Helper to update config and auto-save to Firestore
+  // Update local config and auto-save the sections that changed
   const updateConfigAndSave = useCallback(
     (updater: (prev: AdminConfig) => AdminConfig) => {
       setConfig((prev) => {
         const newConfig = updater(prev);
-
-        // Identify changed sections
         const changedSections = (Object.keys(newConfig) as Array<keyof AdminConfig>).filter(
           (key) => newConfig[key] !== prev[key]
         );
-
-        // Optimization: Update only changed sections
         if (changedSections.length > 0) {
-          // Schedule save for next tick to avoid side-effects/state-updates during render
-          setTimeout(() => {
-            saveChangedSections(changedSections, newConfig);
-          }, 0);
+          // Next tick: no side effects inside the state updater
+          setTimeout(() => saveChangedSections(changedSections, newConfig), 0);
         }
-
         return newConfig;
       });
       setHasChanges(true);
@@ -134,609 +118,93 @@ export const useAdminConfig = () => {
     [saveChangedSections]
   );
 
-  // Update functions for each config section
-  const updateCollegeInfo = useCallback(
-    (updates: Partial<AdminConfig['collegeInfo']>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        collegeInfo: { ...prev.collegeInfo, ...updates },
-      }));
-    },
-    [updateConfigAndSave]
-  );
+  const ops = useMemo(() => {
+    const section =
+      <K extends keyof AdminConfig>(key: K) =>
+      (fn: (value: AdminConfig[K]) => AdminConfig[K]) =>
+        updateConfigAndSave((prev) => ({ ...prev, [key]: fn(prev[key]) }));
 
-  const updateAppConstants = useCallback(
-    (updates: Partial<AdminConfig['appConstants']>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        appConstants: { ...prev.appConstants, ...updates },
-      }));
-    },
-    [updateConfigAndSave]
-  );
+    const setCalendar = section('calendar');
+    const setDirectory = section('directory');
+    const setCourses = section('courses');
+    const setStudents = section('students');
+    const students = listOps<AdminStudentEntry>(setStudents, 'student');
 
-  // Branches CRUD
-  const addBranch = useCallback(
-    (branch: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        branches: [...prev.branches, branch.trim().toUpperCase()],
-      }));
-    },
-    [updateConfigAndSave]
-  );
+    return {
+      updateCollegeInfo: (updates: Partial<AdminConfig['collegeInfo']>) =>
+        section('collegeInfo')((info) => ({ ...info, ...updates })),
+      updateAppConstants: (updates: Partial<AdminConfig['appConstants']>) =>
+        section('appConstants')((constants) => ({ ...constants, ...updates })),
+      updateCalendarDates: (dates: Partial<Omit<AdminConfig['calendar'], 'events'>>) =>
+        setCalendar((calendar) => ({ ...calendar, ...dates })),
 
-  const updateBranch = useCallback(
-    (index: number, branch: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        branches: prev.branches.map((b, i) => (i === index ? branch.trim().toUpperCase() : b)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const deleteBranch = useCallback(
-    (index: number) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        branches: prev.branches.filter((_, i) => i !== index),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const reorderBranches = useCallback(
-    (branches: string[]) => {
-      updateConfigAndSave((prev) => ({ ...prev, branches }));
-    },
-    [updateConfigAndSave]
-  );
-
-  // Hostels CRUD
-  const addHostel = useCallback(
-    (hostel: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        hostels: [...prev.hostels, hostel],
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const updateHostel = useCallback(
-    (index: number, hostel: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        hostels: prev.hostels.map((h, i) => (i === index ? hostel : h)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const deleteHostel = useCallback(
-    (index: number) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        hostels: prev.hostels.filter((_, i) => i !== index),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  // Quotes CRUD
-  const addQuote = useCallback(
-    (quote: Omit<AdminQuote, 'id'>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        quotes: [...prev.quotes, { ...quote, id: `quote-${Date.now()}` }],
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const updateQuote = useCallback(
-    (id: string, quote: Partial<AdminQuote>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        quotes: prev.quotes.map((q) => (q.id === id ? { ...q, ...quote } : q)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const deleteQuote = useCallback(
-    (id: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        quotes: prev.quotes.filter((q) => q.id !== id),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  // Quick Links CRUD
-  const addQuickLink = useCallback(
-    (link: Omit<AdminQuickLink, 'id'>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        quickLinks: [...prev.quickLinks, { ...link, id: `link-${Date.now()}` }],
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const updateQuickLink = useCallback(
-    (id: string, link: Partial<AdminQuickLink>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        quickLinks: prev.quickLinks.map((l) => (l.id === id ? { ...l, ...link } : l)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const deleteQuickLink = useCallback(
-    (id: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        quickLinks: prev.quickLinks.filter((l) => l.id !== id),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  // Forms CRUD
-  const addForm = useCallback(
-    (form: Omit<AdminForm, 'id'>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        forms: [...prev.forms, { ...form, id: `form-${Date.now()}` }],
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const updateForm = useCallback(
-    (id: string, form: Partial<AdminForm>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        forms: prev.forms.map((f) => (f.id === id ? { ...f, ...form } : f)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const deleteForm = useCallback(
-    (id: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        forms: prev.forms.filter((f) => f.id !== id),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  // Calendar CRUD
-  const updateCalendarDates = useCallback(
-    (dates: { semesterStartDate?: string; semesterEndDate?: string; semesterName?: string }) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        calendar: { ...prev.calendar, ...dates },
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const addCalendarEvent = useCallback(
-    (event: Omit<AdminCalendarEvent, 'id'>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        calendar: {
-          ...prev.calendar,
-          events: [...prev.calendar.events, { ...event, id: `event-${Date.now()}` }],
-        },
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const updateCalendarEvent = useCallback(
-    (id: string, event: Partial<AdminCalendarEvent>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        calendar: {
-          ...prev.calendar,
-          events: prev.calendar.events.map((e) => (e.id === id ? { ...e, ...event } : e)),
-        },
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const deleteCalendarEvent = useCallback(
-    (id: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        calendar: {
-          ...prev.calendar,
-          events: prev.calendar.events.filter((e) => e.id !== id),
-        },
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const clearAllCalendarEvents = useCallback(() => {
-    updateConfigAndSave((prev) => ({
-      ...prev,
-      calendar: {
-        ...prev.calendar,
-        events: [],
+      branches: stringListOps(section('branches'), (b) => b.trim().toUpperCase()),
+      hostels: stringListOps(section('hostels')),
+      quotes: listOps<AdminQuote>(section('quotes'), 'quote'),
+      quickLinks: listOps<AdminQuickLink>(section('quickLinks'), 'link'),
+      forms: listOps<AdminForm>(section('forms'), 'form'),
+      directory: listOps<AdminDirectoryEntry>(setDirectory, 'dir'),
+      courses: listOps<AdminCourse>(setCourses, 'course'),
+      grades: listOps<AdminGradeDefinition>(
+        (fn) => section('gradingScale')((scale) => fn(scale || [])),
+        'grade'
+      ),
+      calendarEvents: listOps<AdminCalendarEvent>(
+        (fn) => setCalendar((calendar) => ({ ...calendar, events: fn(calendar.events) })),
+        'event'
+      ),
+      // A student's id is their admission number
+      students: {
+        ...students,
+        add: (student: Omit<AdminStudentEntry, 'id'>) =>
+          setStudents((items) => [
+            ...items,
+            { ...student, id: student.admNo || `student-${Date.now()}` },
+          ]),
       },
-    }));
-  }, [updateConfigAndSave]);
 
-  const importCalendarEvents = useCallback(
-    (events: Omit<AdminCalendarEvent, 'id'>[]) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        calendar: {
-          ...prev.calendar,
+      // Replaces all events
+      importCalendarEvents: (events: Omit<AdminCalendarEvent, 'id'>[]) =>
+        setCalendar((calendar) => ({
+          ...calendar,
           events: events.map((e, i) => ({ ...e, id: `event-${Date.now()}-${i}` })),
-        },
-      }));
-    },
-    [updateConfigAndSave]
-  );
+        })),
 
-  // Directory CRUD
-  const addDirectoryEntry = useCallback(
-    (entry: Omit<AdminDirectoryEntry, 'id'>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        directory: [...prev.directory, { ...entry, id: `dir-${Date.now()}` }],
-      }));
-    },
-    [updateConfigAndSave]
-  );
+      // Appends entries whose email is not already in the directory
+      importDirectoryEntries: (entries: Omit<AdminDirectoryEntry, 'id'>[]) =>
+        setDirectory((directory) => {
+          const existing = new Set(directory.map((d) => d.email.toLowerCase()));
+          const added = entries
+            .filter((e) => !existing.has(e.email.toLowerCase()))
+            .map((e, i) => ({ ...e, id: `dir-${Date.now()}-${i}` }));
+          return [...directory, ...added];
+        }),
 
-  const updateDirectoryEntry = useCallback(
-    (id: string, entry: Partial<AdminDirectoryEntry>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        directory: prev.directory.map((d) => (d.id === id ? { ...d, ...entry } : d)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
+      // Merges into courses with the same code, appends the rest
+      importCourses: (incoming: Omit<AdminCourse, 'id'>[]) =>
+        setCourses((courses) => {
+          const byCode = new Map(incoming.map((c) => [c.courseCode, c]));
+          const existingCodes = new Set(courses.map((c) => c.courseCode));
+          const merged = courses.map((c) => ({ ...c, ...byCode.get(c.courseCode) }));
+          const added = incoming
+            .filter((c) => !existingCodes.has(c.courseCode))
+            .map((c, i) => ({ ...c, id: `course-${Date.now()}-${i}` }));
+          return [...merged, ...added];
+        }),
 
-  const deleteDirectoryEntry = useCallback(
-    (id: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        directory: prev.directory.filter((d) => d.id !== id),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  // Bulk delete directory entries by IDs (avoids race conditions)
-  const deleteDirectoryEntriesByIds = useCallback(
-    (ids: string[]) => {
-      const idSet = new Set(ids);
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        directory: prev.directory.filter((d) => !idSet.has(d.id)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const clearAllDirectoryEntries = useCallback(() => {
-    updateConfigAndSave((prev) => ({
-      ...prev,
-      directory: [],
-    }));
+      // Appends students whose admission number is not already present
+      importStudents: (incoming: Omit<AdminStudentEntry, 'id'>[]) =>
+        setStudents((existing) => {
+          const admNos = new Set(existing.map((s) => s.admNo));
+          const added = incoming
+            .filter((s) => !admNos.has(s.admNo))
+            .map((s) => ({ ...s, id: s.admNo || `student-${Date.now()}` }));
+          return [...existing, ...added];
+        }),
+    };
   }, [updateConfigAndSave]);
 
-  const importDirectoryEntries = useCallback(
-    (entries: Omit<AdminDirectoryEntry, 'id'>[]) => {
-      updateConfigAndSave((prev) => {
-        // Create a map of existing entries by email for deduplication
-        const existingEntriesMap = new Map(prev.directory.map((d) => [d.email.toLowerCase(), d]));
-
-        // Process new entries (only those not already existing)
-        const newEntries = entries
-          .filter((e) => !existingEntriesMap.has(e.email.toLowerCase()))
-          .map((e, i) => ({ ...e, id: `dir-${Date.now()}-${i}` }));
-
-        return {
-          ...prev,
-          directory: [...prev.directory, ...newEntries],
-        };
-      });
-    },
-    [updateConfigAndSave]
-  );
-
-  // Course CRUD operations
-  const addCourse = useCallback(
-    (course: Omit<AdminCourse, 'id'>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        courses: [...prev.courses, { ...course, id: `course-${Date.now()}` }],
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const updateCourse = useCallback(
-    (id: string, course: Partial<AdminCourse>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        courses: prev.courses.map((c) => (c.id === id ? { ...c, ...course } : c)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const deleteCourse = useCallback(
-    (id: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        courses: prev.courses.filter((c) => c.id !== id),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  // Bulk delete courses by IDs (avoids race conditions)
-  const deleteCoursesByIds = useCallback(
-    (ids: string[]) => {
-      const idSet = new Set(ids);
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        courses: prev.courses.filter((c) => !idSet.has(c.id)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const clearAllCourses = useCallback(() => {
-    updateConfigAndSave((prev) => ({
-      ...prev,
-      courses: [],
-    }));
-  }, [updateConfigAndSave]);
-
-  const importCourses = useCallback(
-    (courses: Omit<AdminCourse, 'id'>[]) => {
-      updateConfigAndSave((prev) => {
-        // Create a map of existing courses by code for easy lookup
-        const existingCoursesMap = new Map(prev.courses.map((c) => [c.courseCode, c]));
-
-        // Create a map of incoming courses by code
-        const incomingCoursesMap = new Map(courses.map((c) => [c.courseCode, c]));
-
-        // Update existing courses if they're in the import, otherwise keep them unchanged
-        const updatedExistingCourses = prev.courses.map((existingCourse) => {
-          const incomingCourse = incomingCoursesMap.get(existingCourse.courseCode);
-          if (incomingCourse) {
-            // Merge incoming data with existing course, preserving the ID
-            return { ...existingCourse, ...incomingCourse };
-          }
-          return existingCourse;
-        });
-
-        // Add new courses that don't exist yet
-        const newCourses = courses
-          .filter((c) => !existingCoursesMap.has(c.courseCode))
-          .map((c, i) => ({ ...c, id: `course-${Date.now()}-${i}` }));
-
-        return {
-          ...prev,
-          courses: [...updatedExistingCourses, ...newCourses],
-        };
-      });
-    },
-    [updateConfigAndSave]
-  );
-
-  // Student CRUD operations
-  const addStudent = useCallback(
-    (student: Omit<AdminStudentEntry, 'id'>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        students: [...prev.students, { ...student, id: student.admNo || `student-${Date.now()}` }],
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const updateStudent = useCallback(
-    (id: string, student: Partial<AdminStudentEntry>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        students: prev.students.map((s) => (s.id === id ? { ...s, ...student } : s)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const deleteStudent = useCallback(
-    (id: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        students: prev.students.filter((s) => s.id !== id),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  // Bulk delete students by IDs (avoids race conditions)
-  const deleteStudentsByIds = useCallback(
-    (ids: string[]) => {
-      const idSet = new Set(ids);
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        students: prev.students.filter((s) => !idSet.has(s.id)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const clearAllStudents = useCallback(() => {
-    updateConfigAndSave((prev) => ({
-      ...prev,
-      students: [],
-    }));
-  }, [updateConfigAndSave]);
-
-  const importStudents = useCallback(
-    (students: Omit<AdminStudentEntry, 'id'>[]) => {
-      updateConfigAndSave((prev) => {
-        // Create a map of existing students by admNo for easy lookup
-        const existingStudentsMap = new Map(prev.students.map((s) => [s.admNo, s]));
-
-        // Process new students (only those not already existing)
-        const newStudents = students
-          .filter((s) => !existingStudentsMap.has(s.admNo))
-          .map((s) => ({ ...s, id: s.admNo || `student-${Date.now()}` }));
-
-        return {
-          ...prev,
-          students: [...prev.students, ...newStudents],
-        };
-      });
-    },
-    [updateConfigAndSave]
-  );
-
-  // Grading Scale CRUD operations
-  const addGrade = useCallback(
-    (grade: Omit<AdminGradeDefinition, 'id'>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        gradingScale: [...(prev.gradingScale || []), { ...grade, id: `grade-${Date.now()}` }],
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const updateGrade = useCallback(
-    (id: string, grade: Partial<AdminGradeDefinition>) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        gradingScale: (prev.gradingScale || []).map((g) => (g.id === id ? { ...g, ...grade } : g)),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const deleteGrade = useCallback(
-    (id: string) => {
-      updateConfigAndSave((prev) => ({
-        ...prev,
-        gradingScale: (prev.gradingScale || []).filter((g) => g.id !== id),
-      }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const reorderGrades = useCallback(
-    (gradingScale: AdminGradeDefinition[]) => {
-      updateConfigAndSave((prev) => ({ ...prev, gradingScale }));
-    },
-    [updateConfigAndSave]
-  );
-
-  const updateGradingScale = useCallback(
-    (gradingScale: AdminGradeDefinition[]) => {
-      updateConfigAndSave((prev) => ({ ...prev, gradingScale }));
-    },
-    [updateConfigAndSave]
-  );
-
-  // Reset to defaults
-  const resetToDefaults = useCallback(async () => {
-    const defaultConfig = generateDefaultConfig();
-    updateConfigAndSave(() => defaultConfig);
-  }, [updateConfigAndSave]);
-
-  // Mark as saved (for UI feedback)
-  const markAsSaved = useCallback(() => {
-    setHasChanges(false);
-  }, []);
-
-  return {
-    config,
-    hasChanges,
-    loading,
-    saving,
-    error,
-    // College Info
-    updateCollegeInfo,
-    updateAppConstants,
-    // Branches
-    addBranch,
-    updateBranch,
-    deleteBranch,
-    reorderBranches,
-    // Hostels
-    addHostel,
-    updateHostel,
-    deleteHostel,
-    // Quotes
-    addQuote,
-    updateQuote,
-    deleteQuote,
-    // Quick Links
-    addQuickLink,
-    updateQuickLink,
-    deleteQuickLink,
-    // Forms
-    addForm,
-    updateForm,
-    deleteForm,
-    // Calendar
-    updateCalendarDates,
-    addCalendarEvent,
-    updateCalendarEvent,
-    deleteCalendarEvent,
-    clearAllCalendarEvents,
-    importCalendarEvents,
-    // Directory
-    addDirectoryEntry,
-    updateDirectoryEntry,
-    deleteDirectoryEntry,
-    deleteDirectoryEntriesByIds,
-    clearAllDirectoryEntries,
-    importDirectoryEntries,
-    // Courses
-    addCourse,
-    updateCourse,
-    deleteCourse,
-    deleteCoursesByIds,
-    clearAllCourses,
-    importCourses,
-    // Students
-    addStudent,
-    updateStudent,
-    deleteStudent,
-    deleteStudentsByIds,
-    clearAllStudents,
-    importStudents,
-    // Grading Scale
-    addGrade,
-    updateGrade,
-    deleteGrade,
-    reorderGrades,
-    updateGradingScale,
-    // Utility
-    // Utility
-    resetToDefaults,
-    markAsSaved,
-    saveSection,
-  };
+  return { config, hasChanges, saveSection, ...ops };
 };
+
+export type AdminConfigApi = ReturnType<typeof useAdminConfig>;

@@ -1,47 +1,12 @@
+import { GraduationCap, GripHorizontal, Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { AdminConfig } from '../types';
-import { AdminHeader, AcademicCapIcon } from './AdminIcons';
-import AdminPageLayout from './AdminPageLayout';
+import { AdminHeader, AdminPageLayout, SearchInput } from './ui';
+import { AdminConfigApi } from '../hooks/useAdminConfig';
 
-interface Props {
-  config: AdminConfig;
-  addBranch: (branch: string) => void;
-  updateBranch: (index: number, branch: string) => void;
-  deleteBranch: (index: number) => void;
-  reorderBranches: (branches: string[]) => void;
-}
+type Props = Pick<AdminConfigApi, 'config' | 'branches'>;
 
-const PlusIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-  </svg>
-);
-
-const TrashIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-    />
-  </svg>
-);
-
-const GripIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-  </svg>
-);
-
-const BranchesEditor: React.FC<Props> = ({
-  config,
-  addBranch,
-  updateBranch,
-  deleteBranch,
-  reorderBranches,
-}) => {
+const BranchesEditor: React.FC<Props> = ({ config, branches }) => {
   const [newBranch, setNewBranch] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -50,31 +15,17 @@ const BranchesEditor: React.FC<Props> = ({
 
   const handleAddBranch = () => {
     if (newBranch.trim()) {
-      addBranch(newBranch.trim());
+      branches.add(newBranch.trim());
       setNewBranch('');
     }
   };
 
-  const handleStartEdit = (index: number, value: string) => {
-    setEditingIndex(index);
-    setEditValue(value);
-  };
-
   const handleSaveEdit = () => {
     if (editingIndex !== null && editValue.trim()) {
-      updateBranch(editingIndex, editValue.trim());
+      branches.update(editingIndex, editValue.trim());
       setEditingIndex(null);
       setEditValue('');
     }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingIndex(null);
-    setEditValue('');
-  };
-
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index);
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
@@ -85,13 +36,9 @@ const BranchesEditor: React.FC<Props> = ({
     const removed = newBranches.splice(draggedIndex, 1)[0];
     if (removed !== undefined) {
       newBranches.splice(index, 0, removed);
-      reorderBranches(newBranches);
+      branches.set(newBranches);
       setDraggedIndex(index);
     }
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
   };
 
   const filteredBranches = (config.branches || []).filter((branch) =>
@@ -101,7 +48,7 @@ const BranchesEditor: React.FC<Props> = ({
   return (
     <AdminPageLayout>
       <AdminHeader
-        icon={<AcademicCapIcon />}
+        icon={GraduationCap}
         title="Branches / Departments"
         subtitle="Manage available academic branches for students"
       />
@@ -122,36 +69,18 @@ const BranchesEditor: React.FC<Props> = ({
             onClick={handleAddBranch}
             className="admin-btn admin-btn-primary w-full sm:w-auto justify-center"
           >
-            <PlusIcon />
+            <Plus className="w-5 h-5" />
             Add Branch
           </button>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="admin-search flex-1 max-w-2xl">
-        <svg
-          className="admin-search-icon w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
-        <input
-          type="text"
-          className="admin-input"
-          style={{ paddingLeft: '48px' }}
-          placeholder="Search branches..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+      <SearchInput
+        className="flex-1 max-w-2xl"
+        placeholder="Search branches..."
+        value={searchQuery}
+        onChange={setSearchQuery}
+      />
 
       {/* Branches List */}
       <div className="admin-card">
@@ -171,9 +100,9 @@ const BranchesEditor: React.FC<Props> = ({
               <div
                 key={actualIndex}
                 draggable={!searchQuery}
-                onDragStart={() => handleDragStart(actualIndex)}
+                onDragStart={() => setDraggedIndex(actualIndex)}
                 onDragOver={(e) => handleDragOver(e, actualIndex)}
-                onDragEnd={handleDragEnd}
+                onDragEnd={() => setDraggedIndex(null)}
                 className={`admin-list-item flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 ${
                   draggedIndex === actualIndex ? 'opacity-50' : ''
                 }`}
@@ -182,7 +111,7 @@ const BranchesEditor: React.FC<Props> = ({
                 <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                   {!searchQuery && (
                     <span className="cursor-grab text-indigo-400 hover:text-indigo-300 hidden sm:block">
-                      <GripIcon />
+                      <GripHorizontal className="w-4 h-4" />
                     </span>
                   )}
                   <span className="text-indigo-400 text-xs sm:text-sm w-6 sm:w-8 flex-shrink-0">
@@ -215,7 +144,7 @@ const BranchesEditor: React.FC<Props> = ({
                       Save
                     </button>
                     <button
-                      onClick={handleCancelEdit}
+                      onClick={() => setEditingIndex(null)}
                       className="admin-btn admin-btn-secondary text-xs sm:text-sm flex-1 sm:flex-none justify-center"
                     >
                       Cancel
@@ -224,16 +153,19 @@ const BranchesEditor: React.FC<Props> = ({
                 ) : (
                   <div className="flex gap-2 sm:gap-3 ml-auto sm:ml-0">
                     <button
-                      onClick={() => handleStartEdit(actualIndex, branch)}
+                      onClick={() => {
+                        setEditingIndex(actualIndex);
+                        setEditValue(branch);
+                      }}
                       className="admin-btn admin-btn-secondary text-xs sm:text-sm flex-1 sm:flex-none justify-center"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => deleteBranch(actualIndex)}
+                      onClick={() => branches.remove(actualIndex)}
                       className="admin-btn admin-btn-danger text-xs sm:text-sm flex-shrink-0 justify-center"
                     >
-                      <TrashIcon />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 )}

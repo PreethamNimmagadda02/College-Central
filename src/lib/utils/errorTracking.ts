@@ -3,7 +3,7 @@
  */
 import { getAnalytics } from '@lib/firebase';
 
-export interface ErrorInfo {
+interface ErrorInfo {
   error_message: string;
   error_code?: string;
   error_stack?: string;
@@ -17,7 +17,7 @@ export interface ErrorInfo {
  * @param error - Error object or message
  * @param context - Additional context about the error
  */
-export async function logError(error: Error | string, context?: Partial<ErrorInfo>): Promise<void> {
+async function logError(error: Error | string, context?: Partial<ErrorInfo>): Promise<void> {
   try {
     const analytics = await getAnalytics();
     if (!analytics) {
@@ -51,46 +51,24 @@ export async function logError(error: Error | string, context?: Partial<ErrorInf
 }
 
 /**
- * Log a handled exception (non-fatal)
- * @param error - Error object or message
- * @param context - Additional context
- */
-export async function logHandledException(
-  error: Error | string,
-  context?: Partial<ErrorInfo>
-): Promise<void> {
-  return logError(error, { ...context, severity: 'low' });
-}
-
-/**
- * Log a critical error
- * @param error - Error object or message
- * @param context - Additional context
- */
-export async function logCriticalError(
-  error: Error | string,
-  context?: Partial<ErrorInfo>
-): Promise<void> {
-  return logError(error, { ...context, severity: 'critical' });
-}
-
-/**
  * Create a global error handler that tracks uncaught errors
  */
 export function setupGlobalErrorTracking(): void {
   // Track uncaught errors
   window.addEventListener('error', (event) => {
-    logCriticalError(event.error || event.message, {
+    logError(event.error || event.message, {
       component: 'global',
       user_action: 'runtime_error',
+      severity: 'critical',
     });
   });
 
   // Track unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
-    logCriticalError(event.reason || 'Unhandled promise rejection', {
+    logError(event.reason || 'Unhandled promise rejection', {
       component: 'global',
       user_action: 'promise_rejection',
+      severity: 'critical',
     });
   });
 }

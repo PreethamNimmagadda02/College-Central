@@ -57,6 +57,8 @@ export interface AnalyticsSummary {
 
 import { CAMPUS_LOCATIONS } from '@/config/campusMap';
 
+import { isDemoActive, isDemoUid } from '@features/demo/demoSession';
+
 // ============================================
 // CAMPUS ZONES (Geofencing boundaries)
 // ============================================
@@ -92,9 +94,9 @@ function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: numbe
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-    Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLng / 2) *
-    Math.sin(dLng / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -137,6 +139,7 @@ export interface UserLocationState {
  * Get user's current location state from Firestore
  */
 export async function getUserLocationState(userId: string): Promise<UserLocationState | null> {
+  if (isDemoUid(userId)) return null;
   try {
     const doc = await db.collection(USER_LOCATION_STATE_COLLECTION).doc(userId).get();
     if (doc.exists) {
@@ -157,6 +160,7 @@ export async function updateUserLocationState(
   zoneId: string,
   visitId: string
 ): Promise<boolean> {
+  if (isDemoUid(userId)) return false;
   try {
     await db.collection(USER_LOCATION_STATE_COLLECTION).doc(userId).set({
       lastZoneId: zoneId,
@@ -178,6 +182,7 @@ export async function recordLocationVisit(
   userId: string,
   zone: CampusZone
 ): Promise<string | null> {
+  if (isDemoUid(userId)) return null;
   try {
     const now = new Date();
     const visit: Omit<LocationVisit, 'id'> = {
@@ -219,6 +224,56 @@ export async function updateDwellTime(visitId: string, dwellTimeMinutes: number)
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+/** All visits recorded between two dates (inclusive). */
+async function fetchVisits(startDate: Date, endDate: Date): Promise<LocationVisit[]> {
+  const snapshot = await db
+    .collection(ANALYTICS_COLLECTION)
+    .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(startDate))
+    .where('timestamp', '<=', firebase.firestore.Timestamp.fromDate(endDate))
+    .get();
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as LocationVisit);
+}
+
+/** Visit counts per slot 0..slots-1 (e.g. hour of day or day of week), zero-filled. */
+function countPerSlot(
+  visits: LocationVisit[],
+  slots: number,
+  slotOf: (date: Date) => number
+): Map<number, number> {
+  const counts = new Map<number, number>();
+  for (let i = 0; i < slots; i++) counts.set(i, 0);
+  visits.forEach((v) => {
+    const slot = slotOf(v.timestamp.toDate());
+    counts.set(slot, (counts.get(slot) || 0) + 1);
+  });
+  return counts;
+}
+
+const toDateKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** Visit counts per local date (YYYY-MM-DD) for every day from startDate to endDate, zero-filled. */
+function countPerDate(
+  visits: LocationVisit[],
+  startDate: Date,
+  endDate: Date
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  const loopDate = new Date(startDate);
+  loopDate.setHours(0, 0, 0, 0); // Start at midnight
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999); // Ensure end date is fully covered
+  while (loopDate <= end) {
+    counts.set(toDateKey(loopDate), 0);
+    loopDate.setDate(loopDate.getDate() + 1);
+  }
+  visits.forEach((v) => {
+    const key = toDateKey(v.timestamp.toDate());
+    if (counts.has(key)) counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  return counts;
+}
+
 /**
  * Get aggregated analytics for a date range
  */
@@ -227,16 +282,9 @@ export async function getAggregatedAnalytics(
   endDate: Date
 ): Promise<AnalyticsSummary | null> {
   try {
-    const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
-    const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
+    const visits = await fetchVisits(startDate, endDate);
 
-    const snapshot = await db
-      .collection(ANALYTICS_COLLECTION)
-      .where('timestamp', '>=', startTimestamp)
-      .where('timestamp', '<=', endTimestamp)
-      .get();
-
-    if (snapshot.empty) {
+    if (visits.length === 0) {
       return {
         totalVisits: 0,
         uniqueVisitors: 0,
@@ -250,11 +298,6 @@ export async function getAggregatedAnalytics(
         categoryDistribution: [],
       };
     }
-
-    const visits = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as LocationVisit[];
 
     // Calculate aggregations
     const uniqueUsers = new Set(visits.map((v) => v.userId));
@@ -291,23 +334,13 @@ export async function getAggregatedAnalytics(
       .sort((a, b) => b.totalVisits - a.totalVisits);
 
     // Hourly analytics
-    const hourlyMap = new Map<number, number>();
-    for (let h = 0; h < 24; h++) hourlyMap.set(h, 0);
-    visits.forEach((v) => {
-      const hour = v.timestamp.toDate().getHours();
-      hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1);
-    });
+    const hourlyMap = countPerSlot(visits, 24, (d) => d.getHours());
     const hourlyAnalytics: HourlyAnalytics[] = Array.from(hourlyMap.entries())
       .map(([hour, count]) => ({ hour, visits: count }))
       .sort((a, b) => a.hour - b.hour);
 
     // Daily analytics
-    const dailyMap = new Map<number, number>();
-    for (let d = 0; d < 7; d++) dailyMap.set(d, 0);
-    visits.forEach((v) => {
-      const day = v.timestamp.toDate().getDay();
-      dailyMap.set(day, (dailyMap.get(day) || 0) + 1);
-    });
+    const dailyMap = countPerSlot(visits, 7, (d) => d.getDay());
     const dailyAnalytics: DailyAnalytics[] = Array.from(dailyMap.entries())
       .map(([day, count]) => ({
         dayOfWeek: day,
@@ -321,30 +354,14 @@ export async function getAggregatedAnalytics(
     visits.forEach((v) => {
       categoryMap.set(v.category, (categoryMap.get(v.category) || 0) + 1);
     });
-    // Trend Analytics (Date-based)
-    // 1. Bucket visits by YYYY-MM-DD (Local Time)
-    const trendMap = new Map<string, number>();
-    visits.forEach((v) => {
-      const d = v.timestamp.toDate();
-      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      trendMap.set(dateKey, (trendMap.get(dateKey) || 0) + 1);
-    });
-
-    // 2. Iterate continuously from startDate to endDate filling gaps with 0
-    const trendAnalytics: { date: string; visits: number }[] = [];
-    const loopDate = new Date(startDate);
-    loopDate.setHours(0, 0, 0, 0); // Start at midnight
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999); // Ensure end date is fully covered
-
-    while (loopDate <= end) {
-      const key = `${loopDate.getFullYear()}-${String(loopDate.getMonth() + 1).padStart(2, '0')}-${String(loopDate.getDate()).padStart(2, '0')}`;
-      trendAnalytics.push({
-        date: key,
-        visits: trendMap.get(key) || 0,
-      });
-      loopDate.setDate(loopDate.getDate() + 1);
-    }
+    // Trend Analytics: visits per local date, gaps filled with 0
+    const trendAnalytics = Array.from(
+      countPerDate(visits, startDate, endDate),
+      ([date, count]) => ({
+        date,
+        visits: count,
+      })
+    );
 
     const categoryDistribution = Array.from(categoryMap.entries())
       .map(([category, count]) => ({ category, count }))
@@ -378,13 +395,6 @@ export async function getAggregatedAnalytics(
 // PHASE 2: ENHANCED AGGREGATION FUNCTIONS
 // ============================================
 
-export interface TrendData {
-  period: string;
-  visits: number;
-  uniqueVisitors: number;
-  avgDwellTime: number;
-}
-
 export interface PeakAnalysis {
   peakHour: number;
   peakHourVisits: number;
@@ -401,88 +411,6 @@ export interface PeakAnalysis {
   busyPeriods: { start: number; end: number; avgVisits: number }[];
 }
 
-export interface MovementFlow {
-  fromZone: string;
-  toZone: string;
-  count: number;
-  avgTransitionMinutes: number;
-}
-
-export interface DwellTimeInsights {
-  zoneId: string;
-  zoneName: string;
-  minDwell: number;
-  maxDwell: number;
-  avgDwell: number;
-  medianDwell: number;
-  totalTimeSpent: number;
-}
-
-export interface ComparativeAnalytics {
-  currentPeriod: AnalyticsSummary;
-  previousPeriod: AnalyticsSummary | null;
-  visitChange: number; // percentage change
-  visitorChange: number; // percentage change
-  dwellTimeChange: number; // percentage change
-}
-
-/**
- * Get trend data over multiple periods (for line charts)
- */
-export async function getTrendAnalytics(days: number = 30): Promise<TrendData[]> {
-  try {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
-    const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
-
-    const snapshot = await db
-      .collection(ANALYTICS_COLLECTION)
-      .where('timestamp', '>=', startTimestamp)
-      .where('timestamp', '<=', endTimestamp)
-      .orderBy('timestamp', 'asc')
-      .get();
-
-    if (snapshot.empty) return [];
-
-    const visits = snapshot.docs.map((doc) => ({
-      ...doc.data(),
-      timestamp: doc.data().timestamp.toDate(),
-    })) as (LocationVisit & { timestamp: Date })[];
-
-    // Group by date
-    const dailyMap = new Map<string, { visits: typeof visits; users: Set<string> }>();
-
-    visits.forEach((v) => {
-      const d = v.timestamp;
-      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      if (!dateKey) return;
-      if (!dailyMap.has(dateKey)) {
-        dailyMap.set(dateKey, { visits: [], users: new Set() });
-      }
-      const day = dailyMap.get(dateKey)!;
-      day.visits.push(v);
-      day.users.add(v.userId);
-    });
-
-    return Array.from(dailyMap.entries()).map(([date, data]) => {
-      const withDwell = data.visits.filter((v) => v.dwellTimeMinutes);
-      const totalDwell = withDwell.reduce((sum, v) => sum + (v.dwellTimeMinutes || 0), 0);
-      return {
-        period: date,
-        visits: data.visits.length,
-        uniqueVisitors: data.users.size,
-        avgDwellTime: withDwell.length > 0 ? totalDwell / withDwell.length : 0,
-      };
-    });
-  } catch (error) {
-    console.error('Error getting trend analytics:', error);
-    return [];
-  }
-}
-
 /**
  * Analyze peak usage patterns
  */
@@ -491,26 +419,11 @@ export async function getPeakAnalysis(
   endDate: Date
 ): Promise<PeakAnalysis | null> {
   try {
-    const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
-    const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
-
-    const snapshot = await db
-      .collection(ANALYTICS_COLLECTION)
-      .where('timestamp', '>=', startTimestamp)
-      .where('timestamp', '<=', endTimestamp)
-      .get();
-
-    if (snapshot.empty) return null;
-
-    const visits = snapshot.docs.map((doc) => doc.data()) as LocationVisit[];
+    const visits = await fetchVisits(startDate, endDate);
+    if (visits.length === 0) return null;
 
     // Hourly analysis
-    const hourlyCount = new Map<number, number>();
-    for (let h = 0; h < 24; h++) hourlyCount.set(h, 0);
-    visits.forEach((v) => {
-      const hour = v.timestamp.toDate().getHours();
-      hourlyCount.set(hour, (hourlyCount.get(hour) || 0) + 1);
-    });
+    const hourlyCount = countPerSlot(visits, 24, (d) => d.getHours());
 
     const hourlyArray = Array.from(hourlyCount.entries());
     const peakHourData = hourlyArray.reduce((max, curr) => (curr[1] > max[1] ? curr : max), [0, 0]);
@@ -520,21 +433,7 @@ export async function getPeakAnalysis(
     );
 
     // Daily analysis
-    const DAY_NAMES = [
-      'Sunday',
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-    ];
-    const dailyCount = new Map<number, number>();
-    for (let d = 0; d < 7; d++) dailyCount.set(d, 0);
-    visits.forEach((v) => {
-      const day = v.timestamp.toDate().getDay();
-      dailyCount.set(day, (dailyCount.get(day) || 0) + 1);
-    });
+    const dailyCount = countPerSlot(visits, 7, (d) => d.getDay());
 
     const peakDayData = Array.from(dailyCount.entries()).reduce(
       (max, curr) => (curr[1] > max[1] ? curr : max),
@@ -547,29 +446,7 @@ export async function getPeakAnalysis(
     );
 
     // Date-based analysis (Specific Dates)
-    const dateCount = new Map<string, number>();
-    const loopDate = new Date(startDate);
-    loopDate.setHours(0, 0, 0, 0);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-
-    // Initialize all dates in range with 0
-    while (loopDate <= end) {
-      const key = `${loopDate.getFullYear()}-${String(loopDate.getMonth() + 1).padStart(2, '0')}-${String(loopDate.getDate()).padStart(2, '0')}`;
-      dateCount.set(key, 0);
-      loopDate.setDate(loopDate.getDate() + 1);
-    }
-
-    // Populate with visits
-    visits.forEach((v) => {
-      const d = v.timestamp.toDate();
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      if (dateCount.has(key)) {
-        dateCount.set(key, (dateCount.get(key) || 0) + 1);
-      }
-    });
-
-    const dateArray = Array.from(dateCount.entries());
+    const dateArray = Array.from(countPerDate(visits, startDate, endDate).entries());
     const peakDateData = dateArray.reduce((max, curr) => (curr[1] > max[1] ? curr : max), ['', 0]);
     const quietestDateData = dateArray.reduce(
       (min, curr) => (curr[1] < min[1] ? curr : min),
@@ -631,127 +508,15 @@ export async function getPeakAnalysis(
 }
 
 /**
- * Get dwell time insights per zone
- */
-export async function getDwellTimeInsights(
-  startDate: Date,
-  endDate: Date
-): Promise<DwellTimeInsights[]> {
-  try {
-    const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
-    const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
-
-    const snapshot = await db
-      .collection(ANALYTICS_COLLECTION)
-      .where('timestamp', '>=', startTimestamp)
-      .where('timestamp', '<=', endTimestamp)
-      .get();
-
-    if (snapshot.empty) return [];
-
-    const visits = snapshot.docs.map((doc) => doc.data()) as LocationVisit[];
-    const visitsWithDwell = visits.filter((v) => v.dwellTimeMinutes && v.dwellTimeMinutes > 0);
-
-    // Group by zone
-    const zoneMap = new Map<string, { name: string; dwellTimes: number[] }>();
-
-    visitsWithDwell.forEach((v) => {
-      if (!zoneMap.has(v.zoneId)) {
-        zoneMap.set(v.zoneId, { name: v.zoneName, dwellTimes: [] });
-      }
-      zoneMap.get(v.zoneId)!.dwellTimes.push(v.dwellTimeMinutes!);
-    });
-
-    return Array.from(zoneMap.entries())
-      .map(([zoneId, data]) => {
-        const sorted = [...data.dwellTimes].sort((a, b) => a - b);
-        const total = sorted.reduce((sum, t) => sum + t, 0);
-        const median =
-          sorted.length % 2 === 0
-            ? (sorted[sorted.length / 2 - 1]! + sorted[sorted.length / 2]!) / 2
-            : sorted[Math.floor(sorted.length / 2)]!;
-
-        return {
-          zoneId,
-          zoneName: data.name,
-          minDwell: sorted[0] ?? 0,
-          maxDwell: sorted[sorted.length - 1] ?? 0,
-          avgDwell: total / sorted.length,
-          medianDwell: median,
-          totalTimeSpent: total,
-        };
-      })
-      .sort((a, b) => b.avgDwell - a.avgDwell);
-  } catch (error) {
-    console.error('Error getting dwell time insights:', error);
-    return [];
-  }
-}
-
-/**
- * Get comparative analytics between two periods
- */
-export async function getComparativeAnalytics(
-  currentStart: Date,
-  currentEnd: Date
-): Promise<ComparativeAnalytics | null> {
-  try {
-    // Calculate previous period of same duration
-    const duration = currentEnd.getTime() - currentStart.getTime();
-    const previousEnd = new Date(currentStart.getTime() - 1);
-    const previousStart = new Date(previousEnd.getTime() - duration);
-
-    const [currentPeriod, previousPeriod] = await Promise.all([
-      getAggregatedAnalytics(currentStart, currentEnd),
-      getAggregatedAnalytics(previousStart, previousEnd),
-    ]);
-
-    if (!currentPeriod) return null;
-
-    const calcChange = (current: number, previous: number): number => {
-      if (previous === 0) return current > 0 ? 100 : 0;
-      return ((current - previous) / previous) * 100;
-    };
-
-    return {
-      currentPeriod,
-      previousPeriod,
-      visitChange: previousPeriod
-        ? calcChange(currentPeriod.totalVisits, previousPeriod.totalVisits)
-        : 0,
-      visitorChange: previousPeriod
-        ? calcChange(currentPeriod.uniqueVisitors, previousPeriod.uniqueVisitors)
-        : 0,
-      dwellTimeChange: previousPeriod
-        ? calcChange(currentPeriod.avgDwellTime, previousPeriod.avgDwellTime)
-        : 0,
-    };
-  } catch (error) {
-    console.error('Error getting comparative analytics:', error);
-    return null;
-  }
-}
-
-/**
  * Get hourly heatmap data (hour x day matrix)
  */
-export async function getHourlyHeatmapData(
+async function getHourlyHeatmapData(
   startDate: Date,
   endDate: Date
 ): Promise<{ day: number; hour: number; value: number; zoneId?: string; zoneName?: string }[]> {
   try {
-    const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
-    const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
-
-    const snapshot = await db
-      .collection(ANALYTICS_COLLECTION)
-      .where('timestamp', '>=', startTimestamp)
-      .where('timestamp', '<=', endTimestamp)
-      .get();
-
-    if (snapshot.empty) return [];
-
-    const visits = snapshot.docs.map((doc) => doc.data()) as LocationVisit[];
+    const visits = await fetchVisits(startDate, endDate);
+    if (visits.length === 0) return [];
 
     // Create 7x24 matrix
     const matrix = new Map<string, number>();
@@ -780,23 +545,13 @@ export async function getHourlyHeatmapData(
 /**
  * Get zone-based heatmap data (hour x zone) for single day view
  */
-export async function getZoneHeatmapData(
+async function getZoneHeatmapData(
   startDate: Date,
   endDate: Date
 ): Promise<{ day: number; hour: number; value: number; zoneId: string; zoneName: string }[]> {
   try {
-    const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
-    const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
-
-    const snapshot = await db
-      .collection(ANALYTICS_COLLECTION)
-      .where('timestamp', '>=', startTimestamp)
-      .where('timestamp', '<=', endTimestamp)
-      .get();
-
-    if (snapshot.empty) return [];
-
-    const visits = snapshot.docs.map((doc) => doc.data()) as LocationVisit[];
+    const visits = await fetchVisits(startDate, endDate);
+    if (visits.length === 0) return [];
 
     // Matrix: zoneId-hour -> count
     const matrix = new Map<string, number>();
@@ -836,11 +591,33 @@ export interface LiveZoneStatus {
   lastUpdated: Date;
 }
 
+const DEMO_CROWD_PATTERN: CrowdLevel[] = [
+  'busy',
+  'moderate',
+  'quiet',
+  'moderate',
+  'quiet',
+  'busy',
+  'quiet',
+];
+
+/** Fixed, varied crowd levels so the demo map doesn't show every zone as quiet. */
+function demoCrowdLevels(): LiveZoneStatus[] {
+  const now = new Date();
+  return DEFAULT_CAMPUS_ZONES.map((zone, i) => {
+    const level = DEMO_CROWD_PATTERN[i % DEMO_CROWD_PATTERN.length]!;
+    const visitorCount =
+      level === 'busy' ? 35 + (i % 10) : level === 'moderate' ? 12 + (i % 8) : i % 5;
+    return { zoneId: zone.id, level, visitorCount, lastUpdated: now };
+  });
+}
+
 /**
  * Get real-time crowd levels for all zones
  * Based on active visits in the last 15 minutes
  */
 export async function getRealTimeCrowdLevels(): Promise<LiveZoneStatus[]> {
+  if (isDemoActive()) return demoCrowdLevels();
   try {
     const now = new Date();
     const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
@@ -918,6 +695,7 @@ export interface UserStats {
  * Get personal stats for a specific user
  */
 export async function getUserStats(userId: string): Promise<UserStats | null> {
+  if (isDemoUid(userId)) return null;
   try {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -998,9 +776,21 @@ export async function getUserStats(userId: string): Promise<UserStats | null> {
 /**
  * Get popular times for a specific zone (0-23 hour distribution)
  */
+/** A plausible busy-afternoon curve, used when there's no real data and in the demo. */
+function samplePopularTimes(): { hour: number; level: number }[] {
+  return Array.from({ length: 24 }, (_, i) => {
+    // Generate a bell curve-ish pattern peaking at 2 PM (14)
+    const dist = Math.abs(i - 14);
+    let val = Math.max(10, 100 - dist * 10);
+    if (i < 8 || i > 22) val = Math.max(5, val * 0.1);
+    return { hour: i, level: Math.floor(val * (0.5 + Math.random() * 0.5)) };
+  });
+}
+
 export async function getZonePopularTimes(
   zoneId: string
 ): Promise<{ hour: number; level: number }[]> {
+  if (isDemoActive()) return samplePopularTimes();
   try {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -1013,14 +803,7 @@ export async function getZonePopularTimes(
       .get();
 
     if (snapshot.empty) {
-      // Return mock data if empty so UI looks good for demo
-      return Array.from({ length: 24 }, (_, i) => {
-        // Generate a bell curve-ish pattern peaking at 2 PM (14)
-        const dist = Math.abs(i - 14);
-        let val = Math.max(10, 100 - dist * 10);
-        if (i < 8 || i > 22) val = Math.max(5, val * 0.1);
-        return { hour: i, level: Math.floor(val * (0.5 + Math.random() * 0.5)) };
-      });
+      return samplePopularTimes();
     }
 
     const visits = snapshot.docs.map((doc) => doc.data()) as LocationVisit[];
@@ -1047,16 +830,6 @@ export async function getZonePopularTimes(
 // REAL-TIME MONITORING
 // ============================================
 
-export interface ActiveUserLocation {
-  userId: string;
-  lat: number;
-  lng: number;
-  timestamp: firebase.firestore.Timestamp;
-  lastZoneId?: string;
-  heading?: number;
-  speed?: number;
-}
-
 const ACTIVE_LOCATIONS_COLLECTION = 'active_locations';
 
 /**
@@ -1067,6 +840,7 @@ export async function updateUserLocation(
   location: { lat: number; lng: number; heading?: number; speed?: number },
   zoneId?: string
 ): Promise<void> {
+  if (isDemoUid(userId)) return;
   try {
     await db
       .collection(ACTIVE_LOCATIONS_COLLECTION)
@@ -1083,30 +857,6 @@ export async function updateUserLocation(
   } catch (error) {
     console.error('Error updating real-time location:', error);
   }
-}
-
-/**
- * Subscribe to active users' locations (Admin only)
- * Filters for users active in the last 5 minutes
- */
-export function streamActiveUsers(onUpdate: (users: ActiveUserLocation[]) => void): () => void {
-  const fiveMinutesAgo = new Date();
-  fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
-  const timestamp = firebase.firestore.Timestamp.fromDate(fiveMinutesAgo);
-
-  return db
-    .collection(ACTIVE_LOCATIONS_COLLECTION)
-    .where('timestamp', '>=', timestamp)
-    .onSnapshot(
-      (snapshot) => {
-        const users = snapshot.docs.map((doc) => doc.data() as ActiveUserLocation);
-        onUpdate(users);
-      },
-      (error) => {
-        console.error('Error streaming active users:', error);
-        onUpdate([]);
-      }
-    );
 }
 
 // ============================================
@@ -1129,18 +879,8 @@ export async function getRetentionMetrics(
   endDate: Date
 ): Promise<RetentionMetric[]> {
   try {
-    const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
-    const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
-
-    const snapshot = await db
-      .collection(ANALYTICS_COLLECTION)
-      .where('timestamp', '>=', startTimestamp)
-      .where('timestamp', '<=', endTimestamp)
-      .get();
-
-    if (snapshot.empty) return [];
-
-    const visits = snapshot.docs.map((doc) => doc.data()) as LocationVisit[];
+    const visits = await fetchVisits(startDate, endDate);
+    if (visits.length === 0) return [];
 
     // Group by Zone -> User -> Visit Count
     const zoneUserCounts = new Map<string, Map<string, number>>();
@@ -1202,9 +942,6 @@ export async function getZoneCorrelations(
   endDate: Date
 ): Promise<ZoneCorrelation | null> {
   try {
-    const startTimestamp = firebase.firestore.Timestamp.fromDate(startDate);
-    const endTimestamp = firebase.firestore.Timestamp.fromDate(endDate);
-
     // 1. Get all visits for the target timeframe
     // Note: For large datasets, we should do this in 2 queries:
     // Query 1: Get Users who visited Source Zone
@@ -1212,15 +949,8 @@ export async function getZoneCorrelations(
     // BUT Firestore 'IN' queries are limited to 10-30 items.
     // So fetching all visits in range and processing in memory is often feasible for mid-size app.
 
-    const snapshot = await db
-      .collection(ANALYTICS_COLLECTION)
-      .where('timestamp', '>=', startTimestamp)
-      .where('timestamp', '<=', endTimestamp)
-      .get();
-
-    if (snapshot.empty) return null;
-
-    const allVisits = snapshot.docs.map((doc) => doc.data()) as LocationVisit[];
+    const allVisits = await fetchVisits(startDate, endDate);
+    if (allVisits.length === 0) return null;
 
     // 2. Identify users who visited the source zone
     const sourceZoneVisits = allVisits.filter((v) => v.zoneId === sourceZoneId);
@@ -1267,7 +997,13 @@ export async function getZoneCorrelations(
 
 export interface HeatmapComparison {
   currentPeriod: { day: number; hour: number; value: number; zoneId?: string; zoneName?: string }[];
-  previousPeriod: { day: number; hour: number; value: number; zoneId?: string; zoneName?: string }[];
+  previousPeriod: {
+    day: number;
+    hour: number;
+    value: number;
+    zoneId?: string;
+    zoneName?: string;
+  }[];
 }
 
 /**

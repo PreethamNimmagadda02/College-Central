@@ -1,36 +1,3 @@
-// FIX: Add optional properties to User interface to resolve property access errors across components.
-export interface User {
-  id: string;
-  name: string;
-  role: 'user' | 'admin'; // User role for access control
-  admissionNumber: string;
-  branch: string;
-  hostel: string;
-  email: string;
-  phone: string;
-  profilePicture?: string;
-  profilePicturePath?: string;
-
-  bannerGradient?: string;
-  profileFrame?: string;
-  fullName?: string;
-  rollNumber?: string;
-  year?: string;
-  semester?: number;
-  courseOption?: 'CBCS' | 'NEP';
-  quickLinks?: QuickLink[];
-  bio?: string;
-  socialLinks?: SocialLinks;
-  interests?: string[];
-  createdAt?: any; // Firestore Timestamp
-  lastSemesterReset?: string; // Date string of the last semester reset (YYYY-MM-DD)
-
-  // User Preferences synced to Firestore
-  gradeScenarios?: SavedScenario[];
-  pinnedEventKeys?: string[];
-  reminderPreferences?: string[]; // Already existed in CalendarContext, moving to User object for unity if needed, strictly speaking optional but good for types
-}
-
 export interface SavedScenario {
   id: string;
   name: string;
@@ -85,33 +52,6 @@ export interface TimeTableCourse {
   }[];
 }
 
-export interface CampusEvent {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  description: string;
-  category: string;
-  organizer: string;
-  imageUrl: string;
-  sourceUrl?: string;
-}
-
-export interface Announcement {
-  id: string;
-  title: string;
-  date: string;
-  content: string;
-  category: string;
-  author: string;
-  sourceUrl?: string;
-}
-
-export type NewsItem =
-  | (CampusEvent & { type: 'event' })
-  | (Announcement & { type: 'announcement' });
-
 export interface DirectoryEntry {
   id: string;
   name: string;
@@ -155,30 +95,6 @@ export interface AcademicCalendarData {
   academicYearStartDate?: string; // YYYY-MM-DD
   academicYearEndDate?: string; // YYYY-MM-DD
   events: CalendarEvent[];
-}
-
-// User's reminder preferences for events
-export interface UserReminderPreferences {
-  userId: string;
-  reminderEventKeys: string[]; // Array of event keys (date + description) that user wants reminders for
-}
-
-// FIX: Added LostFoundStatus enum and LostFoundItem interface to resolve missing type errors.
-export enum LostFoundStatus {
-  Lost = 'Lost',
-  Found = 'Found',
-}
-
-export interface LostFoundItem {
-  id: string;
-  name: string;
-  description: string;
-  lastSeenLocation: string;
-  date: string;
-  reporterName: string;
-  reporterContact: string;
-  status: LostFoundStatus;
-  imageUrl: string;
 }
 
 // Campus Map types
@@ -273,8 +189,8 @@ export interface SocialLinks {
   github?: string;
   linkedin?: string;
   instagram?: string;
-  eventDate?: Date;
-  metadata?: Record<string, any>;
+  twitter?: string;
+  website?: string;
 }
 
 export interface Notification {
@@ -354,4 +270,7 @@ export interface User {
 
   // Grade Data
   gradesData?: GradesData;
+
+  scheduleData?: ClassSchedule[];
+  savedCampusPlaces?: string[];
 }

@@ -24,36 +24,3 @@ export const getCourseOptionFromAdmissionNumber = (admissionNumber: string): 'CB
   // Default to CBCS if admission number format is invalid
   return 'CBCS';
 };
-
-/**
- * Validates if the given course option is correct for the admission number
- */
-export const isValidCourseOptionForAdmission = (
-  admissionNumber: string,
-  courseOption: 'CBCS' | 'NEP'
-): boolean => {
-  const expectedOption = getCourseOptionFromAdmissionNumber(admissionNumber);
-  return expectedOption === courseOption;
-};
-
-/**
- * Gets a user-friendly explanation for why a specific course structure applies
- */
-export const getCourseOptionExplanation = (admissionNumber: string): string => {
-  const yearMatch = admissionNumber.match(/^(\d{2})/);
-
-  if (yearMatch) {
-    const yearStr = yearMatch[1] ?? null;
-    if (!yearStr) {
-      return 'Course structure determined by admission batch';
-    }
-    const year = parseInt(yearStr, 10);
-    const courseOption = year >= 24 ? 'NEP' : 'CBCS';
-
-    return courseOption === 'NEP'
-      ? `NEP (National Education Policy) applies to batches from 2024 onwards (${admissionNumber.substring(0, 4)})`
-      : `CBCS (Choice Based Credit System) applies to batches before 2024 (${admissionNumber.substring(0, 4)})`;
-  }
-
-  return 'Course structure determined by admission batch';
-};

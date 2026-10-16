@@ -12,18 +12,18 @@ import { AcademicCalendarData, CalendarEvent } from '@/types';
 
 import { PRELOADED_CALENDAR_DATA } from '@config/academicCalendar';
 import { useAuth } from '@features/auth/hooks/useAuth';
-
-import { useAppConfig } from './AppConfigContext';
-
 import { db } from '@lib/firebase';
 // FIX: Updated Firebase imports for v9 compatibility.
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
+import { getDemoState, subscribeDemoState, updateDemoState } from '@features/demo/demoStore';
+import { getEventKey } from '@lib/utils/eventUtils';
 import { logActivity } from '@services/activityService';
+
+import { useAppConfig } from './AppConfigContext';
 
 interface CalendarContextType {
   calendarData: AcademicCalendarData | null;
-  setCalendarData: React.Dispatch<React.SetStateAction<AcademicCalendarData | null>>;
   loading: boolean;
   addUserEvent: (event: CalendarEvent) => Promise<void>;
   updateUserEvent: (eventId: string, event: CalendarEvent) => Promise<void>;
@@ -92,23 +92,22 @@ const adjustCalendarDatesToCurrentYear = (data: AcademicCalendarData): AcademicC
 };
 
 export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, isGuest } = useAuth();
   const { config } = useAppConfig();
   const [calendarData, setCalendarData] = useState<AcademicCalendarData | null>(null);
   const [loading, setLoading] = useState(true);
   const [userEvents, setUserEvents] = useState<CalendarEvent[]>([]);
   const [reminderPreferences, setReminderPreferences] = useState<string[]>([]);
 
-  // Generate unique key for an event
-  const getEventKey = useCallback((event: CalendarEvent): string => {
-    return `${event.date}-${event.description}`;
-  }, []);
-
   // Load user's custom events from Firebase
   useEffect(() => {
     if (!currentUser) {
       setUserEvents([]);
       return;
+    }
+
+    if (isGuest) {
+      return subscribeDemoState((state) => setUserEvents(state.userEvents));
     }
 
     const q = db.collection('userEvents').where('userId', '==', currentUser.uid);
@@ -125,13 +124,17 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     });
 
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [currentUser, isGuest]);
 
   // Load user's reminder preferences
   useEffect(() => {
     if (!currentUser) {
       setReminderPreferences([]);
       return;
+    }
+
+    if (isGuest) {
+      return subscribeDemoState((state) => setReminderPreferences(state.reminderEventKeys));
     }
 
     const loadPreferences = async () => {
@@ -153,7 +156,24 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
 
     loadPreferences();
-  }, [currentUser]);
+    return undefined;
+  }, [currentUser, isGuest]);
+
+  // Reminder keys live in the demo store for guests and in Firestore for everyone else
+  const saveReminderKeys = useCallback(
+    async (keys: string[]) => {
+      if (!currentUser) return;
+      if (isGuest) {
+        updateDemoState((state) => ({ ...state, reminderEventKeys: keys }));
+        return;
+      }
+      await db.collection('userReminderPreferences').doc(currentUser.uid).set({
+        userId: currentUser.uid,
+        reminderEventKeys: keys,
+      });
+    },
+    [currentUser, isGuest]
+  );
 
   // Toggle reminder preference for an event
   const toggleReminderPreference = useCallback(
@@ -173,11 +193,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       setReminderPreferences(newPreferences);
 
       try {
-        const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
-        await prefDocRef.set({
-          userId: currentUser.uid,
-          reminderEventKeys: newPreferences,
-        });
+        await saveReminderKeys(newPreferences);
         await logActivity(currentUser.uid, {
           type: 'reminder',
           title: isAdding ? 'Reminder Set' : 'Reminder Removed',
@@ -191,7 +207,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         setReminderPreferences(previousPreferences);
       }
     },
-    [currentUser, reminderPreferences]
+    [currentUser, reminderPreferences, saveReminderKeys]
   );
 
   // Merge config calendar data (from database) with user events and adjust dates
@@ -242,39 +258,33 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     let currentSemesterStart = adjustedPreloadedData.semesterStartDate;
     let currentSemesterEnd = adjustedPreloadedData.semesterEndDate;
 
+    // A semester ends with the first end-semester exams after its start
+    const findSemesterEnd = (startEvent: CalendarEvent): string | undefined => {
+      const endEvent = semesterEnds.find(
+        (e) => new Date(e.endDate || e.date) > new Date(startEvent.date)
+      );
+      return endEvent ? endEvent.endDate || endEvent.date : undefined;
+    };
+
     // Logic to find the active or next semester
     // 1. Try to find a semester we are currently in
     let foundActiveSemester = false;
 
-    for (let i = 0; i < semesterStarts.length; i++) {
-      const startEvent = semesterStarts[i];
-      if (!startEvent) continue;
+    for (const startEvent of semesterStarts) {
+      const semesterEnd = findSemesterEnd(startEvent);
 
-      // Find the corresponding end event (the next one after this start)
-      const endEvent = semesterEnds.find(
-        (e) => new Date(e.endDate || e.date) > new Date(startEvent.date)
-      );
-
-      if (endEvent) {
-        const startDate = new Date(startEvent.date);
-        const endDate = new Date(endEvent.endDate || endEvent.date);
-
-        // If today is within this range, pick it
-        if (today >= startDate && today <= endDate) {
-          currentSemesterStart = startEvent.date;
-          currentSemesterEnd = endEvent.endDate || endEvent.date;
-          foundActiveSemester = true;
-          break;
-        }
+      // If today is within this range, pick it
+      if (semesterEnd && today >= new Date(startEvent.date) && today <= new Date(semesterEnd)) {
+        currentSemesterStart = startEvent.date;
+        currentSemesterEnd = semesterEnd;
+        foundActiveSemester = true;
+        break;
       }
     }
 
     // 2. If not in an active semester, find the NEXT semester
     if (!foundActiveSemester) {
-      for (let i = 0; i < semesterStarts.length; i++) {
-        const startEvent = semesterStarts[i];
-        if (!startEvent) continue;
-
+      for (const startEvent of semesterStarts) {
         const startDate = new Date(startEvent.date);
 
         if (today < startDate) {
@@ -282,17 +292,12 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
           // Check if we are within 7 days of the start date
           const diffTime = startDate.getTime() - today.getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          const semesterEnd = diffDays <= 7 ? findSemesterEnd(startEvent) : undefined;
 
-          if (diffDays <= 7) {
-            const endEvent = semesterEnds.find(
-              (e) => new Date(e.endDate || e.date) > new Date(startEvent.date)
-            );
-            if (endEvent) {
-              currentSemesterStart = startEvent.date;
-              currentSemesterEnd = endEvent.endDate || endEvent.date;
-              foundActiveSemester = true;
-              break;
-            }
+          if (semesterEnd) {
+            currentSemesterStart = startEvent.date;
+            currentSemesterEnd = semesterEnd;
+            break;
           }
         }
       }
@@ -345,20 +350,18 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       setReminderPreferences(updatedPreferences);
 
       try {
-        const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
-        await prefDocRef.set({
-          userId: currentUser.uid,
-          reminderEventKeys: updatedPreferences,
-        });
+        await saveReminderKeys(updatedPreferences);
       } catch (error) {
         console.error('Error cleaning up past event reminders:', error);
       }
     }
-  }, [currentUser, calendarData, reminderPreferences, getEventKey]);
+  }, [currentUser, calendarData, reminderPreferences, saveReminderKeys]);
 
   // Run reminder cleanup when calendar data or reminders change
   useEffect(() => {
-    if (!currentUser || !calendarData) return;
+    // Guests' reminders are seeded fresh, and the demo store loads synchronously, which
+    // would let this run before their events are merged in and wrongly drop the reminders
+    if (!currentUser || !calendarData || isGuest) return;
 
     // Run cleanup immediately
     cleanupPastEventReminders();
@@ -367,7 +370,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     const intervalId = setInterval(cleanupPastEventReminders, 24 * 60 * 60 * 1000);
 
     return () => clearInterval(intervalId);
-  }, [currentUser, calendarData]); // Removed cleanupPastEventReminders from deps to avoid infinite loop
+  }, [currentUser, calendarData, isGuest]); // Removed cleanupPastEventReminders from deps to avoid infinite loop
 
   // Add user event to Firebase
   const addUserEvent = useCallback(
@@ -380,7 +383,14 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         createdAt: new Date().toISOString(),
       };
 
-      await db.collection('userEvents').add(eventData);
+      if (isGuest) {
+        updateDemoState((state) => ({
+          ...state,
+          userEvents: [...state.userEvents, { ...eventData, id: `demo-event-${Date.now()}` }],
+        }));
+      } else {
+        await db.collection('userEvents').add(eventData);
+      }
 
       await logActivity(currentUser.uid, {
         type: 'event',
@@ -390,7 +400,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         link: '/academic-calendar',
       });
     },
-    [currentUser]
+    [currentUser, isGuest]
   );
 
   // Update user event in Firebase
@@ -398,14 +408,27 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     async (eventId: string, event: CalendarEvent) => {
       if (!currentUser) throw new Error('User must be logged in');
 
-      const eventRef = db.collection('userEvents').doc(eventId);
-      const oldEventSnap = await eventRef.get();
-      const oldEvent = oldEventSnap.data() as CalendarEvent;
+      let oldEvent: CalendarEvent;
+      if (isGuest) {
+        const existing = getDemoState().userEvents.find((e) => e.id === eventId);
+        if (!existing) throw new Error('Event not found');
+        oldEvent = existing;
+        updateDemoState((state) => ({
+          ...state,
+          userEvents: state.userEvents.map((e) =>
+            e.id === eventId ? { ...e, ...event, id: eventId } : e
+          ),
+        }));
+      } else {
+        const eventRef = db.collection('userEvents').doc(eventId);
+        const oldEventSnap = await eventRef.get();
+        oldEvent = oldEventSnap.data() as CalendarEvent;
 
-      await eventRef.update({
-        ...event,
-        updatedAt: new Date().toISOString(),
-      });
+        await eventRef.update({
+          ...event,
+          updatedAt: new Date().toISOString(),
+        });
+      }
 
       // Check if only reminder was toggled
       const reminderToggled = oldEvent.remindMe !== event.remindMe;
@@ -448,59 +471,57 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         });
       }
     },
-    [currentUser, reminderPreferences, getEventKey, toggleReminderPreference]
+    [currentUser, isGuest, reminderPreferences, toggleReminderPreference]
   );
 
-  // Delete user event from Firebase
+  // Delete user event from Firebase (or the demo store for guests)
   const deleteUserEvent = useCallback(
     async (eventId: string) => {
       if (!currentUser) throw new Error('User must be logged in');
 
-      const eventRef = db.collection('userEvents').doc(eventId);
-      const eventSnap = await eventRef.get();
-
-      if (eventSnap.exists) {
-        const eventData = eventSnap.data() as CalendarEvent;
-
-        // Delete the event from Firebase
-        await eventRef.delete();
-
-        // Remove reminder preference if it exists
-        const eventKey = getEventKey(eventData);
-        if (reminderPreferences.includes(eventKey)) {
-          const newPreferences = reminderPreferences.filter((key) => key !== eventKey);
-          setReminderPreferences(newPreferences);
-
-          try {
-            const prefDocRef = db.collection('userReminderPreferences').doc(currentUser.uid);
-            await prefDocRef.set({
-              userId: currentUser.uid,
-              reminderEventKeys: newPreferences,
-            });
-          } catch (error) {
-            console.error('Error removing reminder preference:', error);
-          }
-        }
-
-        await logActivity(currentUser.uid, {
-          type: 'event',
-          title: 'Event Deleted',
-          description: `Deleted event: "${eventData.description}"${reminderPreferences.includes(eventKey) ? ' and its reminder' : ''}`,
-          icon: '🗑️',
-          link: '/academic-calendar',
-        });
+      let eventData: CalendarEvent | undefined;
+      if (isGuest) {
+        eventData = getDemoState().userEvents.find((e) => e.id === eventId);
+        updateDemoState((state) => ({
+          ...state,
+          userEvents: state.userEvents.filter((e) => e.id !== eventId),
+        }));
       } else {
-        // Fallback if the event doesn't exist for some reason
+        const eventRef = db.collection('userEvents').doc(eventId);
+        const eventSnap = await eventRef.get();
+        eventData = eventSnap.exists ? (eventSnap.data() as CalendarEvent) : undefined;
         await eventRef.delete();
       }
+
+      if (!eventData) return;
+
+      // Remove reminder preference if it exists
+      const eventKey = getEventKey(eventData);
+      const hadReminder = reminderPreferences.includes(eventKey);
+      if (hadReminder) {
+        const newPreferences = reminderPreferences.filter((key) => key !== eventKey);
+        setReminderPreferences(newPreferences);
+        try {
+          await saveReminderKeys(newPreferences);
+        } catch (error) {
+          console.error('Error removing reminder preference:', error);
+        }
+      }
+
+      await logActivity(currentUser.uid, {
+        type: 'event',
+        title: 'Event Deleted',
+        description: `Deleted event: "${eventData.description}"${hadReminder ? ' and its reminder' : ''}`,
+        icon: '🗑️',
+        link: '/academic-calendar',
+      });
     },
-    [currentUser, reminderPreferences, getEventKey]
+    [currentUser, isGuest, reminderPreferences, saveReminderKeys]
   );
 
   const contextValue = useMemo(
     () => ({
       calendarData,
-      setCalendarData,
       loading,
       addUserEvent,
       updateUserEvent,
@@ -511,14 +532,12 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     }),
     [
       calendarData,
-      setCalendarData,
       loading,
       addUserEvent,
       updateUserEvent,
       deleteUserEvent,
       reminderPreferences,
       toggleReminderPreference,
-      getEventKey,
     ]
   );
 

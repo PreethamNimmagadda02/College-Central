@@ -4,21 +4,33 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 // FIX: Use Firebase v9 compat API to match rest of codebase
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import {
+  DEMO_DISPLAY_NAME,
+  DEMO_EMAIL,
+  DEMO_UID,
+  endDemo,
+  isDemoActive,
+  startDemo,
+} from '@features/demo/demoSession';
 import { auth } from '@lib/firebase';
 import { ALLOWED_EMAIL_DOMAIN, HOSTED_DOMAIN } from '@lib/utils/constants';
-import { logActivity } from '@services/activityService';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
-import { Capacitor } from '@capacitor/core';
 import { rateLimitCheck } from '@lib/utils/security';
+import { logActivity } from '@services/activityService';
 
 type User = firebase.User;
 
 interface AuthContextType {
   currentUser: User | null;
   isAuthenticated: boolean;
+  /** True while a visitor explores the demo; guests have no Firebase session. */
+  isGuest: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
+  /** Starts the demo for a visitor without a college email. */
+  enterGuestMode: () => void;
   resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
@@ -26,9 +38,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// What the app sees as `currentUser` during the demo. Only identity fields are set;
+// guest code paths never call Firebase methods on it.
+const DEMO_AUTH_USER = Object.freeze({
+  uid: DEMO_UID,
+  email: DEMO_EMAIL,
+  displayName: DEMO_DISPLAY_NAME,
+  photoURL: null,
+  phoneNumber: null,
+  emailVerified: false,
+  isAnonymous: true,
+  providerData: [],
+}) as unknown as User;
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(isDemoActive);
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
@@ -36,12 +62,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     // onAuthStateChanged is the recommended way to listen for auth changes.
     const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        // A real sign-in always replaces a leftover guest session
+        endDemo();
+        setIsGuest(false);
+      }
       setCurrentUser(user);
       setLoading(false);
     });
     // Clean up the listener when the component unmounts.
     return unsubscribe;
   }, []);
+
+  const enterGuestMode = () => {
+    startDemo();
+    setIsGuest(true);
+  };
 
   const login = async (email: string, password: string) => {
     try {
@@ -155,6 +191,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = async () => {
+    if (isGuest) {
+      // A guest has nothing to sign out of; the demo data stays for next time
+      endDemo();
+      setIsGuest(false);
+      return;
+    }
     try {
       // ✅ 1. Check if there's a user to log out.
       if (currentUser) {
@@ -183,14 +225,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   return (
     <AuthContext.Provider
       value={{
-        currentUser,
-        isAuthenticated: !!currentUser,
+        currentUser: isGuest ? DEMO_AUTH_USER : currentUser,
+        isAuthenticated: isGuest || !!currentUser,
+        isGuest,
         login,
         register,
         loginWithGoogle,
+        enterGuestMode,
         resetPassword,
         logout,
-        loading,
+        loading: isGuest ? false : loading,
       }}
     >
       {/* Always render children to let the UI handle the loading state */}

@@ -3,8 +3,6 @@
  * A robust multi-step workflow for extracting data from large files with maximum accuracy.
  */
 
-import { getGoogleGenAI } from '@lib/utils/lazyImports';
-
 // ============================================================================
 // Types
 // ============================================================================
@@ -132,8 +130,8 @@ async function extractFromChunk(
   totalChunks: number,
   schema: ExtractionSchema,
   apiKey: string
-): Promise<{ items: unknown[]; error?: string }> {
-  const { GoogleGenAI } = await getGoogleGenAI();
+): Promise<unknown[]> {
+  const { GoogleGenAI } = await import('@google/genai');
   const ai = new GoogleGenAI({ apiKey });
 
   const prompt = `You are a precise data extractor. Extract ${schema.name} from the text below.
@@ -170,38 +168,35 @@ ${schema.examples}
 TEXT TO EXTRACT FROM:
 ${chunk}`;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: prompt,
-    });
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.0-flash',
+    contents: prompt,
+    config: { responseMimeType: 'application/json' },
+  });
 
-    let responseText = response.text?.trim() || '';
+  // JSON mode can still be cut off at the token limit
+  const items = JSON.parse(repairTruncatedJSON(response.text?.trim() || ''));
 
-    // Remove markdown code blocks if present
-    if (responseText.startsWith('```json')) {
-      responseText = responseText.slice(7);
-    } else if (responseText.startsWith('```')) {
-      responseText = responseText.slice(3);
+  if (!Array.isArray(items)) {
+    throw new Error('Response is not an array');
+  }
+
+  return items;
+}
+
+/**
+ * Try a chunk up to `attempts` times. Any failure is retried: Gemini's rate-limit and server
+ * errors carry no status field, and a malformed reply often succeeds on the next call.
+ */
+async function extractWithRetries(extract: () => Promise<unknown[]>, attempts: number) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await extract();
+    } catch (error) {
+      if (attempt >= attempts) throw error;
+      console.warn(`[Extraction] Attempt ${attempt} failed, retrying:`, error);
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
     }
-    if (responseText.endsWith('```')) {
-      responseText = responseText.slice(0, -3);
-    }
-    responseText = responseText.trim();
-
-    // Try to repair truncated JSON
-    responseText = repairTruncatedJSON(responseText);
-
-    const items = JSON.parse(responseText);
-
-    if (!Array.isArray(items)) {
-      return { items: [], error: 'Response is not an array' };
-    }
-
-    return { items };
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-    return { items: [], error: errorMsg };
   }
 }
 
@@ -282,7 +277,7 @@ export async function extractWithWorkflow<T>(
   let successfulChunks = 0;
   let failedChunks = 0;
 
-  for (let i = 0; i < chunks.length; i++) {
+  for (const [i, chunkText] of chunks.entries()) {
     onProgress?.({
       phase: 'extracting',
       totalChunks,
@@ -291,37 +286,19 @@ export async function extractWithWorkflow<T>(
       message: `Extracting from chunk ${i + 1} of ${totalChunks}...`,
     });
 
-    let lastError: string | undefined;
-    let success = false;
-
-    // Retry logic
-    for (let attempt = 0; attempt < config.maxRetries; attempt++) {
-      const chunkText = chunks[i];
-      if (!chunkText) continue;
-
-      const result = await extractFromChunk(chunkText, i, totalChunks, config.schema, apiKey);
-
-      if (!result.error && result.items.length >= 0) {
-        allItems.push(...result.items);
-        success = true;
-        console.log(`[Extraction] Chunk ${i + 1}: extracted ${result.items.length} items`);
-        break;
-      }
-
-      lastError = result.error;
-      console.warn(`[Extraction] Chunk ${i + 1} attempt ${attempt + 1} failed: ${lastError}`);
-
-      // Wait before retry
-      if (attempt < config.maxRetries - 1) {
-        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
-      }
-    }
-
-    if (success) {
+    try {
+      const items = await extractWithRetries(
+        () => extractFromChunk(chunkText, i, totalChunks, config.schema, apiKey),
+        config.maxRetries
+      );
+      allItems.push(...items);
       successfulChunks++;
-    } else {
+      console.log(`[Extraction] Chunk ${i + 1}: extracted ${items.length} items`);
+    } catch (error) {
       failedChunks++;
-      errors.push(`Chunk ${i + 1} failed: ${lastError ?? 'Unknown error'}`);
+      errors.push(
+        `Chunk ${i + 1} failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 

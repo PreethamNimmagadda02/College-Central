@@ -1,5 +1,6 @@
 import { allForms } from '@config/forms';
 import { useAuth } from '@features/auth/hooks/useAuth';
+import { subscribeDemoState, updateDemoState } from '@features/demo/demoStore';
 import { db } from '@lib/firebase';
 import { MAX_RECENT_DOWNLOADS } from '@lib/utils/constants';
 import { logActivity } from '@services/activityService';
@@ -26,7 +27,7 @@ interface FormsContextType {
 const FormsContext = createContext<FormsContextType | undefined>(undefined);
 
 export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, isGuest } = useAuth();
   const [userFormsData, setUserFormsData] = useState<UserFormsData | null>({
     favorites: [],
     recentDownloads: [],
@@ -40,6 +41,14 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setError(null);
       setLoading(false);
       return;
+    }
+
+    if (isGuest) {
+      return subscribeDemoState((state) => {
+        setUserFormsData(state.userForms);
+        setError(null);
+        setLoading(false);
+      });
     }
 
     const userDocRef = db.collection('userForms').doc(currentUser.uid);
@@ -64,7 +73,7 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     );
 
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [currentUser, isGuest]);
 
   const toggleFavorite = useCallback(
     async (formNumber: string) => {
@@ -86,10 +95,17 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         });
       }
 
+      if (isGuest) {
+        updateDemoState((state) => ({
+          ...state,
+          userForms: { ...state.userForms, favorites: newFavorites },
+        }));
+        return;
+      }
       const userDocRef = db.collection('userForms').doc(currentUser.uid);
       await userDocRef.update({ favorites: newFavorites });
     },
-    [currentUser, userFormsData]
+    [currentUser, isGuest, userFormsData]
   );
 
   const addRecentDownload = useCallback(
@@ -117,10 +133,17 @@ export const FormsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           .slice(0, MAX_RECENT_DOWNLOADS - 1),
       ];
 
+      if (isGuest) {
+        updateDemoState((state) => ({
+          ...state,
+          userForms: { ...state.userForms, recentDownloads: updatedDownloads },
+        }));
+        return;
+      }
       const userDocRef = db.collection('userForms').doc(currentUser.uid);
       await userDocRef.update({ recentDownloads: updatedDownloads });
     },
-    [currentUser, userFormsData]
+    [currentUser, isGuest, userFormsData]
   );
 
   const contextValue = useMemo(

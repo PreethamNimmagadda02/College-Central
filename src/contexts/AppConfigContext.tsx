@@ -2,25 +2,26 @@
 import { PRELOADED_CALENDAR_DATA } from '@config/academicCalendar';
 import { GREETING_TIMES, WEATHER } from '@config/appConstants';
 import { BRANCH_OPTIONS } from '@config/branches';
-import { CAMPUS_DIRECTORY } from '@config/directory';
 import { CAMPUS_LOCATIONS, CAMPUS_QUICK_ROUTES } from '@config/campusMap';
 import { COLLEGE_INFO } from '@config/collegeInfo';
 import { TIMETABLE_DATA as CBCS_COURSES } from '@config/courseData';
+import { CAMPUS_DIRECTORY } from '@config/directory';
 import { generalForms, ugForms, pgForms, phdForms } from '@config/forms';
+import { DEFAULT_GRADING_SCALE } from '@config/gradingScale';
 import { HOSTEL_OPTIONS } from '@config/hostels';
 import { NEP_TIMETABLE_DATA as NEP_COURSES } from '@config/nepCourseData';
 import { defaultQuickLinks } from '@config/quickLinks';
 import { MOTIVATIONAL_QUOTES } from '@config/quotes';
 import { STUDENT_DIRECTORY } from '@config/studentDirectory';
 import { AdminConfig } from '@features/admin/types';
+import { useAuth } from '@features/auth/hooks/useAuth';
+import { getDemoState } from '@features/demo/demoStore';
 import { subscribeToConfig, initializeConfig } from '@services/configService';
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 
 interface AppConfigContextType {
   config: AdminConfig;
   loading: boolean;
-  error: Error | null;
-  isFirestoreConfig: boolean; // true if config is from Firestore, false if fallback
 }
 
 const AppConfigContext = createContext<AppConfigContextType | undefined>(undefined);
@@ -97,68 +98,31 @@ const generateDefaultConfig = (): AdminConfig => {
     students: STUDENT_DIRECTORY.map((s) => ({ ...s })),
     campusMap: CAMPUS_LOCATIONS.map((l) => ({ ...l })),
     quickRoutes: CAMPUS_QUICK_ROUTES.map((r) => ({ ...r })),
-    gradingScale: [
-      {
-        id: 'grade-1',
-        grade: 'A+',
-        points: 10,
-        color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
-      },
-      {
-        id: 'grade-2',
-        grade: 'A',
-        points: 9,
-        color: 'text-emerald-800 bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-200',
-      },
-      {
-        id: 'grade-3',
-        grade: 'B+',
-        points: 8,
-        color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
-      },
-      {
-        id: 'grade-4',
-        grade: 'B',
-        points: 7,
-        color: 'text-sky-700 bg-sky-200 dark:bg-sky-900/40 dark:text-sky-300',
-      },
-      {
-        id: 'grade-5',
-        grade: 'C+',
-        points: 6,
-        color: 'text-amber-700 bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300',
-      },
-      {
-        id: 'grade-6',
-        grade: 'C',
-        points: 5,
-        color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400',
-      },
-      {
-        id: 'grade-7',
-        grade: 'D',
-        points: 4,
-        color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400',
-      },
-      {
-        id: 'grade-8',
-        grade: 'F',
-        points: 0,
-        color: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400',
-      },
-    ],
+    gradingScale: DEFAULT_GRADING_SCALE.map((g) => ({ ...g })),
   };
 };
 
 export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isGuest } = useAuth();
   const [config, setConfig] = useState<AdminConfig>(generateDefaultConfig);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [isFirestoreConfig, setIsFirestoreConfig] = useState(false);
 
   useEffect(() => {
+    if (isGuest) {
+      // Guests get the bundled config with fictional classmates in place of the real
+      // student list, so the demo makes no Firebase calls at all. Its calendar is left
+      // empty so CalendarContext shifts the bundled calendar to the current year.
+      const defaults = generateDefaultConfig();
+      setConfig({
+        ...defaults,
+        students: getDemoState().directory,
+        calendar: { ...defaults.calendar, events: [] },
+      });
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    setError(null);
 
     // Initialize config if it doesn't exist
     const defaultConfig = generateDefaultConfig();
@@ -167,31 +131,17 @@ export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children 
     // Subscribe to real-time updates - this is independent of auth
     // Config is read-only and should always be available
     const unsubscribe = subscribeToConfig((firestoreConfig) => {
-      if (firestoreConfig) {
-        setConfig(firestoreConfig);
-        setIsFirestoreConfig(true);
-      } else {
-        // Fallback to default config
-        setConfig(defaultConfig);
-        setIsFirestoreConfig(false);
-      }
+      // Fall back to the bundled defaults when Firestore has no config
+      setConfig(firestoreConfig ?? defaultConfig);
       setLoading(false);
     });
 
     return () => {
       unsubscribe();
     };
-  }, []); // No dependencies - subscribe once on mount
+  }, [isGuest]); // Re-runs only when a guest session starts or ends
 
-  const contextValue = useMemo(
-    () => ({
-      config,
-      loading,
-      error,
-      isFirestoreConfig,
-    }),
-    [config, loading, error, isFirestoreConfig]
-  );
+  const contextValue = useMemo(() => ({ config, loading }), [config, loading]);
 
   return <AppConfigContext.Provider value={contextValue}>{children}</AppConfigContext.Provider>;
 };

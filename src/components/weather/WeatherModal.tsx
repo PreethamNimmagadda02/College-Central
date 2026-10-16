@@ -1,5 +1,49 @@
-import React from 'react';
 import { useWeather, getWindDirection } from '@contexts/WeatherContext';
+import React from 'react';
+
+interface StatTileProps {
+  icon: string;
+  label: string;
+  value: string;
+  unit?: string;
+  detail?: string;
+  /** Full Tailwind classes (kept literal so Tailwind can see them) */
+  tileClass: string;
+  valueClass: string;
+  detailClass?: string;
+}
+
+const StatTile: React.FC<StatTileProps> = ({
+  icon,
+  label,
+  value,
+  unit,
+  detail,
+  tileClass,
+  valueClass,
+  detailClass,
+}) => (
+  <div className={`${tileClass} p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border`}>
+    <div className="flex items-center gap-2 sm:gap-3">
+      <div className="text-xl sm:text-2xl md:text-3xl">{icon}</div>
+      <div className="min-w-0">
+        <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">
+          {label}
+        </p>
+        <p className={`text-base sm:text-lg md:text-xl font-bold ${valueClass}`}>
+          {value}
+          {unit && <span className="text-xs sm:text-sm"> {unit}</span>}
+        </p>
+        {detail && (
+          <p className={`text-[9px] sm:text-[10px] md:text-xs truncate ${detailClass}`}>{detail}</p>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+const uvLevel = (uv: number) =>
+  uv < 3 ? 'Low' : uv < 6 ? 'Moderate' : uv < 8 ? 'High' : 'Very High';
 
 const WeatherModal: React.FC = () => {
   const {
@@ -14,6 +58,56 @@ const WeatherModal: React.FC = () => {
 
   if (!showWeatherModal || !detailedWeather) return null;
 
+  const tiles: StatTileProps[] = [
+    {
+      icon: '💧',
+      label: 'Humidity',
+      value: `${detailedWeather.humidity}%`,
+      tileClass:
+        'bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-700/50',
+      valueClass: 'text-blue-600 dark:text-blue-400',
+    },
+    {
+      icon: '💨',
+      label: 'Wind Speed',
+      value: detailedWeather.windSpeed.toFixed(1),
+      unit: 'km/h',
+      detail: getWindDirection(detailedWeather.windDirection),
+      tileClass:
+        'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-emerald-200 dark:border-emerald-700/50',
+      valueClass: 'text-emerald-600 dark:text-emerald-400',
+      detailClass: 'text-emerald-600/70 dark:text-emerald-400/70',
+    },
+    {
+      icon: '🎚️',
+      label: 'Pressure',
+      value: detailedWeather.pressure.toFixed(0),
+      unit: 'hPa',
+      tileClass:
+        'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-700/50',
+      valueClass: 'text-purple-600 dark:text-purple-400',
+    },
+    {
+      icon: '☀️',
+      label: 'UV Index',
+      value: detailedWeather.uvIndex.toFixed(1),
+      detail: uvLevel(detailedWeather.uvIndex),
+      tileClass:
+        'bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border-yellow-200 dark:border-yellow-700/50',
+      valueClass: 'text-yellow-600 dark:text-yellow-400',
+      detailClass: 'text-yellow-600/70 dark:text-yellow-400/70',
+    },
+    {
+      icon: '🌧️',
+      label: 'Precipitation',
+      value: detailedWeather.precipitation.toFixed(1),
+      unit: 'mm',
+      tileClass:
+        'bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border-indigo-200 dark:border-indigo-700/50',
+      valueClass: 'text-indigo-600 dark:text-indigo-400',
+    },
+  ];
+
   return (
     <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 sm:p-4 animate-in fade-in duration-200"
@@ -27,7 +121,9 @@ const WeatherModal: React.FC = () => {
         <div className="sticky top-0 bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/40 dark:to-blue-900/40 backdrop-blur-sm border-b border-sky-200 dark:border-sky-700 p-3 sm:p-4 md:p-6 rounded-t-xl sm:rounded-t-2xl z-10">
           <div className="flex justify-between items-start gap-2">
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-              <div className="text-4xl sm:text-5xl md:text-6xl drop-shadow-lg">{detailedWeather.icon}</div>
+              <div className="text-4xl sm:text-5xl md:text-6xl drop-shadow-lg">
+                {detailedWeather.icon}
+              </div>
               <div className="min-w-0">
                 <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
                   {detailedWeather.temp}°C
@@ -43,7 +139,9 @@ const WeatherModal: React.FC = () => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span className="truncate">{selectedCity.name}, {selectedCity.state}</span>
+                  <span className="truncate">
+                    {selectedCity.name}, {selectedCity.state}
+                  </span>
                 </p>
               </div>
             </div>
@@ -51,7 +149,12 @@ const WeatherModal: React.FC = () => {
               onClick={() => setShowWeatherModal(false)}
               className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 sm:p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 flex-shrink-0"
             >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 sm:w-6 sm:h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -84,101 +187,9 @@ const WeatherModal: React.FC = () => {
 
           {/* Weather Details Grid */}
           <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-            {/* Humidity */}
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border border-blue-200 dark:border-blue-700/50">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="text-xl sm:text-2xl md:text-3xl">💧</div>
-                <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">Humidity</p>
-                  <p className="text-base sm:text-lg md:text-xl font-bold text-blue-600 dark:text-blue-400">
-                    {detailedWeather.humidity}%
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Wind Speed */}
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border border-emerald-200 dark:border-emerald-700/50">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="text-xl sm:text-2xl md:text-3xl">💨</div>
-                <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">
-                    Wind Speed
-                  </p>
-                  <p className="text-base sm:text-lg md:text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                    {detailedWeather.windSpeed.toFixed(1)} <span className="text-xs sm:text-sm">km/h</span>
-                  </p>
-                  <p className="text-[9px] sm:text-[10px] md:text-xs text-emerald-600/70 dark:text-emerald-400/70 truncate">
-                    {getWindDirection(detailedWeather.windDirection)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Pressure */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border border-purple-200 dark:border-purple-700/50">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="text-xl sm:text-2xl md:text-3xl">🎚️</div>
-                <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">Pressure</p>
-                  <p className="text-base sm:text-lg md:text-xl font-bold text-purple-600 dark:text-purple-400">
-                    {detailedWeather.pressure.toFixed(0)} <span className="text-xs sm:text-sm">hPa</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* UV Index */}
-            <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border border-yellow-200 dark:border-yellow-700/50">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="text-xl sm:text-2xl md:text-3xl">☀️</div>
-                <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">UV Index</p>
-                  <p className="text-base sm:text-lg md:text-xl font-bold text-yellow-600 dark:text-yellow-400">
-                    {detailedWeather.uvIndex.toFixed(1)}
-                  </p>
-                  <p className="text-[9px] sm:text-[10px] md:text-xs text-yellow-600/70 dark:text-yellow-400/70">
-                    {detailedWeather.uvIndex < 3
-                      ? 'Low'
-                      : detailedWeather.uvIndex < 6
-                        ? 'Moderate'
-                        : detailedWeather.uvIndex < 8
-                          ? 'High'
-                          : 'Very High'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Precipitation */}
-            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border border-indigo-200 dark:border-indigo-700/50">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="text-xl sm:text-2xl md:text-3xl">🌧️</div>
-                <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">
-                    Precipitation
-                  </p>
-                  <p className="text-base sm:text-lg md:text-xl font-bold text-indigo-600 dark:text-indigo-400">
-                    {detailedWeather.precipitation.toFixed(1)} <span className="text-xs sm:text-sm">mm</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Visibility */}
-            <div className="bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900/20 dark:to-gray-900/20 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700/50">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="text-xl sm:text-2xl md:text-3xl">👁️</div>
-                <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 dark:text-slate-400 font-medium">
-                    Visibility
-                  </p>
-                  <p className="text-base sm:text-lg md:text-xl font-bold text-slate-600 dark:text-slate-400">
-                    {detailedWeather.visibility} <span className="text-xs sm:text-sm">km</span>
-                  </p>
-                </div>
-              </div>
-            </div>
+            {tiles.map((tile) => (
+              <StatTile key={tile.label} {...tile} />
+            ))}
           </div>
 
           {/* AI Recommendation in Modal */}

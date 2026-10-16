@@ -9,9 +9,9 @@
  * - Automatic logout with redirect
  */
 
+import { auth } from '@lib/firebase';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '@lib/firebase';
 
 // Configuration (can be overridden via environment variables)
 const IDLE_TIMEOUT_MINUTES = 30;
@@ -28,23 +28,17 @@ const SESSION_START_KEY = 'session_start_time';
 const LAST_ACTIVITY_KEY = 'last_activity_time';
 
 interface SessionState {
-  isSessionValid: boolean;
   showWarning: boolean;
   remainingSeconds: number;
-  sessionStartTime: number | null;
 }
 
 export function useSessionManager() {
   const navigate = useNavigate();
   const [sessionState, setSessionState] = useState<SessionState>({
-    isSessionValid: true,
     showWarning: false,
     remainingSeconds: 0,
-    sessionStartTime: null,
   });
 
-  const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const logoutTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize or get session start time
@@ -83,9 +77,7 @@ export function useSessionManager() {
       sessionStorage.removeItem(SESSION_START_KEY);
       sessionStorage.removeItem(LAST_ACTIVITY_KEY);
 
-      // Clear timeouts
-      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
-      if (logoutTimeoutRef.current) clearTimeout(logoutTimeoutRef.current);
+      // Stop checking
       if (checkIntervalRef.current) clearInterval(checkIntervalRef.current);
 
       try {
@@ -102,15 +94,6 @@ export function useSessionManager() {
     },
     [navigate]
   );
-
-  // Extend session (user clicked "Stay logged in")
-  const extendSession = useCallback(() => {
-    updateActivity();
-    setSessionState((prev) => ({
-      ...prev,
-      showWarning: false,
-    }));
-  }, [updateActivity]);
 
   // Check session validity
   const checkSession = useCallback(() => {
@@ -193,7 +176,7 @@ export function useSessionManager() {
 
   return {
     ...sessionState,
-    extendSession,
+    extendSession: updateActivity, // "Stay logged in" counts as activity
     logout: () => logout('manual'),
   };
 }

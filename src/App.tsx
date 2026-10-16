@@ -1,58 +1,51 @@
-// Auth feature hooks
-
-// Context providers
-import { AppConfigProvider } from '@contexts/AppConfigContext';
-
-// Layout and common components
-import Layout from '@pages/Layout';
+import { Capacitor } from '@capacitor/core';
 import ErrorBoundary from '@components/common/ErrorBoundary';
-import ProtectedRoute from '@components/common/ProtectedRoute';
-import AdminProtectedRoute from '@components/common/AdminProtectedRoute';
-import UpdatePrompt from '@components/common/UpdatePrompt';
 import { InstallPrompt } from '@components/common/InstallPrompt';
+import { LocationRequirement } from '@components/common/LocationRequirement';
+import { NativeLocationTracker } from '@components/common/NativeLocationTracker';
 import { OfflineIndicator } from '@components/common/OfflineIndicator';
-import { CalendarProvider } from '@contexts/CalendarContext';
+import ProtectedRoute from '@components/common/ProtectedRoute';
+import UpdatePrompt from '@components/common/UpdatePrompt';
 import { CampusMapProvider } from '@contexts/CampusMapContext';
 import { LocationProvider } from '@contexts/LocationContext';
-import { LocationRequirement } from '@components/common/LocationRequirement';
 import { WeatherProvider } from '@contexts/WeatherContext';
 import WeatherModal from '@components/weather/WeatherModal';
+import { AppConfigProvider } from '@contexts/AppConfigContext';
+import { CalendarProvider } from '@contexts/CalendarContext';
 import { FormsProvider } from '@contexts/FormsContext';
 import { GradesProvider } from '@contexts/GradesContext';
 import { ScheduleProvider } from '@contexts/ScheduleContext';
 import { UserProvider } from '@contexts/UserContext';
 import { AuthProvider } from '@features/auth/hooks/useAuth';
 import { RoleProvider } from '@features/auth/hooks/useRole';
+import { GuestBoundary } from '@features/demo/GuestBoundary';
+import { lazyPage } from '@lib/utils/lazyPage';
+import Layout from '@pages/Layout';
 
-// Utilities
-import { lazyWithRetry } from '@lib/utils/lazyWithRetry';
-import { measurePageLoad } from '@lib/utils/performance';
 import React, { Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { Capacitor } from '@capacitor/core';
-import { NativeLocationProvider } from '@contexts/NativeLocationProvider';
 
-// Lazy load pages with automatic retry on chunk loading failure
-const Dashboard = lazyWithRetry(() => import('@pages/Dashboard'));
-const Grades = lazyWithRetry(() => import('@pages/Grades'));
-const Schedule = lazyWithRetry(() => import('@pages/Schedule'));
-const Directory = lazyWithRetry(() => import('@pages/Directory'));
-const Profile = lazyWithRetry(() => import('@pages/Profile'));
-const NotFound = lazyWithRetry(() => import('@pages/NotFound'));
-const CampusMap = lazyWithRetry(() => import('@pages/CampusMap'));
-const CollegeForms = lazyWithRetry(() => import('@pages/CollegeForms'));
-const AcademicCalendar = lazyWithRetry(() => import('@pages/AcademicCalendar'));
-const Login = lazyWithRetry(() => import('@pages/Login'));
-const PrivacyPolicy = lazyWithRetry(() => import('@pages/PrivacyPolicy'));
-const TermsOfService = lazyWithRetry(() => import('@pages/TermsOfService'));
-const OfflinePage = lazyWithRetry(() => import('@pages/OfflinePage'));
-const UserProfile = lazyWithRetry(() => import('@pages/UserProfile'));
+// Lazy load pages (main.tsx reloads once if a chunk from an old deploy is gone)
+const Dashboard = lazyPage(() => import('@pages/Dashboard'));
+const Grades = lazyPage(() => import('@pages/Grades'));
+const Schedule = lazyPage(() => import('@pages/Schedule'));
+const Directory = lazyPage(() => import('@pages/Directory'));
+const Profile = lazyPage(() => import('@pages/Profile'));
+const NotFound = lazyPage(() => import('@pages/NotFound'));
+const CampusMap = lazyPage(() => import('@pages/CampusMap'));
+const CollegeForms = lazyPage(() => import('@pages/CollegeForms'));
+const AcademicCalendar = lazyPage(() => import('@pages/AcademicCalendar'));
+const Login = lazyPage(() => import('@pages/Login'));
+const PrivacyPolicy = lazyPage(() => import('@pages/PrivacyPolicy'));
+const TermsOfService = lazyPage(() => import('@pages/TermsOfService'));
+const OfflinePage = lazyPage(() => import('@pages/OfflinePage'));
+const UserProfile = lazyPage(() => import('@pages/UserProfile'));
 
 // Admin Dashboard - available for admin users in all environments
-const AdminDashboard = lazyWithRetry(() => import('@features/admin/AdminDashboard'));
+const AdminDashboard = lazyPage(() => import('@features/admin/AdminDashboard'));
 // Auth redirect page for role-based routing
-const AuthRedirect = lazyWithRetry(() => import('@pages/AuthRedirect'));
+const AuthRedirect = lazyPage(() => import('@pages/AuthRedirect'));
 
 // Loading fallback component
 const PageLoader = React.memo(() => (
@@ -70,11 +63,11 @@ const router = createHashRouter([
   {
     path: '/admin',
     element: (
-      <AdminProtectedRoute>
+      <ProtectedRoute requireAdmin>
         <Suspense fallback={<PageLoader />}>
           <AdminDashboard />
         </Suspense>
-      </AdminProtectedRoute>
+      </ProtectedRoute>
     ),
     children: [
       { index: true, element: null }, // Default to college-info
@@ -234,15 +227,10 @@ const router = createHashRouter([
   },
 ]);
 
-// ... existing imports
-
 const App: React.FC = () => {
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
-    // Measure initial app load performance
-    measurePageLoad('app_initial_load');
-
     // Fade out splash screen
     const splash = document.getElementById('app-splash');
     if (splash) {
@@ -256,40 +244,33 @@ const App: React.FC = () => {
   return (
     <>
       <AuthProvider>
-        <AppConfigProvider>
-          <UserProvider>
-            <RoleProvider>
-              <GradesProvider>
-                <ScheduleProvider>
-                  <CalendarProvider>
-                    <FormsProvider>
-                      <WeatherProvider>
-                        <CampusMapProvider>
-                          <LocationProvider>
-                            <LocationRequirement>
-                              {isNative && (
-                                <NativeLocationProvider>
-                                  <RouterProvider router={router} />
-                                  <WeatherModal />
-                                </NativeLocationProvider>
-                              )}
-                              {!isNative && (
-                                <>
-                                  <RouterProvider router={router} />
-                                  <WeatherModal />
-                                </>
-                              )}
-                            </LocationRequirement>
-                          </LocationProvider>
-                        </CampusMapProvider>
-                      </WeatherProvider>
-                    </FormsProvider>
-                  </CalendarProvider>
-                </ScheduleProvider>
-              </GradesProvider>
-            </RoleProvider>
-          </UserProvider>
-        </AppConfigProvider>
+        <GuestBoundary>
+          <AppConfigProvider>
+            <UserProvider>
+              <RoleProvider>
+                <GradesProvider>
+                  <ScheduleProvider>
+                    <CalendarProvider>
+                      <FormsProvider>
+                        <WeatherProvider>
+                          <CampusMapProvider>
+                            <LocationProvider>
+                              <LocationRequirement>
+                                {isNative && <NativeLocationTracker />}
+                                <RouterProvider router={router} />
+                                <WeatherModal />
+                              </LocationRequirement>
+                            </LocationProvider>
+                          </CampusMapProvider>
+                        </WeatherProvider>
+                      </FormsProvider>
+                    </CalendarProvider>
+                  </ScheduleProvider>
+                </GradesProvider>
+              </RoleProvider>
+            </UserProvider>
+          </AppConfigProvider>
+        </GuestBoundary>
       </AuthProvider>
       <UpdatePrompt />
       <InstallPrompt />
