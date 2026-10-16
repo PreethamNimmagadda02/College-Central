@@ -41,9 +41,9 @@ jobs:
         run: npm run build
         env:
           # IIT(ISM) Firebase Config (hardcoded non-secrets)
-          VITE_FIREBASE_AUTH_DOMAIN: college-central-52897.firebaseapp.com
-          VITE_FIREBASE_PROJECT_ID: college-central-52897
-          VITE_FIREBASE_STORAGE_BUCKET: college-central-52897.firebasestorage.app
+          VITE_FIREBASE_AUTH_DOMAIN: college-central-7fab2.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: college-central-7fab2
+          VITE_FIREBASE_STORAGE_BUCKET: college-central-7fab2.firebasestorage.app
           # IIT(ISM) Firebase Secrets
           VITE_FIREBASE_API_KEY: ${{ secrets.iitism_FIREBASE_API_KEY }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.iitism_MESSAGING_SENDER_ID }}
@@ -95,6 +95,11 @@ jobs:
   preview:
     name: Preview Deployment
     runs-on: ubuntu-latest
+    # The hosting-deploy action reports through a check run and a PR comment
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     needs: quality
     if: github.event_name == 'pull_request'
 
@@ -115,9 +120,9 @@ jobs:
         run: npm run build
         env:
           # IIT(ISM) preview config
-          VITE_FIREBASE_AUTH_DOMAIN: college-central-52897.firebaseapp.com
-          VITE_FIREBASE_PROJECT_ID: college-central-52897
-          VITE_FIREBASE_STORAGE_BUCKET: college-central-52897.firebasestorage.app
+          VITE_FIREBASE_AUTH_DOMAIN: college-central-7fab2.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: college-central-7fab2
+          VITE_FIREBASE_STORAGE_BUCKET: college-central-7fab2.firebasestorage.app
           VITE_FIREBASE_API_KEY: ${{ secrets.iitism_FIREBASE_API_KEY }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.iitism_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.iitism_APP_ID }}
@@ -134,7 +139,7 @@ jobs:
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.iitism_FIREBASE_SERVICE_ACCOUNT }}
-          projectId: college-central-52897
+          projectId: college-central-7fab2
           expires: 7d
         id: firebase_preview
 
