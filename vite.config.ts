@@ -76,6 +76,9 @@ export default defineConfig({
 
           // Icons
           'icons': ['lucide-react'],
+
+          // Animation (layout, header and dashboard use it, so keep it cacheable on its own)
+          'motion': ['framer-motion'],
         }
       }
     },

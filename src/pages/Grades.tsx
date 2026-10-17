@@ -6,6 +6,7 @@ import { useGradingScale } from '@hooks/useGradingScale';
 import { calculateCreditsFromLTP } from '@lib/utils/creditCalculator';
 import { getLatestGrades } from '@lib/utils/gradeUtils';
 import {
+  AnimatePresence,
   motion,
   useInView,
   useMotionValueEvent,
@@ -1419,126 +1420,128 @@ const ImprovementExamForecaster: React.FC<{ gradesData: GradesData }> = React.me
                     </button>
 
                     {/* Semester Courses */}
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="px-4 sm:px-5 pb-4 sm:pb-5"
-                      >
-                        <div className="space-y-2 sm:space-y-3">
-                          {semester.grades.map((grade) => {
-                            const isLatest =
-                              latestGrades[grade.subjectCode]?.semester === semester.semester;
-                            const isModified = !!modifiedGrades[grade.subjectCode];
-                            const currentDisplayGrade =
-                              modifiedGrades[grade.subjectCode] || grade.grade;
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="px-4 sm:px-5 pb-4 sm:pb-5"
+                        >
+                          <div className="space-y-2 sm:space-y-3">
+                            {semester.grades.map((grade) => {
+                              const isLatest =
+                                latestGrades[grade.subjectCode]?.semester === semester.semester;
+                              const isModified = !!modifiedGrades[grade.subjectCode];
+                              const currentDisplayGrade =
+                                modifiedGrades[grade.subjectCode] || grade.grade;
 
-                            return (
-                              <div
-                                key={`${semester.semester}-${grade.subjectCode}`}
-                                className={`group relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg transition-all duration-300 gap-3 sm:gap-0 ${
-                                  isModified
-                                    ? 'bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-900/30 dark:to-amber-900/10 border-2 border-amber-300 dark:border-amber-700 shadow-md shadow-amber-100 dark:shadow-amber-900/20'
-                                    : 'bg-slate-50 dark:bg-slate-800 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 dark:hover:from-slate-800 dark:hover:to-slate-700/50 hover:shadow-lg hover:-translate-y-0.5'
-                                }`}
-                              >
-                                <div className="flex-grow min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base truncate">
-                                      {grade.subjectCode}
-                                    </p>
-                                    {!isLatest && (
-                                      <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded">
-                                        Retaken
-                                      </span>
-                                    )}
-                                    {isModified && (
-                                      <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300 rounded animate-pulse">
-                                        Modified
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">
-                                    {grade.subjectName}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded-full">
-                                      {grade.credits} Credits
-                                    </span>
-                                    {isModified && (
-                                      <span className="text-[10px] sm:text-xs text-slate-500">
-                                        Original:{' '}
-                                        <span
-                                          className={`font-semibold ${getGradeColor(grade.grade)}`}
-                                        >
-                                          {grade.grade}
+                              return (
+                                <div
+                                  key={`${semester.semester}-${grade.subjectCode}`}
+                                  className={`group relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg transition-all duration-300 gap-3 sm:gap-0 ${
+                                    isModified
+                                      ? 'bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-900/30 dark:to-amber-900/10 border-2 border-amber-300 dark:border-amber-700 shadow-md shadow-amber-100 dark:shadow-amber-900/20'
+                                      : 'bg-slate-50 dark:bg-slate-800 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 dark:hover:from-slate-800 dark:hover:to-slate-700/50 hover:shadow-lg hover:-translate-y-0.5'
+                                  }`}
+                                >
+                                  <div className="flex-grow min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base truncate">
+                                        {grade.subjectCode}
+                                      </p>
+                                      {!isLatest && (
+                                        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded">
+                                          Retaken
                                         </span>
+                                      )}
+                                      {isModified && (
+                                        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300 rounded animate-pulse">
+                                          Modified
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">
+                                      {grade.subjectName}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded-full">
+                                        {grade.credits} Credits
                                       </span>
+                                      {isModified && (
+                                        <span className="text-[10px] sm:text-xs text-slate-500">
+                                          Original:{' '}
+                                          <span
+                                            className={`font-semibold ${getGradeColor(grade.grade)}`}
+                                          >
+                                            {grade.grade}
+                                          </span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 sm:gap-3">
+                                    {isLatest ? (
+                                      <select
+                                        value={currentDisplayGrade}
+                                        onChange={(e) =>
+                                          handleGradeChange(
+                                            grade.subjectCode,
+                                            e.target.value,
+                                            grade.grade
+                                          )
+                                        }
+                                        className={`px-3 sm:px-4 py-1.5 sm:py-2 font-semibold rounded-lg border-2 focus:outline-none focus:ring-2 focus:scale-105 transition-all duration-200 hover:shadow-md cursor-pointer text-sm sm:text-base text-center ${getGradeColor(currentDisplayGrade)} ${getGradeOutlineStyle(currentDisplayGrade)}`}
+                                      >
+                                        {gradeOptions.map((g) => (
+                                          <option key={g} value={g}>
+                                            {g}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    ) : (
+                                      <span
+                                        className={`px-3 sm:px-4 py-1.5 sm:py-2 font-semibold rounded-lg text-sm sm:text-base ${getGradeColor(grade.grade)} opacity-60`}
+                                      >
+                                        {grade.grade}
+                                      </span>
+                                    )}
+                                    {isModified && (
+                                      <button
+                                        onClick={() =>
+                                          handleGradeChange(
+                                            grade.subjectCode,
+                                            grade.grade,
+                                            grade.grade
+                                          )
+                                        }
+                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all duration-200 hover:scale-110 hover:rotate-90"
+                                        title="Reset to original"
+                                      >
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M6 18L18 6M6 6l12 12"
+                                          />
+                                        </svg>
+                                      </button>
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2 sm:gap-3">
-                                  {isLatest ? (
-                                    <select
-                                      value={currentDisplayGrade}
-                                      onChange={(e) =>
-                                        handleGradeChange(
-                                          grade.subjectCode,
-                                          e.target.value,
-                                          grade.grade
-                                        )
-                                      }
-                                      className={`px-3 sm:px-4 py-1.5 sm:py-2 font-semibold rounded-lg border-2 focus:outline-none focus:ring-2 focus:scale-105 transition-all duration-200 hover:shadow-md cursor-pointer text-sm sm:text-base text-center ${getGradeColor(currentDisplayGrade)} ${getGradeOutlineStyle(currentDisplayGrade)}`}
-                                    >
-                                      {gradeOptions.map((g) => (
-                                        <option key={g} value={g}>
-                                          {g}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  ) : (
-                                    <span
-                                      className={`px-3 sm:px-4 py-1.5 sm:py-2 font-semibold rounded-lg text-sm sm:text-base ${getGradeColor(grade.grade)} opacity-60`}
-                                    >
-                                      {grade.grade}
-                                    </span>
-                                  )}
-                                  {isModified && (
-                                    <button
-                                      onClick={() =>
-                                        handleGradeChange(
-                                          grade.subjectCode,
-                                          grade.grade,
-                                          grade.grade
-                                        )
-                                      }
-                                      className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all duration-200 hover:scale-110 hover:rotate-90"
-                                      title="Reset to original"
-                                    >
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M6 18L18 6M6 6l12 12"
-                                        />
-                                      </svg>
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 );
               })}
@@ -2045,225 +2048,227 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             </motion.div>
 
             {/* KPI Explanation Panel */}
-            {(selectedKPI === 'standing' ||
-              selectedKPI === 'consistency' ||
-              selectedKPI === 'efficiency' ||
-              selectedKPI === 'trend') && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
-                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4 sm:p-5 border-l-4 border-primary overflow-hidden"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    {selectedKPI === 'standing' && (
-                      <>
-                        <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
-                          <span className="text-blue-500">🎓</span> Academic Standing
-                        </h4>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
-                          Your academic standing is determined by your CGPA and indicates your
-                          overall performance level.
-                        </p>
-                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                          <p className="text-xs font-medium mb-2">Classification:</p>
-                          <div className="text-xs space-y-1">
-                            <p className={gradesData.cgpa >= 9 ? 'font-bold text-green-600' : ''}>
-                              ≥ 9.0: <strong>Outstanding</strong>
-                            </p>
-                            <p
-                              className={
-                                gradesData.cgpa >= 8 && gradesData.cgpa < 9
-                                  ? 'font-bold text-blue-600'
-                                  : ''
-                              }
-                            >
-                              8.0 - 8.99: <strong>Excellent</strong>
-                            </p>
-                            <p
-                              className={
-                                gradesData.cgpa >= 7 && gradesData.cgpa < 8
-                                  ? 'font-bold text-indigo-600'
-                                  : ''
-                              }
-                            >
-                              7.0 - 7.99: <strong>Very Good</strong>
-                            </p>
-                            <p
-                              className={
-                                gradesData.cgpa >= 6 && gradesData.cgpa < 7
-                                  ? 'font-bold text-amber-600'
-                                  : ''
-                              }
-                            >
-                              6.0 - 6.99: <strong>Good</strong>
-                            </p>
-                            <p
-                              className={
-                                gradesData.cgpa >= 5 && gradesData.cgpa < 6
-                                  ? 'font-bold text-orange-600'
-                                  : ''
-                              }
-                            >
-                              5.0 - 5.99: <strong>Average</strong>
-                            </p>
-                            <p className={gradesData.cgpa < 5 ? 'font-bold text-red-600' : ''}>
-                              {'<'} 5.0: <strong>Below Average</strong>
-                            </p>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-2">
-                            Your CGPA: <strong>{gradesData.cgpa.toFixed(2)}</strong> →{' '}
-                            <strong className="text-primary">
-                              {advancedMetrics.academicStanding}
-                            </strong>
+            <AnimatePresence>
+              {(selectedKPI === 'standing' ||
+                selectedKPI === 'consistency' ||
+                selectedKPI === 'efficiency' ||
+                selectedKPI === 'trend') && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                  animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4 sm:p-5 border-l-4 border-primary overflow-hidden"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      {selectedKPI === 'standing' && (
+                        <>
+                          <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
+                            <span className="text-blue-500">🎓</span> Academic Standing
+                          </h4>
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
+                            Your academic standing is determined by your CGPA and indicates your
+                            overall performance level.
                           </p>
-                        </div>
-                      </>
-                    )}
-                    {selectedKPI === 'consistency' && (
-                      <>
-                        <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
-                          <span className="text-green-500">🎯</span> Consistency Score
-                        </h4>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
-                          Measures how stable your performance is across semesters. A higher score
-                          means less variation in your SGPAs.
-                        </p>
-                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                          <p className="text-xs font-medium mb-2">Calculation:</p>
-                          <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-2">
-                            Score = max(0, 100 - (Standard Deviation × 50))
-                          </code>
-                          <div className="text-xs space-y-1">
-                            <p>
-                              Standard Deviation (σ):{' '}
-                              <strong>{advancedMetrics.stdDev.toFixed(4)}</strong>
-                            </p>
-                            <p>
-                              Consistency Score:{' '}
-                              <strong>{advancedMetrics.consistencyScore.toFixed(1)}%</strong>
-                            </p>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-2">
-                            {advancedMetrics.consistencyScore >= 90
-                              ? '🌟 Extremely consistent!'
-                              : advancedMetrics.consistencyScore >= 70
-                                ? '✅ Good consistency'
-                                : advancedMetrics.consistencyScore >= 50
-                                  ? '⚠️ Moderate variation'
-                                  : '📉 High variation between semesters'}
-                          </p>
-                        </div>
-                      </>
-                    )}
-                    {selectedKPI === 'efficiency' && (
-                      <>
-                        <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
-                          <span className="text-purple-500">⚡</span> Credit Efficiency
-                        </h4>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
-                          Shows how many grade points you earn per credit. Higher values indicate
-                          better utilization of credit hours.
-                        </p>
-                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                          <p className="text-xs font-medium mb-2">Formula:</p>
-                          <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-2">
-                            Efficiency = Total Quality Points / Total Credits
-                          </code>
-                          <div className="text-xs space-y-1">
-                            <p>
-                              Total Quality Points:{' '}
-                              <strong>
-                                {(gradesData.cgpa * gradesData.totalCredits).toFixed(2)}
-                              </strong>
-                            </p>
-                            <p>
-                              Total Credits: <strong>{gradesData.totalCredits}</strong>
-                            </p>
-                            <p>
-                              Efficiency:{' '}
-                              <strong>
-                                {advancedMetrics.creditEfficiency.toFixed(2)} points/credit
-                              </strong>
-                            </p>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-2">
-                            {advancedMetrics.creditEfficiency >= 9
-                              ? '🏆 Outstanding efficiency!'
-                              : advancedMetrics.creditEfficiency >= 8
-                                ? '🌟 Excellent efficiency'
-                                : advancedMetrics.creditEfficiency >= 7
-                                  ? '✅ Good efficiency'
-                                  : '📊 Room for improvement'}
-                          </p>
-                        </div>
-                      </>
-                    )}
-                    {selectedKPI === 'trend' && (
-                      <>
-                        <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
-                          <span className="text-orange-500">{trend.emoji}</span> Performance Trend
-                        </h4>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
-                          Analyzes the direction of your academic performance over time using linear
-                          regression on your SGPAs.
-                        </p>
-                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                          <p className="text-xs font-medium mb-2">Analysis Method:</p>
-                          <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-2">
-                            Slope = Linear regression of SGPA over semesters
-                          </code>
-                          <div className="text-xs space-y-1">
-                            <p>
-                              Slope:{' '}
-                              <strong
+                          <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                            <p className="text-xs font-medium mb-2">Classification:</p>
+                            <div className="text-xs space-y-1">
+                              <p className={gradesData.cgpa >= 9 ? 'font-bold text-green-600' : ''}>
+                                ≥ 9.0: <strong>Outstanding</strong>
+                              </p>
+                              <p
                                 className={
-                                  advancedMetrics.slope > 0
-                                    ? 'text-green-600'
-                                    : advancedMetrics.slope < 0
-                                      ? 'text-red-600'
-                                      : ''
+                                  gradesData.cgpa >= 8 && gradesData.cgpa < 9
+                                    ? 'font-bold text-blue-600'
+                                    : ''
                                 }
                               >
-                                {advancedMetrics.slope > 0 ? '+' : ''}
-                                {(advancedMetrics.slope * 100).toFixed(2)}% per semester
-                              </strong>
-                            </p>
-                            <p>
-                              Status:{' '}
-                              <strong className={trend.color}>
-                                {advancedMetrics.trajectoryStatus}
+                                8.0 - 8.99: <strong>Excellent</strong>
+                              </p>
+                              <p
+                                className={
+                                  gradesData.cgpa >= 7 && gradesData.cgpa < 8
+                                    ? 'font-bold text-indigo-600'
+                                    : ''
+                                }
+                              >
+                                7.0 - 7.99: <strong>Very Good</strong>
+                              </p>
+                              <p
+                                className={
+                                  gradesData.cgpa >= 6 && gradesData.cgpa < 7
+                                    ? 'font-bold text-amber-600'
+                                    : ''
+                                }
+                              >
+                                6.0 - 6.99: <strong>Good</strong>
+                              </p>
+                              <p
+                                className={
+                                  gradesData.cgpa >= 5 && gradesData.cgpa < 6
+                                    ? 'font-bold text-orange-600'
+                                    : ''
+                                }
+                              >
+                                5.0 - 5.99: <strong>Average</strong>
+                              </p>
+                              <p className={gradesData.cgpa < 5 ? 'font-bold text-red-600' : ''}>
+                                {'<'} 5.0: <strong>Below Average</strong>
+                              </p>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2">
+                              Your CGPA: <strong>{gradesData.cgpa.toFixed(2)}</strong> →{' '}
+                              <strong className="text-primary">
+                                {advancedMetrics.academicStanding}
                               </strong>
                             </p>
                           </div>
-                          <p className="text-xs text-slate-500 mt-2">{trend.message}</p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setSelectedKPI(null)}
-                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors ml-3"
-                  >
-                    <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                        </>
+                      )}
+                      {selectedKPI === 'consistency' && (
+                        <>
+                          <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
+                            <span className="text-green-500">🎯</span> Consistency Score
+                          </h4>
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
+                            Measures how stable your performance is across semesters. A higher score
+                            means less variation in your SGPAs.
+                          </p>
+                          <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                            <p className="text-xs font-medium mb-2">Calculation:</p>
+                            <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-2">
+                              Score = max(0, 100 - (Standard Deviation × 50))
+                            </code>
+                            <div className="text-xs space-y-1">
+                              <p>
+                                Standard Deviation (σ):{' '}
+                                <strong>{advancedMetrics.stdDev.toFixed(4)}</strong>
+                              </p>
+                              <p>
+                                Consistency Score:{' '}
+                                <strong>{advancedMetrics.consistencyScore.toFixed(1)}%</strong>
+                              </p>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2">
+                              {advancedMetrics.consistencyScore >= 90
+                                ? '🌟 Extremely consistent!'
+                                : advancedMetrics.consistencyScore >= 70
+                                  ? '✅ Good consistency'
+                                  : advancedMetrics.consistencyScore >= 50
+                                    ? '⚠️ Moderate variation'
+                                    : '📉 High variation between semesters'}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      {selectedKPI === 'efficiency' && (
+                        <>
+                          <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
+                            <span className="text-purple-500">⚡</span> Credit Efficiency
+                          </h4>
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
+                            Shows how many grade points you earn per credit. Higher values indicate
+                            better utilization of credit hours.
+                          </p>
+                          <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                            <p className="text-xs font-medium mb-2">Formula:</p>
+                            <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-2">
+                              Efficiency = Total Quality Points / Total Credits
+                            </code>
+                            <div className="text-xs space-y-1">
+                              <p>
+                                Total Quality Points:{' '}
+                                <strong>
+                                  {(gradesData.cgpa * gradesData.totalCredits).toFixed(2)}
+                                </strong>
+                              </p>
+                              <p>
+                                Total Credits: <strong>{gradesData.totalCredits}</strong>
+                              </p>
+                              <p>
+                                Efficiency:{' '}
+                                <strong>
+                                  {advancedMetrics.creditEfficiency.toFixed(2)} points/credit
+                                </strong>
+                              </p>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2">
+                              {advancedMetrics.creditEfficiency >= 9
+                                ? '🏆 Outstanding efficiency!'
+                                : advancedMetrics.creditEfficiency >= 8
+                                  ? '🌟 Excellent efficiency'
+                                  : advancedMetrics.creditEfficiency >= 7
+                                    ? '✅ Good efficiency'
+                                    : '📊 Room for improvement'}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      {selectedKPI === 'trend' && (
+                        <>
+                          <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
+                            <span className="text-orange-500">{trend.emoji}</span> Performance Trend
+                          </h4>
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
+                            Analyzes the direction of your academic performance over time using
+                            linear regression on your SGPAs.
+                          </p>
+                          <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                            <p className="text-xs font-medium mb-2">Analysis Method:</p>
+                            <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-2">
+                              Slope = Linear regression of SGPA over semesters
+                            </code>
+                            <div className="text-xs space-y-1">
+                              <p>
+                                Slope:{' '}
+                                <strong
+                                  className={
+                                    advancedMetrics.slope > 0
+                                      ? 'text-green-600'
+                                      : advancedMetrics.slope < 0
+                                        ? 'text-red-600'
+                                        : ''
+                                  }
+                                >
+                                  {advancedMetrics.slope > 0 ? '+' : ''}
+                                  {(advancedMetrics.slope * 100).toFixed(2)}% per semester
+                                </strong>
+                              </p>
+                              <p>
+                                Status:{' '}
+                                <strong className={trend.color}>
+                                  {advancedMetrics.trajectoryStatus}
+                                </strong>
+                              </p>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2">{trend.message}</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setSelectedKPI(null)}
+                      className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors ml-3"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </motion.div>
-            )}
+                      <svg
+                        className="w-4 h-4 sm:w-5 sm:h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Performance Summary Cards */}
             <motion.div
@@ -2413,179 +2418,182 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
             </motion.div>
 
             {/* Excellence/Workload/Risk Explanation Panel */}
-            {(selectedKPI === 'excellence' ||
-              selectedKPI === 'workload' ||
-              selectedKPI === 'risk') && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
-                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4 sm:p-5 border-l-4 border-primary overflow-hidden"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    {selectedKPI === 'excellence' && (
-                      <>
-                        <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
-                          <span className="text-emerald-500">🏆</span> Excellence Metrics
-                        </h4>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
-                          Measures your top performance indicators including rate of excellent
-                          grades and performance in high-credit courses.
-                        </p>
-                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg space-y-3">
-                          <div>
-                            <p className="text-xs font-medium mb-1">Excellence Rate:</p>
-                            <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
-                              (A+ & A grades count / Total courses) × 100
-                            </code>
-                            <p className="text-xs text-slate-500 mt-1">
-                              Your rate:{' '}
-                              <strong>{advancedMetrics.excellenceRate.toFixed(1)}%</strong> of
-                              courses are A+ or A
-                            </p>
+            <AnimatePresence>
+              {(selectedKPI === 'excellence' ||
+                selectedKPI === 'workload' ||
+                selectedKPI === 'risk') && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                  animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  className="bg-white dark:bg-dark-card rounded-xl shadow-lg p-4 sm:p-5 border-l-4 border-primary overflow-hidden"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      {selectedKPI === 'excellence' && (
+                        <>
+                          <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
+                            <span className="text-emerald-500">🏆</span> Excellence Metrics
+                          </h4>
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
+                            Measures your top performance indicators including rate of excellent
+                            grades and performance in high-credit courses.
+                          </p>
+                          <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg space-y-3">
+                            <div>
+                              <p className="text-xs font-medium mb-1">Excellence Rate:</p>
+                              <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
+                                (A+ & A grades count / Total courses) × 100
+                              </code>
+                              <p className="text-xs text-slate-500 mt-1">
+                                Your rate:{' '}
+                                <strong>{advancedMetrics.excellenceRate.toFixed(1)}%</strong> of
+                                courses are A+ or A
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium mb-1">Best Semester:</p>
+                              <p className="text-xs text-slate-500">
+                                Semester <strong>{advancedMetrics.bestSemester.semester}</strong>{' '}
+                                with SGPA{' '}
+                                <strong>{advancedMetrics.bestSemester.sgpa.toFixed(2)}</strong>
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium mb-1">High-Credit Average:</p>
+                              <p className="text-xs text-slate-500">
+                                Average grade in courses with ≥{courseOption === 'NEP' ? '3' : '9'}{' '}
+                                credits: <strong>{advancedMetrics.highCreditAvg.toFixed(2)}</strong>
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-xs font-medium mb-1">Best Semester:</p>
-                            <p className="text-xs text-slate-500">
-                              Semester <strong>{advancedMetrics.bestSemester.semester}</strong> with
-                              SGPA <strong>{advancedMetrics.bestSemester.sgpa.toFixed(2)}</strong>
-                            </p>
+                        </>
+                      )}
+                      {selectedKPI === 'workload' && (
+                        <>
+                          <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
+                            <span className="text-blue-500">📊</span> Workload Analysis
+                          </h4>
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
+                            Analyzes your course load distribution across semesters to understand
+                            your academic intensity.
+                          </p>
+                          <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg space-y-3">
+                            <div>
+                              <p className="text-xs font-medium mb-1">
+                                Average Credits per Semester:
+                              </p>
+                              <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
+                                Total Credits / Number of Semesters
+                              </code>
+                              <p className="text-xs text-slate-500 mt-1">
+                                {gradesData.totalCredits} / {gradesData.semesters.length} ={' '}
+                                <strong>
+                                  {advancedMetrics.avgCreditsPerSem.toFixed(1)} credits/sem
+                                </strong>
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium mb-1">
+                                Maximum Credits in a Semester:
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                Heaviest semester had{' '}
+                                <strong>{advancedMetrics.maxCreditsInSem} credits</strong>
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium mb-1">Total Unique Courses:</p>
+                              <p className="text-xs text-slate-500">
+                                <strong>{latestGrades.length}</strong> courses completed (retakes
+                                counted once)
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-xs font-medium mb-1">High-Credit Average:</p>
-                            <p className="text-xs text-slate-500">
-                              Average grade in courses with ≥{courseOption === 'NEP' ? '3' : '9'}{' '}
-                              credits: <strong>{advancedMetrics.highCreditAvg.toFixed(2)}</strong>
-                            </p>
+                        </>
+                      )}
+                      {selectedKPI === 'risk' && (
+                        <>
+                          <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
+                            <span className="text-amber-500">⚠️</span> Risk Assessment
+                          </h4>
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
+                            Identifies courses that may need attention and calculates potential CGPA
+                            improvement.
+                          </p>
+                          <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg space-y-3">
+                            <div>
+                              <p className="text-xs font-medium mb-1">Failed Courses (F grade):</p>
+                              <p className="text-xs text-slate-500">
+                                <strong
+                                  className={
+                                    advancedMetrics.failedCourses.length > 0
+                                      ? 'text-red-600'
+                                      : 'text-green-600'
+                                  }
+                                >
+                                  {advancedMetrics.failedCourses.length}
+                                </strong>{' '}
+                                {advancedMetrics.failedCourses.length === 0
+                                  ? '- No failed courses!'
+                                  : 'courses need retaking'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium mb-1">At-Risk Courses (D or F):</p>
+                              <p className="text-xs text-slate-500">
+                                <strong
+                                  className={
+                                    advancedMetrics.atRiskCourses.length > 0
+                                      ? 'text-orange-600'
+                                      : 'text-green-600'
+                                  }
+                                >
+                                  {advancedMetrics.atRiskCourses.length}
+                                </strong>{' '}
+                                courses below C grade
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium mb-1">Improvement Potential:</p>
+                              <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
+                                Max CGPA (10) - Current CGPA
+                              </code>
+                              <p className="text-xs text-slate-500 mt-1">
+                                10.00 - {gradesData.cgpa.toFixed(2)} ={' '}
+                                <strong>
+                                  {advancedMetrics.improvementPotential.toFixed(2)} points
+                                </strong>{' '}
+                                possible gain
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </>
-                    )}
-                    {selectedKPI === 'workload' && (
-                      <>
-                        <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
-                          <span className="text-blue-500">📊</span> Workload Analysis
-                        </h4>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
-                          Analyzes your course load distribution across semesters to understand your
-                          academic intensity.
-                        </p>
-                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg space-y-3">
-                          <div>
-                            <p className="text-xs font-medium mb-1">
-                              Average Credits per Semester:
-                            </p>
-                            <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
-                              Total Credits / Number of Semesters
-                            </code>
-                            <p className="text-xs text-slate-500 mt-1">
-                              {gradesData.totalCredits} / {gradesData.semesters.length} ={' '}
-                              <strong>
-                                {advancedMetrics.avgCreditsPerSem.toFixed(1)} credits/sem
-                              </strong>
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium mb-1">
-                              Maximum Credits in a Semester:
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              Heaviest semester had{' '}
-                              <strong>{advancedMetrics.maxCreditsInSem} credits</strong>
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium mb-1">Total Unique Courses:</p>
-                            <p className="text-xs text-slate-500">
-                              <strong>{latestGrades.length}</strong> courses completed (retakes
-                              counted once)
-                            </p>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                    {selectedKPI === 'risk' && (
-                      <>
-                        <h4 className="font-semibold text-base sm:text-lg mb-2 flex items-center gap-2">
-                          <span className="text-amber-500">⚠️</span> Risk Assessment
-                        </h4>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
-                          Identifies courses that may need attention and calculates potential CGPA
-                          improvement.
-                        </p>
-                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg space-y-3">
-                          <div>
-                            <p className="text-xs font-medium mb-1">Failed Courses (F grade):</p>
-                            <p className="text-xs text-slate-500">
-                              <strong
-                                className={
-                                  advancedMetrics.failedCourses.length > 0
-                                    ? 'text-red-600'
-                                    : 'text-green-600'
-                                }
-                              >
-                                {advancedMetrics.failedCourses.length}
-                              </strong>{' '}
-                              {advancedMetrics.failedCourses.length === 0
-                                ? '- No failed courses!'
-                                : 'courses need retaking'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium mb-1">At-Risk Courses (D or F):</p>
-                            <p className="text-xs text-slate-500">
-                              <strong
-                                className={
-                                  advancedMetrics.atRiskCourses.length > 0
-                                    ? 'text-orange-600'
-                                    : 'text-green-600'
-                                }
-                              >
-                                {advancedMetrics.atRiskCourses.length}
-                              </strong>{' '}
-                              courses below C grade
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium mb-1">Improvement Potential:</p>
-                            <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
-                              Max CGPA (10) - Current CGPA
-                            </code>
-                            <p className="text-xs text-slate-500 mt-1">
-                              10.00 - {gradesData.cgpa.toFixed(2)} ={' '}
-                              <strong>
-                                {advancedMetrics.improvementPotential.toFixed(2)} points
-                              </strong>{' '}
-                              possible gain
-                            </p>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setSelectedKPI(null)}
-                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors ml-3"
-                  >
-                    <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                        </>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setSelectedKPI(null)}
+                      className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors ml-3"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </motion.div>
-            )}
+                      <svg
+                        className="w-4 h-4 sm:w-5 sm:h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Subject Category Performance */}
             <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -2618,66 +2626,69 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 </button>
               </div>
 
-              {selectedGrade === 'info-subject-category' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mb-4 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
-                >
-                  <h5 className="font-semibold text-sm mb-2 text-amber-900 dark:text-amber-300">
-                    📚 What is Subject Category Performance?
-                  </h5>
-                  <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-200 mb-3">
-                    This ranks your performance across different departments based on average grade
-                    points, helping you identify your academic strengths and weaknesses.
-                  </p>
-                  <div className="space-y-2 text-xs sm:text-sm">
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
-                        Understanding the ranking:
-                      </p>
-                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                        <li>
-                          <strong>🥇 1st Place</strong>: Gold highlight - Your strongest subject
-                          area
-                        </li>
-                        <li>
-                          <strong>🥈 2nd Place</strong>: Silver highlight - Second-best performance
-                        </li>
-                        <li>
-                          <strong>🥉 3rd Place</strong>: Bronze highlight - Third-best performance
-                        </li>
-                      </ul>
+              <AnimatePresence>
+                {selectedGrade === 'info-subject-category' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
+                  >
+                    <h5 className="font-semibold text-sm mb-2 text-amber-900 dark:text-amber-300">
+                      📚 What is Subject Category Performance?
+                    </h5>
+                    <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-200 mb-3">
+                      This ranks your performance across different departments based on average
+                      grade points, helping you identify your academic strengths and weaknesses.
+                    </p>
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
+                          Understanding the ranking:
+                        </p>
+                        <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                          <li>
+                            <strong>🥇 1st Place</strong>: Gold highlight - Your strongest subject
+                            area
+                          </li>
+                          <li>
+                            <strong>🥈 2nd Place</strong>: Silver highlight - Second-best
+                            performance
+                          </li>
+                          <li>
+                            <strong>🥉 3rd Place</strong>: Bronze highlight - Third-best performance
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
+                          How average is calculated:
+                        </p>
+                        <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
+                          Category Average = Σ(Grade Points) / Number of Courses in Category
+                        </code>
+                        <p className="text-slate-700 dark:text-slate-300 text-xs">
+                          <em>
+                            Example: Courses with grades A (9), A+ (10), B+ (8) → Average =
+                            (9+10+8)/3 = 9.0
+                          </em>
+                        </p>
+                      </div>
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
+                          Why this matters:
+                        </p>
+                        <p className="text-slate-700 dark:text-slate-300">
+                          Identifying your strongest and weakest subject categories helps you make
+                          informed decisions about electives, specializations, and career paths. It
+                          also reveals where you might need extra support or tutoring. Click on any
+                          category to see individual course details.
+                        </p>
+                      </div>
                     </div>
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
-                        How average is calculated:
-                      </p>
-                      <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
-                        Category Average = Σ(Grade Points) / Number of Courses in Category
-                      </code>
-                      <p className="text-slate-700 dark:text-slate-300 text-xs">
-                        <em>
-                          Example: Courses with grades A (9), A+ (10), B+ (8) → Average = (9+10+8)/3
-                          = 9.0
-                        </em>
-                      </p>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-amber-900 dark:text-amber-300 mb-1">
-                        Why this matters:
-                      </p>
-                      <p className="text-slate-700 dark:text-slate-300">
-                        Identifying your strongest and weakest subject categories helps you make
-                        informed decisions about electives, specializations, and career paths. It
-                        also reveals where you might need extra support or tutoring. Click on any
-                        category to see individual course details.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <motion.div
                 className="space-y-2 sm:space-y-3"
                 variants={STAGGER}
@@ -2758,43 +2769,45 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                       </div>
                     </div>
 
-                    {selectedCategory === subject.category && (
-                      <motion.div
-                        className="mt-2 ml-4 space-y-2"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                      >
-                        {subject.courses.map((course: any, courseIndex: number) => (
-                          <div
-                            key={courseIndex}
-                            className="flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">{course.subjectCode}</span>
-                                <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-600 rounded-full">
-                                  Semester {course.semester}
+                    <AnimatePresence>
+                      {selectedCategory === subject.category && (
+                        <motion.div
+                          className="mt-2 ml-4 space-y-2"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                        >
+                          {subject.courses.map((course: any, courseIndex: number) => (
+                            <div
+                              key={courseIndex}
+                              className="flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600"
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">{course.subjectCode}</span>
+                                  <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-600 rounded-full">
+                                    Semester {course.semester}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                                  {course.subjectName}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-slate-500">
+                                  {course.credits} credits
+                                </span>
+                                <span
+                                  className={`px-3 py-1 rounded-full text-sm font-bold ${getGradeColor(course.grade)}`}
+                                >
+                                  {course.grade}
                                 </span>
                               </div>
-                              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                                {course.subjectName}
-                              </p>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs text-slate-500">
-                                {course.credits} credits
-                              </span>
-                              <span
-                                className={`px-3 py-1 rounded-full text-sm font-bold ${getGradeColor(course.grade)}`}
-                              >
-                                {course.grade}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </motion.div>
-                    )}
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 ))}
               </motion.div>
@@ -2871,60 +2884,63 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
               </div>
 
               {/* Info Box */}
-              {selectedGrade === 'info-performance-graph' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mb-4 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
-                >
-                  <h5 className="font-semibold text-sm mb-2 text-blue-900 dark:text-blue-300">
-                    📊 Understanding the Performance Graph
-                  </h5>
-                  <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 mb-3">
-                    This graph visualizes your academic performance across all semesters, showing
-                    both SGPA (Semester GPA) and CGPA (Cumulative GPA) trends.
-                  </p>
-                  <div className="space-y-2 text-xs sm:text-sm">
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
-                        What you're seeing:
-                      </p>
-                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                        <li>
-                          <strong className="text-emerald-600">Green line (SGPA)</strong>: Your
-                          grade point average for each individual semester
-                        </li>
-                        <li>
-                          <strong className="text-blue-600">Blue line (CGPA)</strong>: Your
-                          cumulative GPA from semester 1 up to that point
-                        </li>
-                        <li>
-                          <strong>Hover on points</strong>: See exact values, credits, and course
-                          count for each semester
-                        </li>
-                      </ul>
+              <AnimatePresence>
+                {selectedGrade === 'info-performance-graph' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+                  >
+                    <h5 className="font-semibold text-sm mb-2 text-blue-900 dark:text-blue-300">
+                      📊 Understanding the Performance Graph
+                    </h5>
+                    <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 mb-3">
+                      This graph visualizes your academic performance across all semesters, showing
+                      both SGPA (Semester GPA) and CGPA (Cumulative GPA) trends.
+                    </p>
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
+                          What you're seeing:
+                        </p>
+                        <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                          <li>
+                            <strong className="text-emerald-600">Green line (SGPA)</strong>: Your
+                            grade point average for each individual semester
+                          </li>
+                          <li>
+                            <strong className="text-blue-600">Blue line (CGPA)</strong>: Your
+                            cumulative GPA from semester 1 up to that point
+                          </li>
+                          <li>
+                            <strong>Hover on points</strong>: See exact values, credits, and course
+                            count for each semester
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
+                          How to interpret:
+                        </p>
+                        <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                          <li>
+                            CGPA is always more stable than SGPA as it averages all your semesters
+                          </li>
+                          <li>
+                            A rising CGPA indicates consistent improvement in your overall
+                            performance
+                          </li>
+                          <li>
+                            Summary cards below show your Best SGPA, Current CGPA, Average SGPA, and
+                            total semesters
+                          </li>
+                        </ul>
+                      </div>
                     </div>
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
-                        How to interpret:
-                      </p>
-                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                        <li>
-                          CGPA is always more stable than SGPA as it averages all your semesters
-                        </li>
-                        <li>
-                          A rising CGPA indicates consistent improvement in your overall performance
-                        </li>
-                        <li>
-                          Summary cards below show your Best SGPA, Current CGPA, Average SGPA, and
-                          total semesters
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Recharts Line Chart */}
               {(() => {
@@ -3249,68 +3265,70 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 </button>
               </div>
 
-              {selectedGrade === 'info-sgpa-trend' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mb-4 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
-                >
-                  <h5 className="font-semibold text-sm mb-2 text-green-900 dark:text-green-300">
-                    📈 What is SGPA Trend?
-                  </h5>
-                  <p className="text-xs sm:text-sm text-green-800 dark:text-green-200 mb-3">
-                    This chart shows your Semester Grade Point Average (SGPA) for each semester,
-                    helping you track your academic performance over time.
-                  </p>
-                  <div className="space-y-2 text-xs sm:text-sm">
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-green-900 dark:text-green-300 mb-1">
-                        What you're seeing:
-                      </p>
-                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                        <li>
-                          <strong>Bar length</strong>: Represents SGPA on a scale of 0-10
-                        </li>
-                        <li>
-                          <strong>Delta arrows</strong>: Show change from previous semester (↑
-                          improvement, ↓ decline)
-                        </li>
-                        <li>
-                          <strong>Bar color</strong>: Green if above average SGPA, Orange if below
-                          average
-                        </li>
-                      </ul>
+              <AnimatePresence>
+                {selectedGrade === 'info-sgpa-trend' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
+                  >
+                    <h5 className="font-semibold text-sm mb-2 text-green-900 dark:text-green-300">
+                      📈 What is SGPA Trend?
+                    </h5>
+                    <p className="text-xs sm:text-sm text-green-800 dark:text-green-200 mb-3">
+                      This chart shows your Semester Grade Point Average (SGPA) for each semester,
+                      helping you track your academic performance over time.
+                    </p>
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-green-900 dark:text-green-300 mb-1">
+                          What you're seeing:
+                        </p>
+                        <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                          <li>
+                            <strong>Bar length</strong>: Represents SGPA on a scale of 0-10
+                          </li>
+                          <li>
+                            <strong>Delta arrows</strong>: Show change from previous semester (↑
+                            improvement, ↓ decline)
+                          </li>
+                          <li>
+                            <strong>Bar color</strong>: Green if above average SGPA, Orange if below
+                            average
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-green-900 dark:text-green-300 mb-1">
+                          How SGPA is calculated:
+                        </p>
+                        <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
+                          SGPA = Σ(Grade Points × Credits) / Total Credits in Semester
+                        </code>
+                        <p className="text-slate-700 dark:text-slate-300 text-xs">
+                          <em>
+                            Example: If you scored A (9 pts) in a 4-credit course and B+ (8 pts) in
+                            a 3-credit course: SGPA = (9×4 + 8×3) / (4+3) = 60/7 = 8.57
+                          </em>
+                        </p>
+                      </div>
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-green-900 dark:text-green-300 mb-1">
+                          Why this matters:
+                        </p>
+                        <p className="text-slate-700 dark:text-slate-300">
+                          SGPA trends reveal your academic momentum and consistency. An upward trend
+                          shows improvement and adaptation to academic challenges, while a downward
+                          trend signals the need to adjust study strategies. Unlike CGPA (which
+                          averages all semesters), SGPA lets you see performance variations semester
+                          by semester, helping you identify what works and what doesn't.
+                        </p>
+                      </div>
                     </div>
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-green-900 dark:text-green-300 mb-1">
-                        How SGPA is calculated:
-                      </p>
-                      <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
-                        SGPA = Σ(Grade Points × Credits) / Total Credits in Semester
-                      </code>
-                      <p className="text-slate-700 dark:text-slate-300 text-xs">
-                        <em>
-                          Example: If you scored A (9 pts) in a 4-credit course and B+ (8 pts) in a
-                          3-credit course: SGPA = (9×4 + 8×3) / (4+3) = 60/7 = 8.57
-                        </em>
-                      </p>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-green-900 dark:text-green-300 mb-1">
-                        Why this matters:
-                      </p>
-                      <p className="text-slate-700 dark:text-slate-300">
-                        SGPA trends reveal your academic momentum and consistency. An upward trend
-                        shows improvement and adaptation to academic challenges, while a downward
-                        trend signals the need to adjust study strategies. Unlike CGPA (which
-                        averages all semesters), SGPA lets you see performance variations semester
-                        by semester, helping you identify what works and what doesn't.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <motion.div
                 className="space-y-3 sm:space-y-4"
                 variants={STAGGER}
@@ -3409,65 +3427,68 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 </button>
               </div>
 
-              {selectedGrade === 'info-credit-progression' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mb-4 p-3 sm:p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800"
-                >
-                  <h5 className="font-semibold text-sm mb-2 text-indigo-900 dark:text-indigo-300">
-                    📚 What is Cumulative Credit Progression?
-                  </h5>
-                  <p className="text-xs sm:text-sm text-indigo-800 dark:text-indigo-200 mb-3">
-                    This chart tracks how your total earned credits accumulate over time, showing
-                    your progress toward degree completion.
-                  </p>
-                  <div className="space-y-2 text-xs sm:text-sm">
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
-                        Understanding the visualization:
-                      </p>
-                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                        <li>
-                          <strong>Bar length</strong>: Shows cumulative credits earned up to that
-                          semester
-                        </li>
-                        <li>
-                          <strong>+X credits</strong>: New credits earned in that specific semester
-                        </li>
-                        <li>
-                          <strong>Total</strong>: Running total of all credits earned so far
-                        </li>
-                      </ul>
+              <AnimatePresence>
+                {selectedGrade === 'info-credit-progression' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 p-3 sm:p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800"
+                  >
+                    <h5 className="font-semibold text-sm mb-2 text-indigo-900 dark:text-indigo-300">
+                      📚 What is Cumulative Credit Progression?
+                    </h5>
+                    <p className="text-xs sm:text-sm text-indigo-800 dark:text-indigo-200 mb-3">
+                      This chart tracks how your total earned credits accumulate over time, showing
+                      your progress toward degree completion.
+                    </p>
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
+                          Understanding the visualization:
+                        </p>
+                        <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                          <li>
+                            <strong>Bar length</strong>: Shows cumulative credits earned up to that
+                            semester
+                          </li>
+                          <li>
+                            <strong>+X credits</strong>: New credits earned in that specific
+                            semester
+                          </li>
+                          <li>
+                            <strong>Total</strong>: Running total of all credits earned so far
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
+                          How it's calculated:
+                        </p>
+                        <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
+                          Cumulative Credits = Previous Total + Current Semester Credits
+                        </code>
+                        <p className="text-slate-700 dark:text-slate-300 text-xs">
+                          <em>
+                            Example: Sem 1 (20 credits) → Sem 2 (+22 credits) = 42 total → Sem 3
+                            (+20 credits) = 62 total
+                          </em>
+                        </p>
+                      </div>
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
+                          Why this matters:
+                        </p>
+                        <p className="text-slate-700 dark:text-slate-300">
+                          Tracking credit accumulation helps you monitor degree progress and ensures
+                          you're on pace to meet graduation requirements. Consistent credit
+                          progression indicates steady academic advancement.
+                        </p>
+                      </div>
                     </div>
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
-                        How it's calculated:
-                      </p>
-                      <code className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded block mb-1">
-                        Cumulative Credits = Previous Total + Current Semester Credits
-                      </code>
-                      <p className="text-slate-700 dark:text-slate-300 text-xs">
-                        <em>
-                          Example: Sem 1 (20 credits) → Sem 2 (+22 credits) = 42 total → Sem 3 (+20
-                          credits) = 62 total
-                        </em>
-                      </p>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-indigo-900 dark:text-indigo-300 mb-1">
-                        Why this matters:
-                      </p>
-                      <p className="text-slate-700 dark:text-slate-300">
-                        Tracking credit accumulation helps you monitor degree progress and ensures
-                        you're on pace to meet graduation requirements. Consistent credit
-                        progression indicates steady academic advancement.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <motion.div className="space-y-3" variants={STAGGER} initial="hidden" animate="show">
                 {(() => {
                   // Track unique courses to avoid counting retakes multiple times
@@ -3569,51 +3590,53 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 </button>
               </div>
 
-              {selectedGrade === 'info-distribution' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mb-4 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
-                >
-                  <h5 className="font-semibold text-sm mb-2 text-blue-900 dark:text-blue-300">
-                    📊 What is Grade Distribution?
-                  </h5>
-                  <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 mb-3">
-                    This shows how your grades are spread across different grade categories (A+, A,
-                    B+, etc.). Each card displays courses that share the same grade.
-                  </p>
-                  <div className="space-y-2 text-xs sm:text-sm">
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
-                        What the numbers mean:
-                      </p>
-                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                        <li>
-                          <strong>Count</strong>: Number of courses with that grade
-                        </li>
-                        <li>
-                          <strong>Credits</strong>: Total credits from those courses
-                        </li>
-                        <li>
-                          <strong>Percentage</strong>: (Total credits with that grade ÷ Total
-                          credits earned) × 100
-                        </li>
-                      </ul>
+              <AnimatePresence>
+                {selectedGrade === 'info-distribution' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+                  >
+                    <h5 className="font-semibold text-sm mb-2 text-blue-900 dark:text-blue-300">
+                      📊 What is Grade Distribution?
+                    </h5>
+                    <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 mb-3">
+                      This shows how your grades are spread across different grade categories (A+,
+                      A, B+, etc.). Each card displays courses that share the same grade.
+                    </p>
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
+                          What the numbers mean:
+                        </p>
+                        <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                          <li>
+                            <strong>Count</strong>: Number of courses with that grade
+                          </li>
+                          <li>
+                            <strong>Credits</strong>: Total credits from those courses
+                          </li>
+                          <li>
+                            <strong>Percentage</strong>: (Total credits with that grade ÷ Total
+                            credits earned) × 100
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
+                          Why credit-weighted?
+                        </p>
+                        <p className="text-slate-700 dark:text-slate-300">
+                          Higher credit courses impact your CGPA more than lower credit courses. The
+                          percentage reflects this by showing what portion of your total credits
+                          each grade represents.
+                        </p>
+                      </div>
                     </div>
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-blue-900 dark:text-blue-300 mb-1">
-                        Why credit-weighted?
-                      </p>
-                      <p className="text-slate-700 dark:text-slate-300">
-                        Higher credit courses impact your CGPA more than lower credit courses. The
-                        percentage reflects this by showing what portion of your total credits each
-                        grade represents.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <motion.div
                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3"
                 variants={STAGGER}
@@ -3754,70 +3777,74 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                 </button>
               </div>
 
-              {selectedGrade === 'info-tiers' && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mb-4 p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
-                >
-                  <h5 className="font-semibold text-sm mb-2 text-purple-900 dark:text-purple-300">
-                    🎯 What is Performance Tier Breakdown?
-                  </h5>
-                  <p className="text-xs sm:text-sm text-purple-800 dark:text-purple-200 mb-3">
-                    This groups your grades into 4 performance categories, making it easy to see the
-                    overall quality distribution of your academic performance.
-                  </p>
-                  <div className="space-y-2 text-xs sm:text-sm">
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
-                        The Four Tiers:
-                      </p>
-                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
-                        <li>
-                          <strong>Excellent</strong> (A+, A): Outstanding performance, 9-10 grade
-                          points
-                        </li>
-                        <li>
-                          <strong>Good</strong> (B+, B): Above average performance, 7-8 grade points
-                        </li>
-                        <li>
-                          <strong>Average</strong> (C+, C): Satisfactory performance, 5-6 grade
-                          points
-                        </li>
-                        <li>
-                          <strong>Below Average</strong> (D, F): Needs improvement, 0-4 grade points
-                        </li>
-                      </ul>
+              <AnimatePresence>
+                {selectedGrade === 'info-tiers' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
+                  >
+                    <h5 className="font-semibold text-sm mb-2 text-purple-900 dark:text-purple-300">
+                      🎯 What is Performance Tier Breakdown?
+                    </h5>
+                    <p className="text-xs sm:text-sm text-purple-800 dark:text-purple-200 mb-3">
+                      This groups your grades into 4 performance categories, making it easy to see
+                      the overall quality distribution of your academic performance.
+                    </p>
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
+                          The Four Tiers:
+                        </p>
+                        <ul className="space-y-1 text-slate-700 dark:text-slate-300 ml-4 list-disc">
+                          <li>
+                            <strong>Excellent</strong> (A+, A): Outstanding performance, 9-10 grade
+                            points
+                          </li>
+                          <li>
+                            <strong>Good</strong> (B+, B): Above average performance, 7-8 grade
+                            points
+                          </li>
+                          <li>
+                            <strong>Average</strong> (C+, C): Satisfactory performance, 5-6 grade
+                            points
+                          </li>
+                          <li>
+                            <strong>Below Average</strong> (D, F): Needs improvement, 0-4 grade
+                            points
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
+                          How percentages are calculated:
+                        </p>
+                        <p className="text-slate-700 dark:text-slate-300 mb-2">
+                          <strong>Bar Percentage</strong>: (Number of courses in tier ÷ Total number
+                          of courses) × 100
+                        </p>
+                        <p className="text-slate-700 dark:text-slate-300 text-xs">
+                          <em>
+                            Example: If you have 20 total courses and 8 are in the "Excellent" tier,
+                            the bar shows 40%
+                          </em>
+                        </p>
+                      </div>
+                      <div className="bg-white dark:bg-slate-800 p-2 rounded">
+                        <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
+                          Why this matters:
+                        </p>
+                        <p className="text-slate-700 dark:text-slate-300">
+                          While CGPA gives you a single number, tier breakdown shows the
+                          distribution of your performance. A higher concentration in "Excellent"
+                          and "Good" tiers indicates consistent strong performance.
+                        </p>
+                      </div>
                     </div>
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
-                        How percentages are calculated:
-                      </p>
-                      <p className="text-slate-700 dark:text-slate-300 mb-2">
-                        <strong>Bar Percentage</strong>: (Number of courses in tier ÷ Total number
-                        of courses) × 100
-                      </p>
-                      <p className="text-slate-700 dark:text-slate-300 text-xs">
-                        <em>
-                          Example: If you have 20 total courses and 8 are in the "Excellent" tier,
-                          the bar shows 40%
-                        </em>
-                      </p>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded">
-                      <p className="font-medium text-purple-900 dark:text-purple-300 mb-1">
-                        Why this matters:
-                      </p>
-                      <p className="text-slate-700 dark:text-slate-300">
-                        While CGPA gives you a single number, tier breakdown shows the distribution
-                        of your performance. A higher concentration in "Excellent" and "Good" tiers
-                        indicates consistent strong performance.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <motion.div
                 className="space-y-3 sm:space-y-4"
                 variants={STAGGER}
@@ -4153,54 +4180,56 @@ const Grades: React.FC = () => {
             )}
 
             {/* Drop success animation */}
-            {dropSuccess && (
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center bg-green-50 dark:bg-green-900/30 rounded-xl z-20 pointer-events-none"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
-              >
+            <AnimatePresence>
+              {dropSuccess && (
                 <motion.div
-                  className="text-center"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 15 }}
+                  className="absolute inset-0 flex items-center justify-center bg-green-50 dark:bg-green-900/30 rounded-xl z-20 pointer-events-none"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
                 >
                   <motion.div
-                    className="w-14 h-14 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg"
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 12 }}
+                    className="text-center"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 15 }}
                   >
-                    <svg
-                      className="w-8 h-8 sm:w-9 sm:h-9 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                    <motion.div
+                      className="w-14 h-14 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg"
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 12 }}
                     >
-                      <motion.path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={3}
-                        d="M5 13l4 4L19 7"
-                        initial={{ pathLength: 0 }}
-                        animate={{ pathLength: 1 }}
-                        transition={{ delay: 0.3, duration: 0.4, ease: 'easeOut' }}
-                      />
-                    </svg>
+                      <svg
+                        className="w-8 h-8 sm:w-9 sm:h-9 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <motion.path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M5 13l4 4L19 7"
+                          initial={{ pathLength: 0 }}
+                          animate={{ pathLength: 1 }}
+                          transition={{ delay: 0.3, duration: 0.4, ease: 'easeOut' }}
+                        />
+                      </svg>
+                    </motion.div>
+                    <motion.p
+                      className="text-green-700 dark:text-green-300 font-semibold text-sm sm:text-base"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4, duration: 0.3 }}
+                    >
+                      File received!
+                    </motion.p>
                   </motion.div>
-                  <motion.p
-                    className="text-green-700 dark:text-green-300 font-semibold text-sm sm:text-base"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4, duration: 0.3 }}
-                  >
-                    File received!
-                  </motion.p>
                 </motion.div>
-              </motion.div>
-            )}
+              )}
+            </AnimatePresence>
 
             {!selectedFile && !imagePreview ? (
               <div className={`space-y-3 sm:space-y-4 ${isDragging ? 'opacity-30' : ''}`}>

@@ -34,7 +34,7 @@ export const FRAME_OPTIONS = [
     id: 'holographic',
     name: 'Holo',
     class:
-      'p-1 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 animate-gradient-x shadow-lg rounded-full',
+      'p-1 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-[length:200%_200%] animate-gradient-shift shadow-lg rounded-full',
   },
   {
     id: 'neon-blue',
