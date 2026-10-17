@@ -1,3 +1,4 @@
+import { AnimatedList } from '@components/ui/AnimatedList';
 import { useUser } from '@contexts/UserContext';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { subscribeDemoState, updateDemoState } from '@features/demo/demoStore';
@@ -170,7 +171,7 @@ const NotificationCenter: React.FC = () => {
                 <p className="text-xs sm:text-sm">No notifications yet</p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              <AnimatedList className="divide-y divide-slate-100 dark:divide-slate-800">
                 {notifications.map((notif) => {
                   const isExpanded = expandedNotifId === notif.id;
                   return (
@@ -289,7 +290,7 @@ const NotificationCenter: React.FC = () => {
                     </div>
                   );
                 })}
-              </div>
+              </AnimatedList>
             )}
           </div>
         </div>

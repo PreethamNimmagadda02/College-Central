@@ -1,3 +1,5 @@
+import { AnimatedCircularProgressBar } from '@components/ui/AnimatedCircularProgressBar';
+import { NumberTicker } from '@components/ui/NumberTicker';
 import { useCalendar } from '@contexts/CalendarContext';
 import { formatDateRange, formatDateWithMonthName } from '@lib/utils/dateUtils';
 import { getCountdownEvents, getEventEmoji, getUpcomingEvents } from '@lib/utils/eventUtils';
@@ -596,7 +598,7 @@ const AcademicCalendar: React.FC = () => {
             <div>
               <p className="text-blue-100 text-xs md:text-sm font-semibold">Total Events</p>
               <p className="text-2xl md:text-3xl font-black mt-1 group-hover:scale-110 transition-transform origin-left">
-                {calendarData.events.length}
+                <NumberTicker value={calendarData.events.length} />
               </p>
             </div>
             <div className="text-2xl md:text-3xl opacity-70 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
@@ -735,36 +737,15 @@ const AcademicCalendar: React.FC = () => {
                   </button>
 
                   <div className="relative z-10 flex items-center gap-3 sm:gap-5">
-                    {/* Progress Ring Visual */}
-                    <div className="relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20">
-                      <svg
-                        className="w-full h-full -rotate-90 transform group-hover:rotate-12 transition-transform duration-500"
-                        viewBox="0 0 36 36"
-                      >
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="15"
-                          fill="none"
-                          stroke="rgba(255,255,255,0.2)"
-                          strokeWidth="3"
-                        />
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="15"
-                          fill="none"
-                          stroke="white"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeDasharray={`${urgencyPercent}, 100`}
-                          className="transition-all duration-1000 ease-out"
-                        />
-                      </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl drop-shadow-md">
-                        {getEventEmoji(event)}
-                      </span>
-                    </div>
+                    {/* Fills as the event gets closer (a full ring is under a day away) */}
+                    <AnimatedCircularProgressBar
+                      value={urgencyPercent}
+                      gaugePrimaryColor="white"
+                      gaugeSecondaryColor="rgba(255, 255, 255, 0.2)"
+                      className="flex-shrink-0 size-16 sm:size-20 text-2xl sm:text-3xl"
+                    >
+                      <span className="drop-shadow-md">{getEventEmoji(event)}</span>
+                    </AnimatedCircularProgressBar>
 
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-base sm:text-lg leading-tight mb-1 truncate pr-6">

@@ -1,3 +1,4 @@
+import { NumberTicker } from '@components/ui/NumberTicker';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useSchedule } from '@contexts/ScheduleContext';
 import { useUser } from '@contexts/UserContext';
@@ -1296,7 +1297,7 @@ const Schedule: React.FC = () => {
             <div>
               <p className="text-blue-100 text-xs sm:text-sm font-semibold mb-1">Total Courses</p>
               <p className="text-4xl font-black group-hover:scale-110 transition-transform origin-left">
-                {displayCoursesCount}
+                <NumberTicker value={displayCoursesCount} />
               </p>
             </div>
             <svg
@@ -1321,7 +1322,11 @@ const Schedule: React.FC = () => {
             <div>
               <p className="text-green-100 text-xs sm:text-sm font-semibold mb-1">Total Credits</p>
               <p className="text-2xl sm:text-4xl font-black group-hover:scale-110 transition-transform origin-left">
-                {totalCredits}
+                {/* NEP credits count practicals as half, so totals can end in .5 */}
+                <NumberTicker
+                  value={totalCredits}
+                  decimalPlaces={Number.isInteger(totalCredits) ? 0 : 1}
+                />
               </p>
             </div>
             <svg
@@ -1346,7 +1351,7 @@ const Schedule: React.FC = () => {
             <div>
               <p className="text-purple-100 text-xs sm:text-sm font-semibold mb-1">Today's</p>
               <p className="text-2xl sm:text-4xl font-black group-hover:scale-110 transition-transform origin-left">
-                {todaysClasses.length}
+                <NumberTicker value={todaysClasses.length} />
               </p>
             </div>
             <svg
@@ -1371,7 +1376,9 @@ const Schedule: React.FC = () => {
             <div>
               <p className="text-orange-100 text-xs sm:text-sm font-semibold mb-1">Classes</p>
               <p className="text-2xl sm:text-4xl font-black group-hover:scale-110 transition-transform origin-left">
-                {scheduleData?.filter((item) => !item.isCustomTask).length || 0}
+                <NumberTicker
+                  value={scheduleData?.filter((item) => !item.isCustomTask).length || 0}
+                />
               </p>
             </div>
             <svg
@@ -1396,7 +1403,7 @@ const Schedule: React.FC = () => {
             <div>
               <p className="text-teal-100 text-xs sm:text-sm font-semibold mb-1">Tasks</p>
               <p className="text-2xl sm:text-4xl font-black group-hover:scale-110 transition-transform origin-left">
-                {customTasksCount}
+                <NumberTicker value={customTasksCount} />
               </p>
             </div>
             <svg

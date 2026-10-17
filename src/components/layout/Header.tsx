@@ -13,6 +13,7 @@
  */
 
 import { SunIcon, MoonIcon, LogoIcon } from '@components/icons/SidebarIcons';
+import { AnimatedThemeToggler } from '@components/ui/AnimatedThemeToggler';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useUser } from '@contexts/UserContext';
 import { useWeather } from '@contexts/WeatherContext';
@@ -151,8 +152,8 @@ const QuickActionsPill: React.FC<QuickActionsPillProps> = ({ isDark, toggleTheme
         <NotificationCenter />
 
         {/* Theme Toggle */}
-        <button
-          onClick={() => {
+        <AnimatedThemeToggler
+          onToggle={() => {
             toggleTheme();
             setIsExpanded(false);
           }}
@@ -160,7 +161,7 @@ const QuickActionsPill: React.FC<QuickActionsPillProps> = ({ isDark, toggleTheme
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           <ThemeIcons isDark={isDark} />
-        </button>
+        </AnimatedThemeToggler>
       </div>
     </div>
   );
@@ -185,7 +186,9 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const { isAdmin } = useRole();
   const { weather, setShowWeatherModal } = useWeather();
 
-  React.useEffect(() => {
+  // A layout effect, so the class is in place when the theme toggle's view transition
+  // snapshots the page
+  React.useLayoutEffect(() => {
     const root = document.documentElement;
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 
@@ -331,14 +334,14 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
             </div>
 
             {/* Theme Toggle - Desktop only */}
-            <button
-              onClick={toggleTheme}
+            <AnimatedThemeToggler
+              onToggle={toggleTheme}
               className="hidden md:flex relative w-10 h-10 p-2 rounded-xl hover:bg-gradient-to-br hover:from-slate-100 hover:to-blue-50 dark:hover:from-slate-800 dark:hover:to-slate-800/70 focus:outline-none transition-all duration-300 group hover:shadow-md hover:scale-105 overflow-hidden"
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-blue-500/10 dark:to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <ThemeIcons isDark={isDark} />
-            </button>
+            </AnimatedThemeToggler>
 
             {/* User Profile */}
             {user && (

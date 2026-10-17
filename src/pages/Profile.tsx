@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { NumberTicker } from '@components/ui/NumberTicker';
 import { BRANCH_OPTIONS } from '@config/branches';
 import { COURSE_OPTIONS } from '@config/credits';
 import { HOSTEL_OPTIONS } from '@config/hostels';
@@ -1112,7 +1113,7 @@ const Profile: React.FC = () => {
                         Saved Forms
                       </p>
                       <p className="text-2xl md:text-3xl font-black group-hover:scale-110 transition-transform origin-left">
-                        {favoriteForms.length}
+                        <NumberTicker value={favoriteForms.length} />
                       </p>
                     </div>
                     <div className="bg-white/20 backdrop-blur-sm p-2 md:p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
@@ -1150,7 +1151,7 @@ const Profile: React.FC = () => {
                     <div>
                       <p className="text-blue-100 text-xs md:text-sm font-medium mb-1">Events</p>
                       <p className="text-2xl md:text-3xl font-black group-hover:scale-110 transition-transform origin-left">
-                        {userEvents.length}
+                        <NumberTicker value={userEvents.length} />
                       </p>
                     </div>
                     <div className="bg-white/20 backdrop-blur-sm p-2 md:p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
@@ -1190,7 +1191,7 @@ const Profile: React.FC = () => {
                         Reminders
                       </p>
                       <p className="text-2xl md:text-3xl font-black group-hover:scale-110 transition-transform origin-left">
-                        {remindersCount}
+                        <NumberTicker value={remindersCount} />
                       </p>
                     </div>
                     <div className="bg-white/20 backdrop-blur-sm p-2 md:p-3 rounded-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">

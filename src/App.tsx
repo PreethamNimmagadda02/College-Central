@@ -21,6 +21,7 @@ import { RoleProvider } from '@features/auth/hooks/useRole';
 import { GuestBoundary } from '@features/demo/GuestBoundary';
 import { lazyPage } from '@lib/utils/lazyPage';
 import Layout from '@pages/Layout';
+import { MotionConfig } from 'framer-motion';
 
 import React, { Suspense, useEffect } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
@@ -242,7 +243,8 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <>
+    // Animations honour the OS "reduce motion" setting; index.css does the same for CSS ones
+    <MotionConfig reducedMotion="user">
       <AuthProvider>
         <GuestBoundary>
           <AppConfigProvider>
@@ -276,7 +278,7 @@ const App: React.FC = () => {
       <InstallPrompt />
       <OfflineIndicator />
       <Toaster />
-    </>
+    </MotionConfig>
   );
 };
 

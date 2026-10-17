@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+/* animate-in, fade-in, zoom-in-*, slide-in-from-* utilities */
+@import 'tw-animate-css';
 
 /* Enable smooth scrolling globally */
 html {
@@ -34,6 +36,8 @@ html {
   --animate-fadeIn: fadeIn 0.3s ease-out forwards;
   --animate-gradient-shift: gradient-shift 3s ease infinite;
   --animate-spin-slow: spin-slow 8s linear infinite;
+  --animate-pulse-glow: soft-glow 2s ease-in-out infinite;
+  --animate-marquee: marquee var(--duration) linear infinite;
 
   /* Keyframes */
   @keyframes blob {
@@ -87,6 +91,28 @@ html {
     }
   }
 
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(calc(-100% - var(--gap)));
+    }
+  }
+
+  /* Not named pulse-glow: the admin stylesheet defines a gold keyframe under that name */
+  @keyframes soft-glow {
+    0%,
+    100% {
+      box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
+    }
+
+    50% {
+      box-shadow: 0 4px 24px rgba(168, 85, 247, 0.6);
+    }
+  }
+
   @keyframes spin-slow {
     0% {
       transform: rotate(0deg);
@@ -105,4 +131,28 @@ html {
 
 @utility animation-delay-4000 {
   animation-delay: 4s;
+}
+
+/* The theme toggle reveals the new theme with a clip-path animation in place of the default
+   cross-fade, starting from a fully clipped snapshot so Firefox cannot flash it first */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  clip-path: var(--theme-reveal-from, none);
+}
+
+/* Honour the OS "reduce motion" setting. Spinners keep turning, since they show work in progress. */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.animate-spin),
+  *:not(.animate-spin)::before,
+  *:not(.animate-spin)::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
