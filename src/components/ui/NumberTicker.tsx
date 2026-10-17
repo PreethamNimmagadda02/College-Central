@@ -29,7 +29,9 @@ export function NumberTicker({
   const ref = useRef<HTMLSpanElement>(null);
   const reduceMotion = useReducedMotionConfig();
   const motionValue = useMotionValue(startValue);
-  const springValue = useSpring(motionValue, { damping: 60, stiffness: 100 });
+  // Duration-based, not Magic UI's damping 60 / stiffness 100: that spring is so overdamped it
+  // spends seconds crawling through the last percent, showing a slightly wrong number
+  const springValue = useSpring(motionValue, { duration: 1500, bounce: 0 });
   const isInView = useInView(ref, { once: true });
 
   useEffect(() => {

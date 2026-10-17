@@ -3,7 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MotionConfig } from 'framer-motion';
 import { afterEach, describe, expect, it } from 'vitest';
 
-
 const SetupObserver = window.IntersectionObserver;
 
 /** Reports every observed element as on screen, so in-view animations start */
@@ -40,7 +39,9 @@ describe('NumberTicker', () => {
     expect(screen.getByTestId('cgpa')).toHaveTextContent('0.00');
   });
 
-  it('counts up to the value once on screen', async () => {
+  // A strongly overdamped spring creeps through its last percent for seconds, leaving a
+  // wrong CGPA on screen; the count must land on the exact value promptly
+  it('counts up to the exact value within a couple of seconds once on screen', async () => {
     window.IntersectionObserver = VisibleObserver as unknown as typeof IntersectionObserver;
     render(
       <MotionConfig reducedMotion="never">
@@ -48,7 +49,7 @@ describe('NumberTicker', () => {
       </MotionConfig>
     );
     await waitFor(() => expect(screen.getByTestId('credits')).toHaveTextContent('120'), {
-      timeout: 5000,
+      timeout: 2500,
     });
   });
 });
