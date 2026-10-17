@@ -122,6 +122,18 @@ html {
   animation-delay: 4s;
 }
 
+/* The theme toggle reveals the new theme with a clip-path animation in place of the default
+   cross-fade, starting from a fully clipped snapshot so Firefox cannot flash it first */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  clip-path: var(--theme-reveal-from, none);
+}
+
 /* Honour the OS "reduce motion" setting. Spinners keep turning, since they show work in progress. */
 @media (prefers-reduced-motion: reduce) {
   *:not(.animate-spin),
