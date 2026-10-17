@@ -869,7 +869,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
-                    {Math.round(semesterProgress)}%
+                    <NumberTicker value={Math.round(semesterProgress)} className="inline" />%
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
                     Complete

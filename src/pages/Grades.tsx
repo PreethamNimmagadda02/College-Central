@@ -1,3 +1,4 @@
+import { AnimatedCircularProgressBar } from '@components/ui/AnimatedCircularProgressBar';
 import { NumberTicker } from '@components/ui/NumberTicker';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useGrades } from '@contexts/GradesContext';
@@ -7,16 +8,8 @@ import { useGradingScale } from '@hooks/useGradingScale';
 import { celebrate } from '@lib/utils/celebrate';
 import { calculateCreditsFromLTP } from '@lib/utils/creditCalculator';
 import { getLatestGrades } from '@lib/utils/gradeUtils';
-import {
-  AnimatePresence,
-  motion,
-  useInView,
-  useMotionValueEvent,
-  useSpring,
-  useTransform,
-  Variants,
-} from 'framer-motion';
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { AnimatePresence, motion, Variants } from 'framer-motion';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Line,
   XAxis,
@@ -63,58 +56,6 @@ const TREND_META = {
     bob: { x: [0, 5, 0] },
     message: '➡️ Your performance is relatively stable',
   },
-};
-
-// Progress ring component for circular metrics
-const ProgressRing: React.FC<{
-  progress: number;
-  size?: number;
-  strokeWidth?: number;
-  color?: string;
-  className?: string;
-}> = ({ progress, size = 60, strokeWidth = 6, color = 'stroke-primary', className = '' }) => {
-  const ref = useRef<SVGSVGElement>(null);
-  const isInView = useInView(ref, { once: false, margin: '-20px' });
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const spring = useSpring(0, { duration: 1500, bounce: 0 });
-  const strokeDashoffset = useTransform(
-    spring,
-    (val) => circumference - (val / 100) * circumference
-  );
-  const [offset, setOffset] = useState(circumference);
-  useMotionValueEvent(strokeDashoffset, 'change', setOffset);
-
-  useEffect(() => {
-    if (isInView) {
-      spring.set(Math.min(progress, 100));
-    }
-  }, [progress, isInView, spring]);
-
-  return (
-    <svg ref={ref} width={size} height={size} className={`transform -rotate-90 ${className}`}>
-      <circle
-        stroke="currentColor"
-        strokeWidth={strokeWidth}
-        fill="transparent"
-        r={radius}
-        cx={size / 2}
-        cy={size / 2}
-        className="text-slate-200 dark:text-slate-700"
-      />
-      <circle
-        stroke="currentColor"
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        fill="transparent"
-        r={radius}
-        cx={size / 2}
-        cy={size / 2}
-        style={{ strokeDasharray: circumference, strokeDashoffset: offset }}
-        className={`${color} transition-all duration-300`}
-      />
-    </svg>
-  );
 };
 
 // Legacy hardcoded values moved to useGradingScale hook for configurability
@@ -1914,12 +1855,11 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                       className="text-base sm:text-xl font-bold text-green-600"
                     />
                     <span className="text-base sm:text-xl font-bold text-green-600">%</span>
-                    <ProgressRing
-                      progress={advancedMetrics.consistencyScore}
-                      size={24}
-                      strokeWidth={3}
-                      color="stroke-green-500"
-                      className="hidden xs:block"
+                    <AnimatedCircularProgressBar
+                      value={advancedMetrics.consistencyScore}
+                      gaugePrimaryColor="#22c55e"
+                      gaugeSecondaryColor="currentColor"
+                      className="hidden xs:block size-6 text-slate-200 dark:text-slate-700"
                     />
                   </div>
                   <p className="text-[10px] sm:text-xs text-slate-500 mt-1">
