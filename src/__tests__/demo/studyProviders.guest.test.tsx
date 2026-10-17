@@ -72,7 +72,12 @@ describe('study providers in guest mode', () => {
     const { result } = renderHook(() => useGrades(), { wrapper });
     await waitFor(() => expect(result.current.gradesData?.semesters).toHaveLength(4));
 
-    await act(() => result.current.processGrades());
+    let processed: boolean | undefined;
+    await act(async () => {
+      processed = await result.current.processGrades();
+    });
+    // false: nothing was processed, so the page shows no success celebration
+    expect(processed).toBe(false);
     expect(result.current.error).toBe(
       "Grade-sheet scanning isn't available in the demo. You can still edit your grades by hand."
     );

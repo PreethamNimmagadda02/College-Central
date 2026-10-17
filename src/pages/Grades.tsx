@@ -4,6 +4,7 @@ import { useGrades } from '@contexts/GradesContext';
 import { useSchedule } from '@contexts/ScheduleContext';
 import { useUser } from '@contexts/UserContext';
 import { useGradingScale } from '@hooks/useGradingScale';
+import { celebrate } from '@lib/utils/celebrate';
 import { calculateCreditsFromLTP } from '@lib/utils/creditCalculator';
 import { getLatestGrades } from '@lib/utils/gradeUtils';
 import {
@@ -26,6 +27,7 @@ import {
   Area,
   ComposedChart,
 } from 'recharts';
+import { toast } from 'sonner';
 
 import { Grade, GradesData, Semester, SavedScenario } from '@/types';
 
@@ -3960,6 +3962,14 @@ const Grades: React.FC = () => {
     resetGradesState,
   } = useGrades();
 
+  // Extraction takes a while and used to end silently, so mark a successful scan
+  const handleProcessGrades = async () => {
+    if (await processGrades()) {
+      toast.success('Grade sheet processed. Your grades are up to date.');
+      void celebrate();
+    }
+  };
+
   const { user } = useUser();
   const courseOption = user?.courseOption || 'CBCS';
   const { getGradeColor } = useGradingScale();
@@ -4275,7 +4285,7 @@ const Grades: React.FC = () => {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
                   <button
-                    onClick={processGrades}
+                    onClick={handleProcessGrades}
                     disabled={isProcessing}
                     className="px-4 sm:px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
                   >

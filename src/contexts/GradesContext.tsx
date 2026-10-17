@@ -55,7 +55,8 @@ interface GradesContextType {
   selectedFile: File | null;
   imagePreview: string | null;
   selectFile: (file: File | null) => void;
-  processGrades: () => Promise<void>;
+  /** Resolves true once a grade sheet has been processed and the new grades saved */
+  processGrades: () => Promise<boolean>;
   resetGradesState: () => Promise<void>;
 }
 
@@ -122,11 +123,11 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (isGuest) {
       // Scanning uploads to Storage and calls Gemini, so it stays off in the demo
       setError(DEMO_SCAN_UNAVAILABLE);
-      return;
+      return false;
     }
     if (!selectedFile || !currentUser) {
       setError('Please select a file first.');
-      return;
+      return false;
     }
 
     setIsProcessing(true);
@@ -541,11 +542,13 @@ Include retakes. Return exact values as shown on the document.`,
         link: '/grades',
       });
       selectFile(null);
+      return true;
     } catch (e) {
       console.error('Error processing grade sheet:', e);
       setError(
         'Failed to process the grade sheet. The file might be unclear or in an unsupported format. Please try again.'
       );
+      return false;
     } finally {
       setIsProcessing(false);
     }
