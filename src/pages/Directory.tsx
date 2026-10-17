@@ -1,3 +1,4 @@
+import { BlurFade } from '@components/ui/BlurFade';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { getDemoUserByAdmissionNumber } from '@features/demo/demoStore';
@@ -59,6 +60,9 @@ const compareBy =
     if (aVal > bVal) return direction === 'asc' ? 1 : -1;
     return 0;
   };
+
+// Stagger cards slightly as a page of results appears, capped so the last ones don't lag
+const cardFadeDelay = (index: number) => Math.min(index, 10) * 0.03;
 
 const Directory = () => {
   const { config, loading: configLoading } = useAppConfig();
@@ -425,127 +429,127 @@ const Directory = () => {
           <div className="p-4 md:p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {activeTab === 'faculty'
-                ? paginatedFaculty.map((group) => {
+                ? paginatedFaculty.map((group, index) => {
                     const person = group[0]!;
                     return (
-                      <div
-                        key={person.id}
-                        className="group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="relative z-10">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
-                                {person.name}
-                              </h3>
-                            </div>
-                            <Building2 className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
-                          </div>
-                          <div className="space-y-3">
-                            {group.map((role, index) => (
-                              <div key={role.id}>
-                                {index > 0 && (
-                                  <hr className="my-3 border-slate-200 dark:border-slate-700" />
-                                )}
-                                <div className="space-y-2">
-                                  <div className="flex items-start gap-2">
-                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
-                                      Role:
-                                    </span>
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                      {role.designation}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-start gap-2">
-                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
-                                      Dept:
-                                    </span>
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                      {role.department}
-                                    </span>
-                                  </div>
-                                  <a
-                                    href={`mailto:${role.email}`}
-                                    className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link"
-                                  >
-                                    <Mail className="w-4 h-4 flex-shrink-0" />
-                                    <span className="group-hover/link:underline truncate">
-                                      {role.email}
-                                    </span>
-                                  </a>
-                                  {isValidIndianPhoneNumber(role.phone) && (
-                                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
-                                      <Phone className="w-4 h-4 flex-shrink-0" />
-                                      <span>{role.phone}</span>
-                                    </div>
-                                  )}
-                                </div>
+                      <BlurFade key={person.id} delay={cardFadeDelay(index)} className="h-full">
+                        <div className="h-full group relative overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50">
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          <div className="relative z-10">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors">
+                                  {person.name}
+                                </h3>
                               </div>
-                            ))}
+                              <Building2 className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
+                            </div>
+                            <div className="space-y-3">
+                              {group.map((role, index) => (
+                                <div key={role.id}>
+                                  {index > 0 && (
+                                    <hr className="my-3 border-slate-200 dark:border-slate-700" />
+                                  )}
+                                  <div className="space-y-2">
+                                    <div className="flex items-start gap-2">
+                                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
+                                        Role:
+                                      </span>
+                                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        {role.designation}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase w-16 flex-shrink-0">
+                                        Dept:
+                                      </span>
+                                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        {role.department}
+                                      </span>
+                                    </div>
+                                    <a
+                                      href={`mailto:${role.email}`}
+                                      className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link"
+                                    >
+                                      <Mail className="w-4 h-4 flex-shrink-0" />
+                                      <span className="group-hover/link:underline truncate">
+                                        {role.email}
+                                      </span>
+                                    </a>
+                                    {isValidIndianPhoneNumber(role.phone) && (
+                                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-sm">
+                                        <Phone className="w-4 h-4 flex-shrink-0" />
+                                        <span>{role.phone}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </BlurFade>
                     );
                   })
-                : paginatedStudents.map((student) => {
+                : paginatedStudents.map((student, index) => {
                     const isChecking = checkingProfile === student.admNo;
                     return (
-                      <div
-                        key={student.id}
-                        onClick={() => handleViewProfile(student.admNo)}
-                        className="group relative overflow-hidden cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="relative z-10">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors flex items-center gap-2">
-                                {student.name}
-                                {isChecking && <Loader2 className="w-4 h-4 animate-spin" />}
-                              </h3>
-                              <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">
-                                {student.admNo}
-                              </p>
+                      <BlurFade key={student.id} delay={cardFadeDelay(index)} className="h-full">
+                        <div
+                          onClick={() => handleViewProfile(student.admNo)}
+                          className="h-full group relative overflow-hidden cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 dark:hover:border-secondary/50"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          <div className="relative z-10">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-secondary transition-colors flex items-center gap-2">
+                                  {student.name}
+                                  {isChecking && <Loader2 className="w-4 h-4 animate-spin" />}
+                                </h3>
+                                <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">
+                                  {student.admNo}
+                                </p>
+                              </div>
+                              <GraduationCap className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
                             </div>
-                            <GraduationCap className="w-5 h-5 text-slate-400 group-hover:text-primary dark:group-hover:text-secondary transition-colors" />
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Branch:
-                              </span>
-                              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {student.branch}
-                              </span>
-                            </div>
-                            {student.year && (
+                            <div className="space-y-2">
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                  Year:
+                                  Branch:
                                 </span>
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  {student.year}
+                                  {student.branch}
                                 </span>
                               </div>
-                            )}
-                            <div
-                              onClick={(e) => e.stopPropagation()} // Prevent card click
-                            >
-                              <a
-                                href={`mailto:${student.admNo.toLowerCase()}@${config?.collegeInfo?.email?.domain || 'college.edu'}`}
-                                className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link w-fit"
+                              {student.year && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                    Year:
+                                  </span>
+                                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    {student.year}
+                                  </span>
+                                </div>
+                              )}
+                              <div
+                                onClick={(e) => e.stopPropagation()} // Prevent card click
                               >
-                                <Mail className="w-4 h-4 flex-shrink-0" />
-                                <span className="group-hover/link:underline truncate">
-                                  {student.admNo.toLowerCase()}@
-                                  {config?.collegeInfo?.email?.domain || 'college.edu'}
-                                </span>
-                              </a>
+                                <a
+                                  href={`mailto:${student.admNo.toLowerCase()}@${config?.collegeInfo?.email?.domain || 'college.edu'}`}
+                                  className="flex items-center gap-2 text-primary hover:text-primary-dark dark:text-secondary dark:hover:text-secondary/80 text-sm group/link w-fit"
+                                >
+                                  <Mail className="w-4 h-4 flex-shrink-0" />
+                                  <span className="group-hover/link:underline truncate">
+                                    {student.admNo.toLowerCase()}@
+                                    {config?.collegeInfo?.email?.domain || 'college.edu'}
+                                  </span>
+                                </a>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </BlurFade>
                     );
                   })}
             </div>

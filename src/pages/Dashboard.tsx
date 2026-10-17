@@ -25,6 +25,7 @@ import {
   BookmarkIcon,
   NewspaperIcon,
 } from '@components/icons/SidebarIcons';
+import { BlurFade } from '@components/ui/BlurFade';
 import { NumberTicker } from '@components/ui/NumberTicker';
 import { TIME_INTERVALS, SEMESTER_DEFAULTS } from '@config/appConstants';
 import { useAppConfig } from '@contexts/AppConfigContext';
@@ -45,6 +46,7 @@ import {
 } from '@lib/utils/dateUtils';
 import { getCountdownEvents, getUpcomingEvents } from '@lib/utils/eventUtils';
 import { getGreeting, getRandomItem } from '@lib/utils/helpers';
+import { AnimatePresence } from 'framer-motion';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -833,14 +835,17 @@ const Dashboard: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <div className="flex-1">
-                <p className="text-slate-700 dark:text-slate-200 text-base font-medium italic leading-relaxed group-hover:text-slate-900 dark:group-hover:text-white transition-colors duration-300">
-                  "{quote.text}"
-                </p>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors duration-300">
-                  — {quote.author}
-                </p>
-              </div>
+              {/* The quote changes every 30s: blur the old one out, then the new one in */}
+              <AnimatePresence mode="wait" initial={false}>
+                <BlurFade key={quote.text} className="flex-1">
+                  <p className="text-slate-700 dark:text-slate-200 text-base font-medium italic leading-relaxed group-hover:text-slate-900 dark:group-hover:text-white transition-colors duration-300">
+                    "{quote.text}"
+                  </p>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors duration-300">
+                    — {quote.author}
+                  </p>
+                </BlurFade>
+              </AnimatePresence>
             </div>
           </div>
 
@@ -1011,61 +1016,67 @@ const Dashboard: React.FC = () => {
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        <Link
-          to="/schedule"
-          className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative z-10 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-blue-100 font-semibold mb-1">Today's Activities</p>
-              <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">
-                <NumberTicker value={scheduleInfo.classes.length} />
-              </p>
+        <BlurFade delay={0} className="h-full">
+          <Link
+            to="/schedule"
+            className="block h-full group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-100 font-semibold mb-1">Today's Activities</p>
+                <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">
+                  <NumberTicker value={scheduleInfo.classes.length} />
+                </p>
+              </div>
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                <span className="text-4xl">📚</span>
+              </div>
             </div>
-            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
-              <span className="text-4xl">📚</span>
+          </Link>
+        </BlurFade>
+        <BlurFade delay={0.08} className="h-full">
+          <Link
+            to="/grades"
+            className="block h-full group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-purple-100 font-semibold mb-1">CGPA</p>
+                <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">
+                  {displayCgpa != null ? (
+                    <NumberTicker value={displayCgpa} decimalPlaces={2} />
+                  ) : (
+                    'N/A'
+                  )}
+                </p>
+              </div>
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                <span className="text-4xl">🎯</span>
+              </div>
             </div>
-          </div>
-        </Link>
-        <Link
-          to="/grades"
-          className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative z-10 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-purple-100 font-semibold mb-1">CGPA</p>
-              <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">
-                {displayCgpa != null ? (
-                  <NumberTicker value={displayCgpa} decimalPlaces={2} />
-                ) : (
-                  'N/A'
-                )}
-              </p>
+          </Link>
+        </BlurFade>
+        <BlurFade delay={0.16} className="h-full">
+          <Link
+            to="/academic-calendar"
+            className="block h-full group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-100 font-semibold mb-1">Upcoming Events</p>
+                <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">
+                  <NumberTicker value={upcomingEventsCount} />
+                </p>
+              </div>
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                <span className="text-4xl">📅</span>
+              </div>
             </div>
-            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
-              <span className="text-4xl">🎯</span>
-            </div>
-          </div>
-        </Link>
-        <Link
-          to="/academic-calendar"
-          className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 cursor-pointer"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative z-10 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-green-100 font-semibold mb-1">Upcoming Events</p>
-              <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">
-                <NumberTicker value={upcomingEventsCount} />
-              </p>
-            </div>
-            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
-              <span className="text-4xl">📅</span>
-            </div>
-          </div>
-        </Link>
+          </Link>
+        </BlurFade>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 md:gap-6">
