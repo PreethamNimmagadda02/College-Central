@@ -1,10 +1,14 @@
 import ScrollToTop from '@components/common/ScrollToTop';
 import { LogoIcon } from '@components/icons/SidebarIcons';
+import { Android } from '@components/ui/Android';
+import { DotPattern } from '@components/ui/DotPattern';
+import { MagicCard } from '@components/ui/MagicCard';
+import { Marquee } from '@components/ui/Marquee';
 import { NumberTicker } from '@components/ui/NumberTicker';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useAuth } from '@features/auth/hooks/useAuth';
 import { motion, useInView, useMotionValueEvent, useScroll, useTransform } from 'framer-motion';
-import React, { useState, useEffect, useRef, useCallback, type RefObject } from 'react';
+import React, { useState, useEffect, useRef, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Fades a section in and slides it up as it scrolls into view
@@ -14,33 +18,6 @@ const useReveal = (ref: RefObject<HTMLElement | null>, fromY = 80) => {
     opacity: useTransform(scrollYProgress, [0, 0.4], [0, 1]),
     y: useTransform(scrollYProgress, [0, 0.4], [fromY, 0]),
   };
-};
-
-// Custom hook for mouse position tracking
-const useMousePosition = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const elementRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (elementRef.current) {
-      const rect = elementRef.current.getBoundingClientRect();
-      setMousePosition({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const element = elementRef.current;
-    if (element) {
-      element.addEventListener('mousemove', handleMouseMove);
-      return () => element.removeEventListener('mousemove', handleMouseMove);
-    }
-    return undefined;
-  }, [handleMouseMove]);
-
-  return { elementRef, mousePosition };
 };
 
 // Smart metrics data - original metrics with animations
@@ -161,8 +138,6 @@ const LoginLanding: React.FC = () => {
   // Hooks for interactive elements
   const metricsRef = useRef<HTMLDivElement>(null);
   const metricsInView = useInView(metricsRef, { once: true, amount: 0.2 });
-  const { elementRef: loginCardRef, mousePosition } = useMousePosition();
-  const [testimonialIndex, setTestimonialIndex] = useState(0);
 
   // Refs for scroll-based reveal animations
   const missionRef = useRef<HTMLDivElement>(null);
@@ -252,14 +227,6 @@ const LoginLanding: React.FC = () => {
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTextIndex, isTyping]);
-
-  // Testimonial auto-rotation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Capacitor back button handler
 
@@ -425,40 +392,15 @@ const LoginLanding: React.FC = () => {
           {/* Gradient Background - More vibrant and student-friendly */}
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500"></div>
 
-          {/* Decorative Elements - More playful and dynamic */}
+          {/* Dot texture over a soft, static glow. Seven animated, blurred blobs used to sit here,
+              which low-end phones paid for on every frame */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {/* Top left blob */}
-            <div className="absolute -top-[8vh] -left-[8vw] w-[24vw] h-[24vw] min-w-[15rem] min-h-[15rem] max-w-[24rem] max-h-[24rem] bg-blue-400/20 rounded-full blur-3xl animate-pulse"></div>
-            {/* Top right blob */}
-            <div
-              className="absolute top-[15vh] -right-[8vw] w-[20vw] h-[20vw] min-w-[12rem] min-h-[12rem] max-w-[20rem] max-h-[20rem] bg-cyan-300/15 rounded-full blur-3xl animate-pulse"
-              style={{ animationDelay: '1s' }}
-            ></div>
-            {/* Middle left blob */}
-            <div
-              className="absolute top-[60vh] -left-[10vw] w-[24vw] h-[24vw] min-w-[15rem] min-h-[15rem] max-w-[24rem] max-h-[24rem] bg-purple-400/20 rounded-full blur-3xl animate-pulse"
-              style={{ animationDelay: '2s' }}
-            ></div>
-            {/* Middle right blob */}
-            <div
-              className="absolute top-[80vh] -right-[10vw] w-[30vw] h-[30vw] min-w-[20rem] min-h-[20rem] max-w-[31.25rem] max-h-[31.25rem] bg-pink-400/15 rounded-full blur-3xl animate-pulse"
-              style={{ animationDelay: '0.5s' }}
-            ></div>
-            {/* Bottom left blob */}
-            <div
-              className="absolute top-[120vh] left-[8vw] w-[18vw] h-[18vw] min-w-[11rem] min-h-[11rem] max-w-[18rem] max-h-[18rem] bg-indigo-400/20 rounded-full blur-3xl animate-pulse"
-              style={{ animationDelay: '1.5s' }}
-            ></div>
-            {/* Bottom right blob */}
-            <div
-              className="absolute top-[160vh] -right-[10vw] w-[24vw] h-[24vw] min-w-[15rem] min-h-[15rem] max-w-[24rem] max-h-[24rem] bg-violet-400/15 rounded-full blur-3xl animate-pulse"
-              style={{ animationDelay: '2.5s' }}
-            ></div>
-            {/* Accent blob */}
-            <div
-              className="absolute top-[40vh] left-1/2 transform -translate-x-1/2 w-[16vw] h-[16vw] min-w-[10rem] min-h-[10rem] max-w-[16rem] max-h-[16rem] bg-yellow-300/10 rounded-full blur-3xl animate-pulse"
-              style={{ animationDelay: '3s' }}
-            ></div>
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(96,165,250,0.25),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(244,114,182,0.22),transparent_55%)]" />
+            <DotPattern
+              width={20}
+              height={20}
+              className="text-white/20 [mask-image:radial-gradient(ellipse_at_center,white_35%,transparent_85%)]"
+            />
           </div>
 
           {/* Mission Statement */}
@@ -486,6 +428,15 @@ const LoginLanding: React.FC = () => {
                 performance to navigating campus and staying organized, we bring everything you need
                 into one seamless experience.
               </p>
+
+              {/* The real Dashboard (demo data) on the phone the Android app runs on */}
+              <div className="flex justify-center pt-2">
+                <Android
+                  src="/screenshots/dashboard-mobile.jpg"
+                  label="The College Central Dashboard on an Android phone"
+                  className="w-52 sm:w-60 md:w-64 h-auto drop-shadow-2xl"
+                />
+              </div>
 
               {/* Key Benefits */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 pt-4 max-w-3xl mx-auto">
@@ -670,64 +621,47 @@ const LoginLanding: React.FC = () => {
                 ))}
               </div>
 
-              {/* Testimonial Carousel */}
-              <div className="relative max-w-3xl mx-auto overflow-hidden pb-4 pt-4">
-                <div
-                  className="flex transition-transform duration-700 ease-out"
-                  style={{ transform: `translateX(-${testimonialIndex * 100}%)` }}
-                >
-                  {testimonials.map((testimonial) => (
-                    <div key={testimonial.initial} className="w-full flex-shrink-0 px-2">
-                      <div className="group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1">
-                        <div className="flex items-center gap-1 mb-3">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <svg
-                              key={star}
-                              className="w-4 h-4 text-yellow-400"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          ))}
-                        </div>
-                        <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
-                          "{testimonial.quote}"
+              {/* Testimonials drift past continuously; hovering pauses them for reading */}
+              <Marquee
+                pauseOnHover
+                className="max-w-4xl mx-auto py-4 [--duration:45s] [mask-image:linear-gradient(to_right,transparent,white_8%,white_92%,transparent)]"
+              >
+                {testimonials.map((testimonial) => (
+                  <div
+                    key={testimonial.initial}
+                    className="w-72 sm:w-80 group bg-white/10 backdrop-blur-sm rounded-xl p-5 md:p-6 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-300 hover:-translate-y-1"
+                  >
+                    <div className="flex items-center gap-1 mb-3">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <svg
+                          key={star}
+                          className="w-4 h-4 text-yellow-400"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
+                    </div>
+                    <p className="text-white/90 text-sm sm:text-base md:text-lg italic leading-relaxed mb-3 md:mb-4">
+                      "{testimonial.quote}"
+                    </p>
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div
+                        className={`w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br ${testimonial.avatar} flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300`}
+                      >
+                        {testimonial.initial}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">
+                          {testimonial.program}
                         </p>
-                        <div className="flex items-center gap-2 md:gap-3">
-                          <div
-                            className={`w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br ${testimonial.avatar} flex items-center justify-center text-white font-bold group-hover:scale-110 transition-transform duration-300`}
-                          >
-                            {testimonial.initial}
-                          </div>
-                          <div className="text-left">
-                            <p className="text-white/80 text-xs sm:text-sm md:text-base font-semibold">
-                              {testimonial.program}
-                            </p>
-                            <p className="text-white/60 text-xs md:text-sm">{testimonial.year}</p>
-                          </div>
-                        </div>
+                        <p className="text-white/60 text-xs md:text-sm">{testimonial.year}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                {/* Carousel Navigation Dots */}
-                <div className="flex justify-center gap-2 mt-4">
-                  {testimonials.map((testimonial, index) => (
-                    <button
-                      key={testimonial.initial}
-                      onClick={() => setTestimonialIndex(index)}
-                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                        testimonialIndex === index
-                          ? 'bg-white scale-125 shadow-lg shadow-white/30'
-                          : 'bg-white/30 hover:bg-white/50'
-                      }`}
-                      aria-label={`Go to testimonial ${index + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
+                  </div>
+                ))}
+              </Marquee>
 
               {/* Why Choose Section */}
               <div className="bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm rounded-xl p-5 sm:p-6 md:p-8 border border-white/10 hover:border-white/20 transition-all duration-300">
@@ -809,17 +743,7 @@ const LoginLanding: React.FC = () => {
           <div className="relative flex flex-col justify-center items-center px-6 pb-16 md:pb-20">
             <div className="w-full max-w-md relative z-10">
               {/* Login Card with enhanced glassmorphism and mouse-following glow */}
-              <div ref={loginCardRef} className="relative group perspective-1000">
-                {/* Mouse-following glow effect */}
-                <div
-                  className="absolute pointer-events-none transition-opacity duration-300 w-64 h-64 rounded-full bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-cyan-500/30 blur-3xl opacity-0 group-hover:opacity-100"
-                  style={{
-                    left: mousePosition.x - 128,
-                    top: mousePosition.y - 128,
-                    transform: 'translate3d(0, 0, 0)',
-                  }}
-                />
-
+              <MagicCard className="relative group perspective-1000">
                 {/* Animated border gradient */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition-all duration-1000 animate-gradient-shift"></div>
 
@@ -1042,7 +966,7 @@ const LoginLanding: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </MagicCard>
             </div>
           </div>
         </section>

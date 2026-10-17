@@ -37,6 +37,7 @@ html {
   --animate-gradient-shift: gradient-shift 3s ease infinite;
   --animate-spin-slow: spin-slow 8s linear infinite;
   --animate-pulse-glow: soft-glow 2s ease-in-out infinite;
+  --animate-marquee: marquee var(--duration) linear infinite;
 
   /* Keyframes */
   @keyframes blob {
@@ -87,6 +88,16 @@ html {
 
     50% {
       background-position: 100% 50%;
+    }
+  }
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(calc(-100% - var(--gap)));
     }
   }
 
