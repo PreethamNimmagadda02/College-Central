@@ -1,35 +1,11 @@
 import ScrollToTop from '@components/common/ScrollToTop';
 import { LogoIcon } from '@components/icons/SidebarIcons';
+import { NumberTicker } from '@components/ui/NumberTicker';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useAuth } from '@features/auth/hooks/useAuth';
-import {
-  animate,
-  motion,
-  useInView,
-  useMotionValueEvent,
-  useScroll,
-  useTransform,
-} from 'framer-motion';
+import { motion, useInView, useMotionValueEvent, useScroll, useTransform } from 'framer-motion';
 import React, { useState, useEffect, useRef, useCallback, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-// Counts up from 0 to `end` with a cubic ease-out once `start` turns true
-const useCountUp = (end: number, duration: number, start: boolean) => {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!start) return undefined;
-    const controls = animate(0, end, {
-      duration: duration / 1000,
-      ease: (t) => 1 - Math.pow(1 - t, 3),
-      onUpdate: (value) => setCount(Math.floor(value)),
-      onComplete: () => setCount(end),
-    });
-    return () => controls.stop();
-  }, [end, duration, start]);
-
-  return count;
-};
 
 // Fades a section in and slides it up as it scrolls into view
 const useReveal = (ref: RefObject<HTMLElement | null>, fromY = 80) => {
@@ -144,8 +120,6 @@ const AnimatedMetricCard: React.FC<{
   isInView: boolean;
   index: number;
 }> = ({ metric, isInView, index }) => {
-  const count = useCountUp(metric.value, 2000 + index * 200, isInView);
-
   return (
     <div
       className="group flex flex-col items-center justify-center space-y-1 sm:space-y-2 bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-5 md:p-6 border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-purple-500/20"
@@ -160,7 +134,7 @@ const AnimatedMetricCard: React.FC<{
         {metric.icon}
       </div>
       <div className="text-3xl sm:text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-300 to-orange-400 group-hover:scale-110 transition-transform duration-300">
-        {count}
+        <NumberTicker value={metric.value} delay={index * 0.1} className="inline" />
         {metric.suffix}
       </div>
       <div className="text-white/90 text-xs sm:text-sm md:text-base text-center font-semibold">

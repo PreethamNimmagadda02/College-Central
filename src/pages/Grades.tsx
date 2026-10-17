@@ -1,3 +1,4 @@
+import { NumberTicker } from '@components/ui/NumberTicker';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useGrades } from '@contexts/GradesContext';
 import { useSchedule } from '@contexts/ScheduleContext';
@@ -60,33 +61,6 @@ const TREND_META = {
     bob: { x: [0, 5, 0] },
     message: '➡️ Your performance is relatively stable',
   },
-};
-
-// Counts up smoothly to `value` (shown with `decimals` places) when scrolled into view
-const AnimatedNumber: React.FC<{
-  value: number;
-  decimals?: number;
-  duration?: number;
-  className?: string;
-}> = ({ value, decimals = 2, duration = 1.5, className = '' }) => {
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: false, margin: '-50px' });
-  const spring = useSpring(0, { duration: duration * 1000, bounce: 0 });
-  const display = useTransform(spring, (current) => current.toFixed(decimals));
-  const [displayValue, setDisplayValue] = useState(value.toFixed(decimals));
-  useMotionValueEvent(display, 'change', setDisplayValue);
-
-  useEffect(() => {
-    if (isInView) {
-      spring.set(value);
-    }
-  }, [value, isInView, spring]);
-
-  return (
-    <span ref={ref} className={className}>
-      {displayValue}
-    </span>
-  );
 };
 
 // Progress ring component for circular metrics
@@ -1898,9 +1872,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                   </motion.p>
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-[10px] sm:text-xs text-slate-500">CGPA</p>
-                    <AnimatedNumber
+                    <NumberTicker
                       value={gradesData.cgpa}
-                      decimals={2}
+                      decimalPlaces={2}
                       className="text-[10px] sm:text-xs font-semibold text-blue-600"
                     />
                   </div>
@@ -1932,9 +1906,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     </motion.span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <AnimatedNumber
+                    <NumberTicker
                       value={advancedMetrics.consistencyScore}
-                      decimals={0}
+                      decimalPlaces={0}
                       className="text-base sm:text-xl font-bold text-green-600"
                     />
                     <span className="text-base sm:text-xl font-bold text-green-600">%</span>
@@ -1976,9 +1950,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                       ⚡
                     </motion.span>
                   </div>
-                  <AnimatedNumber
+                  <NumberTicker
                     value={advancedMetrics.creditEfficiency}
-                    decimals={2}
+                    decimalPlaces={2}
                     className="text-base sm:text-xl font-bold text-purple-600 block"
                   />
                   <div className="flex items-center gap-1 mt-1">
@@ -2292,9 +2266,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                       Excellence Rate
                     </span>
-                    <AnimatedNumber
+                    <NumberTicker
                       value={advancedMetrics.excellenceRate}
-                      decimals={1}
+                      decimalPlaces={1}
                       className="font-semibold text-sm sm:text-base text-emerald-700 dark:text-emerald-400"
                     />
                   </div>
@@ -2304,9 +2278,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     </span>
                     <span className="font-semibold text-sm sm:text-base">
                       Sem {advancedMetrics.bestSemester.semester} (
-                      <AnimatedNumber
+                      <NumberTicker
                         value={advancedMetrics.bestSemester.sgpa}
-                        decimals={2}
+                        decimalPlaces={2}
                         className="inline"
                       />
                       )
@@ -2316,9 +2290,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                       High-Credit Avg
                     </span>
-                    <AnimatedNumber
+                    <NumberTicker
                       value={advancedMetrics.highCreditAvg}
-                      decimals={2}
+                      decimalPlaces={2}
                       className="font-semibold text-sm sm:text-base"
                     />
                   </div>
@@ -2340,9 +2314,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                       Avg Credits/Sem
                     </span>
-                    <AnimatedNumber
+                    <NumberTicker
                       value={advancedMetrics.avgCreditsPerSem}
-                      decimals={1}
+                      decimalPlaces={1}
                       className="font-semibold text-sm sm:text-base text-blue-700 dark:text-blue-400"
                     />
                   </div>
@@ -2350,9 +2324,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                       Max Credits
                     </span>
-                    <AnimatedNumber
+                    <NumberTicker
                       value={advancedMetrics.maxCreditsInSem}
-                      decimals={0}
+                      decimalPlaces={0}
                       className="font-semibold text-sm sm:text-base"
                     />
                   </div>
@@ -2360,9 +2334,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                       Total Courses
                     </span>
-                    <AnimatedNumber
+                    <NumberTicker
                       value={latestGrades.length}
-                      decimals={0}
+                      decimalPlaces={0}
                       className="font-semibold text-sm sm:text-base"
                     />
                   </div>
@@ -2384,9 +2358,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                       Failed Courses
                     </span>
-                    <AnimatedNumber
+                    <NumberTicker
                       value={advancedMetrics.failedCourses.length}
-                      decimals={0}
+                      decimalPlaces={0}
                       className={`font-semibold text-sm sm:text-base ${advancedMetrics.failedCourses.length > 0 ? 'text-red-600' : 'text-green-600'}`}
                     />
                   </div>
@@ -2394,9 +2368,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                       At-Risk (D/F)
                     </span>
-                    <AnimatedNumber
+                    <NumberTicker
                       value={advancedMetrics.atRiskCourses.length}
-                      decimals={0}
+                      decimalPlaces={0}
                       className={`font-semibold text-sm sm:text-base ${advancedMetrics.atRiskCourses.length > 0 ? 'text-orange-600' : 'text-green-600'}`}
                     />
                   </div>
@@ -2405,9 +2379,9 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                       Improvement
                     </span>
                     <span className="font-semibold text-sm sm:text-base">
-                      <AnimatedNumber
+                      <NumberTicker
                         value={advancedMetrics.improvementPotential}
-                        decimals={2}
+                        decimalPlaces={2}
                         className="inline"
                       />{' '}
                       pts
@@ -3661,26 +3635,26 @@ const PerformanceAnalytics: React.FC<{ gradesData: GradesData; courseOption: str
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       <div className="relative z-10">
-                        <AnimatedNumber
+                        <NumberTicker
                           value={data.count}
-                          decimals={0}
+                          decimalPlaces={0}
                           className="text-2xl sm:text-3xl font-bold group-hover:scale-125 transition-transform duration-300 block"
                         />
                         <p className="text-base sm:text-lg font-semibold group-hover:font-black transition-all">
                           {grade}
                         </p>
                         <p className="text-[10px] sm:text-xs mt-1 opacity-75 group-hover:opacity-100 transition-opacity">
-                          <AnimatedNumber
+                          <NumberTicker
                             value={data.totalCredits}
-                            decimals={0}
+                            decimalPlaces={0}
                             className="inline"
                           />{' '}
                           credits
                         </p>
                         <p className="text-[10px] sm:text-xs opacity-60 group-hover:opacity-100 group-hover:font-semibold transition-all">
-                          <AnimatedNumber
+                          <NumberTicker
                             value={(data.totalCredits / gradesData.totalCredits) * 100}
-                            decimals={1}
+                            decimalPlaces={1}
                             className="inline"
                           />
                           %

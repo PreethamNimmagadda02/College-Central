@@ -25,6 +25,7 @@ import {
   BookmarkIcon,
   NewspaperIcon,
 } from '@components/icons/SidebarIcons';
+import { NumberTicker } from '@components/ui/NumberTicker';
 import { TIME_INTERVALS, SEMESTER_DEFAULTS } from '@config/appConstants';
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useCalendar } from '@contexts/CalendarContext';
@@ -1019,7 +1020,7 @@ const Dashboard: React.FC = () => {
             <div>
               <p className="text-sm text-blue-100 font-semibold mb-1">Today's Activities</p>
               <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">
-                {scheduleInfo.classes.length}
+                <NumberTicker value={scheduleInfo.classes.length} />
               </p>
             </div>
             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
@@ -1036,7 +1037,11 @@ const Dashboard: React.FC = () => {
             <div>
               <p className="text-sm text-purple-100 font-semibold mb-1">CGPA</p>
               <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">
-                {displayCgpa != null ? displayCgpa.toFixed(2) : 'N/A'}
+                {displayCgpa != null ? (
+                  <NumberTicker value={displayCgpa} decimalPlaces={2} />
+                ) : (
+                  'N/A'
+                )}
               </p>
             </div>
             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
@@ -1053,7 +1058,7 @@ const Dashboard: React.FC = () => {
             <div>
               <p className="text-sm text-green-100 font-semibold mb-1">Upcoming Events</p>
               <p className="text-5xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">
-                {upcomingEventsCount}
+                <NumberTicker value={upcomingEventsCount} />
               </p>
             </div>
             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
