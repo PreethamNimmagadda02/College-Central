@@ -4384,7 +4384,7 @@ const Grades: React.FC = () => {
             </p>
             {cgpaStatus && (
               <span
-                className={`inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold rounded-full ${cgpaStatus.bg} shadow-md`}
+                className={`inline-block px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold rounded-full ${cgpaStatus.bg} ${cgpaStatus.color} dark:text-white shadow-md`}
               >
                 {cgpaStatus.text}
               </span>
